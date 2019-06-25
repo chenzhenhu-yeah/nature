@@ -1,0 +1,35 @@
+a b c d e f g h i g k l m n o p q r s t u v w x y z 
+2019-05-10 13:35:46 logger.py INFO  stare_reach error!
+2019-05-13 09:21:23 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '300408', 'num': 900, 'price': 19.62, 'cost': 17658, 'agent': 'pingan', 'name': '三环集团'}
+2019-05-13 09:21:39 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '300684', 'num': 600, 'price': 30.52, 'cost': 18312, 'agent': 'pingan', 'name': '中石科技'}
+2019-05-13 09:21:56 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '300322', 'num': 1500, 'price': 13.02, 'cost': 19530, 'agent': 'pingan', 'name': '硕贝德'}
+2019-05-13 09:22:12 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'anke', 'code': '300454', 'num': 200, 'price': 91.02, 'cost': 18204, 'agent': 'pingan', 'name': '深信服'}
+2019-05-13 09:22:29 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'original', 'code': '300408', 'num': 900, 'price': 19.63, 'cost': 17667, 'agent': 'pingan', 'name': '三环集团'}
+2019-05-13 11:14:39 logger.py INFO  stare_reach error!
+2019-05-14 10:17:07 logger.py INFO  stare_reach error!
+2019-05-14 10:52:31 logger.py INFO  stare_reach error!
+2019-05-15 12:39:54 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.45, 'cost': 20610, 'agent': 'pingan', 'name': '翰宇药业'}
+2019-05-15 12:40:45 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'redian', 'code': '002132', 'num': 6000, 'price': 3.13, 'cost': 18780, 'agent': 'pingan', 'name': '恒星科技'}
+2019-05-15 12:44:13 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '002792', 'num': 600, 'price': 30.09, 'cost': 18054, 'agent': 'pingan', 'name': '通宇通讯'}
+2019-05-15 12:49:31 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'anke', 'code': '300454', 'num': 200, 'price': 93.51, 'cost': 18702, 'agent': 'pingan', 'name': '深信服'}
+2019-05-15 12:50:33 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'anke', 'code': '300579', 'num': 500, 'price': 37.96, 'cost': 18980, 'agent': 'pingan', 'name': '数字认证'}
+2019-05-15 12:53:19 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '300684', 'num': 600, 'price': 31.01, 'cost': 18606, 'agent': 'pingan', 'name': '中石科技'}
+2019-05-15 12:57:15 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': '5G', 'code': '300322', 'num': 1500, 'price': 13.39, 'cost': 20085, 'agent': 'pingan', 'name': '硕贝德'}
+2019-05-16 09:21:20 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'anke', 'code': '300369', 'num': 1600, 'price': 13.02, 'cost': 20832, 'agent': 'pingan', 'name': '绿盟科技'}
+2019-05-16 13:13:48 logger.py INFO  stare_reach error!
+2019-05-17 11:59:19 logger.py INFO  stare_reach error!
+2019-05-20 12:40:22 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.42, 'cost': 20556, 'agent': 'pingan', 'name': '翰宇药业'}
+2019-05-22 09:21:23 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'redian', 'code': '000821', 'num': 2200, 'price': 8.99, 'cost': 19778, 'agent': 'pingan', 'name': '京山轻机'}
+2019-05-22 09:21:40 logger.py INFO  place_order: success {'ins': 'buy_order', 'portfolio': 'redian', 'code': '002482', 'num': 3700, 'price': 5.4, 'cost': 19980, 'agent': 'pingan', 'name': '广田集团'}
+2019-05-22 10:55:19 logger.py INFO  stare_reach error!
+2019-05-22 11:37:13 logger.py INFO  stare_reach error!
+2019-05-22 11:55:32 logger.py INFO  stare_reach error!
+2019-05-22 13:26:32 logger.py INFO  place_order: success {'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
+2019-05-23 09:34:03 logger.py INFO  place_order: success {'ins': 'sell_order', 'portfolio': 'redian', 'code': '002132', 'num': 6000, 'price': 3.17, 'cost': 19020, 'agent': 'pingan', 'name': '恒星科技'}
+2019-05-24 11:50:03 logger.py INFO  stare_reach error!
+2019-05-24 13:06:13 logger.py INFO  stare_reach error!
+2019-05-29 09:26:54 logger.py INFO  stare_reach error!
+2019-05-30 12:37:17 logger.py INFO  stare_reach error!
+2019-05-30 12:38:58 logger.py INFO  stare_reach error!
+2019-05-31 14:37:45 logger.py INFO  stare_reach error!
+2019-05-31 14:38:12 logger.py INFO  stare_reach error!

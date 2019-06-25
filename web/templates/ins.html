@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>from_test</title>
+</head>
+<body>
+
+{% if name %}
+{{ name }}
+{% else %}
+<form method="post" action="confirm_ins">
+<fieldset>
+<p>
+  ins_type：
+  <select name="ins_type"/>
+    <option value='buy_order'>buy_order</option>
+    <option value='down_sell'>down_sell</option>
+    <option value='up_warn'>up_warn</option>
+    <option value='down_warn'>down_warn</option>
+    <option value='sell_order'>sell_order</option>
+    <option value='del'>del</option>
+  </select>
+</p>
+<p>
+  code:<input type="text" name="code"  required/>
+</p>
+<p>
+  num:<input type="number" name="num" required/>
+</p>
+<p>
+  price:<input type="text" name="price"  required/>
+</p>
+<p>
+  portfolio:
+  <select name="portfolio"/>
+    <option value='5G'>5G</option>
+    <option value='boll'>boll</option>
+    <option value='original'>original</option>
+  </select>
+</p>
+<p>
+  agent:
+  <select name="agent"/>
+    <option value='pingan'>pingan</option>
+    <option value='gtja'>gtja</option>
+    <option value='cf'>cf</option>
+  </select>
+</p>
+<p>
+  token:<input type="password" name="token"/>
+</p>
+</fieldset>
+
+<div>
+<input type="submit" value="Submit"/>
+</div>
+</form>
+{% endif %}
+
+</body>
+</html>
