@@ -7,21 +7,9 @@ import zlib
 import pandas as pd
 import tushare as ts
 
-import sys
-#sys.path.append(r'../../')
-sys.path.append('..\\..')
-#sys.path.append(r'C:\Users\czh\Documents\critical\python_scripts\git_repo\hello-world')
-from down_k.get_daily import get_codes
-from down_k.get_stk import get_stk_hfq
-from down_k.get_trading_dates import get_trading_dates
+from nature import get_stk_hfq, get_trading_dates, get_stk_codes
 
-from strategy.nearboll.book import Book
-#print(sys.path)
-#print(__name__)
-#print(sys.modules.items())
-
-
-
+from nature import Book
 
 def hit_ma(dss,date):
     r = []

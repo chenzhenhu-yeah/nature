@@ -2,11 +2,7 @@
 import pandas as pd
 import numpy as np
 
-import sys
-sys.path.append(r'../')
-from down_k.get_trading_dates import get_trading_dates
-from down_k.get_stk import get_stk_hfq
-from hu_signal.k import K
+from nature import get_trading_dates, get_stk_hfq, K
 
 def red3(df):
 # 红三兵规则：多头趋势确认形态，开启多头攻势。（后续回调可介入）

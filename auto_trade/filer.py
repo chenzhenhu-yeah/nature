@@ -4,6 +4,45 @@ from multiprocessing.connection import Client
 import pandas as pd
 import time
 
+
+#{'ins':'r','filename':'ins.txt'}
+#{'ins':'rc','filename':'ins.txt'}
+def rc_ins_file():
+    r = []
+    ins_dict = {'ins':'rc','filename':'ini/ins.txt'}
+    address = ('localhost', 9001)
+    again = True
+    while again:
+        time.sleep(1)
+        try :
+            with Client(address, authkey=b'secret password') as conn:
+                conn.send(ins_dict)
+                r = conn.recv()
+                again = False
+        except:
+            pass
+
+    return r
+
+
+#{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
+def a_ins_file(content):
+    r = []
+    ins_dict = {'ins':'a','filename':'ini/ins.txt','content':content}
+    address = ('localhost', 9001)
+    again = True
+    while again:
+        time.sleep(1)
+        try :
+            with Client(address, authkey=b'secret password') as conn:
+                conn.send(ins_dict)
+                r = conn.recv()
+                again = False
+        except:
+            pass
+
+    return r
+
 #{'ins':'r','filename':'ins.txt'}
 #{'ins':'rc','filename':'ins.txt'}
 #{'ins':'a','filename':'ins.txt','content':'aaaaaa'}

@@ -2,8 +2,8 @@
 
 from collections import defaultdict
 
-from vtUtility import ArrayManager
-from vtUtility import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
+from nature import ArrayManager
+from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 
 ########################################################################
 class Signal(object):

@@ -10,7 +10,7 @@ import logging.config
 dss = '../data/'
 
 def to_log(s):
-    address = ('localhost', 7000)
+    address = ('localhost', 9000)
     again = True
     while again:
         time.sleep(1)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     logging.config.fileConfig(logconfigfile)
 
 
-    address = ('localhost', 7000)     # family is deduced to be 'AF_INET'
+    address = ('localhost', 9000)     # family is deduced to be 'AF_INET'
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:

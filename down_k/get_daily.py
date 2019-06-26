@@ -11,7 +11,7 @@ def get_daily(dss,day):
     return df
 
 
-def get_codes(dss,day='2018-08-08',market=['CYB','ZXB','SZ']):
+def get_stk_codes(dss,day='2018-08-08',market=['CYB','ZXB','SZ']):
     df = get_daily(dss,day)
     df = df[~df.code.str.startswith('6')]
     # print(len(df))
@@ -24,4 +24,5 @@ if __name__ == "__main__":
     # df = get_daily(r'../../data/','2018-05-30')
     # print(df.head())
 
-    get_codes(r'../../data/')
+    #get_stk_codes(r'../../data/')
+    pass

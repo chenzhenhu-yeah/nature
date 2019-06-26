@@ -3,10 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-import sys
-sys.path.append(r'../')
-from down_k.get_trading_dates import get_trading_dates
-from down_k.get_stk import get_stk_hfq
+
+from nature import get_trading_dates, get_stk_hfq
 
 def MACD(df, n_fast=12, n_slow=26, ksgn='close'):
     '''

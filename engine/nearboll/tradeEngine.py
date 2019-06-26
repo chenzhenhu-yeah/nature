@@ -12,15 +12,12 @@ from datetime import datetime
 import numpy as np
 import tushare as ts
 
-from vtUtility import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from book import Book
-from nearBollStrategy import NearBollPortfolio
+from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
+from nature import Book
+from nature import NearBollPortfolio
 #from ipdb import set_trace
 
-import sys
-sys.path.append(r'../../')
-from down_k.get_stk import get_stk_hfq
-from down_k.get_trading_dates import get_trading_dates
+from nature import get_stk_hfq, get_trading_dates
 
 SIZE_DICT = {}
 PRICETICK_DICT = {}

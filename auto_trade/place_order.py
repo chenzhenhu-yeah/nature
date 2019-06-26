@@ -1,22 +1,28 @@
 
 from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
+import multiprocessing
+
 import pandas as pd
 import time
 from datetime import datetime
-import auto_trade
+
+from nature.auto_trade import auto_trade
+from nature import to_log
 
 dss = '../../data/'
 
-def to_log(s):
-    address = ('localhost', 9000)
+
+def send_instruction(ins_dict):
+    address = ('localhost', 9002)
     again = True
     while again:
         time.sleep(1)
         try :
-            with Client(address, authkey=b'secret password') as conn2:
-                conn2.send(s)
-            again = False
+            with Client(address, authkey=b'secret password') as conn:
+                # to_log('stare send ins: '+str(ins_dict))
+                conn.send(ins_dict)
+                again = False
         except:
             pass
 
@@ -81,10 +87,10 @@ def record_order(order):
         record_sell_order(order)
 
 def append_order(order):
-    filename = dss + 'csv/order.txt'
+    filename = dss + 'csv/order.csv'
     now = datetime.now()
     today = now.strftime('%Y%m%d')
-    order = today + '&' + order
+    order = today + '&' + order + '&n'
     with open(filename, 'a', encoding='utf-8') as f:
         f.write(order+'\n')
 
@@ -123,12 +129,55 @@ def place_order(order):
 
     return r
 
-if __name__ == "__main__":
-    print('beging portfolio_order')
+def place_order_service():
+    print('place_order service begin...')
     address = ('localhost', 9002)     # family is deduced to be 'AF_INET'
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:
-                print('connection accepted from', listener.last_accepted)
+                #print('connection accepted from', listener.last_accepted)
                 ins_dict = conn.recv(); #print(ins_dict)
                 place_order(ins_dict)
+
+
+def avoid_idle():
+    print('avoid_idle begin ...')
+    address = ('localhost', 9002)
+    time.sleep(60)
+    again = True
+    while again:
+        try :
+            with Client(address, authkey=b'secret password') as conn:
+                #print('here  2')
+                ins_dict = {'ins':'avoid_idle','agent':'pingan'}
+                conn.send(ins_dict)
+
+                # time.sleep(9)
+                # ins_dict = {'ins':'avoid_idle','agent':'cf'}
+                # conn.send(ins_dict)
+        except Exception as e:
+            print('error')
+            print(e)
+
+        time.sleep(900)
+        #print('here  1')
+
+
+def on_order_done():
+    print('on_order_done begin ...')
+    pass
+
+if __name__ == "__main__":
+    p1 = multiprocessing.Process(target=place_order_service, args=())
+    p1.start()
+    time.sleep(1)
+
+    p2 = multiprocessing.Process(target=avoid_idle, args=())
+    p2.start()
+
+    p3 = multiprocessing.Process(target=on_order_done, args=())
+    p3.start()
+
+    p1.join()
+    p2.join()
+    p3.join()

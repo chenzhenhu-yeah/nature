@@ -1,13 +1,9 @@
 
 import os
-
 import pandas as pd
 import tushare as ts
 
-import sys
-sys.path.append('../')
-
-from down_k.get_trading_dates import get_trading_dates
+from nature import get_trading_dates
 
 def down_daily_run(dss):
     listfile = os.listdir(dss + 'daily')

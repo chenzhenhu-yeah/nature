@@ -4,8 +4,8 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
-from backtestEngine import BacktestingEngine
-from upBollStrategy import UpBollPortfolio
+from nature import BacktestingEngine
+from nature import UpBollPortfolio
 
 #from ipdb import set_trace
 

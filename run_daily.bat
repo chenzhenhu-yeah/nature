@@ -11,20 +11,13 @@ choice /t 1 /d y /n >nul
 start /MIN python place_order.py
 choice /t 1 /d y /n >nul
 
-start /MIN python stare_file.py
-choice /t 1 /d y /n >nul
-
-start /MIN python avoid_idle.py
+start /MIN python stare.py
 choice /t 1 /d y /n >nul
 
 cd ..
 start /MIN python scheduled_task.py
 choice /t 1 /d y /n >nul
 
-cd .\book
-start /MIN python stk_warn.py
-
-cd ..
 cd .\strategy\nearboll
 start /MIN python tradeEngine.py
 

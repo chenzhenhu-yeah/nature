@@ -3,11 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-import sys
-sys.path.append(r'../')
-from down_k.get_trading_dates import get_trading_dates
-from hu_signal.macd import init_signal_macd, signal_macd_sell, signal_macd_buy
-from hu_signal.k_pattern import signal_k_pattern
+from nature import get_trading_dates
+from nature import init_signal_macd, signal_macd_sell, signal_macd_buy
+from nature import signal_k_pattern
 
 def calc_signal_buy(dss, _date):
     """

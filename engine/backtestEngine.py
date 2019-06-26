@@ -7,14 +7,9 @@ from collections import OrderedDict, defaultdict
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pymongo import MongoClient
 
-import sys
-sys.path.append(r'../../')
-from down_k.get_stk import get_stk_hfq
-
-
-from vtUtility import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
+from nature import get_stk_hfq
+from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 
 #from ipdb import set_trace
 
