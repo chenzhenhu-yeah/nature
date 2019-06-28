@@ -2,18 +2,29 @@
 import pandas as pd
 import time
 from datetime import datetime
-
+import json
 import smtplib
 from email.mime.text import MIMEText
 
+from nature import to_log
 
 dss = r'../data/'
 
+
 def send_email(subject, content):
-    # 第三方 SMTP 服务
-    mail_host = 'smtp.yeah.net'              # 设置服务器
-    mail_username = 'chenzhenhu@yeah.net'   # 用户名
-    mail_auth_password = "852299"       # 授权密码
+    to_log('in send_email')
+    # # 第三方 SMTP 服务
+    # mail_host = 'smtp.yeah.net'              # 设置服务器
+    # mail_username = 'chenzhenhu@yeah.net'   # 用户名
+    # mail_auth_password = "852299"       # 授权密码
+
+    # 加载配置
+    config = open(dss+'csv/config.json')
+    setting = json.load(config)
+    mail_host = setting['mail_host']              # 设置服务器
+    mail_username = setting['mail_host']          # 用户名
+    mail_auth_password = setting['mail_host']     # 授权密码
+    # print(mail_host, mail_username, mail_auth_password)
 
     sender = 'chenzhenhu@yeah.net'
     receivers = 'chenzhenhu@yeah.net'         # 一个收件人
@@ -35,6 +46,8 @@ def send_email(subject, content):
         print(e)
 
 def is_trade_time():
+    to_log('in is_trade_time')
+
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))
@@ -47,6 +60,8 @@ def is_trade_time():
         return False
 
 def is_price_time():
+    to_log('in is_price_time')
+
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))

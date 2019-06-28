@@ -12,6 +12,7 @@ from datetime import datetime
 import numpy as np
 import tushare as ts
 
+from nature import to_log
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book
 from nature import NearBollPortfolio
@@ -71,6 +72,8 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
+        to_log('in TradeEngine.__init__')
+
         self.portfolio = None
 
         # 合约配置信息
@@ -125,6 +128,8 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def loadHold(self):
         """每日重新加载持仓"""
+        to_log('in TradeEngine.loadHold')
+
         dates = get_trading_dates(dss)
         preday = dates[-2]
         today = dates[-1]
@@ -142,6 +147,8 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def loadPortfolio(self):
         """每日更新投资组合"""
+        to_log('in TradeEngine.loadPortfolio')
+
         self.portfolio = NearBollPortfolio(self)
         filename = dss + 'csv/setting.csv'
 
@@ -163,6 +170,8 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def loadData(self):
         """每日重新加载数据"""
+        to_log('in TradeEngine.loadData')
+
         dataDict = OrderedDict()
 
         for vtSymbol in self.vtSymbolList:
@@ -210,6 +219,8 @@ class TradeEngine(object):
 
     #----------------------------------------------------------------------
     def worker_0300(self):
+        to_log('in TradeEngine.worker_0300')
+
         print('begin worker_0300')
         r, dt = self.is_trade_day()
         if r == False:
@@ -223,6 +234,8 @@ class TradeEngine(object):
 
     #----------------------------------------------------------------------
     def worker_1450(self):
+        to_log('in TradeEngine.worker_1450')
+
         print('begin worker_1450')
         r, dt = self.is_trade_day()
         if r == False:
@@ -295,6 +308,8 @@ class TradeEngine(object):
 
     #----------------------------------------------------------------------
     def worker_1700(self):
+        to_log('in TradeEngine.worker_1700')
+        
         print('begin worker_1700')
         tradeList = self.getTradeData()
         print(tradeList)

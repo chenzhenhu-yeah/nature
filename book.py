@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import tushare as ts
 
+from nature import to_log
 from nature import (get_trading_dates, get_stk_bfq, is_price_time)
 
 pro = ts.pro_api('e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854')
@@ -12,11 +13,15 @@ pro = ts.pro_api('e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854')
 
 class Tactic(object):
     def __init__(self,dss,name,df):
+        to_log('in Tactic.__init__')
+
         self.dss = dss
         self.tacticName = name
         self.hold_Array = self._load_hold(df)
 
     def _load_hold(self, df):
+        to_log('in Tactic._load_hold')
+
         r = []
         if df is not None:
             for i, row in df.iterrows():
@@ -26,6 +31,8 @@ class Tactic(object):
 
     # 计算Tactic包含的code
     def get_codes(self):
+        to_log('in Tactic.get_codes')
+
         r = []
         for item in self.hold_Array:
             code = item[0]
@@ -34,6 +41,8 @@ class Tactic(object):
 
     # 计算Tactic当前的市值
     def get_cost_cap(self):
+        to_log('in Tactic.get_cost_cap')
+
         r_cost, r_cap = 0, 0
 
         for item in self.hold_Array:
@@ -51,6 +60,8 @@ class Tactic(object):
         return r_cost, r_cap
 
     def daily_result(self, today):
+        to_log('in Tactic.daily_result')
+
         r = []
         for item in self.hold_Array:
             code = item[0]
@@ -73,12 +84,16 @@ class Tactic(object):
 
 class Book(object):
     def __init__(self,dss):
+        to_log('in Book.__init__')
+
         self.dss = dss
         self.holdFilename = dss + 'csv/hold.csv'
         self.cash = self._loadCash()
         self.tactic_List = self._loadHold()
 
     def _loadCash(self):
+        to_log('in Book._loadCash')
+
         df1 = pd.read_csv(self.holdFilename);#print(df1)
         df1 = df1[df1.agent=='pingan']
         df2 = df1[df1.portfolio=='cash']
@@ -86,6 +101,8 @@ class Book(object):
         return cash
 
     def _loadHold(self):
+        to_log('in Book._loadHold')
+
         df1 = pd.read_csv(self.holdFilename);#print(df1)
         df1 = df1[df1.agent=='pingan']
         df1 = df1[~df1.code.isin(['cash01','profit'])]
@@ -101,6 +118,8 @@ class Book(object):
 
     # 计算Book包含的code
     def get_codes(self):
+        to_log('in Book.get_codes')
+
         codes = []
         for tactic in self.tactic_List:
             codes += tactic.get_codes()
@@ -108,6 +127,8 @@ class Book(object):
 
     # 计算Book当前的市值
     def get_cost_cap(self):
+        to_log('in Book.get_cost_cap')
+
         cost, cap = 0, 0
         for tactic in self.tactic_List:
             cost1, cap1 = tactic.get_cost_cap()
@@ -116,6 +137,8 @@ class Book(object):
         return cost, cap
 
 def has_factor(dss):
+    to_log('in has_factor')
+
     r = []
     b1 = Book(dss)
     codes = b1.get_codes()
@@ -133,6 +156,8 @@ def has_factor(dss):
     return r
 
 def stk_report(dss):
+    to_log('in stk_report')
+
     b1 = Book(dss)
     codes = b1.get_codes()
 

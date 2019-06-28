@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from multiprocessing.connection import Client
 
-
+from nature import to_log
 from nature import get_trading_dates, send_email
 from nature.down_k.down_data import down_data
 from nature.engine.nearboll.use_ma import use_ma
@@ -17,6 +17,7 @@ from nature.book import stk_report
 dss = r'../data/'
 
 def mail_1515():
+    to_log('in mail_1515')
     try:
         now = datetime.now()
         today = now.strftime('%Y-%m-%d')
@@ -47,6 +48,7 @@ def mail_1515():
         print(e)
 
 def mail_1815():
+    to_log('in mail_1815')
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
@@ -64,6 +66,7 @@ def mail_1815():
         print(e)
 
 def mail_0200():
+    to_log('in mail_0200')
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
@@ -78,15 +81,13 @@ def mail_0200():
         print(e)
 
 def down_data_0100():
-    try:
-        now = datetime.now()
-        weekday = int(now.strftime('%w'))
-        if 0 <= weekday <= 6:
-            print('\n' + str(now) + " down_inx begin...")
-            down_data(dss)
-    except Exception as e:
-        print('error')
-        print(e)
+    to_log('in down_data_0100')
+
+    now = datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 0 <= weekday <= 6:
+        print('\n' + str(now) + " down_inx begin...")
+        down_data(dss)
 
 if __name__ == '__main__':
     '''

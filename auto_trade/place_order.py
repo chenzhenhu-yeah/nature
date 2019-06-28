@@ -14,6 +14,8 @@ dss = '../../data/'
 
 
 def send_instruction(ins_dict):
+    to_log('in send_instruction')
+
     address = ('localhost', 9002)
     again = True
     while again:
@@ -28,6 +30,8 @@ def send_instruction(ins_dict):
 
 #20190522&{'ins': 'buy_order', 'portfolio': 'redian', 'code': '002482', 'num': 3700, 'price': 5.4, 'cost': 19980, 'agent': 'pingan', 'name': '广田集团'}
 def record_buy_order(ins_dict):
+    to_log('in record_buy_order')
+
     filename = dss + 'csv/hold.csv'
     df = pd.read_csv(filename, dtype={'code':'str'})
 
@@ -56,6 +60,8 @@ def record_buy_order(ins_dict):
 
 #20190522&{'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
 def record_sell_order(ins_dict):
+    to_log('in record_sell_order')
+
     filename = dss + 'csv/hold.csv'
     df = pd.read_csv(filename, dtype={'code':'str'})
 
@@ -80,6 +86,8 @@ def record_sell_order(ins_dict):
     df.to_csv(filename,index=False)
 
 def record_order(order):
+    to_log('in record_order')
+
     ins = order['ins']
     if ins == 'buy_order':
         record_buy_order(order)
@@ -87,15 +95,22 @@ def record_order(order):
         record_sell_order(order)
 
 def append_order(order):
+    to_log('in append_order')
+
+    time.sleep(1)
+    order_id = str(int(time.time()))
+
     filename = dss + 'csv/order.csv'
     now = datetime.now()
     today = now.strftime('%Y%m%d')
-    order = today + '&' + order + '&n'
+    order = today + '&' + order_id + '&' + order + '&n'
     with open(filename, 'a', encoding='utf-8') as f:
         f.write(order+'\n')
 
 #{'ins':'buy_order','portfolio':'original','code':'300408','num':1000,'cost':19999,'price':11.88,'agent':'pingan'}
 def place_order(order):
+    to_log('in place_order')
+
     r = False
     try:
         if order['agent']=='pingan' and order['ins']=='buy_order':
@@ -165,7 +180,23 @@ def avoid_idle():
 
 def on_order_done():
     print('on_order_done begin ...')
-    pass
+    order_list = []
+    while True:
+        time.sleep(3)
+        if is_price_time():
+            try:
+                now = datetime.now()
+                today = now.strftime('%Y%m%d')
+                filename = dss + 'csv/order.csv'
+                df = pd.read_csv(filename,sep='&')
+                df_n = df[(df.date==today) & (df.done=='n')]
+
+            except Exception as e:
+                print('error')
+                print(e)
+        else:
+            order_list = []
+            time.sleep(300)
 
 if __name__ == "__main__":
     p1 = multiprocessing.Process(target=place_order_service, args=())
