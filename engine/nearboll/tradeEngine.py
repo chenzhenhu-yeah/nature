@@ -135,11 +135,7 @@ class TradeEngine(object):
         """每日重新加载持仓"""
         to_log('in TradeEngine.loadHold')
 
-        dates = get_trading_dates(dss)
-        preday = dates[-2]
-        today = dates[-1]
-        pfFile = dss + 'csv/hold.csv'
-        p1 = Book(dss, pfFile,preday, today)
+        p1 = Book(dss)
         self.cash = p1.cash
 
         for tactic in p1.hold_TacticList:
@@ -399,11 +395,11 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    start()
-    # engine = TradeEngine()
-    # engine.worker_0300()
-    # engine.worker_1450()
-    # engine.worker_1700()
+    # start()
+    engine = TradeEngine()
+    engine.worker_1430()
+    engine.worker_1450()
+    engine.worker_1500()
 
     # df = ts.get_realtime_quotes('300408')
     # d = df.loc[0,:]
