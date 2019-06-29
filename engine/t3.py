@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 from nature import BacktestingEngine
 from nature import UpBollPortfolio
+from nature import NearBollPortfolio
 
 #from ipdb import set_trace
 
@@ -14,10 +15,10 @@ engine = BacktestingEngine()
 #engine.print_engine()
 
 
-engine.setPeriod(datetime(2019,5, 1), datetime(2019, 6, 20))
+engine.setPeriod(datetime(2019,5, 1), datetime(2019, 6, 30))
 #engine.print_engine()
 
-pf = UpBollPortfolio(engine)
+pf = NearBollPortfolio(engine)
 
 engine.initPortfolio(pf, 100E4)
 #engine.print_engine()

@@ -54,10 +54,10 @@ def use_ma(dss):
     today = dates[-1]
     print(today)
     pfFile = dss + 'csv/hold.csv'
-    p1 = Book(dss, pfFile,preday, today)
+    b1 = Book(dss)
 
     codes = []
-    for tactic in p1.hold_TacticList:
+    for tactic in b1.tactic_List:
         if tactic.tacticName == 'boll':
             for hold in tactic.hold_Array:
                 code = hold[0]

@@ -20,7 +20,7 @@ VARIABLE_COMMISSION_DICT = {}
 FIXED_COMMISSION_DICT = {}
 SLIPPAGE_DICT = {}
 
-dss = '../../../data/'
+dss = '../../data/'
 
 
 ########################################################################

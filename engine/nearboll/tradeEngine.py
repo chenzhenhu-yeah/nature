@@ -135,10 +135,10 @@ class TradeEngine(object):
         """每日重新加载持仓"""
         to_log('in TradeEngine.loadHold')
 
-        p1 = Book(dss)
-        self.cash = p1.cash
+        b1 = Book(dss)
+        self.cash = b1.cash
 
-        for tactic in p1.hold_TacticList:
+        for tactic in b1.tactic_List:
             if tactic.tacticName == 'boll':
                 for hold in tactic.hold_Array:
                     code = hold[0]
@@ -201,6 +201,9 @@ class TradeEngine(object):
                 barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.vtSymbol] = bar
 
+                for signal in self.portfolio.signalDict[bar.vtSymbol]:
+                    signal.am.updateBar(bar)
+
         self.output(u'全部数据加载完成')
 
 
@@ -220,7 +223,7 @@ class TradeEngine(object):
 
     #----------------------------------------------------------------------
     def worker_1430(self):
-        to_log('in TradeEngine.worker_0300')
+        to_log('in TradeEngine.worker_1430')
 
         print('begin worker_0300')
         r, dt = self.is_trade_day()
@@ -249,6 +252,7 @@ class TradeEngine(object):
         #print(dt)
         #barDict = self.dataDict[dt]
         for vtSymbol in self.vtSymbolList:
+            #print(vtSymbol)
             df = None
             i = 0
             while df is None and i<3:
@@ -309,7 +313,7 @@ class TradeEngine(object):
 
     #----------------------------------------------------------------------
     def worker_1500(self):
-        to_log('in TradeEngine.worker_1700')
+        to_log('in TradeEngine.worker_1500')
 
         print('begin worker_1700')
         tradeList = self.getTradeData()
@@ -318,13 +322,9 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        # schedule.every().day.at("14:30").do(self.worker_1430)
-        # schedule.every().day.at("14:50").do(self.worker_1450)
-        # schedule.every().day.at("15:00").do(self.worker_1500)
-
-        schedule.every().day.at("19:10").do(self.worker_1430)
-        schedule.every().day.at("19:11").do(self.worker_1450)
-        schedule.every().day.at("19:12").do(self.worker_1500)
+        schedule.every().day.at("14:30").do(self.worker_1430)
+        schedule.every().day.at("14:50").do(self.worker_1450)
+        schedule.every().day.at("15:00").do(self.worker_1500)
 
         self.output(u'交易引擎开始运行')
         while True:
@@ -395,11 +395,11 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    # start()
-    engine = TradeEngine()
-    engine.worker_1430()
-    engine.worker_1450()
-    engine.worker_1500()
+    start()
+    # engine = TradeEngine()
+    # engine.worker_1430()
+    # engine.worker_1450()
+    # engine.worker_1500()
 
     # df = ts.get_realtime_quotes('300408')
     # d = df.loc[0,:]

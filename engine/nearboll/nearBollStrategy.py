@@ -36,14 +36,14 @@ class NearBollSignal(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar):
         """"""
-        #print(bar.date)
+        #print(bar.date, self.vtSymbol)
 
         self.bar = bar
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
-
+        #print('here')
         self.calculateIndicator()
         #self.generateSignal_A(bar)
         self.generateSignal_B(bar)
@@ -85,11 +85,12 @@ class NearBollSignal(Signal):
 
         if T5_close > T5_bollUp:
             to_log(bar.date+' rise boll up five days before ')
+            #print(T5_close,T5_open,T5_high,T5_low)
 
         pos = self.portfolio.posDict[self.vtSymbol]
         # 当前无仓位，发送开仓委托
         if pos == 0:
-            if T5_close > T5_bollUp and (T5_close-T5_open)/(T5_high+0.01-T5_low) > 0.618:    # T5日收盘突破上轨, T5日应是阳线
+            if T5_close > T5_bollUp and (T5_close-T5_open)/(T5_high+0.01-T5_open) > 0.48:    # T5日收盘突破上轨, T5日应是阳线
                 to_log('here1')
                 if T5_close/T30_close < 1.15:   # 当前不是处于阶段性顶部
                     to_log('here2')
