@@ -326,9 +326,9 @@ class TradeEngine(object):
         # schedule.every().day.at("14:50").do(self.worker_1450)
         # schedule.every().day.at("15:00").do(self.worker_1500)
 
-        schedule.every().day.at("19:04").do(self.worker_1430)
-        schedule.every().day.at("19:05").do(self.worker_1450)
-        schedule.every().day.at("19:07").do(self.worker_1500)
+        schedule.every().day.at("19:06").do(self.worker_1430)
+        schedule.every().day.at("19:07").do(self.worker_1450)
+        schedule.every().day.at("19:08").do(self.worker_1500)
 
         self.output(u'交易引擎开始运行')
         while True:
