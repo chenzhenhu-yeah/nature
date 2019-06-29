@@ -165,8 +165,8 @@ def stk_report(dss):
     for code in codes:
         df = ts.get_realtime_quotes(code)
         name = df.at[0,'name']
-        price = df.at[0,'price']
-        pre_close = df.at[0,'pre_close']
+        price = float(df.at[0,'price'])
+        pre_close = float(df.at[0,'pre_close'])
 
         df = get_stk_bfq(dss,code)
         df = df.loc[:30,]

@@ -223,7 +223,7 @@ class TradeEngine(object):
             return False, today
 
     #----------------------------------------------------------------------
-    def worker_0300(self):
+    def worker_1430(self):
         to_log('in TradeEngine.worker_0300')
 
         print('begin worker_0300')
@@ -312,7 +312,7 @@ class TradeEngine(object):
             #set_trace()
 
     #----------------------------------------------------------------------
-    def worker_1700(self):
+    def worker_1500(self):
         to_log('in TradeEngine.worker_1700')
 
         print('begin worker_1700')
@@ -322,9 +322,13 @@ class TradeEngine(object):
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        schedule.every().day.at("14:30").do(self.worker_0300)
-        schedule.every().day.at("14:50").do(self.worker_1450)
-        schedule.every().day.at("15:00").do(self.worker_1700)
+        # schedule.every().day.at("14:30").do(self.worker_1430)
+        # schedule.every().day.at("14:50").do(self.worker_1450)
+        # schedule.every().day.at("15:00").do(self.worker_1500)
+
+        schedule.every().day.at("19:04").do(self.worker_1430)
+        schedule.every().day.at("19:05").do(self.worker_1450)
+        schedule.every().day.at("19:07").do(self.worker_1500)
 
         self.output(u'交易引擎开始运行')
         while True:
