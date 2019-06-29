@@ -8,10 +8,7 @@ from email.mime.text import MIMEText
 
 from nature import to_log
 
-dss = r'../data/'
-
-
-def send_email(subject, content):
+def send_email(dss, subject, content):
     to_log('in send_email')
     # # 第三方 SMTP 服务
     # mail_host = 'smtp.yeah.net'              # 设置服务器
@@ -22,12 +19,12 @@ def send_email(subject, content):
     config = open(dss+'csv/config.json')
     setting = json.load(config)
     mail_host = setting['mail_host']              # 设置服务器
-    mail_username = setting['mail_host']          # 用户名
-    mail_auth_password = setting['mail_host']     # 授权密码
+    mail_username = setting['mail_username']          # 用户名
+    mail_auth_password = setting['mail_auth_password']     # 授权密码
     # print(mail_host, mail_username, mail_auth_password)
 
-    sender = 'chenzhenhu@yeah.net'
-    receivers = 'chenzhenhu@yeah.net'         # 一个收件人
+    sender = setting['sender']
+    receivers = setting['receivers']         # 一个收件人
     #receivers = '270114497@qq.com, zhenghaishu@126.com' # 多个收件人
 
     try:
@@ -46,13 +43,13 @@ def send_email(subject, content):
         print(e)
 
 def is_trade_time():
-    to_log('in is_trade_time')
+    #to_log('in is_trade_time')
 
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))
     #print(weekday)
-    if 1 <= weekday <= 5:
+    if 0 <= weekday <= 6:
         t = time.localtime()
         if (t.tm_hour>9 and t.tm_hour<17) or (t.tm_hour==9 and t.tm_min>20) :
             return True
@@ -60,13 +57,13 @@ def is_trade_time():
         return False
 
 def is_price_time():
-    to_log('in is_price_time')
+    #to_log('in is_price_time')
 
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))
     #print(weekday)
-    if 1 <= weekday <= 5:
+    if 0 <= weekday <= 6:
         t = time.localtime()
         if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>31) :
             return True

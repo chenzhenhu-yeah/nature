@@ -6,40 +6,7 @@ from multiprocessing.connection import Client
 import time
 import tushare as ts
 
-
-def read_log():
-    now = datetime.now()
-    today = now.strftime('%Y-%m-%d')
-    #today = '2019-03-02'
-    logfile= '../auto_trade/log/autotrade.log'
-    #df = pd.read_csv(logfile,sep=' ',header=None,encoding='ansi')
-    df = pd.read_csv(logfile,sep=' ',header=None,encoding='gbk')
-    df = df[df[0]==today]
-
-    r = []
-    for i, row in df.iterrows():
-        r.append(str(list(row)))
-
-    return r
-
-
-#{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
-def a_ins_file(content):
-    r = []
-    ins_dict = {'ins':'a','filename':'ini/ins.txt','content':content}
-    address = ('localhost', 9001)
-    again = True
-    while again:
-        time.sleep(1)
-        try :
-            with Client(address, authkey=b'secret password') as conn:
-                conn.send(ins_dict)
-                r = conn.recv()
-                again = False
-        except:
-            pass
-
-    return r
+from nature import read_log_today, a_file
 
 app = Flask(__name__)
 # app = Flask(__name__,template_folder='tpl') # 指定一个参数使用自己的模板目录
@@ -50,7 +17,7 @@ def index():
 
 @app.route('/log')
 def show_log():
-    items = read_log()
+    items = read_log_today()
     return render_template("show_log.html",title="Show Log",items=items)
 
 @app.route('/file')
@@ -80,8 +47,10 @@ def confirm_ins():
         ins = str({'ins':ins_type,'portfolio':portfolio,'code':code,'num':num,'price':price,'cost':cost,'agent':agent,'name':name})
     if ins_type in ['up_warn','down_warn','del']:
         ins = str({'ins':ins_type,'code':code,'num':num,'price':price,'name':name})
-    
-    a_ins_file(ins)
+
+    filename = 'csv/ins.txt'
+
+    a_file(filename,ins)
     return 'success: ' + ins
 
 if __name__ == '__main__':

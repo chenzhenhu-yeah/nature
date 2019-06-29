@@ -8,9 +8,10 @@ import multiprocessing
 from datetime import datetime
 
 from nature import to_log, is_trade_time, is_price_time, send_email
-from nature import send_instruction, rc_ins_file, a_ins_file
+from nature import send_instruction, rc_file, a_file
 from nature import Book
 
+dss = '../../data/'
 
 def deal_single_ins(item):
     r = False
@@ -27,14 +28,14 @@ def deal_single_ins(item):
         b3_price = float(df.at[0,'b3_p'])
         if b3_price >= item['price']:
             to_log('reach price by up_warn ins ')
-            send_email('up_warn', str(item))
+            send_email(dss, 'up_warn', str(item))
             r = True
     if item['ins'] == 'down_warn':
         df = ts.get_realtime_quotes(item['code'])
         b3_price = float(df.at[0,'b3_p'])
         if b3_price <= item['price'] and b3_price > 0 :
             to_log('reach price by down_warn ins ')
-            send_email('down_warn', str(item))
+            send_email(dss, 'down_warn', str(item))
             r = True
     if item['ins'] in ['sell_order','buy_order']:
         to_log('send sell_order or buy_order ins ')
@@ -45,12 +46,13 @@ def stare_ins():
     print('stare_ins begin... ')
     item_list = []
     del_list = []
+    filename = 'csv/ins.txt'
     while True:
         try:
             time.sleep(3)
             if is_trade_time():
                 # 读入ins文件后清空
-                new_ins = rc_ins_file()
+                new_ins = rc_file(filename)
 
                 # 分离 'del' 指令与其它指令，将其它指令加入到列表中
                 c = []
@@ -78,13 +80,13 @@ def stare_ins():
                 if item_list != []:
                     # 将未触发的指令保存到文件中
                     for i,item in enumerate(item_list):
-                        a_ins_file(str(item))
+                        a_file(filename, str(item))
                     item_list = []
         except Exception as e:
             print("error: ")
             print(e)
 
-def stare_hold(dss):
+def stare_hold():
     print('stare_hold begin... ')
     loaded = False
     codes = ()
@@ -109,11 +111,11 @@ def stare_hold(dss):
                     #print(code, price, pre_close)
                     if code not in mailed:
                         if price/pre_close - 1 > 0.05:
-                            send_email('up_warn', str(code+' '+name))
+                            send_email(dss, 'up_warn', str(code+' '+name))
                             #print('up_warn', str(code+' '+name))
                             mailed.append(code)
                         if price/pre_close - 1 < -0.05:
-                            send_email('down_warn', str(code+' '+name))
+                            send_email(dss, 'down_warn', str(code+' '+name))
                             #print('down_warn', str(code+' '+name))
                             mailed.append(code)
                 except Exception as e:
@@ -126,12 +128,13 @@ def stare_hold(dss):
             time.sleep(300)
 
 if __name__ == "__main__":
+    print('stare begin... \n')
+
     p1 = multiprocessing.Process(target=stare_ins, args=())
     p1.start()
     time.sleep(1)
 
-    dss = '../../'
-    p2 = multiprocessing.Process(target=stare_hold, args=(dss))
+    p2 = multiprocessing.Process(target=stare_hold, args=())
     p2.start()
 
     p1.join()

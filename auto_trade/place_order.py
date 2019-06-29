@@ -8,7 +8,8 @@ import time
 from datetime import datetime
 
 from nature.auto_trade import auto_trade
-from nature import to_log
+
+from nature import to_log,is_price_time
 
 dss = '../../data/'
 
@@ -103,7 +104,7 @@ def append_order(order):
     filename = dss + 'csv/order.csv'
     now = datetime.now()
     today = now.strftime('%Y%m%d')
-    order = today + '&' + order_id + '&' + order + '&n'
+    order = today + '&' + order_id + '&' + order
     with open(filename, 'a', encoding='utf-8') as f:
         f.write(order+'\n')
 
@@ -136,7 +137,7 @@ def place_order(order):
         else:
             if order['ins'] != 'avoid_idle':
                 append_order(str(order))
-                record_order(order)
+                #record_order(order)
                 to_log('place_order: success '+str(order))
     except Exception as e:
         print('error')
@@ -178,27 +179,59 @@ def avoid_idle():
         #print('here  1')
 
 
-def on_order_done():
-    print('on_order_done begin ...')
-    order_list = []
+def on_order_done(order_dict):
+    for key in order_dict.keys():
+        ins_dict = order_dict[key]
+        #print(ins_dict)
+        if ins_dict['done'] == False:
+            try:
+                df_q = ts.get_realtime_quotes(ins_dict['code'])
+                price_now = df.at[0,'price']
+                if ins_dict['ins'] == 'buy_order' and ins_dict['price'] > price_now:
+                    record_order(ins_dict)
+                    ins_dict['done'] = True
+                    to_log(str(price) + str(ins_dict))
+                if ins_dict['ins'] == 'sell_order' and ins_dict['price'] < price_now:
+                    record_order(ins_dict)
+                    ins_dict['done'] = True
+                    to_log(str(price) + str(ins_dict))
+            except:
+                continue
+
+def stare_order():
+    print('stare_order begin ...')
+    order_dict = {}
     while True:
-        time.sleep(3)
         if is_price_time():
             try:
                 now = datetime.now()
                 today = now.strftime('%Y%m%d')
+                #print(today)
                 filename = dss + 'csv/order.csv'
-                df = pd.read_csv(filename,sep='&')
-                df_n = df[(df.date==today) & (df.done=='n')]
+                df = pd.read_csv(filename,sep='&',dtype='str')
+                #print(df)
+                df_n = df[df.date==today]
+                #print(df_n)
+                for i, row in df_n.iterrows():
+                    if row.id not in order_dict.keys():
+                        ins_dict = eval(row.ins)
+                        ins_dict['done'] = False
+                        order_dict[row.id] = ins_dict
 
+                on_order_done(order_dict)
             except Exception as e:
                 print('error')
                 print(e)
         else:
-            order_list = []
+            order_dict = {}
             time.sleep(300)
 
+        time.sleep(3)
+        # return
+
 if __name__ == "__main__":
+    print('place_order begin... \n')
+
     p1 = multiprocessing.Process(target=place_order_service, args=())
     p1.start()
     time.sleep(1)
@@ -206,7 +239,7 @@ if __name__ == "__main__":
     p2 = multiprocessing.Process(target=avoid_idle, args=())
     p2.start()
 
-    p3 = multiprocessing.Process(target=on_order_done, args=())
+    p3 = multiprocessing.Process(target=stare_order, args=())
     p3.start()
 
     p1.join()

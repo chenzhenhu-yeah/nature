@@ -1,10 +1,10 @@
 
-from nature.logger import to_log
+from nature.logger import to_log, read_log_today
 
 from nature.tools import (send_email, is_trade_time, is_price_time)
 
 from nature.auto_trade.place_order import send_instruction
-from nature.auto_trade.filer import rc_ins_file, a_ins_file
+from nature.auto_trade.filer import rc_file, a_file
 
 
 from nature.down_k.get_trading_dates import get_trading_dates
@@ -24,7 +24,7 @@ from nature.engine.vtUtility import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
 from nature.engine.strategy import Signal, Portfolio
 
-from nature.book import Book
+from nature.hold.book import Book
 from nature.engine.nearboll.nearBollStrategy import NearBollPortfolio
 from nature.engine.nearboll.upBollStrategy import UpBollPortfolio
 from nature.engine.backtestEngine import BacktestingEngine

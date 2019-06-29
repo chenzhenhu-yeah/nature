@@ -7,9 +7,9 @@ import time
 
 #{'ins':'r','filename':'ins.txt'}
 #{'ins':'rc','filename':'ins.txt'}
-def rc_ins_file():
+def rc_file(filename):
     r = []
-    ins_dict = {'ins':'rc','filename':'ini/ins.txt'}
+    ins_dict = {'ins':'rc','filename':filename}
     address = ('localhost', 9001)
     again = True
     while again:
@@ -26,9 +26,9 @@ def rc_ins_file():
 
 
 #{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
-def a_ins_file(content):
+def a_file(filename, content):
     r = []
-    ins_dict = {'ins':'a','filename':'ini/ins.txt','content':content}
+    ins_dict = {'ins':'a','filename':filename,'content':content}
     address = ('localhost', 9001)
     again = True
     while again:
@@ -48,8 +48,11 @@ def a_ins_file(content):
 #{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
 def deal_file(ins):
     r = []
+    dss = '../../data/'
+    filename = dss + ins['filename']
+
     if ins['ins']=='r':
-        with open(ins['filename'], 'r', encoding='utf-8') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             line = f.readline()
             while line:
                 if line[0] == '{':
@@ -58,7 +61,7 @@ def deal_file(ins):
                 line = f.readline()
 
     if ins['ins']=='rc':
-        with open(ins['filename'], 'r+', encoding='utf-8') as f:
+        with open(filename, 'r+', encoding='utf-8') as f:
             line = f.readline()
             while line:
                 if line[0] == '{':
@@ -70,7 +73,7 @@ def deal_file(ins):
             f.truncate()
 
     if ins['ins']=='a':
-        with open(ins['filename'], 'a', encoding='utf-8') as f:
+        with open(filename, 'a', encoding='utf-8') as f:
             f.write(str(ins['content'])+'\n')
 
     return r
@@ -81,6 +84,6 @@ if __name__ == "__main__":
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:
-                print('connection accepted from', listener.last_accepted)
+                # print('connection accepted from', listener.last_accepted)
                 ins_dict = conn.recv(); #print(ins_dict)
                 conn.send( deal_file(ins_dict) )

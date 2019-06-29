@@ -22,10 +22,24 @@ def to_log(s):
             print('error')
             print(e)
 
+def read_log_today():
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    #today = '2019-03-02'
+    logfile= dss + 'log/autotrade.log'
+    #df = pd.read_csv(logfile,sep=' ',header=None,encoding='ansi')
+    df = pd.read_csv(logfile,sep=' ',header=None,encoding='gbk')
+    df = df[df[0]==today]
+
+    r = []
+    for i, row in df.iterrows():
+        r.append(str(list(row)))
+
+    return r
+
 if __name__ == "__main__":
     print('beging logging... ')
 
-    config_filename = dss + 'log/appconfig.ini'
     cfg = configparser.ConfigParser()
     # cfg.read(config_filename)
     # if cfg.getboolean('init','DEBUG'):

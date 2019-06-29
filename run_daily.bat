@@ -1,10 +1,10 @@
 echo begin
 @echo off
 
-cd .\auto_trade
 start /MIN python logger.py
 choice /t 1 /d y /n >nul
 
+cd .\auto_trade
 start /MIN python filer.py
 choice /t 1 /d y /n >nul
 
@@ -18,7 +18,7 @@ cd ..
 start /MIN python scheduled_task.py
 choice /t 1 /d y /n >nul
 
-cd .\strategy\nearboll
+cd .\engine\nearboll
 start /MIN python tradeEngine.py
 
 pause
