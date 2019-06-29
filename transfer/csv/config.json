@@ -1,0 +1,11 @@
+{
+	"mail_host": "smtp.yeah.net",
+	"mail_username": "chenzhenhu@yeah.net",
+	"mail_auth_password": "852299",
+	"sender": "chenzhenhu@yeah.net",
+  "receivers": "chenzhenhu@yeah.net",
+	"pro_id": "e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854",
+	"socket_logger":"9000",
+	"socket_filer":"9001",
+	"socket_order":"9002"
+}
