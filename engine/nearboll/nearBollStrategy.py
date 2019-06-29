@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 
-
+from nature import to_log
 from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import Signal, Portfolio
@@ -81,18 +81,26 @@ class NearBollSignal(Signal):
         T30_close = self.am.lowArray[-30]
         h = min(T5_close,T4_close)
 
+        to_log(self.vtSymbol)
+
         if T5_close > T5_bollUp:
-            print(bar.date, self.vtSymbol, 'rise boll up five days before')
+            to_log(bar.date+' rise boll up five days before ')
 
         pos = self.portfolio.posDict[self.vtSymbol]
         # 当前无仓位，发送开仓委托
         if pos == 0:
             if T5_close > T5_bollUp and (T5_close-T5_open)/(T5_high+0.01-T5_low) > 0.618:    # T5日收盘突破上轨, T5日应是阳线
+                to_log('here1')
                 if T5_close/T30_close < 1.15:   # 当前不是处于阶段性顶部
+                    to_log('here2')
                     if h/T5_open < 1.12:         # 短期不能冲高太猛
+                        to_log('here3')
                         if T1_close/h < 0.97 and T2_close<h and T3_close<h:   # 逐日回调，且距最高点回落3个百分点以上
+                            to_log('here4')
                             if T1_close > T1_bollMid and T2_close > T2_bollMid and T3_close > T3_bollMid and T4_close > T4_bollMid:
+                                to_log('here5')
                                 if T1_close < T3_close or T1_close < T4_close :
+                                    to_log('here6')
                                     self.buyPrice = bar.close
                                     self.longStop = min(T5_open,T1_bollMid)
                                     self.intraTradeLow = self.longStop

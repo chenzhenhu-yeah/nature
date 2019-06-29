@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import numpy as np
 import tushare as ts
+import json
 
 from nature import to_log
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
@@ -27,7 +28,11 @@ FIXED_COMMISSION_DICT = {}
 SLIPPAGE_DICT = {}
 
 dss = '../../../data/'
-pro = ts.pro_api('e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854')
+# 加载配置
+config = open(dss+'csv/config.json')
+setting = json.load(config)
+pro_id = setting['pro_id']              # 设置服务器
+pro = ts.pro_api(pro_id)
 
 ########################################################################
 class Gateway(object):
@@ -303,13 +308,13 @@ class TradeEngine(object):
 
             self.portfolio.onBar(bar)
 
-            bar.print_bar()
+            #bar.print_bar()
             #set_trace()
 
     #----------------------------------------------------------------------
     def worker_1700(self):
         to_log('in TradeEngine.worker_1700')
-        
+
         print('begin worker_1700')
         tradeList = self.getTradeData()
         print(tradeList)

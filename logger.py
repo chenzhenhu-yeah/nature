@@ -1,5 +1,6 @@
 from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
+import json
 
 import time
 import os
@@ -7,10 +8,13 @@ import configparser
 import logging
 import logging.config
 
+from nature import SOCKET_LOGGER
+
 dss = '../data/'
 
+address = ('localhost', SOCKET_LOGGER)
+
 def to_log(s):
-    address = ('localhost', 9000)
     again = True
     while again:
         time.sleep(1)
@@ -52,8 +56,6 @@ if __name__ == "__main__":
     logconfigfile = dss + 'log/logconfigwork.ini'
     logging.config.fileConfig(logconfigfile)
 
-
-    address = ('localhost', 9000)     # family is deduced to be 'AF_INET'
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:

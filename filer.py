@@ -3,14 +3,18 @@ from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
 import pandas as pd
 import time
+import json
 
+from nature import SOCKET_FILER
+
+dss = '../data/'
+address = ('localhost', SOCKET_FILER)
 
 #{'ins':'r','filename':'ins.txt'}
 #{'ins':'rc','filename':'ins.txt'}
 def rc_file(filename):
     r = []
     ins_dict = {'ins':'rc','filename':filename}
-    address = ('localhost', 9001)
     again = True
     while again:
         time.sleep(1)
@@ -29,7 +33,6 @@ def rc_file(filename):
 def a_file(filename, content):
     r = []
     ins_dict = {'ins':'a','filename':filename,'content':content}
-    address = ('localhost', 9001)
     again = True
     while again:
         time.sleep(1)
@@ -48,7 +51,6 @@ def a_file(filename, content):
 #{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
 def deal_file(ins):
     r = []
-    dss = '../../data/'
     filename = dss + ins['filename']
 
     if ins['ins']=='r':
@@ -80,7 +82,6 @@ def deal_file(ins):
 
 if __name__ == "__main__":
     print('beging filer')
-    address = ('localhost', 9001)     # family is deduced to be 'AF_INET'
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:

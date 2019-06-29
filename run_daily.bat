@@ -4,10 +4,10 @@ echo begin
 start /MIN python logger.py
 choice /t 1 /d y /n >nul
 
-cd .\auto_trade
 start /MIN python filer.py
 choice /t 1 /d y /n >nul
 
+cd .\auto_trade
 start /MIN python place_order.py
 choice /t 1 /d y /n >nul
 

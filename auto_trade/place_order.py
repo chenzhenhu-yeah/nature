@@ -6,18 +6,19 @@ import multiprocessing
 import pandas as pd
 import time
 from datetime import datetime
+import json
 
 from nature.auto_trade import auto_trade
 
-from nature import to_log,is_price_time
+from nature import to_log, is_price_time, SOCKET_ORDER
 
 dss = '../../data/'
 
+address = ('localhost', SOCKET_ORDER)
 
 def send_instruction(ins_dict):
     to_log('in send_instruction')
 
-    address = ('localhost', 9002)
     again = True
     while again:
         time.sleep(1)
@@ -147,7 +148,6 @@ def place_order(order):
 
 def place_order_service():
     print('place_order service begin...')
-    address = ('localhost', 9002)     # family is deduced to be 'AF_INET'
     while True:
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:
@@ -158,7 +158,7 @@ def place_order_service():
 
 def avoid_idle():
     print('avoid_idle begin ...')
-    address = ('localhost', 9002)
+
     time.sleep(60)
     again = True
     while again:

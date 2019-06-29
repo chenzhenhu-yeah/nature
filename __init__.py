@@ -1,10 +1,14 @@
 
+SOCKET_LOGGER = 9000
+SOCKET_FILER  = 9001
+SOCKET_ORDER  = 9002
+
 from nature.logger import to_log, read_log_today
 
 from nature.tools import (send_email, is_trade_time, is_price_time)
 
 from nature.auto_trade.place_order import send_instruction
-from nature.auto_trade.filer import rc_file, a_file
+from nature.filer import rc_file, a_file
 
 
 from nature.down_k.get_trading_dates import get_trading_dates
