@@ -165,11 +165,13 @@ def stk_report(dss):
     for code in codes:
         df = ts.get_realtime_quotes(code)
         name = df.at[0,'name']
+        price = df.at[0,'price']
+        pre_close = df.at[0,'pre_close']
 
         df = get_stk_bfq(dss,code)
         df = df.loc[:30,]
         #print(df)
-        one_change = round((df.at[0,'close']/df.at[1,'close'] - 1)*100, 2)
+        one_change = round((price/pre_close - 1)*100, 2)
         five_change = round((df.at[0,'close']/df.at[5,'close'] - 1)*100, 2)
         ten_change = round((df.at[0,'close']/df.at[10,'close'] - 1)*100, 2)
         r.append( str([name,one_change,five_change,ten_change]) )

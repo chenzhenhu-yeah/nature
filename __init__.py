@@ -24,7 +24,7 @@ from nature.engine.vtUtility import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
 from nature.engine.strategy import Signal, Portfolio
 
-from nature.hold.book import Book
+from nature.hold.book import Book, has_factor, stk_report
 from nature.engine.nearboll.nearBollStrategy import NearBollPortfolio
 from nature.engine.nearboll.upBollStrategy import UpBollPortfolio
 from nature.engine.backtestEngine import BacktestingEngine

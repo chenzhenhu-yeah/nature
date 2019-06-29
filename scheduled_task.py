@@ -11,8 +11,7 @@ from nature import to_log
 from nature import get_trading_dates, send_email
 from nature.down_k.down_data import down_data
 from nature.engine.nearboll.use_ma import use_ma
-from nature.book import has_factor
-from nature.book import stk_report
+from nature import has_factor, stk_report
 
 dss = r'../data/'
 
