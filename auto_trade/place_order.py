@@ -48,17 +48,12 @@ def record_buy_order(ins_dict):
     if 'price' in ins_dict:
         ins_dict.pop('price')
 
-    # 增加date
-    now = datetime.now()
-    today = now.strftime('%Y-%m-%d')
-    ins_dict['date'] = today
-
     #新增一条记录
     df_dict = pd.DataFrame([ins_dict])
     df = df.append(df_dict, sort=False)
     #print(df)
 
-    df = df[['portfolio','code','cost','num','agent','date']]
+    df = df[['portfolio','code','cost','num','agent']]
     df.to_csv(filename,index=False)
 
 #20190522&{'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
@@ -85,7 +80,7 @@ def record_sell_order(ins_dict):
     df = df.drop(index=[pre_stock_index[0]])
 
     #print(df)
-    df = df[['portfolio','code','cost','num','agent','date']]
+    df = df[['portfolio','code','cost','num','agent']]
     df.to_csv(filename,index=False)
 
 def record_order(order):

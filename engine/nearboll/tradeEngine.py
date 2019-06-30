@@ -135,7 +135,7 @@ class TradeEngine(object):
         """每日重新加载持仓"""
         to_log('in TradeEngine.load_signal_param')
 
-        df = pd.read_csv('signal_param.csv', dtype={'code','str'})
+        df = pd.read_csv('signal_param.csv', dtype={'code':'str'})
         for i, row in df.iterrows():
             signal_list = self.portfolio.signalDict[row.code]
             if len(signal_list) > 0:
