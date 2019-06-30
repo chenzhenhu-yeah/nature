@@ -42,6 +42,8 @@ def deal_single_ins(item):
         send_instruction(item)
         r = True
 
+    return r
+
 def stare_ins():
     print('stare_ins begin... ')
     item_list = []
