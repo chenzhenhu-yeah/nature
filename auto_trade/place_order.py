@@ -183,9 +183,10 @@ def on_order_done(order_dict):
     to_log( 'in on_order_done ' + str(order_dict.keys()) )
     for key in order_dict.keys():
         ins_dict = order_dict[key]
-        #print(ins_dict)
+        to_log( str(ins_dict) )
         if ins_dict['done'] == False:
             try:
+                to_log('here')
                 df_q = ts.get_realtime_quotes(ins_dict['code'])
                 name =  df.at[0,'name']
                 price_now = df.at[0,'price']
@@ -199,6 +200,7 @@ def on_order_done(order_dict):
                     ins_dict['done'] = True
                     to_log(str(price) + str(ins_dict))
             except:
+                to_log('error')
                 continue
 
 def stare_order():
