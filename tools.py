@@ -51,7 +51,7 @@ def is_trade_time():
     #print(weekday)
     if 0 <= weekday <= 6:
         t = time.localtime()
-        if (t.tm_hour>9 and t.tm_hour<17) or (t.tm_hour==9 and t.tm_min>20) :
+        if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>20) :
             return True
     else:
         return False
@@ -65,7 +65,7 @@ def is_price_time():
     #print(weekday)
     if 0 <= weekday <= 6:
         t = time.localtime()
-        if (t.tm_hour>9 and t.tm_hour<17) or (t.tm_hour==9 and t.tm_min>31) :
+        if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>31) :
             return True
     else:
         return False
