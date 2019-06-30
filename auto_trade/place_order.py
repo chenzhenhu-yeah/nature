@@ -180,13 +180,16 @@ def avoid_idle():
 
 
 def on_order_done(order_dict):
+    to_log( 'in on_order_done ' + str(order_dict.keys()) )
     for key in order_dict.keys():
         ins_dict = order_dict[key]
         #print(ins_dict)
         if ins_dict['done'] == False:
             try:
                 df_q = ts.get_realtime_quotes(ins_dict['code'])
+                name =  df.at[0,'name']
                 price_now = df.at[0,'price']
+                to_log(name + price_now)
                 if ins_dict['ins'] == 'buy_order' and ins_dict['price'] > price_now:
                     record_order(ins_dict)
                     ins_dict['done'] = True
