@@ -7,6 +7,7 @@ import pandas as pd
 import time
 from datetime import datetime
 import json
+import tushare as ts 
 
 from nature.auto_trade import auto_trade
 
