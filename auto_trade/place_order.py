@@ -7,7 +7,7 @@ import pandas as pd
 import time
 from datetime import datetime
 import json
-import tushare as ts 
+import tushare as ts
 
 from nature.auto_trade import auto_trade
 
@@ -189,8 +189,8 @@ def on_order_done(order_dict):
             try:
                 to_log('here')
                 df_q = ts.get_realtime_quotes(ins_dict['code'])
-                name =  df.at[0,'name']
-                price_now = df.at[0,'price']
+                name =  df_q.at[0,'name']
+                price_now = df_q.at[0,'price']
                 to_log(name + price_now)
                 if ins_dict['ins'] == 'buy_order' and ins_dict['price'] > price_now:
                     record_order(ins_dict)
@@ -200,9 +200,9 @@ def on_order_done(order_dict):
                     record_order(ins_dict)
                     ins_dict['done'] = True
                     to_log(str(price) + str(ins_dict))
-            except:
+            except Exception as e:
                 to_log('error')
-                continue
+                to_log(e)
 
 def stare_order():
     print('stare_order begin ...')
