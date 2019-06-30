@@ -112,7 +112,7 @@ def append_order(order):
 
 #{'ins':'buy_order','portfolio':'original','code':'300408','num':1000,'cost':19999,'price':11.88,'agent':'pingan'}
 def place_order(order):
-    to_log('in place_order')
+    # to_log('in place_order')
 
     r = False
     try:

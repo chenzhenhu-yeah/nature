@@ -10,6 +10,7 @@ import schedule
 import time
 from datetime import datetime
 import numpy as np
+import pandas as pd
 import tushare as ts
 import json
 
@@ -129,6 +130,19 @@ class TradeEngine(object):
             break
 
 
+    #----------------------------------------------------------------------
+    def load_signal_param(self):
+        """每日重新加载持仓"""
+        to_log('in TradeEngine.load_signal_param')
+
+        df = pd.read_csv('signal_param.csv', dtype={'code','str'})
+        for i, row in df.iterrows():
+            signal_list = self.portfolio.signalDict[row.code]
+            if len(signal_list) > 0:
+                signal = signal_list[0]
+                signal.buyPrice = row.buyPrice
+                signal.intraTradeLow = row.intraTradeLow
+                signal.longStop = row.longStop
 
     #----------------------------------------------------------------------
     def loadHold(self):
@@ -234,6 +248,7 @@ class TradeEngine(object):
         self.loadPortfolio()
         self.loadHold()
         self.loadData()
+        self.load_signal_param()
 
 
     #----------------------------------------------------------------------
@@ -318,6 +333,16 @@ class TradeEngine(object):
         print('begin worker_1700')
         tradeList = self.getTradeData()
         print(tradeList)
+
+        r = []
+        for code in self.portfolio.posDict.keys():
+            if self.portfolio.posDict[code] > 0:
+                for signal in self.portfolio.signalDict[code]:
+                    r.append([code,signal.buyPrice,signal.intraTradeLow,signal.longStop])
+
+        df = pd.DataFrame(r, columns=['code','buyPrice','intraTradeLow','longStop'])
+        df.to_csv('signal_param.csv', index=False)
+
 
     #----------------------------------------------------------------------
     def run(self):

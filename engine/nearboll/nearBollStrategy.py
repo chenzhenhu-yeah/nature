@@ -24,9 +24,9 @@ class NearBollSignal(Signal):
     bollUp = 0                          # 布林通道上轨
     bollDown = 0                        # 布林通道下轨
 
-    intraTradeHigh = 0                  # 持仓期内的最高点
-    intraTradeLow = 0                   # 持仓期内的最低点
+    # 需要保存的参数
     buyPrice = 0
+    intraTradeLow = 100E4                   # 持仓期内的最低点
     longStop = 100E4                        # 多头止损
 
     #----------------------------------------------------------------------
@@ -122,14 +122,14 @@ class NearBollSignal(Signal):
                 self.longStop = self.buyPrice*1.002          # 如果当前价大于成本价，移动止损到成本价
 
             if T1_close <= self.longStop:
-                if bar.close_bfq == 0:
+                if bar.close_bfq == 0:                  # 回测
                     self.sell(bar.close-0.05, abs(pos)) # 确保成交
-                else:
+                else:                                   # 实盘
                     self.sell(bar.close_bfq-0.05, abs(pos)) # 确保成交
             elif self.longStop > self.intraTradeLow and T1_close < min(self.am.lowArray[-2], self.am.lowArray[-3]):
-                if bar.close_bfq == 0:
+                if bar.close_bfq == 0:                  # 回测
                     self.sell(bar.close-0.05, abs(pos)) # 确保成交
-                else:
+                else:                                   # 实盘
                     self.sell(bar.close_bfq-0.05, abs(pos)) # 确保成交
 
                 #print('here2:',bar.close)
@@ -175,9 +175,9 @@ class NearBollSignal(Signal):
         # 持有多头仓位
         elif pos > 0:
             if T1_close < min(self.am.lowArray[-2], self.am.lowArray[-3]):
-                if bar.close_bfq == 0:
+                if bar.close_bfq == 0:        # 回测
                     self.sell(bar.close-0.05, abs(self.pos)) # 确保成交
-                else:
+                else:                         # 实盘
                     self.sell(bar.close_bfq-0.05, abs(self.pos)) # 确保成交
 
 
