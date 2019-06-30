@@ -193,11 +193,11 @@ def on_order_done(order_dict):
                 price_now = float(df_q.at[0,'price'])
                 #to_log(name + price_now)
                 if ins_dict['ins'] == 'buy_order' and ins_dict['price'] > price_now:
-                    record_order(ins_dict)
+                    record_order(ins_dict.copy())
                     ins_dict['done'] = True
                     to_log(str(price) + str(ins_dict))
                 if ins_dict['ins'] == 'sell_order' and ins_dict['price'] < price_now:
-                    record_order(ins_dict)
+                    record_order(ins_dict.copy())
                     ins_dict['done'] = True
                     to_log(str(price) + str(ins_dict))
             except Exception as e:
