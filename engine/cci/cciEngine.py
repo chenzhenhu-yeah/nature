@@ -140,7 +140,7 @@ class CciEngine(TradeEngine):
                 for signal in self.portfolio.signalDict[code]:
                     r.append([code,signal.buyPrice,signal.intraTradeLow,signal.longStop])
 
-111111        # 参数不一样！！！！！！
+        # 参数不一样！！！！！！
         df = pd.DataFrame(r, columns=['code','buyPrice','intraTradeLow','longStop'])
         df.to_csv('signal_param.csv', index=False)
 
