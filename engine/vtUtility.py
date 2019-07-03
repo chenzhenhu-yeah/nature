@@ -4,6 +4,8 @@
 import numpy as np
 import talib
 
+from nature import send_instruction
+
 DIRECTION_LONG = u'多'
 DIRECTION_SHORT = u'空'
 
@@ -18,6 +20,28 @@ EMPTY_UNICODE = u''
 EMPTY_INT = 0
 EMPTY_FLOAT = 0.0
 
+
+########################################################################
+class Gateway(object):
+    def __init__(self):
+        pass
+
+class GatewayPingan(Gateway):
+    def __init__(self):
+        pass
+
+    def sendOrder(self, code, direction, offset, price, volume, portfolio):
+        cost = int(price*volume)
+        df = ts.get_realtime_quotes(code)
+        name = df.at[0,'name']
+        ins_dict = {}
+
+        if direction == DIRECTION_LONG:
+            ins_dict = {'ins':'buy_order','portfolio':portfolio,'code':code,'num':volume,'price':price,'cost':cost,'agent':'pingan','name':name}
+        if direction == DIRECTION_SHORT:
+            ins_dict = {'ins':'sell_order','portfolio':portfolio,'code':code,'num':volume,'price':price,'cost':cost,'agent':'pingan','name':name}
+        if ins_dict != {}:
+            send_instruction(ins_dict)
 
 ########################################################################
 class VtBaseData(object):

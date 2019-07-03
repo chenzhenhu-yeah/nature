@@ -2,6 +2,23 @@
 import pandas as pd
 from datetime import datetime, timedelta
 
+def get_adj_factor(dss,code):
+    """
+    获取某个股票的后复权因子
+    """
+    # 加载配置
+    config = open(dss+'csv/config.json')
+    setting = json.load(config)
+    pro_id = setting['pro_id']              # 设置服务器
+    pro = ts.pro_api(pro_id)
+
+    if code[0] == '6':
+        code += '.SH'
+    else:
+        code += '.SZ'
+    df = pro.adj_factor(ts_code=code, trade_date='')
+    return df
+
 def get_stk_hfq(dss,code,begin_date=None, end_date=None):
     """
     如果没有指定日期范围，则获取从当期日期向前365个自然日内的所有交易日

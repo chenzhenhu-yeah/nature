@@ -7,14 +7,19 @@ from datetime import datetime
 import numpy as np
 
 
-from csv import DictReader
+from nature import GatewayPingan, NearBollPortfolio, CciEngine
 
-with open('setting.csv')as f:
-    r = DictReader(f)
-    print(r)
-    #set_trace()
-    print('/n')
+def testClass(engine, className):
+    p1 = className(engine)
+    print(p1)
+    print(type(p1))
 
-    for d in r:
-        print(d)
-        print('/n')
+def start():
+    dss = '../../../data/'
+    engine = CciEngine(dss, GatewayPingan(), 'cci')
+    #engine.run()
+
+    testClass(engine, NearBollPortfolio)
+
+if __name__ == '__main__':
+    start()

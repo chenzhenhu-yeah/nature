@@ -70,5 +70,19 @@ def is_price_time():
     else:
         return False
 
+#----------------------------------------------------------------------
+def is_trade_day():
+    #now = datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
+    now = datetime.now()
+    today = now.strftime('%Y%m%d')
+    today = datetime.strptime(today + ' ' + '00:00:00', '%Y%m%d %H:%M:%S')
+    weekday = int(now.strftime('%w'))
+    #print(weekday)
+
+    if 1 <= weekday <= 5:
+        return True, today
+    else:
+        return False, today
+
 if __name__ == '__main__':
     pass

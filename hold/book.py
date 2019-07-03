@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 import tushare as ts
 
 from nature import to_log
-from nature import (get_trading_dates, get_stk_bfq, is_price_time)
-
-pro = ts.pro_api('e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854')
+from nature import get_trading_dates, get_stk_bfq, is_price_time, get_adj_factor
 
 
 class Tactic(object):
@@ -83,11 +81,11 @@ class Tactic(object):
         return r
 
 class Book(object):
-    def __init__(self,dss):
+    def __init__(self,dss,filename='csv/hold.csv'):
         to_log('in Book.__init__')
 
         self.dss = dss
-        self.holdFilename = dss + 'csv/hold.csv'
+        self.holdFilename = dss + filename
         self.cash = self._loadCash()
         self.tactic_List = self._loadHold()
 
@@ -136,6 +134,202 @@ class Book(object):
             cap  += cap1
         return cost, cap
 
+    # 处理指令
+    def deal_ins(ins_dict2):
+        ins_dict = ins_dict2.copy()
+        if ins_dict['ins'] == 'bonus_interest':
+            pass
+        elif ins_dict['ins'] == 'buy_order':
+            self._record_buy_order(ins_dict)
+        elif ins_dict['ins'] == 'sell_order':
+            self._record_sell_order(ins_dict)
+        elif ins_dict['ins'] == 'open_portfolio':
+            self._open_tactic_in_file(ins_dict)
+        elif ins_dict['ins'] == 'close_portfolio':
+            self._close_tactic_in_file(ins_dict)
+
+    # 20190522&{'ins': 'buy_order', 'portfolio': 'redian', 'code': '002482', 'num': 3700, 'price': 5.4, 'cost': 19980, 'agent': 'pingan', 'name': '广田集团'}
+    def _record_buy_order(self, ins_dict):
+        to_log('in Book._record_buy_order')
+
+        df = pd.read_csv(self.holdFilename, dtype={'code':'str'})
+
+        portfolio_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code=='profit') & (df.agent==ins_dict['agent'])].index.tolist()
+        if len(portfolio_index) == 1:   #已开组合
+            #获得原来的cash, 并减少cash
+            pre_cash_index = df[(df.portfolio=='cash') & (df.agent==ins_dict['agent'])].index.tolist()
+            df.loc[pre_cash_index[0],'cost'] -= ins_dict['cost']
+
+            #文件中不需要保存这两个字段
+            if 'ins' in ins_dict:
+                ins_dict.pop('ins')
+            if 'price' in ins_dict:
+                ins_dict.pop('price')
+
+            #新增一条记录
+            df_dict = pd.DataFrame([ins_dict])
+            df = df.append(df_dict, sort=False)
+            #print(df)
+
+            df = df[['portfolio','code','cost','num','agent']]
+            df.to_csv(self.holdFilename,index=False)
+        else:
+            to_log('组合未开，buy_order无法处理')
+
+    # 20190522&{'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
+    def _record_sell_order(self, ins_dict):
+        to_log('in record_sell_order')
+
+        df = pd.read_csv(self.holdFilename, dtype={'code':'str'})
+
+        #获得原来的stock
+        pre_stock_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code==ins_dict['code']) & (df.num==ins_dict['num']) & (df.agent==ins_dict['agent'])].index.tolist()
+        if len(pre_stock_index) > 0:
+            pre_row = df.loc[pre_stock_index[0]]
+
+            #更新组合的profit
+            profit = ins_dict['cost']*(1-0.0015) - pre_row['cost']
+            profit_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code=='profit') & (df.agent==ins_dict['agent'])].index.tolist()
+            df.loc[profit_index[0],'cost'] += profit
+
+            #获得原来的cash, 并增加cash
+            pre_cash_index = df[(df.portfolio=='cash') & (df.agent==ins_dict['agent'])].index.tolist()
+            df.loc[pre_cash_index[0],'cost'] += ins_dict['cost']*(1-0.0015)
+
+            #删除原来的记录
+            df = df.drop(index=[pre_stock_index[0]])
+
+            #print(df)
+            df = df[['portfolio','code','cost','num','agent']]
+            df.to_csv(self.holdFilename,index=False)
+        else:
+            to_log('原持仓记录不存在，sell_order无法处理')
+
+    #{'ins':'open_portfolio', 'portfolio':'5G','code':'profit','cost':0,'num':0,'agent':'pingan'}
+    def _open_tactic_in_file(self, ins_dict):
+        df = pd.read_csv(self.holdFilename, dtype={'code':str})
+
+        #验证此组合不存在
+        df1 = df[df.agent == ins_dict['agent']]
+        df1 = df1[df1.portfolio == ins_dict['portfolio']]
+        if df1.empty:
+            #组合开仓，增加一条profit记录
+            ins_dict.pop('ins')
+            df_dict = pd.DataFrame([ins_dict])
+            df = df.append(df_dict,sort=False)
+            df = df.loc[:,['portfolio','code','cost','num','agent']]
+            df.to_csv(file_hold_security, index=False)
+        else:
+            to_log('组合已存在！！！')
+
+    #{'ins':'close_portfolio', 'portfolio':'5G','agent':'pingan'}
+    def _close_tactic_in_file(self, ins_dict):
+        df = pd.read_csv(self.holdFilename, dtype={'code':str})
+        #获得组合相关的记录
+        portfolio_index = df[(df.portfolio==ins_dict['portfolio']) & (df.agent==ins_dict['agent'])].index.tolist()
+        if len(portfolio_index) == 1:
+            profit_row = df.loc[portfolio_index[0]]
+            if profit_row['code'] == 'profit':
+                #获得cash, 并增加cash金额
+                cash_index = df[(df.portfolio=='cash') & (df.code=='cash01') & (df.agent==ins_dict['agent'])].index.tolist()
+                df.loc[cash_index[0], 'cost'] += profit_row['cost']
+
+                #删除此记录
+                df = df.drop(index=portfolio_index)
+                df = df.loc[:,['portfolio','code','cost','num','agent']]
+                df.to_csv(self.holdFilename, index=False)
+                to_log('close_portfolio success '+ str(ins_dict) )
+            else:
+                to_log('close_portfolio failed, 组合中无profit字段')
+        else:
+            to_log('close_portfolio failed, 组合中还有标的')
+
+    def _validate_order(self, ins_dict):
+        r = False
+        df = pd.read_csv(self.holdFilename,dtype={'code':str})
+
+        if ins_dict['ins'][:3] == 'buy':        #对于buy_order
+            portfolio_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code=='cash01') & (df.agent==ins_dict['agent'])].index.tolist()
+            if len(portfolio_index)>0:   #是否已开组合
+                # cash_index = df[(df.portfolio=='cash') & (df.code=='cash01') & (df.agent==ins_dict['agent'])].index.tolist()
+                # if len(cash_index)>0:  #券商现金是否足够
+                #     row = df.loc[cash_index[0]]
+                #     if row.at['cost'] > ins_dict['cost']*1.001:
+                r = True
+        elif ins_dict['ins'][:4] == 'sell':     #对于sell_order，是否已存在？
+            #获得原来的stock
+            stock_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code==ins_dict['code']) & (df.agent==ins_dict['agent'])].index.tolist()
+            if len(stock_index)>0:
+                row = df.loc[stock_index[0]]
+                if row.at['num'] >= ins_dict['num']:
+                    r = True
+        r = True    #暂不校验!
+        return r
+
+
+    # 盘点组合
+    def _pandian_p(self,idx,df):
+        df1 = df.copy()
+        df1 = df1.rename(columns = {'code':'代码','portfolio':'名称','num':'数量','cost':'成本','agent':'市值'})
+        df1['市值'] = 0
+        df1['名称'] = ''
+
+        # 补充名称、市值
+        cost, value = 0, 0
+        for i,row in df1.iterrows():
+            if row['代码'] in ('cash01'):
+                df1.at[i,'市值'] = row['成本']
+            elif row['代码'] in ('profit'):
+                pass
+            else:
+                df_q = ts.get_realtime_quotes(row['代码'])
+                df1.at[i,'名称'] = df_q.at[0,'name']
+                price = float(df_q.at[0,'price'])
+                df1.at[i,'市值'] = row['数量'] * price
+                cost  += df1.at[i,'成本']
+                value += df1.at[i,'市值']
+
+        # 汇总
+        df2 = pd.DataFrame([['     ',idx,0,cost,value]],columns=['代码','名称','数量','成本','市值'])
+        df1 = df2.append(df1, sort=False)
+        # 排序
+        df1 = df1.sort_values(by='代码', ascending=False)
+        #print(df1)
+        return df1
+
+
+    # 盘点持仓
+    def pandian(self, agent=None):
+        df_r = pd.DataFrame([['','现金','','',0],['','货基','','',0],['','持仓','',0,0],['','总计','','',0]],
+        columns=['代码','名称','数量','成本','市值'])
+
+        agent = 'pingan'
+        #agent = 'gtja'
+        df1 = pd.read_csv(self.holdFilename);#print(df1)
+        df2 = df1[(df1.agent==agent)]
+        #df2 = df1[(df1.agent==agent) & (~df1.portfolio.isin(['cash','money_fond']))]
+
+        g = df2.groupby('portfolio').agg({'cost':np.sum})
+        for idx in list(g.index):
+            #print(g.loc[idx]['cost'])
+            if idx == 'cash':
+                df_r.iat[0,4] = g.loc[idx]['cost']
+            elif idx == 'money_fond':
+                df_r.iat[1,4] = g.loc[idx]['cost']
+            else:
+                df9 = pd.DataFrame([['','','','',''],],columns=['代码','名称','数量','成本','市值'])
+                df_r = df_r.append(df9,sort=False)
+                df9 = df2[df2.portfolio==idx]
+                df9 = self._pandian_p(idx,df9)
+                df_r = df_r.append(df9,sort=False)
+                df_r.iat[2,4] += df9.iat[-1,4]
+                df_r.iat[2,3] += df9.iat[-1,3];#print(df9)
+        df_r.iat[3,4] = df_r.iat[0,4] + df_r.iat[1,4] + df_r.iat[2,4]
+
+        #print(df_r)
+        df_r.to_excel('e1.xlsx',index=False)
+
+###########################################################################
 def has_factor(dss):
     to_log('in has_factor')
 
@@ -144,12 +338,7 @@ def has_factor(dss):
     codes = b1.get_codes()
 
     for code in codes:
-        if code[0] == '6':
-            code += '.SH'
-        else:
-            code += '.SZ'
-
-        df = pro.adj_factor(ts_code=code, trade_date='')
+        df = get_adj_factor(dss, code)
         #print(df.head(2))
         if df.at[0,'adj_factor'] != df.at[1,'adj_factor']:
             r.append(code)
@@ -179,7 +368,7 @@ def stk_report(dss):
     return r
 
 if __name__ == '__main__':
-    dss = '../data/'
+    dss = '../../data/'
     #stk_warn(dss)
     #print(stk_report(dss))
     print(has_factor(dss))

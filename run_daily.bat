@@ -19,6 +19,6 @@ start /MIN python scheduled_task.py
 choice /t 1 /d y /n >nul
 
 cd .\engine\nearboll
-start /MIN python tradeEngine.py
+start /MIN python bollEngine.py
 
 pause

@@ -20,22 +20,23 @@ class NearBollSignal(Signal):
     bollWindow = 20                     # 布林通道窗口数
     bollDev = 2                         # 布林通道的偏差
 
-    # 策略变量
-    bollUp = 0                          # 布林通道上轨
-    bollDown = 0                        # 布林通道下轨
-
-    # 需要保存的参数
-    buyPrice = 0
-    intraTradeLow = 100E4                   # 持仓期内的最低点
-    longStop = 100E4                        # 多头止损
-
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         Signal.__init__(self, portfolio, vtSymbol)
 
+        # 策略变量
+        self.bollUp = None                          # 布林通道上轨
+        self.bollDown = None                        # 布林通道下轨
+
+        # 需要持久化保存的参数
+        self.buyPrice = 0
+        self.intraTradeLow = 100E4                   # 持仓期内的最低点
+        self.longStop = 100E4                        # 多头止损
+
+
     #----------------------------------------------------------------------
     def onBar(self, bar):
-        """"""
+        """新推送过来一个bar，进行处理"""
         #print(bar.date, self.vtSymbol)
 
         self.bar = bar
@@ -44,9 +45,9 @@ class NearBollSignal(Signal):
             return
 
         #print('here')
-        self.calculateIndicator()
+        self.calculateIndicator()     # 计算指标
         #self.generateSignal_A(bar)
-        self.generateSignal_B(bar)
+        self.generateSignal_B(bar)    # 触发信号，产生交易指令
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -106,12 +107,11 @@ class NearBollSignal(Signal):
                                     self.longStop = min(T5_open,T1_bollMid)
                                     self.intraTradeLow = self.longStop
 
-                                    if bar.close_bfq == 0:
+                                    if bar.close_bfq == 0:            # 回测
                                         self.buy(bar.close, 1000)
-                                    else:
+                                    else:                             # 实盘
                                         volume = int(self.singlePosition/bar.close_bfq/100)*100
                                         self.buy(bar.close_bfq, volume)
-
 
         # 持有多头仓位
         elif pos > 0:
@@ -181,17 +181,14 @@ class NearBollSignal(Signal):
                     self.sell(bar.close_bfq-0.05, abs(self.pos)) # 确保成交
 
 
-
-########################################################################
 class NearBollPortfolio(Portfolio):
-
     #----------------------------------------------------------------------
     def __init__(self, engine):
         Portfolio.__init__(self, engine)
 
     #----------------------------------------------------------------------
     def init(self, portfolioValue, vtSymbolList, sizeDict):
-        """"""
+        """初始化信号字典、持仓字典"""
         self.portfolioValue = portfolioValue
         self.sizeDict = sizeDict
 
@@ -204,6 +201,16 @@ class NearBollPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
-        """对交易信号进行过滤，符合条件的才发单执行"""
+        """
+        对交易信号进行过滤，符合条件的才发单执行。
+        计算真实交易价格和数量。
+        """
         multiplier = 1
+
+        # 计算合约持仓
+        if direction == DIRECTION_LONG:
+            self.posDict[vtSymbol] += volume
+        else:
+            self.posDict[vtSymbol] -= volume
+
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
