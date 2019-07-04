@@ -7,9 +7,6 @@ from nature.logger import to_log, read_log_today
 
 from nature.tools import send_email, is_trade_time, is_price_time,is_trade_day
 
-from nature.auto_trade.place_order import send_instruction
-from nature.filer import rc_file, a_file
-
 from nature.down_k.get_trading_dates import get_trading_dates
 from nature.down_k.get_stk import get_stk_hfq, get_stk_bfq, get_adj_factor
 from nature.down_k.get_inx import get_inx
@@ -22,6 +19,9 @@ from nature.hu_signal.macd import init_signal_macd, signal_macd_sell, signal_mac
 from nature.hu_signal.k_pattern import signal_k_pattern
 
 from nature.hold.book import Book, has_factor, stk_report
+
+from nature.auto_trade.place_order import send_instruction
+from nature.filer import rc_file, a_file
 
 from nature.engine.vtUtility import VtBarData, ArrayManager, GatewayPingan
 from nature.engine.vtUtility import (DIRECTION_LONG, DIRECTION_SHORT,

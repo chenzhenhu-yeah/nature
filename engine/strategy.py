@@ -55,10 +55,10 @@ class Portfolio(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self, engine, name):
+    def __init__(self, engine):
         """Constructor"""
         self.engine = engine
-        self.name = name
+        self.name = ''
         self.signalDict = defaultdict(list)  # 存储信号，code为键, signal列表为值
 
         self.sizeDict = {}          # 合约大小字典，code为键,size为值

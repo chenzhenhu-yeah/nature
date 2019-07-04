@@ -1,6 +1,8 @@
 
 import pandas as pd
 from datetime import datetime, timedelta
+import json
+import tushare as ts
 
 def get_adj_factor(dss,code):
     """

@@ -13,7 +13,7 @@ import pandas as pd
 import tushare as ts
 import json
 
-from nature import to_log, is_trade_day,send_email
+from nature import to_log, is_trade_day, send_email
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book
 from nature import NearBollPortfolio, GatewayPingan, TradeEngine
@@ -64,7 +64,7 @@ class BollEngine(TradeEngine):
         to_log('in TradeEngine.worker_1450')
 
         print('begin worker_1450')
-        r, dt = self.is_trade_day()
+        r, dt = is_trade_day()
         if r == False:
             return
 
@@ -88,12 +88,12 @@ class BollEngine(TradeEngine):
             code = vtSymbol
             df1 = None
             i = 0
-            while df1 is None and i<3:
+            while df1 is None and i<2:
                 try:
                     i += 1
                     df1 = get_adj_factor(self.dss, code)
                 except Exception as e:
-                    print('error adj_factor')
+                    print('error adj_factor ' + code)
                     print(e)
                     time.sleep(1)
             if df1 is None:
@@ -164,7 +164,8 @@ def start():
 
 if __name__ == '__main__':
     start()
-    # engine = TradeEngine()
+    # dss = '../../../data/'
+    # engine = BollEngine(dss, GatewayPingan())
     # engine.worker_1430()
     # engine.worker_1450()
     # engine.worker_1500()

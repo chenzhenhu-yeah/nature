@@ -10,11 +10,9 @@ import json
 import tushare as ts
 
 from nature.auto_trade import auto_trade
-
-from nature import to_log, is_price_time, SOCKET_ORDER
+from nature import to_log, is_price_time, SOCKET_ORDER, Book
 
 dss = '../../data/'
-
 address = ('localhost', SOCKET_ORDER)
 
 def send_instruction(ins_dict):
@@ -30,67 +28,6 @@ def send_instruction(ins_dict):
                 again = False
         except:
             pass
-
-#20190522&{'ins': 'buy_order', 'portfolio': 'redian', 'code': '002482', 'num': 3700, 'price': 5.4, 'cost': 19980, 'agent': 'pingan', 'name': '广田集团'}
-def record_buy_order(ins_dict):
-    to_log('in record_buy_order')
-
-    filename = dss + 'csv/hold.csv'
-    df = pd.read_csv(filename, dtype={'code':'str'})
-
-    #获得原来的cash, 并减少cash
-    pre_cash_index = df[(df.portfolio=='cash') & (df.agent==ins_dict['agent'])].index.tolist()
-    df.loc[pre_cash_index[0],'cost'] -= ins_dict['cost']
-
-    #文件中不需要保存这两个字段
-    if 'ins' in ins_dict:
-        ins_dict.pop('ins')
-    if 'price' in ins_dict:
-        ins_dict.pop('price')
-
-    #新增一条记录
-    df_dict = pd.DataFrame([ins_dict])
-    df = df.append(df_dict, sort=False)
-    #print(df)
-
-    df = df[['portfolio','code','cost','num','agent']]
-    df.to_csv(filename,index=False)
-
-#20190522&{'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
-def record_sell_order(ins_dict):
-    to_log('in record_sell_order')
-
-    filename = dss + 'csv/hold.csv'
-    df = pd.read_csv(filename, dtype={'code':'str'})
-
-    #获得原来的cash, 并增加cash
-    pre_cash_index = df[(df.portfolio=='cash') & (df.agent==ins_dict['agent'])].index.tolist()
-    df.loc[pre_cash_index[0],'cost'] += ins_dict['cost']*(1-0.0015)
-
-    #获得原来的stock
-    pre_stock_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code==ins_dict['code']) & (df.num==ins_dict['num']) & (df.agent==ins_dict['agent'])].index.tolist()
-    pre_row = df.loc[pre_stock_index[0]]
-
-    #更新组合的profit
-    profit = ins_dict['cost']*(1-0.0015) - pre_row['cost']
-    profit_index = df[(df.portfolio==ins_dict['portfolio']) & (df.code=='profit') & (df.agent==ins_dict['agent'])].index.tolist()
-    df.loc[profit_index[0],'cost'] += profit
-
-    #删除原来的记录
-    df = df.drop(index=[pre_stock_index[0]])
-
-    #print(df)
-    df = df[['portfolio','code','cost','num','agent']]
-    df.to_csv(filename,index=False)
-
-def record_order(order):
-    to_log('in record_order')
-
-    ins = order['ins']
-    if ins == 'buy_order':
-        record_buy_order(order)
-    if ins == 'sell_order':
-        record_sell_order(order)
 
 def append_order(order):
     to_log('in append_order')
@@ -187,10 +124,12 @@ def on_order_done(order_dict):
                 price_now = float(df_q.at[0,'price'])
                 #to_log(name + price_now)
                 if ins_dict['ins'] == 'buy_order' and ins_dict['price'] > price_now:
-                    record_order(ins_dict.copy())
+                    b1 = Book(dss)
+                    b1.deal_ins(ins_dict.copy())
                     ins_dict['done'] = True
                 if ins_dict['ins'] == 'sell_order' and ins_dict['price'] < price_now:
-                    record_order(ins_dict.copy())
+                    b1 = Book(dss)
+                    b1.deal_ins(ins_dict.copy())
                     ins_dict['done'] = True
             except Exception as e:
                 to_log('error')
