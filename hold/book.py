@@ -135,7 +135,7 @@ class Book(object):
         return cost, cap
 
     # 处理指令
-    def deal_ins(ins_dict2):
+    def deal_ins(self, ins_dict2):
         ins_dict = ins_dict2.copy()
         if ins_dict['ins'] == 'bonus_interest':
             pass

@@ -6,6 +6,9 @@ import tushare as ts
 
 from nature import Book
 
-dss = '../../../data/'
-b1 = Book(dss)
+
+
+dss = 'ini\\'
+b1 = Book(dss,'hold_security.csv')
+
 b1.pandian()
