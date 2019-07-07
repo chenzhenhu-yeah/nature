@@ -21,7 +21,7 @@ def mail_1515():
         now = datetime.now()
         today = now.strftime('%Y-%m-%d')
         weekday = int(now.strftime('%w'))
-        if 0 <= weekday <= 6:
+        if 1 <= weekday <= 5:
             r = []
             txtfile = dss + 'csv/ins.txt'
             with open(txtfile, 'r', encoding='utf-8') as f:
@@ -42,7 +42,7 @@ def mail_1815():
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
-        if 0 <= weekday <= 6:
+        if 1 <= weekday <= 5:
             print('\n' + str(now) + " mail_factor begin...")
             r = has_factor(dss)
             if r != []:
@@ -55,12 +55,21 @@ def mail_1815():
         print('error')
         print(e)
 
+def down_data_0100():
+    to_log('in down_data_0100')
+
+    now = datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 2 <= weekday <= 6:
+        print('\n' + str(now) + " down_data begin...")
+        down_data(dss)
+
 def mail_0200():
     to_log('in mail_0200')
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
-        if 0 <= weekday <= 6:
+        if 2 <= weekday <= 6:
             print('\n' + str(now) + " mail_ma begin...")
             r = use_ma(dss)
 
@@ -69,15 +78,6 @@ def mail_0200():
     except Exception as e:
         print('error')
         print(e)
-
-def down_data_0100():
-    to_log('in down_data_0100')
-
-    now = datetime.now()
-    weekday = int(now.strftime('%w'))
-    if 0 <= weekday <= 6:
-        print('\n' + str(now) + " down_inx begin...")
-        down_data(dss)
 
 if __name__ == '__main__':
     '''

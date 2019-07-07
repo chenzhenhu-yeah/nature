@@ -49,7 +49,7 @@ def is_trade_time():
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))
     #print(weekday)
-    if 0 <= weekday <= 6:
+    if 1 <= weekday <= 5:
         t = time.localtime()
         if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>20) :
             return True
@@ -63,7 +63,7 @@ def is_price_time():
     today = now.strftime('%Y-%m-%d')
     weekday = int(now.strftime('%w'))
     #print(weekday)
-    if 0 <= weekday <= 6:
+    if 1 <= weekday <= 5:
         t = time.localtime()
         if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>31) :
             return True

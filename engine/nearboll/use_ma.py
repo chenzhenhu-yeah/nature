@@ -14,7 +14,7 @@ from nature import Book
 def hit_ma(dss,date):
     r = []
 
-    codes = get_codes(dss)
+    codes = get_stk_codes(dss)
     for code in codes:
         df = get_stk_hfq(dss,code,'2018-01-08')
         if df is None:

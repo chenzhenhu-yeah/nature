@@ -7,14 +7,6 @@ import tushare as ts
 
 from nature import Book
 
-ins_dict = {}
-ins_dict_list = [
-{'ins': 'sell_order', 'portfolio': '5G', 'code': '300461', 'num': 1300, 'price': 22.60, 'cost': 29380, 'agent': 'pingan', 'name': '田中精机'},
-{'ins': 'sell_order', 'portfolio': '5G', 'code': '300036', 'num': 2000, 'price': 15.40, 'cost': 30800, 'agent': 'pingan', 'name': '超图软件'},
-{'ins': 'buy_order', 'portfolio': 'overlap', 'code': '300514', 'num': 2000, 'price': 14.52, 'cost': 29040, 'agent': 'pingan', 'name': '友讯达'},
-{'ins': 'sell_order', 'portfolio': 'overlap', 'code': '300514', 'num': 2000, 'price': 14.56, 'cost': 29120, 'agent': 'pingan', 'name': '友讯达'},
-]
-
 
 # now = datetime.now()
 # today = now.strftime('%Y%m%d')

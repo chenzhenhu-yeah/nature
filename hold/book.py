@@ -18,7 +18,7 @@ class Tactic(object):
         self.hold_Array = self._load_hold(df)
 
     def _load_hold(self, df):
-        to_log('in Tactic._load_hold')
+        #to_log('in Tactic._load_hold')
 
         r = []
         if df is not None:
@@ -29,7 +29,7 @@ class Tactic(object):
 
     # 计算Tactic包含的code
     def get_codes(self):
-        to_log('in Tactic.get_codes')
+        #to_log('in Tactic.get_codes')
 
         r = []
         for item in self.hold_Array:
@@ -82,7 +82,7 @@ class Tactic(object):
 
 class Book(object):
     def __init__(self,dss,filename='csv/hold.csv'):
-        to_log('in Book.__init__')
+        #to_log('in Book.__init__')
 
         self.dss = dss
         self.holdFilename = dss + filename
@@ -90,7 +90,7 @@ class Book(object):
         self.tactic_List = self._loadHold()
 
     def _loadCash(self):
-        to_log('in Book._loadCash')
+        #to_log('in Book._loadCash')
 
         df1 = pd.read_csv(self.holdFilename);#print(df1)
         df1 = df1[df1.agent=='pingan']
@@ -99,7 +99,7 @@ class Book(object):
         return cash
 
     def _loadHold(self):
-        to_log('in Book._loadHold')
+        #to_log('in Book._loadHold')
 
         df1 = pd.read_csv(self.holdFilename);#print(df1)
         df1 = df1[df1.agent=='pingan']
@@ -116,7 +116,7 @@ class Book(object):
 
     # 计算Book包含的code
     def get_codes(self):
-        to_log('in Book.get_codes')
+        #to_log('in Book.get_codes')
 
         codes = []
         for tactic in self.tactic_List:
@@ -218,7 +218,7 @@ class Book(object):
             df_dict = pd.DataFrame([ins_dict])
             df = df.append(df_dict,sort=False)
             df = df.loc[:,['portfolio','code','cost','num','agent']]
-            df.to_csv(file_hold_security, index=False)
+            df.to_csv(self.holdFilename, index=False)
         else:
             to_log('组合已存在！！！')
 
