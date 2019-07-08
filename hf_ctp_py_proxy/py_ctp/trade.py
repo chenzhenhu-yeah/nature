@@ -18,6 +18,7 @@ from .ctp_trade import Trade
 from .ctp_struct import CThostFtdcInputOrderActionField, CThostFtdcInputOrderField, CThostFtdcInstrumentField, CThostFtdcInstrumentStatusField, CThostFtdcInvestorPositionField, CThostFtdcOrderField, CThostFtdcRspInfoField, CThostFtdcRspUserLoginField, CThostFtdcSettlementInfoConfirmField, CThostFtdcTradingAccountField, CThostFtdcTradingNoticeInfoField, CThostFtdcQuoteField, CThostFtdcInputQuoteField, CThostFtdcInputForQuoteField, CThostFtdcInvestorPositionDetailField, CThostFtdcRspAuthenticateField
 from .ctp_enum import TThostFtdcActionFlagType, TThostFtdcContingentConditionType, TThostFtdcDirectionType, TThostFtdcOffsetFlagType, TThostFtdcForceCloseReasonType, TThostFtdcHedgeFlagType, TThostFtdcOrderPriceTypeType, TThostFtdcPosiDirectionType, TThostFtdcTimeConditionType, TThostFtdcVolumeConditionType, TThostFtdcOrderStatusType, TThostFtdcInstrumentStatusType, TThostFtdcTradeTypeType, TThostFtdcAppTypeType
 
+from nature import to_log
 
 class CtpTrade():
     """"""
@@ -71,7 +72,7 @@ class CtpTrade():
     #     pass
 
     def _OnRspAuthenticate(self, pRspAuthenticateField: CThostFtdcRspAuthenticateField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        print('in _OnRspAuthenticate')
+        to_log('in _OnRspAuthenticate')
         if pRspInfo.getErrorID() == 0:
             if pRspAuthenticateField.getAppType() == TThostFtdcAppTypeType.THOST_FTDC_APP_TYPE_InvestorRelay:
                 self.t.RegisterUserSystemInfo(self.broker, self.investor, 0, '', self.pub_ip, self.port, time.strftime('%H:%M:%S', time.localtime()))
@@ -86,7 +87,7 @@ class CtpTrade():
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField(), pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        print('in _OnRspUserLogin')
+        to_log('in _OnRspUserLogin')
         if pRspInfo.getErrorID() == 0:
             self.session = pRspUserLogin.getSessionID()
             self.tradingday = pRspUserLogin.getTradingDay()
@@ -427,7 +428,7 @@ class CtpTrade():
 
         :param front:
         """
-        print('in ReqConnect')
+        to_log('in ReqConnect')
 
         self.t.CreateApi()
         spi = self.t.CreateSpi()
@@ -469,7 +470,7 @@ class CtpTrade():
         :param pwd:
         :param broker:
         """
-        print('in ReqUserLogin')
+        to_log('in ReqUserLogin')
 
         self.broker = broker
         self.investor = user

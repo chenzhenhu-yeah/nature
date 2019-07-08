@@ -23,6 +23,14 @@ def mail_1515():
         weekday = int(now.strftime('%w'))
         if 1 <= weekday <= 5:
             r = []
+            logfile= dss + 'log/autotrade.log'
+            df = pd.read_csv(logfile,sep=' ',header=None,encoding='ansi')
+            df = df[df[0]==today]
+            for i, row in df.iterrows():
+                r.append(str(list(row)))
+            send_email('show log', '\n'.join(r))
+
+            r = []
             txtfile = dss + 'csv/ins.txt'
             with open(txtfile, 'r', encoding='utf-8') as f:
                 line = f.readline()
@@ -31,7 +39,7 @@ def mail_1515():
                         #line_dict = eval(line)
                         r.append(line)
                     line = f.readline()
-            send_email(dss, 'show ins in mail ', '\n'.join(r))
+            send_email(dss, 'show ins ', '\n'.join(r))
 
     except Exception as e:
         print('error')
@@ -45,12 +53,11 @@ def mail_1815():
         if 1 <= weekday <= 5:
             print('\n' + str(now) + " mail_factor begin...")
             r = has_factor(dss)
-            if r != []:
-                send_email(dss, 'has_factor', '\n'.join(r))
+            send_email(dss, 'has_factor', '\n'.join(r))
 
             print('\n' + str(now) + " mail_stk_report begin...")
             r = stk_report(dss)
-            send_email(dss, 'stk_report', '\n'.join(r))
+            send_email(dss, 'show stk_report', '\n'.join(r))
     except Exception as e:
         print('error')
         print(e)
@@ -74,7 +81,7 @@ def mail_0200():
             r = use_ma(dss)
 
             if r != []:               # 发邮件
-                send_email(dss, 'setting.csv', '\n'.join(r))
+                send_email(dss, 'show setting', '\n'.join(r))
     except Exception as e:
         print('error')
         print(e)
