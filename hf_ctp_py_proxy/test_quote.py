@@ -26,6 +26,7 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
         """"""
+        print('in _OnRtnDepthMarketData: ', pDepthMarketData.getInstrumentID())
         tick = Tick()
 
         tick.AskPrice = pDepthMarketData.getAskPrice1()
@@ -95,7 +96,7 @@ class TestQuote(object):
         """运行"""
         schedule.every().day.at("08:08").do(self.run)
         schedule.every().day.at("18:00").do(self.release)
-        schedule.every().day.at("21:20").do(self.run)
+        schedule.every().day.at("08:30").do(self.run)
         schedule.every().day.at("01:00").do(self.release)
 
         print(u'行情接收器开始运行')

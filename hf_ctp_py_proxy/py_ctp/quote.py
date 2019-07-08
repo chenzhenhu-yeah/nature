@@ -100,7 +100,7 @@ class CtpQuote(object):
 
     def _OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField):
         """"""
-        to_log('in CtpQuote._OnRtndepthMarketData')
+        to_log('in CtpQuote._OnRtnDepthMarketData')
 
         tick: Tick = None
         # 这个逻辑交由应用端处理更合理 ==> 第一个tick不送给客户端(以处理隔夜早盘时收到夜盘的数据的问题)
