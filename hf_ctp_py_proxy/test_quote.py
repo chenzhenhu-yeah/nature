@@ -95,7 +95,7 @@ class TestQuote(object):
         """运行"""
         schedule.every().day.at("08:08").do(self.run)
         schedule.every().day.at("18:00").do(self.release)
-        schedule.every().day.at("19:52").do(self.run)
+        schedule.every().day.at("20:30").do(self.run)
         schedule.every().day.at("01:00").do(self.release)
 
         print(u'行情接收器开始运行')
