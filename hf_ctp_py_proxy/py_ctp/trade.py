@@ -117,11 +117,15 @@ class CtpTrade():
             bIsLast: bool):
         if not self.logined:
             time.sleep(0.5)
+            to_log('in _OnRspSettlementInfoConfirm ')
+
             """查询合约/持仓/权益"""
             threading.Thread(target=self._qry).start()  # 开启查询
 
     def _qry(self):
         """查询帐号相关信息"""
+        to_log('in _qry ')
+
         # restart 模式, 待rtnorder 处理完毕后再进行查询,否则会造成position混乱
         ord_cnt = 0
         trd_cnt = 0
@@ -131,7 +135,7 @@ class CtpTrade():
                 break
             ord_cnt = len(self.orders)
             trd_cnt = len(self.trades)
-        self.t.ReqQryInstrument()
+        #self.t.ReqQryInstrument()
         time.sleep(1.1)
         self.t.ReqQryInvestorPosition(self.broker, self.investor)
         time.sleep(1.1)
@@ -144,14 +148,15 @@ class CtpTrade():
         info.ErrorMsg = '正确'
         threading.Thread(target=self.OnUserLogin, args=(self, info)).start()
         # 调用Release后程序异常退出,但不报错误:接口断开了仍然调用了查询指令
-        while self.logined:
-            """查询持仓与权益"""
-            self.t.ReqQryInvestorPosition(self.broker, self.investor)
-            time.sleep(1.1)
-            if not self.logined:
-                return
-            self.t.ReqQryTradingAccount(self.broker, self.investor)
-            time.sleep(1.1)
+
+        # while self.logined:
+        #     """查询持仓与权益"""
+        #     self.t.ReqQryInvestorPosition(self.broker, self.investor)
+        #     time.sleep(1.1)
+        #     if not self.logined:
+        #         return
+        #     self.t.ReqQryTradingAccount(self.broker, self.investor)
+        #     time.sleep(1.1)
 
     def _OnRtnInstrumentStatus(self, pInstrumentStatus: CThostFtdcInstrumentStatusField):
         if pInstrumentStatus.getInstrumentID() == '':
@@ -170,6 +175,8 @@ class CtpTrade():
 
     def _OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
+        to_log('in _OnRspQryInstrument')
+
         inst = InstrumentField()
         inst.InstrumentID = pInstrument.getInstrumentID()
         inst.ProductID = pInstrument.getProductID()
@@ -179,9 +186,12 @@ class CtpTrade():
         inst.MaxOrderVolume = pInstrument.getMaxLimitOrderVolume()
         inst.ProductType = pInstrument.getProductClass().name  # ProductClassType.Futures -> Futures
         self.instruments[inst.InstrumentID] = inst
+        print('inst.__dict__ \n',inst.__dict__)
 
     def _OnRspQryPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
+        # 此段程序的数据结构较复杂，需要逐步解构！
+        to_log('in _OnRspQryPosition')
         if pInvestorPosition.getInstrumentID() != '':  # 偶尔出现NULL的数据导致数据转换错误
             self._posi.append(pInvestorPosition)  # Struct(**f.__dict__)) #dict -> object
 
@@ -223,6 +233,8 @@ class CtpTrade():
 
     def _OnRspQryPositionDetail(self, pInvestorPositionDetail: CThostFtdcInvestorPositionDetailField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """持仓明细"""
+        to_log('in _OnRspQryPositionDetail')
+
         if pInvestorPositionDetail.getInstrumentID() == '':
             return
         detail = PositionDetail()
@@ -239,6 +251,7 @@ class CtpTrade():
 
     def _OnRspQryAccount(self, pTradingAccount: CThostFtdcTradingAccountField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
+        to_log('in _OnRspQryAccount')
         if not self.account:
             self.account = TradingAccount()
         self.account.Available = pTradingAccount.getAvailable()
@@ -250,6 +263,7 @@ class CtpTrade():
         self.account.PreBalance = pTradingAccount.getPreBalance() + pTradingAccount.getDeposit() + pTradingAccount.getWithdraw()
         self.account.Fund = self.account.PreBalance + pTradingAccount.getCloseProfit() + pTradingAccount.getPositionProfit() - pTradingAccount.getCommission()
         self.account.Risk = 0 if self.account.Fund == 0 else self.account.CurrMargin / self.account.Fund
+        print('account.__dict__ \n', self.account.__dict__)
 
     def _OnRtnOrder(self, pOrder: CThostFtdcOrderField):
         """"""
