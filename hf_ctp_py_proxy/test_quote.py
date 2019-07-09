@@ -94,7 +94,7 @@ class TestQuote(object):
     #----------------------------------------------------------------------
     def daily_worker(self):
         """运行"""
-        schedule.every().day.at("08:08").do(self.run)
+        schedule.every().day.at("11:21").do(self.run)
         schedule.every().day.at("18:00").do(self.release)
         schedule.every().day.at("08:30").do(self.run)
         schedule.every().day.at("01:00").do(self.release)
@@ -114,8 +114,8 @@ if __name__ == "__main__":
     time.sleep(3)
     qq = TestQuote(front_quote, broker, investor, pwd)
 
-    #qq.daily_worker()
-    qq.run()
-    input()
-    qq.release()
-    input()
+    qq.daily_worker()
+    # qq.run()
+    # input()
+    # qq.release()
+    # input()

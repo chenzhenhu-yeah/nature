@@ -5,8 +5,6 @@ __title__ = ''
 __author__ = 'HaiFeng'
 __mtime__ = '2016/9/23'
 """
-
-import threading
 import platform
 import os
 
@@ -71,12 +69,12 @@ class CtpQuote(object):
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
         self.logined = False
-        threading.Thread(target=self.OnDisConnected, args=(self, 0)).start()
+        self.OnDisConnected(self, 0)
 
     def _OnFrontConnected(self):
         """"""
         to_log('in CtpQuote._OnFrontConnected')
-        threading.Thread(target=self.OnConnected, args=(self,)).start()
+        self.OnConnected(self,)
 
     def _OnFrontDisConnected(self, reason: int):
         """"""
@@ -84,7 +82,7 @@ class CtpQuote(object):
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
         self.logined = False
-        threading.Thread(target=self.OnDisConnected, args=(self, reason)).start()
+        self.OnDisConnected(self, reason)
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
@@ -93,7 +91,7 @@ class CtpQuote(object):
         info.ErrorID = pRspInfo.getErrorID()
         info.ErrorMsg = pRspInfo.getErrorMsg()
         self.logined = True
-        threading.Thread(target=self.OnUserLogin, args=(self, info)).start()
+        self.OnUserLogin(self, info)
 
     def _OnRspSubMarketData(self, pSpecificInstrument: CThostFtdcSpecificInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         to_log('in CtpQuote._OnRspSubMarketData')
@@ -134,8 +132,6 @@ class CtpQuote(object):
         tick.LowerLimitPrice = pDepthMarketData.getLowerLimitPrice()
         tick.PreOpenInterest = pDepthMarketData.getPreOpenInterest()
 
-        # 用线程会导入多数据入库时报错
-        # threading.Thread(target=self.OnTick, (self, tick))
         self.OnTick(self, tick)
 
     def OnDisConnected(self, obj, error: int):
