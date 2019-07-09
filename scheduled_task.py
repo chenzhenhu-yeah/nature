@@ -79,9 +79,9 @@ def mail_0200():
         if 2 <= weekday <= 6:
             print('\n' + str(now) + " mail_ma begin...")
             r = use_ma(dss)
-
-            if r != []:               # 发邮件
-                send_email(dss, 'show setting', '\n'.join(r))
+            #print(r)
+            #print(type(r))
+            send_email(dss, str(len(r))+' setting items ', '')
     except Exception as e:
         print('error')
         print(e)
@@ -90,6 +90,7 @@ if __name__ == '__main__':
     '''
     schedule.every(3).seconds.do(down_data_0100)
     '''
+
     # 盘中
     schedule.every().day.at("15:15").do(mail_1515)
 

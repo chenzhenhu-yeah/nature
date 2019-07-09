@@ -53,7 +53,7 @@ def use_ma(dss):
     preday = dates[-2]
     today = dates[-1]
     print(today)
-    pfFile = dss + 'csv/hold.csv'
+    #pfFile = dss + 'csv/hold.csv'
     b1 = Book(dss)
 
     codes = []
@@ -79,6 +79,7 @@ def use_ma(dss):
 
     return r
 
+
 if __name__ == '__main__':
-    #use_ma('../../../data/')
+    use_ma('../../../data/')
     pass
