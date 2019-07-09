@@ -26,7 +26,7 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
         """"""
-        print('in _OnRtnDepthMarketData: ', pDepthMarketData.getInstrumentID())
+        #print('in _OnRtnDepthMarketData: ', pDepthMarketData.getInstrumentID())
         tick = Tick()
 
         tick.AskPrice = pDepthMarketData.getAskPrice1()
@@ -61,7 +61,8 @@ class HuQuote(CtpQuote):
                 'OpenInterest','PreOpenInterest','UpdateMillisec','UpdateTime']
         df = df[cols]
 
-        fname = 'tick/' + f.Instrument + '_' + self.tradeDay + '.csv'
+        dss = '../../data/'
+        fname = dss + 'tick/' + f.Instrument + '_' + self.tradeDay + '.csv'
         df.to_csv(fname, index=False, mode='a', header=False)
 
 
