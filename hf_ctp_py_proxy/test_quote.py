@@ -78,7 +78,7 @@ class TestQuote(object):
         self.q = HuQuote()
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
         #self.q.OnUserLogin = lambda o, i: self.q.ReqSubscribeMarketData('rb1910')
-        ids = ['IC1909','IF1909','IH1909','c1909','SR1909','CF1909','rb1910']
+        ids = ['IC1909','IF1909','IH1909','c1909','SR909','CF909','rb1910']
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(ids)
 
     def subscribe_ids(self, ids):
@@ -110,15 +110,12 @@ if __name__ == "__main__":
     broker = '9999'
     investor = ''
     pwd = ''
-    appid = 'simnow_client_test'
-    auth_code = '0000000000000000'
 
     time.sleep(3)
     qq = TestQuote(front_quote, broker, investor, pwd)
-    qq.daily_worker()
 
-    # qq.run()
-    # input()
-
-    # qq.release()
-    # input()
+    #qq.daily_worker()
+    qq.run()
+    input()
+    qq.release()
+    input()
