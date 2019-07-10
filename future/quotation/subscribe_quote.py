@@ -110,7 +110,7 @@ class HuQuote(CtpQuote):
         if bar.time != min:
             if len(bar.time) > 0:
                 # send bar to port
-                self.send_bar(str(bar.__dict__))
+                #self.send_bar(str(bar.__dict__))
 
                 # save bar
                 df = pd.DataFrame([bar.__dict__])
@@ -188,9 +188,9 @@ if __name__ == "__main__":
     time.sleep(3)
     qq = TestQuote(front_quote, broker, investor, pwd)
 
-    #qq.daily_worker()
+    qq.daily_worker()
 
-    qq.run()
-    input()
-    qq.release()
-    input()
+    # qq.run()
+    # input()
+    # qq.release()
+    # input()
