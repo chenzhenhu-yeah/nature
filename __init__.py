@@ -2,6 +2,7 @@
 SOCKET_LOGGER = 9000
 SOCKET_FILER  = 9001
 SOCKET_ORDER  = 9002
+SOCKET_BAR    = 9003
 
 from nature.logger import to_log, read_log_today
 
@@ -37,3 +38,8 @@ from nature.engine.backtestEngine import BacktestingEngine
 from nature.engine.tradeEngine import TradeEngine
 from nature.engine.cci.cciEngine import CciEngine
 from nature.engine.nearboll.bollEngine import BollEngine
+
+from nature.future.py_ctp.trade import CtpTrade
+from nature.future.py_ctp.quote import CtpQuote
+#from py_ctp.enums import *
+from nature.future.py_ctp.structs import Tick
