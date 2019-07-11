@@ -25,11 +25,6 @@ from nature import NearBollPortfolio, GatewayPingan, TradeEngine
 
 from nature import get_stk_hfq, get_trading_dates, get_adj_factor
 
-SIZE_DICT = {}
-PRICETICK_DICT = {}
-VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
-SLIPPAGE_DICT = {}
 
 ########################################################################
 class FutEngine(object):
@@ -43,6 +38,7 @@ class FutEngine(object):
         """Constructor"""
         to_log('in FutEngine.__init__')
         # TradeEngine.__init__(self, dss, gateway)
+        self.portfolio_list = []
 
         # 开启bar监听服务
         threading.Thread( target=self.bar_service, args=() ).start()
@@ -50,6 +46,11 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def bar_service(self):
         print('in bar_svervice')
+
+        r, dt = is_trade_day()
+        if r == False:
+            return
+
         address = ('localhost', SOCKET_BAR)
         while True:
             with Listener(address, authkey=b'secret password') as listener:
@@ -59,27 +60,36 @@ class FutEngine(object):
                     d = eval(s)
                     bar = VtBarData()
                     bar.__dict__ = d
-                    threading.Thread( target=self.On_Bar, args=(bar,) ).start()
-                    #self.On_Bar(bar)
+                    for p in self.portfolio_list:
+                        p.onBar(bar)
+                        #threading.Thread( target=p.onBar, args=(bar,) ).start()
+
+                        #threading.Thread( target=self.onBar, args=(bar,) ).start()
+                        #self.onBar(bar)
 
     #----------------------------------------------------------------------
-    def On_Bar(self, bar):
+    def onBar(self, bar):
         print('in On_Bar')
         print(bar.__dict__)
         print(type(bar))
 
     #----------------------------------------------------------------------
+    def loadPortfolio(self, PortfolioClass, name):
+        """每日重新加载投资组合"""
+        to_log('in FutEngine.loadPortfolio')
+
+        p = PortfolioClass(self, name)
+        p.init()
+        self.portfolio_list.append(p)
+
+
+    #----------------------------------------------------------------------
     def worker_open(self):
         """盘前加载配置及数据"""
         to_log('in FutEngine.worker_open')
+        print('in worker_open')
 
-        print('begin worker_open')
-        r, dt = is_trade_day()
-        if r == False:
-            return
-
-        # self.loadPortfolio(NearBollPortfolio, 'boll')
-
+        self.loadPortfolio(AtrRsiPortfolio, 'AtrRsi')
 
     #----------------------------------------------------------------------
     def worker_close(self):

@@ -99,7 +99,7 @@ class ArrayManager(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self, size=100):
+    def __init__(self, initDays=90, size=100):
         """Constructor"""
         self.count = 0                      # 缓存计数
         self.size = size                    # 缓存大小
@@ -127,7 +127,7 @@ class ArrayManager(object):
         self.volumeArray[-1] = bar.volume
 
         self.count += 1
-        if not self.inited and self.count >= 30:
+        if not self.inited and self.count >= initDays:
             self.inited = True
 
     #----------------------------------------------------------------------

@@ -75,18 +75,6 @@ class TradeEngine(object):
 
         self.portfolio = PortfolioClass(self)
         self.portfolio.name = name
-        filename = self.dss + 'csv/setting.csv'
-
-        with open(filename,encoding='utf-8') as f:
-            r = DictReader(f)
-            for d in r:
-                self.vtSymbolList.append(d['vtSymbol'])
-
-                SIZE_DICT[d['vtSymbol']] = int(d['size'])
-                PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-                VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-                FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-                SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
         self.portfolio.init(self.portfolioValue, self.vtSymbolList, SIZE_DICT)
 

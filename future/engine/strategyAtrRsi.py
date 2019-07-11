@@ -1,34 +1,22 @@
 # encoding: UTF-8
 
-"""
-一个ATR-RSI指标结合的交易策略，适合用在股指的1分钟和5分钟线上。
+from collections import defaultdict
 
-注意事项：
-1. 作者不对交易盈利做任何保证，策略代码仅供参考
-2. 将IF0000_1min.csv用ctaHistoryData.py导入MongoDB后，直接运行本文件即可回测策略
-
-"""
-
-from vnpy.trader.vtObject import VtBarData
-from vnpy.trader.vtConstant import EMPTY_STRING
-from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate, 
-                                                     BarGenerator, 
-                                                     ArrayManager)
-
+from nature import to_log
+from nature import ArrayManager
+from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
+from nature import Signal, Portfolio
 
 ########################################################################
-class AtrRsiStrategy(CtaTemplate):
-    """结合ATR和RSI指标的一个分钟线交易策略"""
-    className = 'AtrRsiStrategy'
-    author = u'用Python的交易员'
+class AtrRsiSignal(Signal):
 
     # 策略参数
-    atrLength = 22          # 计算ATR指标的窗口数   
+    atrLength = 22          # 计算ATR指标的窗口数
     atrMaLength = 10        # 计算ATR均线的窗口数
     rsiLength = 5           # 计算RSI的窗口数
     rsiEntry = 16           # RSI的开仓信号
     trailingPercent = 0.8   # 百分比移动止损
-    initDays = 10           # 初始化数据所用的天数
+    initDays = 90           # 初始化数据所用的天数
     fixedSize = 1           # 每次交易的数量
 
     # 策略变量
@@ -40,51 +28,19 @@ class AtrRsiStrategy(CtaTemplate):
     intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
     intraTradeLow = 0                   # 移动止损用的持仓期内最低价
 
-    # 参数列表，保存了参数的名称
-    paramList = ['name',
-                 'className',
-                 'author',
-                 'vtSymbol',
-                 'atrLength',
-                 'atrMaLength',
-                 'rsiLength',
-                 'rsiEntry',
-                 'trailingPercent']    
-
-    # 变量列表，保存了变量的名称
-    varList = ['inited',
-               'trading',
-               'pos',
-               'atrValue',
-               'atrMa',
-               'rsiValue',
-               'rsiBuy',
-               'rsiSell']  
-    
-    # 同步列表，保存了需要保存到数据库的变量名称
-    syncList = ['pos',
-                'intraTradeHigh',
-                'intraTradeLow']
-
     #----------------------------------------------------------------------
-    def __init__(self, ctaEngine, setting):
-        """Constructor"""
-        super(AtrRsiStrategy, self).__init__(ctaEngine, setting)
-        
-        # 创建K线合成器对象
-        self.bg = BarGenerator(self.onBar)
-        self.am = ArrayManager()
-        
-        # 注意策略类中的可变对象属性（通常是list和dict等），在策略初始化时需要重新创建，
-        # 否则会出现多个策略实例之间数据共享的情况，有可能导致潜在的策略逻辑错误风险，
-        # 策略类中的这些可变对象属性可以选择不写，全都放在__init__下面，写主要是为了阅读
-        # 策略时方便（更多是个编程习惯的选择）        
+    def __init__(self, portfolio, vtSymbol):
+        Signal.__init__(self, portfolio, vtSymbol)
 
-    #----------------------------------------------------------------------
-    def onInit(self):
-        """初始化策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略初始化' %self.name)
-    
+        # 策略变量
+        self.bollUp = None                          # 布林通道上轨
+        self.bollDown = None                        # 布林通道下轨
+
+        # 需要持久化保存的参数
+        self.buyPrice = 0
+        self.intraTradeLow = 100E4                   # 持仓期内的最低点
+        self.longStop = 100E4                        # 多头止损
+
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
         self.rsiSell = 50 - self.rsiEntry
@@ -94,47 +50,36 @@ class AtrRsiStrategy(CtaTemplate):
         for bar in initData:
             self.onBar(bar)
 
-        self.putEvent()
-
-    #----------------------------------------------------------------------
-    def onStart(self):
-        """启动策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略启动' %self.name)
-        self.putEvent()
-
-    #----------------------------------------------------------------------
-    def onStop(self):
-        """停止策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略停止' %self.name)
-        self.putEvent()
-
-    #----------------------------------------------------------------------
-    def onTick(self, tick):
-        """收到行情TICK推送（必须由用户继承实现）"""
-        self.bg.updateTick(tick)
-
     #----------------------------------------------------------------------
     def onBar(self, bar):
-        """收到Bar推送（必须由用户继承实现）"""
-        self.cancelAll()
+        """新推送过来一个bar，进行处理"""
+        #print(bar.date, self.vtSymbol)
 
-        # 保存K线数据
-        am = self.am
-        am.updateBar(bar)
-        if not am.inited:
+        self.bar = bar
+        self.am.updateBar(bar)
+        if not self.am.inited:
             return
 
-        # 计算指标数值
-        atrArray = am.atr(self.atrLength, array=True)
+        #print('here')
+        self.calculateIndicator()     # 计算指标
+        self.generateSignal(bar)    # 触发信号，产生交易指令
+
+    #----------------------------------------------------------------------
+    def calculateIndicator(self):
+        """计算技术指标"""
+        atrArray = self.am.atr(self.atrLength, array=True)
         self.atrValue = atrArray[-1]
         self.atrMa = atrArray[-self.atrMaLength:].mean()
-        
-        self.rsiValue = am.rsi(self.rsiLength)
 
+        self.rsiValue = self.am.rsi(self.rsiLength)
+
+    #----------------------------------------------------------------------
+    def generateSignal(self, bar):
         # 判断是否要进行交易
-        
+
+        pos = self.portfolio.posDict[self.vtSymbol]
         # 当前无仓位
-        if self.pos == 0:
+        if pos == 0:
             self.intraTradeHigh = bar.high
             self.intraTradeLow = bar.low
 
@@ -150,42 +95,76 @@ class AtrRsiStrategy(CtaTemplate):
                     self.short(bar.close-5, self.fixedSize)
 
         # 持有多头仓位
-        elif self.pos > 0:
+        elif pos > 0:
             # 计算多头持有期内的最高价，以及重置最低价
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
             self.intraTradeLow = bar.low
-            
+
             # 计算多头移动止损
             longStop = self.intraTradeHigh * (1-self.trailingPercent/100)
 
-            # 发出本地止损委托
+            # 发出本地止损委托 >>> 这个待研究，目前不支持！！！
             self.sell(longStop, abs(self.pos), stop=True)
-            
+
         # 持有空头仓位
-        elif self.pos < 0:
+        elif pos < 0:
             self.intraTradeLow = min(self.intraTradeLow, bar.low)
             self.intraTradeHigh = bar.high
 
             shortStop = self.intraTradeLow * (1+self.trailingPercent/100)
+            # 发出本地止损委托 >>> 这个待研究，目前不支持！！！
             self.cover(shortStop, abs(self.pos), stop=True)
 
-        # 同步数据到数据库
-        self.saveSyncData()
+class AtrRsiPortfolio(Portfolio):
+    #----------------------------------------------------------------------
+    def __init__(self, engine, name):
+        Portfolio.__init__(self, engine)
 
-        # 发出状态更新事件
-        self.putEvent()
+        self.name = name
+        self.vtSymbolList = []
+        self.SIZE_DICT = {}
+        self.PRICETICK_DICT = {}
+        self.VARIABLE_COMMISSION_DICT = {}
+        self.FIXED_COMMISSION_DICT = {}
+        self.SLIPPAGE_DICT = {}
 
     #----------------------------------------------------------------------
-    def onOrder(self, order):
-        """收到委托变化推送（必须由用户继承实现）"""
-        pass
+    def init(self):
+        """初始化信号字典、持仓字典"""
+        filename = self.engine.dss + 'csv/setting_fut_' + self.name + '.csv'
 
-    #----------------------------------------------------------------------
-    def onTrade(self, trade):
-        # 发出状态更新事件
-        self.putEvent()
+        with open(filename,encoding='utf-8') as f:
+            r = DictReader(f)
+            for d in r:
+                self.vtSymbolList.append(d['vtSymbol'])
+                self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
+                self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
+                self.VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
+                self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
+                self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
+        self.portfolioValue = 100E4
+        self.sizeDict = self.SIZE_DICT
+
+        for vtSymbol in self.vtSymbolList:
+            signal1 = AtrRsiSignal(self, vtSymbol)
+            l = self.signalDict[vtSymbol]
+            l.append(signal1)
+            self.posDict[vtSymbol] = 0
+
+        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
     #----------------------------------------------------------------------
-    def onStopOrder(self, so):
-        """停止单推送"""
-        pass
+    def newSignal(self, signal, direction, offset, price, volume):
+        """
+        对交易信号进行过滤，符合条件的才发单执行。
+        计算真实交易价格和数量。
+        """
+        multiplier = 1
+
+        # 计算合约持仓
+        if direction == DIRECTION_LONG:
+            self.posDict[vtSymbol] += volume
+        else:
+            self.posDict[vtSymbol] -= volume
+
+        self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
