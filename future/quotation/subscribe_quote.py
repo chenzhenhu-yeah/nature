@@ -9,6 +9,7 @@ import time
 import pandas as pd
 import schedule
 import threading
+from multiprocessing.connection import Client
 
 from nature import CtpTrade
 from nature import CtpQuote
@@ -24,6 +25,7 @@ class HuQuote(CtpQuote):
         #to_log('in BollEngine.__init__')
         CtpQuote.__init__(self)
         self.id_list = ['IC1909','IF1909','IH1909','c1909','SR909','CF909','rb1910']
+        self.id_list = ['IC1909','c1909','CF909']
         self.dss = '../../../data/'
         self.tradeDay = ''
         self.bar_dict = {}
@@ -53,10 +55,12 @@ class HuQuote(CtpQuote):
         tick.PreOpenInterest = pDepthMarketData.getPreOpenInterest()
 
         if (tick.UpdateTime>='08:59:59' and tick.UpdateTime <= '15:00:01') or (tick.UpdateTime>='20:59:59' and tick.UpdateTime <= '23:30:01'):
-            threading.Thread( target=self.OnTick, args=(self, tick) ).start()
+            #threading.Thread( target=self.OnTick, args=(tick,) ).start()
+            #多线程容易出错。
+            self.OnTick(tick)
 
     #----------------------------------------------------------------------
-    def OnTick(self, obj, f: Tick):
+    def OnTick(self, f: Tick):
         """"""
         #print(f'=== [QUOTE] OnTick ===\n{f.__dict__}')
         #print(type(f.__dict__))
@@ -88,9 +92,10 @@ class HuQuote(CtpQuote):
             try :
                 with Client(address, authkey=b'secret password') as conn2:
                     conn2.send(s)
+                    time.sleep(0.030)
                 again = False
             except Exception as e:
-                print('error')
+                print('error，发送太密集')
                 print(e)
     #----------------------------------------------------------------------
     def _Generate_Bar(self, tick):
@@ -170,8 +175,8 @@ class TestQuote(object):
     #----------------------------------------------------------------------
     def daily_worker(self):
         """运行"""
-        schedule.every().day.at("08:08").do(self.run)
-        schedule.every().day.at("23:50").do(self.release)
+        schedule.every().day.at("20:08").do(self.run)
+        schedule.every().day.at("15:50").do(self.release)
 
         print(u'行情接收器开始运行')
         while True:

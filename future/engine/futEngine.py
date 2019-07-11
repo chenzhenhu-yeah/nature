@@ -49,14 +49,18 @@ class FutEngine(object):
 
     #----------------------------------------------------------------------
     def bar_service(self):
+        print('in bar_svervice')
         address = ('localhost', SOCKET_BAR)
         while True:
             with Listener(address, authkey=b'secret password') as listener:
                 with listener.accept() as conn:
                     #print('connection accepted from', listener.last_accepted)
                     s = conn.recv()
-                    bar = eval(s)
-                    threading.Thread( target=self.On_Bar, args=(bar) ).start()
+                    d = eval(s)
+                    bar = VtBarData()
+                    bar.__dict__ = d
+                    threading.Thread( target=self.On_Bar, args=(bar,) ).start()
+                    #self.On_Bar(bar)
 
     #----------------------------------------------------------------------
     def On_Bar(self, bar):
@@ -65,11 +69,11 @@ class FutEngine(object):
         print(type(bar))
 
     #----------------------------------------------------------------------
-    def worker_0808(self):
+    def worker_open(self):
         """盘前加载配置及数据"""
-        to_log('in FutEngine.worker_0808')
+        to_log('in FutEngine.worker_open')
 
-        print('begin worker_0808')
+        print('begin worker_open')
         r, dt = is_trade_day()
         if r == False:
             return
@@ -78,23 +82,23 @@ class FutEngine(object):
 
 
     #----------------------------------------------------------------------
-    def worker_2350(self):
+    def worker_close(self):
         """盘后保存及展示数据"""
-        to_log('in FutEngine.worker_2350')
+        to_log('in FutEngine.worker_close')
 
-        print('begin worker_2350')
+        print('begin worker_close')
         # 打印当日成交记录
         tradeList = self.getTradeData()
         to_log( '当日成交记录：' + str(tradeList) )
 
-        # 保存信号参数
+        # 保存信号参数，此项工作应该放到portfolio中去做更好
 
 
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        schedule.every().day.at("08:08").do(self.worker_0808)
-        schedule.every().day.at("23:50").do(self.worker_2350)
+        schedule.every().day.at("20:08").do(self.worker_open)
+        schedule.every().day.at("15:50").do(self.worker_close)
 
         print(u'期货交易引擎开始运行')
         while True:
