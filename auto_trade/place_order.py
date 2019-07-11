@@ -118,7 +118,7 @@ def on_order_done(order_dict):
         ins_dict = order_dict[key]
         if ins_dict['done'] == False:
             try:
-                to_log( 'in on_order_done ' + str(ins_dict) )
+                #to_log( 'in on_order_done ' + str(ins_dict) )
                 df_q = ts.get_realtime_quotes(ins_dict['code'])
                 name =  df_q.at[0,'name']
                 price_now = float(df_q.at[0,'price'])

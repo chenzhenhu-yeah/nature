@@ -28,7 +28,7 @@ def mail_1515():
             df = df[df[0]==today]
             for i, row in df.iterrows():
                 r.append(str(list(row)))
-            send_email('show log', '\n'.join(r))
+            send_email(dss, 'show log', '\n'.join(r))
 
             r = []
             txtfile = dss + 'csv/ins.txt'
@@ -53,7 +53,10 @@ def mail_1815():
         if 1 <= weekday <= 5:
             print('\n' + str(now) + " mail_factor begin...")
             r = has_factor(dss)
-            send_email(dss, 'has_factor', '\n'.join(r))
+            if r == []:
+                send_email(dss, 'no factor', '')
+            else:
+                send_email(dss, 'has factor', '\n'.join(r))
 
             print('\n' + str(now) + " mail_stk_report begin...")
             r = stk_report(dss)
