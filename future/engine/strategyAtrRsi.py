@@ -16,7 +16,7 @@ class AtrRsiSignal(Signal):
     rsiLength = 5           # 计算RSI的窗口数
     rsiEntry = 16           # RSI的开仓信号
     trailingPercent = 0.8   # 百分比移动止损
-    initDays = 90           # 初始化数据所用的天数
+    initBars = 90           # 初始化数据所用的天数
     fixedSize = 1           # 每次交易的数量
 
     # 策略变量
@@ -46,7 +46,7 @@ class AtrRsiSignal(Signal):
         self.rsiSell = 50 - self.rsiEntry
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.loadBar(self.initDays)
+        initData = self.portfolio.engine.loadInitBar(self.vtSymbol, self.initBars)
         for bar in initData:
             self.onBar(bar)
 
@@ -89,10 +89,9 @@ class AtrRsiSignal(Signal):
                 # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
                 if self.rsiValue > self.rsiBuy:
                     # 这里为了保证成交，选择超价5个整指数点下单
-                    self.buy(bar.close+5, self.fixedSize)
-
+                    self.buy(bar.close, self.fixedSize)
                 elif self.rsiValue < self.rsiSell:
-                    self.short(bar.close-5, self.fixedSize)
+                    self.short(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif pos > 0:
@@ -103,8 +102,9 @@ class AtrRsiSignal(Signal):
             # 计算多头移动止损
             longStop = self.intraTradeHigh * (1-self.trailingPercent/100)
 
-            # 发出本地止损委托 >>> 这个待研究，目前不支持！！！
-            self.sell(longStop, abs(self.pos), stop=True)
+            # 发出本地止损委托
+            if bar.close <= longStop:
+                self.sell(bar.close, abs(pos))
 
         # 持有空头仓位
         elif pos < 0:
@@ -112,8 +112,8 @@ class AtrRsiSignal(Signal):
             self.intraTradeHigh = bar.high
 
             shortStop = self.intraTradeLow * (1+self.trailingPercent/100)
-            # 发出本地止损委托 >>> 这个待研究，目前不支持！！！
-            self.cover(shortStop, abs(self.pos), stop=True)
+            if bar.close >= shortStop:
+                self.cover(bar.close, abs(pos))
 
 class AtrRsiPortfolio(Portfolio):
     #----------------------------------------------------------------------
@@ -168,3 +168,25 @@ class AtrRsiPortfolio(Portfolio):
             self.posDict[vtSymbol] -= volume
 
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
+
+    #----------------------------------------------------------------------
+    def loadParam(self):
+        filename = self.engine.dss + 'fut/cfg/AtrRsi_param.csv'
+        df = pd.read_csv(filename)
+        for i, row in df.iterrows():
+            code = row.vtSymbol
+            for signal in self.portfolio.signalDict[code]:
+                signal.buyPrice = row.buyPrice,
+                signal.intraTradeLow = row.intraTradeLow
+                signal.longStop = row.longStop
+
+    #----------------------------------------------------------------------
+    def saveParam(self):
+        r = []
+        for code in self.vtSymbolList:
+            for signal in self.portfolio.signalDict[code]:
+                r.append([code, signal.buyPrice, signal.intraTradeLow, signal.longStop])
+
+        df = pd.DataFrame(r, columns=['vtSymbol','buyPrice','intraTradeLow','longStop'])
+        filename = self.engine.dss + 'fut/cfg/AtrRsi_param.csv'
+        df.to_csv(filename, index=False)

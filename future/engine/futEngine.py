@@ -38,10 +38,15 @@ class FutEngine(object):
         """Constructor"""
         to_log('in FutEngine.__init__')
         # TradeEngine.__init__(self, dss, gateway)
+        self.dss = dss
         self.portfolio_list = []
+        self.vtSymbol_list = ['IC1909','c1909','CF909']
+        self.vtSymbol_dict = {}
 
         # 开启bar监听服务
-        threading.Thread( target=self.bar_service, args=() ).start()
+        #threading.Thread( target=self.bar_service, args=() ).start()
+        threading.Thread( target=self.put_service, args=() ).start()
+
 
     #----------------------------------------------------------------------
     def bar_service(self):
@@ -67,6 +72,34 @@ class FutEngine(object):
                         #threading.Thread( target=self.onBar, args=(bar,) ).start()
                         #self.onBar(bar)
 
+
+    #----------------------------------------------------------------------
+    def put_service(self):
+        print('in put_svervice')
+        while True:
+            time.sleep(23)
+            for id in self.vtSymbol_list:
+                try:
+                    fname = self.dss + 'fut/put/min1_' + id + '.csv'
+                    #print(fname)
+                    df = pd.read_csv(fname)
+                    d = dict(df.loc[0,:])
+                    #print(d)
+                    #print(type(d))
+                    bar = VtBarData()
+                    bar.__dict__ = d
+                    if id not in self.vtSymbol_dict:
+                        self.vtSymbol_dict[id] = bar
+                    elif self.vtSymbol_dict[id].time != bar.time:
+                        self.vtSymbol_dict[id] = bar
+                        self.onBar(bar)
+                        for p in self.portfolio_list:
+                            p.onBar(bar)
+                except Exception as e:
+                    print('error，读取文件错误')
+                    print(e)
+
+
     #----------------------------------------------------------------------
     def onBar(self, bar):
         print('in On_Bar')
@@ -80,8 +113,34 @@ class FutEngine(object):
 
         p = PortfolioClass(self, name)
         p.init()
+        p.loadParam()
         self.portfolio_list.append(p)
 
+    #----------------------------------------------------------------------
+    def loadInitBar(self, vtSymbol, initBars):
+        """读取Bar数据，"""
+        r = []
+        try:
+            today = time.strftime('%Y%m%d',time.localtime())
+            fname = self.dss + 'fut/bar/min1_' + today + '_' + vtSymbol + '.csv'
+            #print(fname)
+            df = pd.read_csv(fname)
+            df = df.sort_values(by=['date','time'])
+            df = df.iloc[-initBars:]
+            print(df)
+
+            for i, row in df.iterrows():
+                d = dict(row)
+                #print(d)
+                #print(type(d))
+                bar = VtBarData()
+                bar.__dict__ = d
+                r.append(bar)
+        except Exception as e:
+            print('error ')
+            print(e)
+
+        return r
 
     #----------------------------------------------------------------------
     def worker_open(self):
@@ -101,8 +160,9 @@ class FutEngine(object):
         tradeList = self.getTradeData()
         to_log( '当日成交记录：' + str(tradeList) )
 
-        # 保存信号参数，此项工作应该放到portfolio中去做更好
-
+        # 保存信号参数
+        for p in portfolio_list:
+            p.saveParam()
 
     #----------------------------------------------------------------------
     def run(self):
@@ -119,6 +179,8 @@ class FutEngine(object):
 def start():
     dss = '../../../data/'
     engine = FutEngine(dss)
+    #engine.loadInitBar('c1909', 10)
+
     print('here')
     engine.run()
 
