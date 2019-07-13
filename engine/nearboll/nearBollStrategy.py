@@ -187,17 +187,30 @@ class NearBollPortfolio(Portfolio):
         Portfolio.__init__(self, engine)
 
     #----------------------------------------------------------------------
-    def init(self, portfolioValue, vtSymbolList, sizeDict):
+    def init(self):
         """初始化信号字典、持仓字典"""
-        self.portfolioValue = portfolioValue
-        self.sizeDict = sizeDict
+        filename = self.engine.dss + 'csv/setting.csv'
 
-        for vtSymbol in vtSymbolList:
-            signal1 = NearBollSignal(self, vtSymbol)
+        with open(filename,encoding='utf-8') as f:
+            r = DictReader(f)
+            for d in r:
+                self.vtSymbolList.append(d['vtSymbol'])
+                self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
+                self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
+                self.VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
+                self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
+                self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
+
+        self.portfolioValue = 100E4
+        self.sizeDict = self.SIZE_DICT
+
+        for vtSymbol in self.vtSymbolList:
+            signal1 = AtrRsiSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
-
             self.posDict[vtSymbol] = 0
+
+        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
 
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):

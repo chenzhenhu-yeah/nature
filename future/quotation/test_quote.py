@@ -92,7 +92,7 @@ class HuQuote(CtpQuote):
         except Exception as e:
             #print('error，发送太密集')
             #print(e)
-            pass 
+            pass
 
     #----------------------------------------------------------------------
     def put_bar(self, df, id):
@@ -175,6 +175,19 @@ class TestQuote(object):
 
     def release(self):
         self.q.ReqUserLogout()
+
+        # 保存最后一根K线
+        for id in self.bar_dict:
+            bar = self.bar_dict[id]
+            df = pd.DataFrame([bar.__dict__])
+            cols = ['date','time','open','high','low','close','volume']
+            df = df[cols]
+            fname = self.dss + 'fut/bar/min1_' + self.tradeDay + '_' + id + '.csv'
+            df.to_csv(fname, index=False, mode='a', header=False)
+
+        #清空，以免第二日重复保存
+        self.bar_dict = {}
+
 
     #----------------------------------------------------------------------
     def daily_worker(self):

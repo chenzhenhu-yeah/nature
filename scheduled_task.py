@@ -27,7 +27,7 @@ def mail_1515():
             df = pd.read_csv(logfile,sep=' ',header=None,encoding='ansi')
             df = df[df[0]==today]
             for i, row in df.iterrows():
-                r.append(str(list(row)))
+                r.append(str(list(row)[:7]))
             send_email(dss, 'show log', '\n'.join(r))
 
             r = []

@@ -24,11 +24,11 @@ from nature.hold.book import Book, has_factor, stk_report
 from nature.auto_trade.place_order import send_instruction
 from nature.filer import rc_file, a_file
 
-from nature.engine.vtUtility import VtBarData, ArrayManager, GatewayPingan
-from nature.engine.vtUtility import (DIRECTION_LONG, DIRECTION_SHORT,
+from nature.strategy import VtBarData, ArrayManager, GatewayPingan
+from nature.strategy import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_OPEN, OFFSET_CLOSE,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
-from nature.engine.strategy import Signal, Portfolio
+from nature.strategy import Signal, Portfolio
 
 from nature.engine.nearboll.nearBollStrategy import NearBollPortfolio
 from nature.engine.nearboll.upBollStrategy import UpBollPortfolio

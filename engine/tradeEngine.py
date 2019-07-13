@@ -76,9 +76,7 @@ class TradeEngine(object):
         self.portfolio = PortfolioClass(self)
         self.portfolio.name = name
 
-        self.portfolio.init(self.portfolioValue, self.vtSymbolList, SIZE_DICT)
-
-        self.output(u'投资组合的合约代码%s' %(self.vtSymbolList))
+        self.portfolio.init()
 
     #----------------------------------------------------------------------
     def loadHold(self):

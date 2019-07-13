@@ -3,7 +3,8 @@
 from pywinauto import application
 import time
 
-zggj_window_handle = 0x1A0F96
+zggj_window_handle = 0x315A4
+
 gtja_window_handle = 0xA085C
 cf_window_handle = 0x20C60
 
@@ -17,12 +18,14 @@ def zggj_buy(code,price,num):
         time.sleep(1)
         print('here')
 
-        dlg_spec.Edit1.set_text('c1909')
-        dlg_spec.Edit2.set_text('1236')
-        dlg_spec.Edit3.set_text('10')
+        # dlg_spec.Edit1.set_text('c1909')
+        # dlg_spec.Edit2.set_text('1236')
+        # dlg_spec.Edit3.set_text('10')
 
-        dlg_spec.wxWindowClass1.set_item('卖出')
-        # t = dlg_spec.comboBox1
+        #dlg_spec.wxWindowClass1.select('卖出')
+
+
+        dlg_spec.comboBox1.select(0)
         # t = dlg_spec.Edit1
         # print(dir(t))
         # #print(help(t))

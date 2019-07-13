@@ -62,9 +62,6 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def OnTick(self, f: Tick):
         """"""
-        #print(f'=== [QUOTE] OnTick ===\n{f.__dict__}')
-        #print(type(f.__dict__))
-
         # 处理Bar
         self._Generate_Bar(f)
 
@@ -82,21 +79,23 @@ class HuQuote(CtpQuote):
         else:
             df.to_csv(fname, index=False, mode='a')
 
-
-
     #----------------------------------------------------------------------
     def send_bar(self, s):
         address = ('localhost', SOCKET_BAR)
-        again = True
-        while again:
-            try :
-                with Client(address, authkey=b'secret password') as conn2:
-                    conn2.send(s)
-                    time.sleep(0.030)
-                again = False
-            except Exception as e:
-                print('error，发送太密集')
-                print(e)
+        try :
+            with Client(address, authkey=b'secret password') as conn2:
+                conn2.send(s)
+                time.sleep(0.030)
+        except Exception as e:
+            #print('error，发送太密集')
+            #print(e)
+            pass
+
+    #----------------------------------------------------------------------
+    def put_bar(self, df, id):
+        fname = self.dss + 'fut/put/min1_' + id + '.csv'
+        df.to_csv(fname, index=False)
+
     #----------------------------------------------------------------------
     def _Generate_Bar(self, tick):
         """生成、推送、保存Bar"""
@@ -114,14 +113,16 @@ class HuQuote(CtpQuote):
 
         if bar.time != min:
             if len(bar.time) > 0:
-                # send bar to port
-                #self.send_bar(str(bar.__dict__))
-
-                # save bar
                 df = pd.DataFrame([bar.__dict__])
                 cols = ['date','time','open','high','low','close','volume']
                 df = df[cols]
 
+                # send bar to port
+                self.send_bar(str(bar.__dict__))
+
+                #self.put_bar(df, id)
+
+                # save bar
                 # 出现了怪的问题，发布了多条重复的tick，但分种线的加工不应该出现此问题，多线程 ? ? ?
                 fname = self.dss + 'fut/bar/min1_' + self.tradeDay + '_' + id + '.csv'
                 if os.path.exists(fname):
@@ -171,6 +172,19 @@ class TestQuote(object):
 
     def release(self):
         self.q.ReqUserLogout()
+
+        # 保存最后一根K线
+        for id in self.bar_dict:
+            bar = self.bar_dict[id]
+            df = pd.DataFrame([bar.__dict__])
+            cols = ['date','time','open','high','low','close','volume']
+            df = df[cols]
+            fname = self.dss + 'fut/bar/min1_' + self.tradeDay + '_' + id + '.csv'
+            df.to_csv(fname, index=False, mode='a', header=False)
+
+        #清空，以免第二日重复保存
+        self.bar_dict = {}
+
 
     #----------------------------------------------------------------------
     def daily_worker(self):
