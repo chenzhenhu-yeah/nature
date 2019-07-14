@@ -24,8 +24,16 @@ class HuQuote(CtpQuote):
         """Constructor"""
         #to_log('in BollEngine.__init__')
         CtpQuote.__init__(self)
-        self.id_list = ['IC1909','IF1909','IH1909','c1909','SR909','CF909','rb1910']
-        self.id_list = ['IC1909','c1909','CF909']
+        self.id_list = ['c1909','c2001',
+                        'SR909','SR001',
+                        'CF909','CF001',
+                        'rb1910','rb2001',
+                        'IH1909','IH1912',
+                        'IC1909','IC1912',
+                        'IF1909','IF1912',
+                        ]
+
+        #self.id_list = ['IC1909','c1909','CF909']
         self.dss = '../../../data/'
         self.tradeDay = ''
         self.bar_dict = {}
