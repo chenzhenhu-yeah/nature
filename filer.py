@@ -80,7 +80,7 @@ def deal_file(ins):
 
     return r
 
-if __name__ == "__main__":
+def file_service():
     print('beging filer')
     while True:
         with Listener(address, authkey=b'secret password') as listener:
@@ -88,3 +88,10 @@ if __name__ == "__main__":
                 # print('connection accepted from', listener.last_accepted)
                 ins_dict = conn.recv(); #print(ins_dict)
                 conn.send( deal_file(ins_dict) )
+
+if __name__ == "__main__":
+    try:
+        file_service()
+    except Exception as e:
+        print('error')
+        print(e)

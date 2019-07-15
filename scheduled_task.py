@@ -90,20 +90,24 @@ def mail_0200():
         print(e)
 
 if __name__ == '__main__':
-    '''
-    schedule.every(3).seconds.do(down_data_0100)
-    '''
+    try:
+        '''
+        schedule.every(3).seconds.do(down_data_0100)
+        '''
 
-    # 盘中
-    schedule.every().day.at("15:15").do(mail_1515)
+        # 盘中
+        schedule.every().day.at("15:15").do(mail_1515)
 
-    #盘后
-    schedule.every().day.at("18:15").do(mail_1815)
-    schedule.every().day.at("01:00").do(down_data_0100)
-    schedule.every().day.at("02:00").do(mail_0200)
+        #盘后
+        schedule.every().day.at("18:15").do(mail_1815)
+        schedule.every().day.at("01:00").do(down_data_0100)
+        schedule.every().day.at("02:00").do(mail_0200)
 
 
-    print('schedule begin...')
-    while True:
-        schedule.run_pending()
-        time.sleep(10)
+        print('schedule begin...')
+        while True:
+            schedule.run_pending()
+            time.sleep(10)
+    except Exception as e:
+        print('error')
+        print(e)

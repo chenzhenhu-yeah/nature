@@ -41,7 +41,7 @@ def read_log_today():
 
     return r
 
-if __name__ == "__main__":
+def log_service():
     print('beging logging... ')
 
     cfg = configparser.ConfigParser()
@@ -63,3 +63,10 @@ if __name__ == "__main__":
                 s = conn.recv();
                 logger = logging.getLogger('autotrade')
                 logger.info(s)
+
+if __name__ == "__main__":
+    try:
+        log_service()
+    except Exception as e:
+        print('error')
+        print(e)

@@ -43,3 +43,4 @@ from nature.future.py_ctp.trade import CtpTrade
 from nature.future.py_ctp.quote import CtpQuote
 #from py_ctp.enums import *
 from nature.future.py_ctp.structs import Tick
+from nature.future.engine.strategyAtrRsi import AtrRsiPortfolio

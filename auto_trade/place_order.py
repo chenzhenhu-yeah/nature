@@ -167,18 +167,22 @@ def stare_order():
         # return
 
 if __name__ == "__main__":
-    print('place_order begin... \n')
+    try:
+        print('place_order begin... \n')
 
-    p1 = multiprocessing.Process(target=place_order_service, args=())
-    p1.start()
-    time.sleep(1)
+        p1 = multiprocessing.Process(target=place_order_service, args=())
+        p1.start()
+        time.sleep(1)
 
-    p2 = multiprocessing.Process(target=avoid_idle, args=())
-    p2.start()
+        p2 = multiprocessing.Process(target=avoid_idle, args=())
+        p2.start()
 
-    p3 = multiprocessing.Process(target=stare_order, args=())
-    p3.start()
+        p3 = multiprocessing.Process(target=stare_order, args=())
+        p3.start()
 
-    p1.join()
-    p2.join()
-    p3.join()
+        p1.join()
+        p2.join()
+        p3.join()
+    except Exception as e:
+        print('error')
+        print(e)

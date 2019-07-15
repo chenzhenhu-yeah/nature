@@ -52,11 +52,7 @@ class TradeEngine(object):
 
         # 合约配置信息
         self.vtSymbolList = []
-        self.sizeDict = {}                  # 合约大小字典
-        self.priceTickDict = {}             # 最小价格变动字典
-        self.variableCommissionDict = {}    # 变动手续费字典
-        self.fixedCommissionDict = {}       # 固定手续费字典
-        self.slippageDict = {}              # 滑点成本字典
+
 
         self.cash = 0
         self.portfolioValue = 100E4

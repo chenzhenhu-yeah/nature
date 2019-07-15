@@ -207,18 +207,22 @@ class TestQuote(object):
             time.sleep(10)
 
 if __name__ == "__main__":
-    front_trade = 'tcp://180.168.146.187:10101'
-    front_quote = 'tcp://180.168.146.187:10111'
-    broker = '9999'
-    investor = ''
-    pwd = ''
+    try:
+        front_trade = 'tcp://180.168.146.187:10101'
+        front_quote = 'tcp://180.168.146.187:10111'
+        broker = '9999'
+        investor = ''
+        pwd = ''
 
-    time.sleep(3)
-    qq = TestQuote(front_quote, broker, investor, pwd)
+        time.sleep(3)
+        qq = TestQuote(front_quote, broker, investor, pwd)
 
-    #qq.daily_worker()
+        qq.daily_worker()
 
-    qq.run()
-    input()
-    qq.release()
-    input()
+        # qq.run()
+        # input()
+        # qq.release()
+        # input()
+    except Exception as e:
+        print('error')
+        print(e)

@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+from csv import DictReader
 from collections import defaultdict
 
 
@@ -32,7 +33,6 @@ class NearBollSignal(Signal):
         self.buyPrice = 0
         self.intraTradeLow = 100E4                   # 持仓期内的最低点
         self.longStop = 100E4                        # 多头止损
-
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -183,13 +183,22 @@ class NearBollSignal(Signal):
 
 class NearBollPortfolio(Portfolio):
     #----------------------------------------------------------------------
-    def __init__(self, engine):
+    def __init__(self, engine, name):
         Portfolio.__init__(self, engine)
+
+        self.name = name
+        self.vtSymbolList = []
+        self.SIZE_DICT = {}
+        self.PRICETICK_DICT = {}
+        self.VARIABLE_COMMISSION_DICT = {}
+        self.FIXED_COMMISSION_DICT = {}
+        self.SLIPPAGE_DICT = {}
 
     #----------------------------------------------------------------------
     def init(self):
         """初始化信号字典、持仓字典"""
-        filename = self.engine.dss + 'csv/setting.csv'
+        #filename = self.engine.dss + 'csv/setting.csv'
+        filename = self.engine.dss + 'csv/setting_stk_' + self.name + '.csv'
 
         with open(filename,encoding='utf-8') as f:
             r = DictReader(f)
@@ -205,7 +214,7 @@ class NearBollPortfolio(Portfolio):
         self.sizeDict = self.SIZE_DICT
 
         for vtSymbol in self.vtSymbolList:
-            signal1 = AtrRsiSignal(self, vtSymbol)
+            signal1 = NearBollSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
             self.posDict[vtSymbol] = 0

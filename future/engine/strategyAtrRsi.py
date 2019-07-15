@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+from csv import DictReader
 from collections import defaultdict
 
 from nature import to_log
@@ -131,7 +132,7 @@ class AtrRsiPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def init(self):
         """初始化信号字典、持仓字典"""
-        filename = self.engine.dss + 'csv/setting_fut_' + self.name + '.csv'
+        filename = self.engine.dss + 'fut/cfg/setting_fut_' + self.name + '.csv'
 
         with open(filename,encoding='utf-8') as f:
             r = DictReader(f)

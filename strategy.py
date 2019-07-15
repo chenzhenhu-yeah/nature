@@ -186,6 +186,7 @@ class ArrayManager(object):
         """Constructor"""
         self.count = 0                      # 缓存计数
         self.size = size                    # 缓存大小
+        self.initDays = initDays
         self.inited = False                 # True if count>=size
 
         self.openArray = np.zeros(size)     # OHLC
@@ -210,7 +211,7 @@ class ArrayManager(object):
         self.volumeArray[-1] = bar.volume
 
         self.count += 1
-        if not self.inited and self.count >= initDays:
+        if not self.inited and self.count >= self.initDays:
             self.inited = True
 
     #----------------------------------------------------------------------

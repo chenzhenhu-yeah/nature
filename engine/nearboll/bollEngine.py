@@ -21,12 +21,6 @@ from nature import NearBollPortfolio, GatewayPingan, TradeEngine
 
 from nature import get_stk_hfq, get_trading_dates, get_adj_factor
 
-SIZE_DICT = {}
-PRICETICK_DICT = {}
-VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
-SLIPPAGE_DICT = {}
-
 ########################################################################
 class BollEngine(TradeEngine):
     """
@@ -163,14 +157,14 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    start()
-    # dss = '../../../data/'
-    # engine = BollEngine(dss, GatewayPingan())
-    # engine.worker_1430()
-    # engine.worker_1450()
-    # engine.worker_1500()
+    try:
+        start()
 
-    # df = ts.get_realtime_quotes('300408')
-    # d = df.loc[0,:]
-    # print(type(d))
-    # print(d)
+        # dss = '../../../data/'
+        # engine = BollEngine(dss, GatewayPingan())
+        # engine.worker_1430()
+        # engine.worker_1450()
+        # engine.worker_1500()
+    except Exception as e:
+        print('error')
+        print(e)

@@ -130,14 +130,18 @@ def stare_hold():
             time.sleep(300)
 
 if __name__ == "__main__":
-    print('stare begin... \n')
+    try:
+        print('stare begin... \n')
 
-    p1 = multiprocessing.Process(target=stare_ins, args=())
-    p1.start()
-    time.sleep(1)
+        p1 = multiprocessing.Process(target=stare_ins, args=())
+        p1.start()
+        time.sleep(1)
 
-    p2 = multiprocessing.Process(target=stare_hold, args=())
-    p2.start()
+        p2 = multiprocessing.Process(target=stare_hold, args=())
+        p2.start()
 
-    p1.join()
-    p2.join()
+        p1.join()
+        p2.join()
+    except Exception as e:
+        print('error')
+        print(e)

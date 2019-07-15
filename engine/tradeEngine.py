@@ -55,11 +55,6 @@ class TradeEngine(object):
 
         # 合约配置信息
         self.vtSymbolList = []
-        self.sizeDict = {}                  # 合约大小字典
-        self.priceTickDict = {}             # 最小价格变动字典
-        self.variableCommissionDict = {}    # 变动手续费字典
-        self.fixedCommissionDict = {}       # 固定手续费字典
-        self.slippageDict = {}              # 滑点成本字典
 
         self.cash = 0
         self.portfolioValue = 100E4
@@ -73,9 +68,7 @@ class TradeEngine(object):
         """每日重新加载投资组合"""
         to_log('in TradeEngine.loadPortfolio')
 
-        self.portfolio = PortfolioClass(self)
-        self.portfolio.name = name
-
+        self.portfolio = PortfolioClass(self, name)
         self.portfolio.init()
 
     #----------------------------------------------------------------------
@@ -100,7 +93,8 @@ class TradeEngine(object):
 
         self.dataDict = OrderedDict()
 
-        for vtSymbol in self.vtSymbolList:
+        for vtSymbol in self.portfolio.vtSymbolList:
+            print('come here ')
             df = get_stk_hfq(self.dss, vtSymbol)
             df = df.sort_values(['date'])
             for i, d in df.iterrows():
