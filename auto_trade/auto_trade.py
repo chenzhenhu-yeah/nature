@@ -3,7 +3,7 @@
 from pywinauto import application
 import time
 
-pingan_window_handle = 0x2C0616
+pingan_window_handle = 0x20364
 gtja_window_handle = 0xA085C
 cf_window_handle = 0x20C60
 

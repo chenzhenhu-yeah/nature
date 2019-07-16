@@ -19,10 +19,9 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        self.portfolio = None
         self.dss = '../../../data/'
 
-
+        self.portfolio = None                # 一对一
         self.portfolioValue = 100E4
         self.startDt = None
         self.endDt = None
@@ -37,7 +36,7 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name):
         """每日重新加载投资组合"""
-        to_log('in FutEngine.loadPortfolio')
+        print('in BacktestEngine.loadPortfolio')
 
         p = PortfolioClass(self, name)
         p.init()
@@ -66,7 +65,7 @@ class BacktestingEngine(object):
             bar.low = float(d['low'])
             bar.close = float(d['close'])
 
-            date = d['date']
+            date = str(d['date'])
             if '-' in date:
                 date = date.split('-')
                 date = ''.join(date)
@@ -83,37 +82,20 @@ class BacktestingEngine(object):
 
     #----------------------------------------------------------------------
     def loadInitBar(self, vtSymbol, initBars):
-        """读取Bar数据，"""
+        """读取startDt前n条Bar数据，用于初始化am"""
 
         dt_list = self.dataDict.keys()
-        print(len(dt_list))
+        #print(len(dt_list))
         dt_list = [x for x in dt_list if x<self.startDt]
-        print(len(dt_list))
+        #print(len(dt_list))
+        dt_list = dt_list[-initBars:]
+        #print(dt_list)
 
-
-        # for dt, barDict in self.dataDict.items():
-        #     if dt >= self.startDt and dt <= self.endDt:
-        #
         r = []
-        # try:
-        #     today = time.strftime('%Y%m%d',time.localtime())
-        #     fname = self.dss + 'fut/bar/min1_' + today + '_' + vtSymbol + '.csv'
-        #     #print(fname)
-        #     df = pd.read_csv(fname)
-        #     df = df.sort_values(by=['date','time'])
-        #     df = df.iloc[-initBars:]
-        #     print(df)
-        #
-        #     for i, row in df.iterrows():
-        #         d = dict(row)
-        #         #print(d)
-        #         #print(type(d))
-        #         bar = VtBarData()
-        #         bar.__dict__ = d
-        #         r.append(bar)
-        # except Exception as e:
-        #     print('error ')
-        #     print(e)
+        for dt in dt_list:
+            barDict = self.dataDict[dt]
+            for bar in barDict.values():
+                r.append(bar)
 
         return r
 
@@ -480,13 +462,13 @@ if __name__ == '__main__':
     #try:
         # 创建回测引擎对象
         engine = BacktestingEngine()
-        engine.loadPortfolio(AtrRsiPortfolio, 'backtest')
-
-        engine.setPeriod(datetime(2018,5, 1), datetime(2019, 6, 30))
+        engine.setPeriod(datetime(2018, 9, 1), datetime(2019, 3, 30))
         engine.loadData('IF88')
 
-        #engine.runBacktesting()
-        #engine.showResult()
+        engine.loadPortfolio(AtrRsiPortfolio, 'backtest')
+
+        engine.runBacktesting()
+        engine.showResult()
 
     # except Exception as e:
     #     print('error')
