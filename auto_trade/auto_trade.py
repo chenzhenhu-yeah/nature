@@ -2,10 +2,19 @@
 
 from pywinauto import application
 import time
+import json
 
-pingan_window_handle = 0x20364
-gtja_window_handle = 0xA085C
-cf_window_handle = 0x20C60
+from nature import get_dss
+
+dss = get_dss()
+config = open(dss+'csv/config.json')
+setting = json.load(config)
+
+pingan_window_handle = setting['pingan_window_handle']
+gtja_window_handle = setting['gtja_window_handle']
+cf_window_handle = setting['cf_window_handle']
+
+#print(pingan_window_handle)
 
 def pingan_avoid_idle():
     r = False
@@ -228,7 +237,7 @@ if __name__ == "__main__":
     num = '100'
 
     #gtja_buy(code,price,num)
-    gtja_sell(code,price,num)
+    #gtja_sell(code,price,num)
     #pingan_buy(code,price,num)
     #pingan_sell(code,price,num)
     #cf_buy(code,price,num)

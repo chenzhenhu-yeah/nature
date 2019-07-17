@@ -7,12 +7,21 @@
 
 from pywinauto import application
 import time
-from nature import to_log
+import json
 
-kqgj_window_handle = 0x207A2
+from nature import to_log, get_dss
+
+dss = get_dss()
+config = open(dss+'csv/config.json')
+setting = json.load(config)
+
+kqgj_window_handle = setting['kqgj_window_handle']
+kqgj_app_path = setting['kqgj_app_path']
+#print(kqgj_window_handle)
+#print(kqgj_app_path)
+
 app = application.Application()
-#app.connect(path = r"C:\国际期货主席\launcher.exe")
-app.connect(path = r"C:\Users\Administrator\AppData\Roaming\Q72_cifco_1_standard\20190715083443\q7_release.exe")
+app.connect(path = kqgj_app_path)
 dlg_spec = app.window(handle = kqgj_window_handle)
 
 def kqgj_buy(code,price,num):
@@ -201,7 +210,7 @@ if __name__ == "__main__":
     price = '1235'
     num = '1'
 
-    kqgj_buy(code,price,num)
+    #kqgj_buy(code,price,num)
 
     #gtja_sell(code,price,num)
     #pingan_buy(code,price,num)

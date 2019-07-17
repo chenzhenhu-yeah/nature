@@ -1,4 +1,5 @@
 #  -*- coding: utf-8 -*-
+import os
 import pandas as pd
 import time
 from datetime import datetime
@@ -83,6 +84,13 @@ def is_trade_day():
         return True, today
     else:
         return False, today
+#----------------------------------------------------------------------
+def get_dss():
+    path = os.getcwd()
+    i = path.find('git_repo')
+    #print(path[:i])
+    return path[:i] + 'git_repo/data/'
 
 if __name__ == '__main__':
+    get_dss()
     pass
