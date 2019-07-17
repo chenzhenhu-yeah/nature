@@ -9,7 +9,7 @@ from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSE
 from nature import Signal, Portfolio
 
 ########################################################################
-class AtrRsiSignal(Signal):
+class Fut_AtrRsiSignal(Signal):
 
     # 策略参数
     atrLength = 22          # 计算ATR指标的窗口数
@@ -49,7 +49,8 @@ class AtrRsiSignal(Signal):
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine.loadInitBar(self.vtSymbol, self.initBars)
         for bar in initData:
-            self.onBar(bar)
+            if not self.am.inited:
+                self.onBar(bar)
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -116,7 +117,7 @@ class AtrRsiSignal(Signal):
             if bar.close >= shortStop:
                 self.cover(bar.close, abs(pos))
 
-class AtrRsiPortfolio(Portfolio):
+class Fut_AtrRsiPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, name):
         Portfolio.__init__(self, engine)
@@ -145,15 +146,15 @@ class AtrRsiPortfolio(Portfolio):
                 self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
         self.portfolioValue = 100E4
-        self.sizeDict = self.SIZE_DICT
 
         for vtSymbol in self.vtSymbolList:
-            signal1 = AtrRsiSignal(self, vtSymbol)
+            self.posDict[vtSymbol] = 0
+            signal1 = Fut_AtrRsiSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
-            self.posDict[vtSymbol] = 0
 
         print(u'投资组合的合约代码%s' %(self.vtSymbolList))
+
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
         """
@@ -164,9 +165,13 @@ class AtrRsiPortfolio(Portfolio):
 
         # 计算合约持仓
         if direction == DIRECTION_LONG:
-            self.posDict[vtSymbol] += volume
+            self.posDict[signal.vtSymbol] += volume
         else:
-            self.posDict[vtSymbol] -= volume
+            self.posDict[signal.vtSymbol] -= volume
+
+        # 对价格四舍五入
+        priceTick = self.PRICETICK_DICT[signal.vtSymbol]
+        price = int(round(price/priceTick, 0)) * priceTick
 
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
 

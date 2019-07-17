@@ -35,6 +35,10 @@ class Signal(object):
         self.bar = None                 # 最新K线
 
     #----------------------------------------------------------------------
+    def onBar(self, bar):
+        assert False, '子类必须实现此函数'
+
+    #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """调用组合中的接口，传递下单指令"""
         self.portfolio.newSignal(self, direction, offset, price, volume)
@@ -72,20 +76,12 @@ class Portfolio(object):
     #----------------------------------------------------------------------
     def __init__(self, engine):
         """Constructor"""
-        self.engine = engine
+        self.engine = engine                 # 所属引擎
         self.name = ''
-        self.signalDict = defaultdict(list)  # 存储信号，code为键, signal列表为值
-
-        self.sizeDict = {}          # 合约大小字典，code为键,size为值
-        self.posDict = {}           # 真实持仓量字典，code为键,pos为值
+        self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
+        self.posDict = {}           # 真实持仓量字典,code为键,pos为值
 
         self.portfolioValue = 0     # 组合市值
-
-    #----------------------------------------------------------------------
-    def print_portfolio(self):
-        print(self.sizeDict)          # 合约大小字典
-        print(self.posDict)        # 真实持仓量字典
-        print(self.portfolioValue)     # 组合市值
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -97,7 +93,7 @@ class Portfolio(object):
     def sendOrder(self, vtSymbol, direction, offset, price, volume, multiplier):
         """向引擎发单"""
 
-        # 向回测引擎中发单记录
+        # 向引擎发单
         self.engine.sendOrder(vtSymbol, direction, offset, price, volume*multiplier)
         print('\n',str(self.engine.currentDt) + ' sendOrder...')
         print(vtSymbol, direction, offset, price, volume*multiplier)

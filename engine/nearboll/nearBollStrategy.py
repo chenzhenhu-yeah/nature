@@ -211,7 +211,6 @@ class NearBollPortfolio(Portfolio):
                 self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
         self.portfolioValue = 100E4
-        self.sizeDict = self.SIZE_DICT
 
         for vtSymbol in self.vtSymbolList:
             signal1 = NearBollSignal(self, vtSymbol)

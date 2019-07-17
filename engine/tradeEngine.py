@@ -94,7 +94,7 @@ class TradeEngine(object):
         self.dataDict = OrderedDict()
 
         for vtSymbol in self.portfolio.vtSymbolList:
-            print('come here ')
+            #print('come here ')
             df = get_stk_hfq(self.dss, vtSymbol)
             df = df.sort_values(['date'])
             for i, d in df.iterrows():

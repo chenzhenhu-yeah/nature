@@ -63,7 +63,7 @@ class BollEngine(TradeEngine):
             return
 
         self.currentDt = dt
-        for vtSymbol in self.vtSymbolList:
+        for vtSymbol in self.portfolio.vtSymbolList:
             #print(vtSymbol)
             df = None
             i = 0
@@ -158,13 +158,13 @@ def start():
 
 if __name__ == '__main__':
     try:
-        start()
+        #start()
 
-        # dss = '../../../data/'
-        # engine = BollEngine(dss, GatewayPingan())
-        # engine.worker_1430()
-        # engine.worker_1450()
-        # engine.worker_1500()
+        dss = '../../../data/'
+        engine = BollEngine(dss, GatewayPingan())
+        engine.worker_1430()
+        engine.worker_1450()
+        engine.worker_1500()
     except Exception as e:
         print('error')
         print(e)

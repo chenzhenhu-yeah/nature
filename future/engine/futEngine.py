@@ -37,7 +37,7 @@ class FutEngine(object):
     def __init__(self,dss):
         """Constructor"""
         to_log('in FutEngine.__init__')
-        # TradeEngine.__init__(self, dss, gateway)
+        
         self.dss = dss
         self.portfolio_list = []
         self.vtSymbol_list = ['IC1909','c1909','CF909']

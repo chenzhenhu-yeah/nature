@@ -10,7 +10,13 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import AtrRsiPortfolio
+from nature import Fut_AtrRsiPortfolio
+
+SIZE_DICT = {}
+PRICETICK_DICT = {}
+VARIABLE_COMMISSION_DICT = {}
+FIXED_COMMISSION_DICT = {}
+SLIPPAGE_DICT = {}
 
 ########################################################################
 class BacktestingEngine(object):
@@ -41,6 +47,18 @@ class BacktestingEngine(object):
         p = PortfolioClass(self, name)
         p.init()
         self.portfolio = p
+
+        global SIZE_DICT
+        global PRICETICK_DICT
+        global VARIABLE_COMMISSION_DICT
+        global FIXED_COMMISSION_DICT
+        global SLIPPAGE_DICT
+
+        SIZE_DICT = p.SIZE_DICT
+        PRICETICK_DICT = p.PRICETICK_DICT
+        VARIABLE_COMMISSION_DICT = p.VARIABLE_COMMISSION_DICT
+        FIXED_COMMISSION_DICT = p.FIXED_COMMISSION_DICT
+        SLIPPAGE_DICT = p.SLIPPAGE_DICT
 
     #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
@@ -291,9 +309,6 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def sendOrder(self, vtSymbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
-        # 对价格四舍五入
-        priceTick = PRICETICK_DICT[vtSymbol]
-        price = int(round(price/priceTick, 0)) * priceTick
 
         # 记录成交数据
         trade = TradeData(vtSymbol, direction, offset, price, volume)
@@ -409,7 +424,8 @@ class DailyResult(object):
         """计算当日交易盈亏"""
         for vtSymbol, l in self.tradeDict.items():
             close = self.closeDict[vtSymbol]
-            size = self.portfolio.SIZE_DICT[vtSymbol]
+            size = SIZE_DICT[vtSymbol]
+
 
             slippage = SLIPPAGE_DICT[vtSymbol]
             variableCommission = VARIABLE_COMMISSION_DICT[vtSymbol]
@@ -436,7 +452,8 @@ class DailyResult(object):
         for vtSymbol, pos in self.posDict.items():
             previousClose = self.previousCloseDict.get(vtSymbol, 0)
             close = self.closeDict[vtSymbol]
-            size = self.portfolio.SIZE_DICT[vtSymbol]
+            size = SIZE_DICT[vtSymbol]
+
 
             pnl = (close - previousClose) * pos * size
             self.holdingPnl += pnl
@@ -465,7 +482,7 @@ if __name__ == '__main__':
         engine.setPeriod(datetime(2018, 9, 1), datetime(2019, 3, 30))
         engine.loadData('IF88')
 
-        engine.loadPortfolio(AtrRsiPortfolio, 'backtest')
+        engine.loadPortfolio(Fut_AtrRsiPortfolio, 'backtest')
 
         engine.runBacktesting()
         engine.showResult()
