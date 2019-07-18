@@ -195,8 +195,8 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        schedule.every().day.at("14:58").do(self.worker_1430)
-        schedule.every().day.at("14:59").do(self.worker_1450)
+        schedule.every().day.at("14:30").do(self.worker_1430)
+        schedule.every().day.at("14:50").do(self.worker_1450)
         schedule.every().day.at("15:00").do(self.worker_1500)
 
         self.output(u'交易引擎开始运行')
@@ -227,17 +227,17 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    # try:
-    #     start()
+    try:
+        start()
 
-        dss = '../../../data/'
-        engine = StkEngine(dss, GatewayPingan())
-        engine.worker_1430()
-        engine.worker_1450()
-        engine.worker_1500()
-        print('come here ')
-    # except Exception as e:
-    #     print('error')
-    #     print(e)
-    #     while True:
-    #         time.sleep(300)
+        # dss = '../../../data/'
+        # engine = StkEngine(dss, GatewayPingan())
+        # engine.worker_1430()
+        # engine.worker_1450()
+        # engine.worker_1500()
+        # print('come here ')
+    except Exception as e:
+        print('error')
+        print(e)
+        while True:
+            time.sleep(300)
