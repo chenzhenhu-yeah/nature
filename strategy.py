@@ -1,8 +1,10 @@
 # encoding: UTF-8
 
 from collections import defaultdict
+import pandas as pd
 import numpy as np
 import talib
+import tushare as ts
 
 from nature import send_instruction
 
