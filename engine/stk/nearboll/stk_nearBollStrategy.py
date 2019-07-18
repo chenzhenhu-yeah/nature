@@ -288,7 +288,7 @@ class stk_NearBollPortfolio(Portfolio):
         r = []
         today = get_nature_day()
         for code in self.vtSymbolList:
-            for signal in self.portfolio.signalDict[code]:
+            for signal in self.signalDict[code]:
                 r.append([today,self.name, code, signal.buyPrice, signal.intraTradeLow, signal.longStop,'','',''])
 
         #['date', 'name', 'vtSymbol','buyPrice','intraTradeLow','longStop']
