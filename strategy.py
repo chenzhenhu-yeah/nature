@@ -94,7 +94,7 @@ class Portfolio(object):
         """向引擎发单"""
 
         # 向引擎发单
-        self.engine.sendOrder(vtSymbol, direction, offset, price, volume*multiplier)
+        self.engine.sendOrder(vtSymbol, direction, offset, price, volume*multiplier, self.name)
         print('\n',str(self.engine.currentDt) + ' sendOrder...')
         print(vtSymbol, direction, offset, price, volume*multiplier)
         #self.print_portfolio()

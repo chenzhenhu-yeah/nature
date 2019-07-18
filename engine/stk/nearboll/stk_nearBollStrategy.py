@@ -240,9 +240,9 @@ class stk_NearBollPortfolio(Portfolio):
 
         # 计算合约持仓
         if direction == DIRECTION_LONG:
-            self.posDict[vtSymbol] += volume
+            self.posDict[signal.vtSymbol] += volume
         else:
-            self.posDict[vtSymbol] -= volume
+            self.posDict[signal.vtSymbol] -= volume
 
         # 对价格四舍五入
         priceTick = self.PRICETICK_DICT[signal.vtSymbol]

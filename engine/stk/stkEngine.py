@@ -83,7 +83,7 @@ class StkEngine(object):
         return r
 
     #----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, direction, offset, price, volume):
+    def sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
         """记录交易数据（由portfolio调用）"""
 
         # 记录成交数据
@@ -91,8 +91,8 @@ class StkEngine(object):
         l = self.tradeDict.setdefault(self.currentDt, [])
         l.append(trade)
 
-        print('send order: ', vtSymbol, direction, offset, price, volume )# 此处还应判断cash
-        self.gateway(vtSymbol, direction, offset, price, volume, self.portfolio.name) #发单到真实交易路由
+        print('send order: ', vtSymbol, direction, offset, price, volume, pfName )# 此处还应判断cash
+        self.gateway.sendOrder(vtSymbol, direction, offset, price, volume, pfName) #发单到真实交易路由
 
     #----------------------------------------------------------------------
     def output(self, content):
@@ -227,17 +227,17 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    try:
-        start()
+    # try:
+    #     start()
 
-        # dss = '../../../data/'
-        # engine = StkEngine(dss, GatewayPingan())
-        # engine.worker_1430()
-        # engine.worker_1450()
-        # engine.worker_1500()
-        # print('come here ')
-    except Exception as e:
-        print('error')
-        print(e)
-        while True:
-            time.sleep(300)
+        dss = '../../../data/'
+        engine = StkEngine(dss, GatewayPingan())
+        engine.worker_1430()
+        engine.worker_1450()
+        engine.worker_1500()
+        print('come here ')
+    # except Exception as e:
+    #     print('error')
+    #     print(e)
+    #     while True:
+    #         time.sleep(300)
