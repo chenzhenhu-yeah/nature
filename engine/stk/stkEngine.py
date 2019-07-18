@@ -195,8 +195,8 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        schedule.every().day.at("14:49").do(self.worker_1430)
-        schedule.every().day.at("14:50").do(self.worker_1450)
+        schedule.every().day.at("14:58").do(self.worker_1430)
+        schedule.every().day.at("14:59").do(self.worker_1450)
         schedule.every().day.at("15:00").do(self.worker_1500)
 
         self.output(u'交易引擎开始运行')

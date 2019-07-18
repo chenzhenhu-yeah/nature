@@ -93,9 +93,9 @@ def get_nature_day():
 #----------------------------------------------------------------------
 def get_dss():
     path = os.getcwd()
-    i = path.find('git_repo')
+    i = path.find('git-repo')
     #print(path[:i])
-    return path[:i] + 'git_repo/data/'
+    return path[:i] + 'git-repo/data/'
 
 if __name__ == '__main__':
     get_dss()
