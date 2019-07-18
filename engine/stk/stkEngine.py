@@ -195,7 +195,7 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def run(self):
         """运行"""
-        schedule.every().day.at("14:46").do(self.worker_1430)
+        schedule.every().day.at("14:49").do(self.worker_1430)
         schedule.every().day.at("14:50").do(self.worker_1450)
         schedule.every().day.at("15:00").do(self.worker_1500)
 
