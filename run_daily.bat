@@ -18,13 +18,14 @@ cd ..
 start /MIN python scheduled_task.py
 choice /t 1 /d y /n >nul
 
-cd .\future\quotation
+cd .\engine\fut\quotation
 start /MIN python subscribe_quote.py
 choice /t 1 /d y /n >nul
 
 cd ..
 cd ..
-cd .\engine\nearboll
-start /MIN python bollEngine.py
+cd ..
+cd .\engine\stk
+start /MIN python stkEngine.py
 
 pause

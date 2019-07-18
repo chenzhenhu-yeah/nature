@@ -84,6 +84,12 @@ def is_trade_day():
         return True, today
     else:
         return False, today
+
+def get_nature_day():
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    return today
+
 #----------------------------------------------------------------------
 def get_dss():
     path = os.getcwd()

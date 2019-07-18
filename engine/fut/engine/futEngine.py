@@ -37,7 +37,7 @@ class FutEngine(object):
     def __init__(self,dss):
         """Constructor"""
         to_log('in FutEngine.__init__')
-        
+
         self.dss = dss
         self.portfolio_list = []
         self.vtSymbol_list = ['IC1909','c1909','CF909']
@@ -47,6 +47,23 @@ class FutEngine(object):
         #threading.Thread( target=self.bar_service, args=() ).start()
         threading.Thread( target=self.put_service, args=() ).start()
 
+    #----------------------------------------------------------------------
+    def init_daily(self):
+        """每日初始化交易引擎"""
+        to_log('in FutEngine.init_daily')
+
+        self.portfolio_list = []
+        self.loadPortfolio(AtrRsiPortfolio, 'AtrRsi')
+
+    #----------------------------------------------------------------------
+    def loadPortfolio(self, PortfolioClass, name):
+        """加载投资组合"""
+        to_log('in FutEngine.loadPortfolio')
+
+        p = PortfolioClass(self, name)
+        p.init()
+        p.loadParam()
+        self.portfolio_list.append(p)
 
     #----------------------------------------------------------------------
     def bar_service(self):
@@ -107,16 +124,6 @@ class FutEngine(object):
         print(type(bar))
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass, name):
-        """每日重新加载投资组合"""
-        to_log('in FutEngine.loadPortfolio')
-
-        p = PortfolioClass(self, name)
-        p.init()
-        p.loadParam()
-        self.portfolio_list.append(p)
-
-    #----------------------------------------------------------------------
     def loadInitBar(self, vtSymbol, initBars):
         """读取Bar数据，"""
         r = []
@@ -148,7 +155,7 @@ class FutEngine(object):
         to_log('in FutEngine.worker_open')
         print('in worker_open')
 
-        self.loadPortfolio(AtrRsiPortfolio, 'AtrRsi')
+        self.init_daily()
 
     #----------------------------------------------------------------------
     def worker_close(self):

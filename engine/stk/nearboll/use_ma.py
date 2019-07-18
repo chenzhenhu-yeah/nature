@@ -73,9 +73,7 @@ def use_ma(dss):
         name = df.at[0,'name']
         r.append([vtSymbol,1,0.01,'0.00003',0,0.01,name])
     df = pd.DataFrame(r, columns=['vtSymbol','size','priceTick','variableCommission','fixedCommission','slippage','name'])
-    #filename = dss + 'csv/setting_' + today + '.csv'
-    #df.to_csv(filename, index=False, encoding='gbk')
-    filename = dss + 'csv/setting' + '.csv'
+    filename = dss + 'csv/setting_stk_boll' + '.csv'
     df.to_csv(filename, index=False)
 
     return r

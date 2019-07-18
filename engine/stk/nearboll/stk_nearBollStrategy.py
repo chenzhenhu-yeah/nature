@@ -2,28 +2,27 @@
 
 from csv import DictReader
 from collections import defaultdict
+import pandas as pd
 
-
-from nature import to_log
-from nature import ArrayManager
+from nature import to_log, get_nature_day
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
-from nature import Signal, Portfolio
+from nature import ArrayManager, Signal, Portfolio, Book
 
 ########################################################################
-class NearBollSignal(Signal):
-
-    # 策略参数
-    # initDays = 10                       # 初始化数据所用的天数
-    fixedSize = 1                         # 每次交易的数量
-    singlePosition = 3E4
-
-    # 策略参数
-    bollWindow = 20                     # 布林通道窗口数
-    bollDev = 2                         # 布林通道的偏差
+class stk_NearBollSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         Signal.__init__(self, portfolio, vtSymbol)
+
+        # 策略参数
+        self.initBars = 90                    # 初始化am所用的数目
+        self.fixedSize = 1                         # 每次交易的数量
+        self.singlePosition = 3E4
+
+        # 策略参数
+        self.bollWindow = 20                     # 布林通道窗口数
+        self.bollDev = 2                         # 布林通道的偏差
 
         # 策略变量
         self.bollUp = None                          # 布林通道上轨
@@ -33,6 +32,12 @@ class NearBollSignal(Signal):
         self.buyPrice = 0
         self.intraTradeLow = 100E4                   # 持仓期内的最低点
         self.longStop = 100E4                        # 多头止损
+
+        # 载入历史数据，并采用回放计算的方式初始化策略数值
+        initData = self.portfolio.engine._backcall_loadInitBar(self.vtSymbol, self.initBars)
+        for bar in initData:
+            if not self.am.inited:
+                self.onBar(bar)
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -181,7 +186,7 @@ class NearBollSignal(Signal):
                     self.sell(bar.close_bfq-0.05, abs(self.pos)) # 确保成交
 
 
-class NearBollPortfolio(Portfolio):
+class stk_NearBollPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, name):
         Portfolio.__init__(self, engine)
@@ -200,6 +205,7 @@ class NearBollPortfolio(Portfolio):
         #filename = self.engine.dss + 'csv/setting.csv'
         filename = self.engine.dss + 'csv/setting_stk_' + self.name + '.csv'
 
+        # 从配置文件中读取组合所管理的合约
         with open(filename,encoding='utf-8') as f:
             r = DictReader(f)
             for d in r:
@@ -210,15 +216,19 @@ class NearBollPortfolio(Portfolio):
                 self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
                 self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
+        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
         self.portfolioValue = 100E4
 
+        # 加载Signal字典
         for vtSymbol in self.vtSymbolList:
-            signal1 = NearBollSignal(self, vtSymbol)
+            self.posDict[vtSymbol] = 0
+            signal1 = stk_NearBollSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
-            self.posDict[vtSymbol] = 0
 
-        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
+
+        self.loadHold()
+        self.loadParam()
 
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
@@ -234,4 +244,54 @@ class NearBollPortfolio(Portfolio):
         else:
             self.posDict[vtSymbol] -= volume
 
+        # 对价格四舍五入
+        priceTick = self.PRICETICK_DICT[signal.vtSymbol]
+        price = int(round(price/priceTick, 0)) * priceTick
+
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
+
+    #----------------------------------------------------------------------
+    def loadHold(self):
+        """每日重新加载持仓"""
+
+        b1 = Book(self.engine.dss)
+        for tactic in b1.tactic_List:
+            if tactic.tacticName == self.name:
+                for hold in tactic.hold_Array:
+                    code = hold[0]
+                    num = hold[2]
+                    self.posDict[code] = num
+
+
+    #----------------------------------------------------------------------
+    def loadParam(self):
+        """每日重新加载信号参数"""
+
+        filename = self.engine.dss + 'csv/stk_strategy_param.csv'
+        df = pd.read_csv(filename, dtype='str')
+        df = df[df.name==self.name]
+        #df = df.sort_values('date', ascending=False)
+        lastday= str(df['date'].max())
+        print('lastday: ' + lastday)
+
+        for i, row in df.iterrows():
+            if lastday == row.date and row.A in self.signalDict:
+                signal_list = self.signalDict[row.A]
+                if len(signal_list) > 0:
+                    signal = signal_list[0]
+                    signal.buyPrice = row.B
+                    signal.intraTradeLow = row.C
+                    signal.longStop = row.D
+
+    #----------------------------------------------------------------------
+    def saveParam(self):
+        r = []
+        today = get_nature_day()
+        for code in self.vtSymbolList:
+            for signal in self.portfolio.signalDict[code]:
+                r.append([today,self.name, code, signal.buyPrice, signal.intraTradeLow, signal.longStop,'','',''])
+
+        #['date', 'name', 'vtSymbol','buyPrice','intraTradeLow','longStop']
+        df = pd.DataFrame(r, columns=['date','name','A','B','C','D','E','F','G'])
+        filename = self.engine.dss + 'csv/stk_strategy_param.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
