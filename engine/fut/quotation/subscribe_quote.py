@@ -15,7 +15,7 @@ from nature import CtpTrade
 from nature import CtpQuote
 from nature import Tick
 from nature import VtBarData
-from nature import SOCKET_BAR
+from nature import SOCKET_BAR, get_dss
 
 class HuQuote(CtpQuote):
 
@@ -35,7 +35,7 @@ class HuQuote(CtpQuote):
                         'IF1909','IF1912',
                         ]
 
-        self.dss = '../../../data/'
+        self.dss = get_dss()
         self.tradeDay = ''
         self.bar_dict = {}
 

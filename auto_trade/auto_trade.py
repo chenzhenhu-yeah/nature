@@ -15,6 +15,8 @@ gtja_window_handle = setting['gtja_window_handle']
 cf_window_handle = setting['cf_window_handle']
 
 #print(pingan_window_handle)
+pingan_window_handle = hex(int(pingan_window_handle, 16))
+#print(pingan_window_handle)
 
 def pingan_avoid_idle():
     r = False
