@@ -43,7 +43,7 @@ class Signal(object):
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """调用组合中的接口，传递下单指令"""
-        self.portfolio.newSignal(self, direction, offset, price, volume)
+        self.portfolio._bc_newSignal(self, direction, offset, price, volume)
 
     #----------------------------------------------------------------------
     def buy(self, price, volume):
@@ -91,15 +91,6 @@ class Portfolio(object):
         for signal in self.signalDict[bar.vtSymbol]:
             signal.onBar(bar)
 
-    #----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, direction, offset, price, volume, multiplier):
-        """向引擎发单"""
-
-        # 向引擎发单
-        self.engine.sendOrder(vtSymbol, direction, offset, price, volume*multiplier, self.name)
-        print('\n',str(self.engine.currentDt) + ' sendOrder...')
-        print(vtSymbol, direction, offset, price, volume*multiplier)
-        #self.print_portfolio()
 
 
 ########################################################################
@@ -111,7 +102,7 @@ class GatewayPingan(Gateway):
     def __init__(self):
         pass
 
-    def sendOrder(self, code, direction, offset, price, volume, portfolio):
+    def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
         cost = int(price*volume)
         df = ts.get_realtime_quotes(code)
         name = df.at[0,'name']

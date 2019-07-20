@@ -15,38 +15,37 @@ from nature.down_k.down_fut import down_fut_all
 
 
 def down_data(dss):
-    to_log('in down_data')
     try:
         down_inx_all(dss)
-        to_log('in down_inx_all')
+        to_log('down_inx_all done')
     except Exception as e:
         print('error')
         print(e)
 
     try:
         down_stk_hfq_all(dss)
-        to_log('in down_stk_hfq_all')
+        to_log('down_stk_hfq_all done')
     except Exception as e:
         print('error')
         print(e)
 
     try:
         down_stk_bfq_all(dss)
-        to_log('in down_stk_bfq_all')
+        to_log('down_stk_bfq_all done')
     except Exception as e:
         print('error')
         print(e)
 
     try:
         down_daily_run(dss)
-        to_log('in down_daily_run')
+        to_log('down_daily_run done')
     except Exception as e:
         print('error')
         print(e)
 
     try:
         down_fut_all(dss)
-        to_log('in down_fut_all')
+        to_log('down_fut_all done')
     except Exception as e:
         print('error')
         print(e)

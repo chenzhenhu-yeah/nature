@@ -9,7 +9,7 @@ from nature.logger import to_log, read_log_today
 from nature.tools import send_email, is_trade_time, is_price_time,is_trade_day,get_dss,get_nature_day
 
 from nature.down_k.get_trading_dates import get_trading_dates
-from nature.down_k.get_stk import get_stk_hfq, get_stk_bfq, get_adj_factor
+from nature.down_k.get_stk import get_stk_hfq, get_stk_bfq, get_adj_factor, get_hfq_factor
 from nature.down_k.get_inx import get_inx
 from nature.down_k.get_daily import get_daily, get_stk_codes
 from nature.down_k.get_fut import get_fut
@@ -37,3 +37,5 @@ from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
 from nature.engine.fut.py_ctp.structs import Tick
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
+from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
+from nature.engine.fut.engine.fut_strategyBoll import Fut_BollPortfolio

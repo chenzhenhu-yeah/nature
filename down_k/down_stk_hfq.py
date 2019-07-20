@@ -56,16 +56,13 @@ def down_stk_hfq_single(code,dss,tim01,strInterface='k'):
 
 def down_stk_hfq_all(dss,time0='2018-01-01',strInterface='k'):
     codes = []
-    df = pd.read_csv(dss+'daily/2019-05-23_stk_all.csv', dtype='str', encoding='gbk')
+    listfile = os.listdir(dss + 'daily')
+    listfile.sort(reverse=True)
+    lastday = listfile[0][:10]
+    fn = dss+'daily/'+lastday+'_stk_all.csv'
+    print(fn)
+    df = pd.read_csv(fn, dtype='str', encoding='gbk')
     codes = list(df['code'])
-
-    # df = pd.read_csv(dss+'csv/stk_cyb.csv', dtype='str', encoding='gbk')
-    # codes += list(df['code'])
-    # df = pd.read_csv(dss+'csv/stk_zxb.csv', dtype='str', encoding='gbk')
-    # codes += list(df['code'])
-    # df = pd.read_csv(dss+'csv/stk_sz.csv', dtype='str', encoding='gbk')
-    # codes += list(df['code'])
-
 
     #codes = ['300408']
     print('down_stk_hfq begin ...')

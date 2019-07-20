@@ -9,35 +9,34 @@ from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSE
 from nature import Signal, Portfolio
 
 ########################################################################
-class Fut_AtrRsiSignal(Signal):
+class Fut_BollSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         Signal.__init__(self, portfolio, vtSymbol)
 
         # 策略参数
-        self.atrLength = 22          # 计算ATR指标的窗口数
-        self.atrMaLength = 10        # 计算ATR均线的窗口数
-        self.rsiLength = 5           # 计算RSI的窗口数
-        self.rsiEntry = 16           # RSI的开仓信号
-        self.trailingPercent = 0.8   # 百分比移动止损
+        self.bollWindow = 18                     # 布林通道窗口数
+        self.bollDev = 3.4                       # 布林通道的偏差
+        self.cciWindow = 10                      # CCI窗口数
+        self.atrWindow = 30                      # ATR窗口数
+        self.slMultiplier = 5.2                  # 计算止损距离的乘数
         self.initBars = 90           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
 
         # 策略变量
-        self.atrValue = 0                        # 最新的ATR指标数值
-        self.atrMa = 0                           # ATR移动平均的数值
-        self.rsiValue = 0                        # RSI指标的数值
+        self.bollUp = 0                          # 布林通道上轨
+        self.bollDown = 0                        # 布林通道下轨
+        self.cciValue = 0                        # CCI指标数值
+        self.atrValue = 0                        # ATR指标数值
 
         # 需要持久化保存的参数
+        self.counter = 0
         self.buyPrice = 0
         self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
         self.intraTradeLow = 100E4                   # 持仓期内的最低点
         self.longStop = 100E4                        # 多头止损
-
-        # 初始化RSI入场阈值
-        self.rsiBuy = 50 + self.rsiEntry
-        self.rsiSell = 50 - self.rsiEntry
+        self.shortStop = 0                       # 空头止损
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars)
@@ -62,55 +61,50 @@ class Fut_AtrRsiSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        atrArray = self.am.atr(self.atrLength, array=True)
-        self.atrValue = atrArray[-1]
-        self.atrMa = atrArray[-self.atrMaLength:].mean()
-
-        self.rsiValue = self.am.rsi(self.rsiLength)
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        self.cciValue = self.am.cci(self.cciWindow)
+        self.atrValue = self.am.atr(self.atrWindow)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
         # 判断是否要进行交易
-
+        """
+        cci>100，买入；
+        买入后，6日内cci<100，卖出;
+        cci<-100，卖出；
+        """
         pos = self.portfolio.posDict[self.vtSymbol]
-        # 当前无仓位
+
+        # 当前无仓位，发送开仓委托
         if pos == 0:
             self.intraTradeHigh = bar.high
             self.intraTradeLow = bar.low
 
-            # ATR数值上穿其移动平均线，说明行情短期内波动加大
-            # 即处于趋势的概率较大，适合CTA开仓
-            if self.atrValue > self.atrMa:
-                # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
-                if self.rsiValue > self.rsiBuy:
-                    # 这里为了保证成交，选择超价5个整指数点下单
-                    self.buy(bar.close, self.fixedSize)
-                elif self.rsiValue < self.rsiSell:
-                    self.short(bar.close, self.fixedSize)
+            if self.cciValue > 0 and bar.close > self.bollUp:
+                self.buy(bar.close, self.fixedSize)
+
+            elif self.cciValue < 0 and bar.close < self.bollDown:
+                self.short(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif pos > 0:
-            # 计算多头持有期内的最高价，以及重置最低价
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
             self.intraTradeLow = bar.low
+            self.longStop = self.intraTradeHigh - self.atrValue * self.slMultiplier
 
-            # 计算多头移动止损
-            longStop = self.intraTradeHigh * (1-self.trailingPercent/100)
-
-            # 发出本地止损委托
-            if bar.close <= longStop:
+            if bar.close <= self.longStop:
                 self.sell(bar.close, abs(pos))
 
         # 持有空头仓位
         elif pos < 0:
-            self.intraTradeLow = min(self.intraTradeLow, bar.low)
             self.intraTradeHigh = bar.high
+            self.intraTradeLow = min(self.intraTradeLow, bar.low)
+            self.shortStop = self.intraTradeLow + self.atrValue * self.slMultiplier
 
-            shortStop = self.intraTradeLow * (1+self.trailingPercent/100)
-            if bar.close >= shortStop:
+            if bar.close >= self.shortStop:
                 self.cover(bar.close, abs(pos))
 
-class Fut_AtrRsiPortfolio(Portfolio):
+class Fut_BollPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, name):
         Portfolio.__init__(self, engine)
@@ -142,7 +136,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
 
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
-            signal1 = Fut_AtrRsiSignal(self, vtSymbol)
+            signal1 = Fut_BollSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
 

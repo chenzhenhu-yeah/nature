@@ -13,7 +13,7 @@ import json
 
 from nature import to_log, is_trade_day, send_email
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import get_stk_hfq, get_trading_dates, get_adj_factor
+from nature import get_stk_hfq, get_trading_dates, get_adj_factor, get_hfq_factor
 from nature import Book
 from nature import stk_NearBollPortfolio, GatewayPingan
 
@@ -27,7 +27,6 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def __init__(self,dss,gateway):
         """Constructor"""
-        to_log('in StkEngine.__init__')
         self.dss = dss
         self.gateway = gateway
         self.portfolio_list = []
@@ -35,8 +34,6 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def init_daily(self):
         """每日初始化交易引擎"""
-        to_log('in StkEngine.init_engine')
-
         self.portfolio_list = []
         self.loadPortfolio(stk_NearBollPortfolio, 'boll')
 
@@ -48,19 +45,20 @@ class StkEngine(object):
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name):
         """每日重新加载投资组合"""
-        to_log('in TradeEngine.loadPortfolio')
 
         p = PortfolioClass(self, name)
         p.init()
         self.portfolio_list.append(p)
 
     #----------------------------------------------------------------------
-    def _backcall_loadInitBar(self, vtSymbol, initBars):
+    def _bc_loadInitBar(self, vtSymbol, initBars):
         """读取Bar数据，"""
         r = []
-        df = get_stk_hfq(self.dss, vtSymbol)
+        #df = get_stk_hfq(self.dss, vtSymbol, begin_date=None, end_date='2019-07-18')
+        df = get_stk_hfq(self.dss, vtSymbol, begin_date=None, end_date=None)
         if df is not None:
             df = df.iloc[:initBars]
+            df = df.sort_values('date')
             for i, row in df.iterrows():
                 d = dict(row)
                 #print(d)
@@ -83,7 +81,7 @@ class StkEngine(object):
         return r
 
     #----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
+    def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
         """记录交易数据（由portfolio调用）"""
 
         # 记录成交数据
@@ -92,7 +90,7 @@ class StkEngine(object):
         l.append(trade)
 
         print('send order: ', vtSymbol, direction, offset, price, volume, pfName )# 此处还应判断cash
-        self.gateway.sendOrder(vtSymbol, direction, offset, price, volume, pfName) #发单到真实交易路由
+        self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName) #发单到真实交易路由
 
     #----------------------------------------------------------------------
     def output(self, content):
@@ -140,23 +138,31 @@ class StkEngine(object):
                         time.sleep(0.1)
 
                 if df is None:
+                    to_log('ignore '+ vtSymbol)
                     continue
 
-                code = vtSymbol
+                adj_factor = None
                 df1 = None
                 i = 0
                 while df1 is None and i<2:
                     try:
                         i += 1
-                        df1 = get_adj_factor(self.dss, code)
+                        df1 = get_adj_factor(self.dss, vtSymbol)
+                        adj_factor = float(df1.at[0,'adj_factor'])
                     except Exception as e:
-                        print('error adj_factor ' + code)
+                        print('error adj_factor ' + vtSymbol)
                         print(e)
                         time.sleep(0.1)
                 if df1 is None:
+                    to_log('ignore '+ vtSymbol)
                     continue
 
-                factor = float(df1.at[0,'adj_factor'])
+                hfq_factor = get_hfq_factor(self.dss, vtSymbol)
+                factor = hfq_factor
+                if adj_factor is not None:
+                    if abs((adj_factor-hfq_factor)/adj_factor)> 0.01:    # 差异大，今天有除权
+                        factor = adj_factor
+
                 d = df.loc[0,:]
                 bar = VtBarData()
                 bar.vtSymbol = vtSymbol
@@ -172,6 +178,8 @@ class StkEngine(object):
                 bar.time = '00:00:00'
                 bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
                 bar.volume = float(d['volume'])
+
+                #to_log(vtSymbol+' '+d['price']+' * '+str(factor)+' = '+str(bar.close))
 
                 p.onBar(bar)
 

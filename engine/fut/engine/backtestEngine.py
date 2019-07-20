@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from nature import get_stk_hfq, to_log
+from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import Fut_AtrRsiPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_BollPortfolio
 
 SIZE_DICT = {}
 PRICETICK_DICT = {}
@@ -25,7 +25,7 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        self.dss = '../../../data/'
+        self.dss = get_dss()
 
         self.portfolio = None                # 一对一
         self.portfolioValue = 100E4
@@ -70,7 +70,7 @@ class BacktestingEngine(object):
     def loadData(self, vtSymbol):
         """加载数据"""
 
-        df = pd.read_csv(vtSymbol+'.csv')
+        df = pd.read_csv('bar/'+vtSymbol+'.csv')
         for i, d in df.iterrows():
             #print(d)
             #set_trace()
@@ -88,7 +88,8 @@ class BacktestingEngine(object):
                 date = date.split('-')
                 date = ''.join(date)
             bar.date = date
-            bar.time = d['time']
+            #print(date)
+            bar.time = str(d['time'])
             #bar.time = '00:00:00'
             bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
             bar.volume = d['volume']
@@ -99,7 +100,7 @@ class BacktestingEngine(object):
         self.output(u'全部数据加载完成')
 
     #----------------------------------------------------------------------
-    def loadInitBar(self, vtSymbol, initBars):
+    def _bc_loadInitBar(self, vtSymbol, initBars):
         """读取startDt前n条Bar数据，用于初始化am"""
 
         dt_list = self.dataDict.keys()
@@ -107,6 +108,7 @@ class BacktestingEngine(object):
         dt_list = [x for x in dt_list if x<self.startDt]
         #print(len(dt_list))
         dt_list = dt_list[-initBars:]
+        dt_list = sorted(dt_list)
         #print(dt_list)
 
         r = []
@@ -307,7 +309,7 @@ class BacktestingEngine(object):
         plt.show()
 
     #----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, direction, offset, price, volume):
+    def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
 
         # 记录成交数据
@@ -479,12 +481,21 @@ if __name__ == '__main__':
     #try:
         # 创建回测引擎对象
         engine = BacktestingEngine()
-        engine.setPeriod(datetime(2018, 9, 1), datetime(2019, 3, 30))
-        engine.loadData('IF88')
 
-        engine.loadPortfolio(Fut_AtrRsiPortfolio, 'backtest')
+        engine.setPeriod(datetime(2018, 7, 18), datetime(2018, 11, 30))
+        engine.loadData('c1901')
+        engine.loadPortfolio(Fut_BollPortfolio, 'c1901')
+
+        # engine.setPeriod(datetime(2018, 7, 18), datetime(2019, 7, 30))
+        # engine.loadData('IF88')
+        # engine.loadPortfolio(Fut_BollPortfolio, 'IF88')
 
         engine.runBacktesting()
+
+        # td_list = engine.getTradeData()
+        # for td in td_list:
+        #     print(td.__dict__)
+
         engine.showResult()
 
     # except Exception as e:

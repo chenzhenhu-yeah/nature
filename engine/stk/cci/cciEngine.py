@@ -37,7 +37,7 @@ class CciEngine(TradeEngine):
     #----------------------------------------------------------------------
     def __init__(self,dss,gateway):
         """Constructor"""
-        to_log('in CciEngine.__init__')
+
         TradeEngine.__init__(self, dss, gateway)
 
     #----------------------------------------------------------------------

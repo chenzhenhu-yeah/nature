@@ -12,7 +12,7 @@ def down_daily_run(dss):
     lastday = listfile[0][:10]
     print(lastday)
     dates = get_trading_dates(dss,lastday)
-    dates.pop(0)
+    dates.pop(0)                             #担心daily数据更新不及时
     #dates = ['2019-04-01']
 
     for today in dates:

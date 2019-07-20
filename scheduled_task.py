@@ -16,7 +16,6 @@ from nature import has_factor, stk_report
 dss = r'../data/'
 
 def mail_1515():
-    to_log('in mail_1515')
     try:
         now = datetime.now()
         today = now.strftime('%Y-%m-%d')
@@ -46,7 +45,6 @@ def mail_1515():
         print(e)
 
 def mail_1815():
-    to_log('in mail_1815')
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
@@ -66,7 +64,6 @@ def mail_1815():
         print(e)
 
 def down_data_0100():
-    to_log('in down_data_0100')
 
     now = datetime.now()
     weekday = int(now.strftime('%w'))
@@ -74,8 +71,7 @@ def down_data_0100():
         print('\n' + str(now) + " down_data begin...")
         down_data(dss)
 
-def mail_0200():
-    to_log('in mail_0200')
+def mail_0200():    
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))

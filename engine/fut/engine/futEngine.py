@@ -23,7 +23,6 @@ from nature import Book
 from nature import NearBollPortfolio, GatewayPingan, TradeEngine
 #from ipdb import set_trace
 
-from nature import get_stk_hfq, get_trading_dates, get_adj_factor
 
 
 ########################################################################
@@ -36,7 +35,6 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def __init__(self,dss):
         """Constructor"""
-        to_log('in FutEngine.__init__')
 
         self.dss = dss
         self.portfolio_list = []
@@ -50,7 +48,6 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def init_daily(self):
         """每日初始化交易引擎"""
-        to_log('in FutEngine.init_daily')
 
         self.portfolio_list = []
         self.loadPortfolio(AtrRsiPortfolio, 'AtrRsi')

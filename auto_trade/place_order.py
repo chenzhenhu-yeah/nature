@@ -16,22 +16,17 @@ dss = '../../data/'
 address = ('localhost', SOCKET_ORDER)
 
 def send_instruction(ins_dict):
-    to_log('in send_instruction')
-
     again = True
     while again:
         time.sleep(1)
         try :
             with Client(address, authkey=b'secret password') as conn:
-                # to_log('stare send ins: '+str(ins_dict))
                 conn.send(ins_dict)
                 again = False
         except:
             pass
 
 def append_order(order):
-    to_log('in append_order')
-
     time.sleep(1)
     order_id = str(int(time.time()))
 
@@ -41,6 +36,7 @@ def append_order(order):
     order = today + '&' + order_id + '&' + order
     with open(filename, 'a', encoding='utf-8') as f:
         f.write(order+'\n')
+    to_log('append_order done')
 
 #{'ins':'buy_order','portfolio':'original','code':'300408','num':1000,'cost':19999,'price':11.88,'agent':'pingan'}
 def place_order(order):
@@ -132,7 +128,7 @@ def on_order_done(order_dict):
                     b1.deal_ins(ins_dict.copy())
                     ins_dict['done'] = True
             except Exception as e:
-                to_log('error')
+                to_log('error in on_order_done')
                 to_log(e)
 
 def stare_order():

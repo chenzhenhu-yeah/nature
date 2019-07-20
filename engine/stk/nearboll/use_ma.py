@@ -7,7 +7,7 @@ import zlib
 import pandas as pd
 import tushare as ts
 
-from nature import get_stk_hfq, get_trading_dates, get_stk_codes
+from nature import get_stk_hfq, get_trading_dates, get_stk_codes, get_dss
 
 from nature import Book
 
@@ -80,5 +80,5 @@ def use_ma(dss):
 
 
 if __name__ == '__main__':
-    use_ma('../../../data/')
-    pass
+    use_ma(get_dss())
+    

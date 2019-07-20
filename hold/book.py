@@ -11,7 +11,6 @@ from nature import get_trading_dates, get_stk_bfq, is_price_time, get_adj_factor
 
 class Tactic(object):
     def __init__(self,dss,name,df):
-        to_log('in Tactic.__init__')
 
         self.dss = dss
         self.tacticName = name
@@ -39,7 +38,6 @@ class Tactic(object):
 
     # 计算Tactic当前的市值
     def get_cost_cap(self):
-        to_log('in Tactic.get_cost_cap')
 
         r_cost, r_cap = 0, 0
 
@@ -58,7 +56,6 @@ class Tactic(object):
         return r_cost, r_cap
 
     def daily_result(self, today):
-        to_log('in Tactic.daily_result')
 
         r = []
         for item in self.hold_Array:
@@ -125,7 +122,6 @@ class Book(object):
 
     # 计算Book当前的市值
     def get_cost_cap(self):
-        to_log('in Book.get_cost_cap')
 
         cost, cap = 0, 0
         for tactic in self.tactic_List:
@@ -150,7 +146,6 @@ class Book(object):
 
     # 20190522&{'ins': 'buy_order', 'portfolio': 'redian', 'code': '002482', 'num': 3700, 'price': 5.4, 'cost': 19980, 'agent': 'pingan', 'name': '广田集团'}
     def _record_buy_order(self, ins_dict):
-        to_log('in Book._record_buy_order')
 
         df = pd.read_csv(self.holdFilename, dtype={'code':'str'})
 
@@ -174,7 +169,7 @@ class Book(object):
             df = df[['portfolio','code','cost','num','agent']]
             df.to_csv(self.holdFilename,index=False)
         else:
-            to_log('组合未开，buy_order无法处理')
+            to_log('error, 组合未开，buy_order无法处理')
 
     # 20190522&{'ins': 'sell_order', 'portfolio': 'redian', 'code': '300199', 'num': 1800, 'price': 11.46, 'cost': 20628, 'agent': 'pingan', 'name': '翰宇药业'}
     def _record_sell_order(self, ins_dict):
@@ -203,7 +198,7 @@ class Book(object):
             df = df[['portfolio','code','cost','num','agent']]
             df.to_csv(self.holdFilename,index=False)
         else:
-            to_log('原持仓记录不存在，sell_order无法处理')
+            to_log('error, 原持仓记录不存在，sell_order无法处理')
 
     #{'ins':'open_portfolio', 'portfolio':'5G','code':'profit','cost':0,'num':0,'agent':'pingan'}
     def _open_tactic_in_file(self, ins_dict):
@@ -331,7 +326,6 @@ class Book(object):
 
 ###########################################################################
 def has_factor(dss):
-    to_log('in has_factor')
 
     r = []
     b1 = Book(dss)
@@ -344,8 +338,7 @@ def has_factor(dss):
             r.append(code)
     return r
 
-def stk_report(dss):
-    to_log('in stk_report')
+def stk_report(dss):    
 
     b1 = Book(dss)
     codes = b1.get_codes()

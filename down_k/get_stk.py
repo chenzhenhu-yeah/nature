@@ -80,6 +80,15 @@ def get_stk_bfq(dss,code,begin_date=None, end_date=None):
 
     return df
 
+def get_hfq_factor(dss,code):
+    df_hfq = get_stk_hfq(dss, code)
+    df_bfq = get_stk_bfq(dss, code)
+
+    factor = 0
+    if df_hfq.at[0,'date'] == df_bfq.at[0,'date']:
+        factor = df_hfq.at[0,'close']/df_bfq.at[0,'close']
+
+    return factor
 
 if __name__ == "__main__":
     get_stk_bfq(r'../../data/','300408')

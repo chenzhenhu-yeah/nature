@@ -34,10 +34,9 @@ class stk_NearBollSignal(Signal):
         self.longStop = 100E4                        # 多头止损
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.portfolio.engine._backcall_loadInitBar(self.vtSymbol, self.initBars)
+        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars)
         for bar in initData:
-            if not self.am.inited:
-                self.onBar(bar)
+            self.am.updateBar(bar)
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -87,16 +86,15 @@ class stk_NearBollSignal(Signal):
         T30_close = self.am.lowArray[-30]
         h = min(T5_close,T4_close)
 
-        to_log(self.vtSymbol)
-
         if T5_close > T5_bollUp:
-            to_log(bar.date+' rise boll up five days before ')
-            #print(T5_close,T5_open,T5_high,T5_low)
+            to_log(self.vtSymbol+' '+bar.date+' rise boll up five days before ')
 
         pos = self.portfolio.posDict[self.vtSymbol]
         # 当前无仓位，发送开仓委托
         if pos == 0:
             if T5_close > T5_bollUp and (T5_close-T5_open)/(T5_high+0.01-T5_open) > 0.48:    # T5日收盘突破上轨, T5日应是阳线
+                to_log(self.vtSymbol+ ' T5_close '+str(T5_close) + ' T5_bollUp '+ str(T5_bollUp) )
+                to_log(self.vtSymbol+ ' T1_close '+str(T1_close) + ' T1_bollUp '+ str(T1_bollUp) )
                 to_log('here1')
                 if T5_close/T30_close < 1.15:   # 当前不是处于阶段性顶部
                     to_log('here2')
@@ -122,6 +120,7 @@ class stk_NearBollSignal(Signal):
         elif pos > 0:
             # if bar.vtSymbol == '300399':
             #     print(self.longStop,self.intraTradeLow,T1_close,self.am.lowArray[-2], self.am.lowArray[-3])
+            to_log( 'has pos: ' + self.vtSymbol+ ' T1_close '+str(T1_close) + ' longStop '+ str(longStop) )
 
             if T1_close > self.buyPrice and self.longStop < self.buyPrice:
                 self.longStop = self.buyPrice*1.002          # 如果当前价大于成本价，移动止损到成本价
@@ -231,9 +230,9 @@ class stk_NearBollPortfolio(Portfolio):
         self.loadParam()
 
     #----------------------------------------------------------------------
-    def newSignal(self, signal, direction, offset, price, volume):
+    def _bc_newSignal(self, signal, direction, offset, price, volume):
         """
-        对交易信号进行过滤，符合条件的才发单执行。
+        对交易信号进行过滤，符合条件的才向引擎发单执行。
         计算真实交易价格和数量。
         """
         multiplier = 1
@@ -248,7 +247,12 @@ class stk_NearBollPortfolio(Portfolio):
         priceTick = self.PRICETICK_DICT[signal.vtSymbol]
         price = int(round(price/priceTick, 0)) * priceTick
 
-        self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
+        # 向引擎发单
+        self.engine._bc_sendOrder(vtSymbol, direction, offset, price, volume*multiplier, self.name)
+        print('\n',str(self.engine.currentDt) + ' sendOrder...')
+        print(vtSymbol, direction, offset, price, volume*multiplier)
+        #self.print_portfolio()
+
 
     #----------------------------------------------------------------------
     def loadHold(self):
@@ -288,8 +292,9 @@ class stk_NearBollPortfolio(Portfolio):
         r = []
         today = get_nature_day()
         for code in self.vtSymbolList:
-            for signal in self.signalDict[code]:
-                r.append([today,self.name, code, signal.buyPrice, signal.intraTradeLow, signal.longStop,'','',''])
+            if self.posDict[code] != 0:   #有持仓需保存参数
+                for signal in self.signalDict[code]:
+                    r.append([today,self.name, code, signal.buyPrice, signal.intraTradeLow, signal.longStop,'','',''])
 
         #['date', 'name', 'vtSymbol','buyPrice','intraTradeLow','longStop']
         df = pd.DataFrame(r, columns=['date','name','A','B','C','D','E','F','G'])

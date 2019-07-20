@@ -19,7 +19,6 @@ def deal_single_ins(item):
         df = ts.get_realtime_quotes(item['code'])
         b3_price = float(df.at[0,'b3_p'])
         if b3_price <= item['price'] and b3_price > 0:
-            to_log('reach price by down_sell ins ')
             item['ins'] = 'sell_order'
             send_instruction(item)
             r = True
@@ -34,11 +33,9 @@ def deal_single_ins(item):
         df = ts.get_realtime_quotes(item['code'])
         b3_price = float(df.at[0,'b3_p'])
         if b3_price <= item['price'] and b3_price > 0 :
-            to_log('reach price by down_warn ins ')
             send_email(dss, 'down_warn', str(item))
             r = True
     if item['ins'] in ['sell_order','buy_order']:
-        to_log('send sell_order or buy_order ins ')
         send_instruction(item)
         r = True
 
