@@ -183,16 +183,16 @@ class TestQuote(object):
         self.q.ReqUserLogout()
 
         # 保存最后一根K线
-        for id in self.bar_dict:
-            bar = self.bar_dict[id]
+        for id in self.q.bar_dict:
+            bar = self.q.bar_dict[id]
             df = pd.DataFrame([bar.__dict__])
             cols = ['date','time','open','high','low','close','volume']
             df = df[cols]
-            fname = self.dss + 'fut/bar/min1_' + self.tradeDay + '_' + id + '.csv'
+            fname = self.q.dss + 'fut/bar/min1_' + self.q.tradeDay + '_' + id + '.csv'
             df.to_csv(fname, index=False, mode='a', header=False)
 
         #清空，以免第二日重复保存
-        self.bar_dict = {}
+        self.q.bar_dict = {}
 
 
     #----------------------------------------------------------------------
