@@ -235,7 +235,7 @@ def start():
     engine.run()
 
 if __name__ == '__main__':
-    try:
+    #try:
         start()
 
         # dss = '../../../data/'
@@ -244,8 +244,9 @@ if __name__ == '__main__':
         # engine.worker_1450()
         # engine.worker_1500()
         # print('come here ')
-    except Exception as e:
-        print('error')
-        print(e)
-        while True:
-            time.sleep(300)
+        
+    # except Exception as e:
+    #     print('error')
+    #     print(e)
+    #     while True:
+    #         time.sleep(300)

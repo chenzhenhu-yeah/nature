@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 
 from nature import to_log
 
-def send_email(dss, subject, content):    
+def send_email(dss, subject, content):
     # # 第三方 SMTP 服务
     # mail_host = 'smtp.yeah.net'              # 设置服务器
     # mail_username = 'chenzhenhu@yeah.net'   # 用户名
@@ -51,7 +51,7 @@ def is_trade_time():
     #print(weekday)
     if 1 <= weekday <= 5:
         t = time.localtime()
-        if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>20) :
+        if (t.tm_hour>9 and t.tm_hour<15) or (t.tm_hour==9 and t.tm_min>16) :
             return True
     else:
         return False
