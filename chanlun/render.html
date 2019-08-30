@@ -29,17 +29,17 @@
 </script>
 </head>
 <body>
-    <div id="46540c4be5f14e10bbb074c66cebe1e0" style="width:800px;height:400px;"></div>
+    <div id="f7f4b453a68b48bc8413b5e5802bb15c" style="width:800px;height:400px;"></div>
     <script type="text/javascript">
 
-var myChart_46540c4be5f14e10bbb074c66cebe1e0 = echarts.init(document.getElementById('46540c4be5f14e10bbb074c66cebe1e0'), 'light', {renderer: 'canvas'});
+var myChart_f7f4b453a68b48bc8413b5e5802bb15c = echarts.init(document.getElementById('f7f4b453a68b48bc8413b5e5802bb15c'), 'light', {renderer: 'canvas'});
 function kline_tooltip_formatter(params) {
     var text;
     text = ((((((((((((params[0].seriesName + "<br/>") + "- open:") + params[0].data[1]) + "<br/>") + "- close:") + params[0].data[2]) + "<br/>") + "- lowest:") + params[0].data[3]) + "<br/>") + "- highest:") + params[0].data[4]);
     return text;
 }
 
-var option_46540c4be5f14e10bbb074c66cebe1e0 = {
+var option_f7f4b453a68b48bc8413b5e5802bb15c = {
     "title": [
         {
             "text": "K \u7ebf\u56fe\u793a\u4f8b",
@@ -71,7 +71,7 @@ var option_46540c4be5f14e10bbb074c66cebe1e0 = {
             }
         }
     },
-    "series_id": 1244746,
+    "series_id": 5380984,
     "tooltip": {
         "trigger": "axis",
         "triggerOn": "mousemove|click",
@@ -1070,13 +1070,112 @@ var option_46540c4be5f14e10bbb074c66cebe1e0 = {
             "markLine": {
                 "data": []
             },
-            "seriesId": 1244746
+            "seriesId": 5380984
+        },
+        {
+            "type": "line",
+            "name": "test",
+            "symbol": "emptyCircle",
+            "symbolSize": 4,
+            "smooth": false,
+            "step": false,
+            "showSymbol": true,
+            "data": [
+                [
+                    "2019-08-14 21:09:00",
+                    5530.0
+                ],
+                [
+                    "2019-08-14 21:29:00",
+                    5552.0
+                ],
+                [
+                    "2019-08-14 22:19:00",
+                    5527.0
+                ],
+                [
+                    "2019-08-14 22:43:00",
+                    5547.0
+                ],
+                [
+                    "2019-08-15 09:39:00",
+                    5465.0
+                ],
+                [
+                    "2019-08-15 10:13:00",
+                    5502.0
+                ],
+                [
+                    "2019-08-15 10:51:00",
+                    5482.0
+                ],
+                [
+                    "2019-08-15 11:05:00",
+                    5488.0
+                ],
+                [
+                    "2019-08-15 13:30:00",
+                    5463.0
+                ],
+                [
+                    "2019-08-15 13:49:00",
+                    5494.0
+                ],
+                [
+                    "2019-08-15 14:02:00",
+                    5487.0
+                ],
+                [
+                    "2019-08-15 14:12:00",
+                    5494.0
+                ],
+                [
+                    "2019-08-15 14:28:00",
+                    5474.0
+                ]
+            ],
+            "label": {
+                "normal": {
+                    "show": false,
+                    "position": "top",
+                    "textStyle": {
+                        "fontSize": 12
+                    }
+                },
+                "emphasis": {
+                    "show": true,
+                    "textStyle": {
+                        "fontSize": 12
+                    }
+                }
+            },
+            "lineStyle": {
+                "normal": {
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "dashed"
+                }
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "data": []
+            },
+            "markLine": {
+                "data": []
+            },
+            "seriesId": 5380984,
+            "xAxisIndex": 0,
+            "yAxisIndex": 0
         }
     ],
     "legend": [
         {
             "data": [
-                "\u65e5K"
+                "\u65e5K",
+                "test"
             ],
             "selectedMode": "multiple",
             "show": true,
@@ -1360,7 +1459,7 @@ var option_46540c4be5f14e10bbb074c66cebe1e0 = {
         }
     ]
 };
-myChart_46540c4be5f14e10bbb074c66cebe1e0.setOption(option_46540c4be5f14e10bbb074c66cebe1e0);
+myChart_f7f4b453a68b48bc8413b5e5802bb15c.setOption(option_f7f4b453a68b48bc8413b5e5802bb15c);
 
 </script>
 </body>
