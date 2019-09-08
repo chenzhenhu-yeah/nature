@@ -33,13 +33,14 @@ class FutEngine(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self,dss):
+    def __init__(self,dss,minx):
         """Constructor"""
 
         self.dss = dss
         self.portfolio_list = []
         self.vtSymbol_list = ['IC1909','c1909','CF909']
         self.vtSymbol_dict = {}
+        self.minx = minx
 
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
@@ -62,7 +63,7 @@ class FutEngine(object):
         p.loadParam()
         self.portfolio_list.append(p)
 
-    #----------------------------------------------------------------------
+    # 进程间通信接口，暂未启用-------------------------------------------------
     def bar_service(self):
         print('in bar_svervice')
 
@@ -87,14 +88,14 @@ class FutEngine(object):
                         #self.onBar(bar)
 
 
-    #----------------------------------------------------------------------
+    # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
         print('in put_svervice')
         while True:
-            time.sleep(23)
+            time.sleep(1)
             for id in self.vtSymbol_list:
                 try:
-                    fname = self.dss + 'fut/put/min1_' + id + '.csv'
+                    fname = self.dss + 'fut/put/'+ self.minx + '_' + id + '.csv'
                     #print(fname)
                     df = pd.read_csv(fname)
                     d = dict(df.loc[0,:])
@@ -126,7 +127,7 @@ class FutEngine(object):
         r = []
         try:
             today = time.strftime('%Y%m%d',time.localtime())
-            fname = self.dss + 'fut/bar/min1_' + today + '_' + vtSymbol + '.csv'
+            fname = self.dss + 'fut/bar/' + self.minx + '_' + today + '_' + vtSymbol + '.csv'
             #print(fname)
             df = pd.read_csv(fname)
             df = df.sort_values(by=['date','time'])
@@ -167,26 +168,32 @@ class FutEngine(object):
         # 保存信号参数
         for p in portfolio_list:
             p.saveParam()
-
-    #----------------------------------------------------------------------
-    def run(self):
-        """运行"""
-        schedule.every().day.at("20:08").do(self.worker_open)
-        schedule.every().day.at("15:50").do(self.worker_close)
-
-        print(u'期货交易引擎开始运行')
-        while True:
-            schedule.run_pending()
-            time.sleep(10)
+    
 
 #----------------------------------------------------------------------
 def start():
     dss = '../../../data/'
-    engine = FutEngine(dss)
-    #engine.loadInitBar('c1909', 10)
+    engine1 = FutEngine(dss,'min1')
+    schedule.every().day.at("20:08").do(engine1.worker_open)
+    schedule.every().day.at("15:50").do(engine1.worker_close)
 
-    print('here')
-    engine.run()
+    #engine5 = FutEngine(dss,'min5')
+    #schedule.every().day.at("20:08").do(engine5.worker_open)
+    #schedule.every().day.at("15:50").do(engine5.worker_close)
+
+    #engine15 = FutEngine(dss,'min15')
+    #schedule.every().day.at("20:08").do(engine15.worker_open)
+    #schedule.every().day.at("15:50").do(engine15.worker_close)
+
+
+    print(u'期货交易引擎开始运行')
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
+
+
+
+
 
 if __name__ == '__main__':
     start()
