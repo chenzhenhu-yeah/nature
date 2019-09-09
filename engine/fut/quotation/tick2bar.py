@@ -60,15 +60,19 @@ def proc_segment(df1,begin,end,num):
         _Generate_Bar_MinOne(tick, temp_bar, r, today)
         if k == n-1:
             # 收尾处理
-            if end == '23:59:59':
-                # 处理交易时段跨日的情况，如品种 ag, 使生成最后一根bar
-                tick.UpdateTime = '00:00:00'
-                dt_today = datetime.datetime.strptime(today,'%Y-%m-%d')
-                dt_today += datetime.timedelta(days=1)
-                _Generate_Bar_MinOne(tick, temp_bar, r, dt_today.strftime('%Y-%m-%d'))
-            else:
-                tick.UpdateTime = end[:-2] + '00'
-                _Generate_Bar_MinOne(tick, temp_bar, r, today)
+            tick.UpdateTime = end[:-2] + '00'
+            _Generate_Bar_MinOne(tick, temp_bar, r, today)
+
+            # 之前的处理方式，已废
+            # if end == '23:59:59':
+            #     # 处理交易时段跨日的情况，如品种 ag, 使生成最后一根bar
+            #     tick.UpdateTime = '00:00:00'
+            #     dt_today = datetime.datetime.strptime(today,'%Y-%m-%d')
+            #     dt_today += datetime.timedelta(days=1)
+            #     _Generate_Bar_MinOne(tick, temp_bar, r, dt_today.strftime('%Y-%m-%d'))
+            # else:
+            #     tick.UpdateTime = end[:-2] + '00'
+            #     _Generate_Bar_MinOne(tick, temp_bar, r, today)
 
     tm_begin = datetime.datetime.strptime(today+' '+begin,'%Y-%m-%d %H:%M:%S')
     oneminute = datetime.timedelta(minutes=1)
@@ -110,7 +114,13 @@ if __name__ == "__main__":
 
     r = []
     for i,row in df2.iterrows():
-        df1 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<=row.end)]
+        if row.end > row.begin:
+            df1 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<=row.end)]
+        else:
+            df11 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<='23:59:59')]
+            df12 = df[(df.UpdateTime>='00:00:00') & (df.UpdateTime<=row.end)]
+            df1 = pd.concat([df11, df12])
+
         df1 = df1.reset_index()
         # print(i,len(df1))
         # print(df1.head(9))
@@ -121,16 +131,3 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(r, columns=['date','time','open','high','low','low'])
     df.to_csv('c1.csv',index=False)
-
-
-#print(bar.date, bar.time, bar.open, bar.high, bar.low, bar.close)
-        #bar.time[6:8] = '00'
-
-        # self._Generate_Bar_Min5(bar)
-        # self._Generate_Bar_Min15(bar)
-
-        # fname = self.dss + 'fut/bar/min1_' + self.tradeDay + '_' + id + '.csv'
-        # if os.path.exists(fname):
-        #     df.to_csv(fname, index=False, mode='a', header=False)
-        # else:
-        #     df.to_csv(fname, index=False, mode='a')
