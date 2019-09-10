@@ -124,12 +124,25 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def special_time(self, new_bar):
         fn = get_dss() + 'fut/cfg/trade_time.csv'
+        pz = new_bar.vtSymbol[:2]
+        if pz.isalpha():
+            pass
+        else:
+            pz = new_bar.vtSymbol[:1]
         df2 = pd.read_csv(fn)
-        df2 = df2[df2.symbol==new_bar.vtSymbol[:2]].sort_values(by='seq')
+        df2 = df2[df2.symbol==pz].sort_values(by='seq')
         df2 = df2.reset_index()
-        assert len(df2) == 4 
-        end1 = df2.iat[0,4]
-        end2 = df2.iat[3,4]
+
+        assert len(df2) == 4
+        # if len(df2) != 4:
+        #     print(df2)
+        #     print(new_bar.vtSymbol)
+
+        # end1 = df2.iat[0,4]
+        # end2 = df2.iat[3,4]
+        end1 = df2.at[0,'end']
+        end2 = df2.at[3,'end']
+
 
         sp1 = ''
         sp2 = ''
