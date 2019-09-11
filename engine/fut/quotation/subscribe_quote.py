@@ -375,9 +375,9 @@ if __name__ == "__main__":
         broker = setting['broker']
 
         # CTP
-        front_trade = 'tcp://180.168.146.187:10101'
-        front_quote = 'tcp://180.168.146.187:10111'
-        broker = '9999'
+        # front_trade = 'tcp://180.168.146.187:10101'
+        # front_quote = 'tcp://180.168.146.187:10111'
+        # broker = '9999'
         investor = ''
         pwd = ''
 
