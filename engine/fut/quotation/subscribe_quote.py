@@ -101,68 +101,9 @@ class HuQuote(CtpQuote):
             pass
 
     #----------------------------------------------------------------------
-    def put_bar(self, bar, minx):
-        df = pd.DataFrame([bar.__dict__])
-        cols = ['date','time','open','high','low','close','volume']
-        df = df[cols]
-
-        fname = self.dss + 'fut/put/' + minx + '_' + bar.vtSymbol + '.csv'
+    def put_bar(self, df, id, minx):
+        fname = self.dss + 'fut/put/' + minx + '_' + id + '.csv'
         df.to_csv(fname, index=False)
-
-    #----------------------------------------------------------------------
-    def save_bar(self, bar, minx):
-        df = pd.DataFrame([bar.__dict__])
-        cols = ['date','time','open','high','low','close','volume']
-        df = df[cols]
-
-        fname = self.dss + 'fut/put/rec/' + minx + '_' + self.tradeDay + '_' + bar.vtSymbol + '.csv'
-        if os.path.exists(fname):
-            df.to_csv(fname, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fname, index=False, mode='a')
-
-    #----------------------------------------------------------------------
-    def special_time(self, new_bar):
-        fn = get_dss() + 'fut/cfg/trade_time.csv'
-        pz = new_bar.vtSymbol[:2]
-        if pz.isalpha():
-            pass
-        else:
-            pz = new_bar.vtSymbol[:1]
-        df2 = pd.read_csv(fn)
-        df2 = df2[df2.symbol==pz].sort_values(by='seq')
-        df2 = df2.reset_index()
-
-        assert len(df2) == 4
-        # if len(df2) != 4:
-        #     print(df2)
-        #     print(new_bar.vtSymbol)
-
-        # end1 = df2.iat[0,4]
-        # end2 = df2.iat[3,4]
-        end1 = df2.at[0,'end']
-        end2 = df2.at[3,'end']
-
-
-        sp1 = ''
-        sp2 = ''
-
-        # 夜间时段
-        if end1[:5] == '23:00':
-            sp1 = '22:58'
-        if end1[:5] == '23:30':
-            sp1 = '23:28'
-        if end1[:5] == '02:30':
-            sp1 = '02:28'
-
-        # 下午收盘
-        if end2[:5] == '15:00':
-            sp2 = '14:58'
-
-        if new_bar.time[:5] == sp1 or new_bar.time[:5] == sp2:
-            return True
-        else:
-            return False
 
     #----------------------------------------------------------------------
     def _Generate_Bar_Min1(self, tick):
@@ -248,13 +189,18 @@ class HuQuote(CtpQuote):
 
         if bar.time[3:5] != new_bar.time[3:5] :
             # 将 bar的分钟改为整点，推送并保存bar
-            bar.time = new_bar.time[:-2] + '00'
+            bar.time = new_bar.time
             #bar.time[6:8] = '00'
 
             self.put_bar(bar, 'min1')
             self._Generate_Bar_Min5(bar)
             self._Generate_Bar_Min15(bar)
-            self.save_bar(bar,'min1')
+
+            fname = self.dss + 'fut/put/rec/min1_' + self.tradeDay + '_' + id + '.csv'
+            if os.path.exists(fname):
+                df.to_csv(fname, index=False, mode='a', header=False)
+            else:
+                df.to_csv(fname, index=False, mode='a')
 
         self.bar_min1_dict[id] = bar
 
@@ -277,11 +223,16 @@ class HuQuote(CtpQuote):
             bar.low =  new_bar.low
         bar.close = new_bar.close
 
-        if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00'] or self.special_time(new_bar):
+        if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
             # 将 bar的分钟改为整点，推送并保存bar
-            bar.time = new_bar.time[:-2] + '00'
+            bar.time = new_bar.time
             self.put_bar(bar, 'min5')
-            self.save_bar(bar,'min5')
+
+            fname = self.dss + 'fut/put/rec/min5_' + self.tradeDay + '_' + id + '.csv'
+            if os.path.exists(fname):
+                df.to_csv(fname, index=False, mode='a', header=False)
+            else:
+                df.to_csv(fname, index=False, mode='a')
 
         self.bar_min5_dict[id] = bar
 
@@ -304,13 +255,19 @@ class HuQuote(CtpQuote):
             bar.low =  new_bar.low
         bar.close = new_bar.close
 
-        if new_bar.time[3:5] in ['15','30','45','00'] or self.special_time(new_bar):
+        if new_bar.time[3:5] in ['15','30','45','00']:
             # 将 bar的分钟改为整点，推送并保存bar
-            bar.time = new_bar.time[:-2] + '00'
+            bar.time = new_bar.time
             self.put_bar(bar, 'min15')
-            self.save_bar(bar,'min15')
+
+            fname = self.dss + 'fut/put/rec/min15_' + self.tradeDay + '_' + id + '.csv'
+            if os.path.exists(fname):
+                df.to_csv(fname, index=False, mode='a', header=False)
+            else:
+                df.to_csv(fname, index=False, mode='a')
 
         self.bar_min15_dict[id] = bar
+
 
 class TestQuote(object):
     """TestQuote"""
@@ -364,8 +321,6 @@ if __name__ == "__main__":
         # front_trade = 'tcp://180.168.212.75:41305'
         # front_quote = 'tcp://180.168.212.75:41313'
         # broker = '8000'
-        # investor = '71081980'
-        # pwd = 'zhenhu123'
 
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
@@ -374,23 +329,27 @@ if __name__ == "__main__":
         front_quote = setting['front_quote']
         broker = setting['broker']
 
-        # CTP
+        # # CTP
         # front_trade = 'tcp://180.168.146.187:10101'
         # front_quote = 'tcp://180.168.146.187:10111'
         # broker = '9999'
+
+        investor = '71081980'
+        pwd = 'zhenhu123'
         investor = ''
         pwd = ''
+
 
 
         time.sleep(3)
         qq = TestQuote(front_quote, broker, investor, pwd)
 
-        qq.daily_worker()
+        # qq.daily_worker()
 
-        # qq.run()
-        # input()
-        # qq.release()
-        # input()
+        qq.run()
+        input()
+        qq.release()
+        input()
     except Exception as e:
         print('error')
         print(e)
