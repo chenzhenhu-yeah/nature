@@ -168,7 +168,7 @@ class FutEngine(object):
         # 保存信号参数
         for p in portfolio_list:
             p.saveParam()
-    
+
 
 #----------------------------------------------------------------------
 def start():
@@ -197,13 +197,12 @@ def start():
 
 if __name__ == '__main__':
     start()
-    # dss = '../../../data/'
-    # engine = BollEngine(dss, GatewayPingan())
-    # engine.worker_1430()
-    # engine.worker_1450()
-    # engine.worker_1500()
 
-    # df = ts.get_realtime_quotes('300408')
-    # d = df.loc[0,:]
-    # print(type(d))
-    # print(d)
+    # dss = '../../../data/'
+    # engine1 = FutEngine(dss,'min1')
+    # engine1.worker_open()
+
+    # dss = '../../../data/'
+    # engine5 = FutEngine(dss,'min5')
+    # engine5.worker_open()
+    
