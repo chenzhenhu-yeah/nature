@@ -58,7 +58,7 @@ def price_signal(dss, day):
         if be_bottom(row.code, day):
             df2 = pro.concept_detail(ts_code = get_ts_code(row.code))
             concept_name = df2.concept_name.tolist()
-            r.append( [day, row.code, row['name'], row.p_change, concept_name] )
+            r.append( str([day, row.code, row['name'], row.p_change, concept_name]) )
         #break
     return r
 
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     today = dates[-1]
     print(today)
     r = price_signal(get_dss(),today)
-    print(str(r))
+    print(r)
