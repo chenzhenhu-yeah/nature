@@ -5,8 +5,15 @@ import time
 import numpy as np
 import pandas as pd
 import tushare as ts
+import json
 
-pro = ts.pro_api('e7d81e40fb30b0e7f7f8d420a81700f401ddd382d82b84c473afd854')
+from nature import get_dss
+
+# 加载配置
+config = open(get_dss()+'csv/config.json')
+setting = json.load(config)
+pro_id = setting['pro_id']          
+pro = ts.pro_api(pro_id)
 
 def get_hu_k_data(xcod,tim0):
 

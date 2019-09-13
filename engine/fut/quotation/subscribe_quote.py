@@ -361,7 +361,7 @@ class TestQuote(object):
             time.sleep(10)
 
 if __name__ == "__main__":
-    try:
+    # try:
         # # 海通
         # front_trade = 'tcp://180.168.212.75:41305'
         # front_quote = 'tcp://180.168.212.75:41313'
@@ -393,8 +393,8 @@ if __name__ == "__main__":
         # input()
         # qq.release()
         # input()
-    except Exception as e:
-        print('error')
-        print(e)
-        while True:
-            time.sleep(300)
+    # except Exception as e:
+    #     print('error')
+    #     print(e)
+    #     while True:
+    #         time.sleep(300)

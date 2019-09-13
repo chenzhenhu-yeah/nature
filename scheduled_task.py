@@ -12,6 +12,7 @@ from nature import get_trading_dates, send_email
 from nature.down_k.down_data import down_data
 from nature.engine.stk.nearboll.use_ma import use_ma
 from nature import has_factor, stk_report
+from nature.hu_signal.price_signal import price_signal
 
 dss = r'../data/'
 
@@ -71,7 +72,7 @@ def down_data_0100():
         print('\n' + str(now) + " down_data begin...")
         down_data(dss)
 
-def mail_0200():    
+def mail_0200():
     try:
         now = datetime.now()
         weekday = int(now.strftime('%w'))
@@ -84,6 +85,22 @@ def mail_0200():
     except Exception as e:
         print('error')
         print(e)
+
+def run_price_signal():
+    try:
+        now = datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 2 <= weekday <= 6:
+            dates = get_trading_dates(dss)
+            today = dates[-1]
+            r = price_signal(dss,today)
+            #print(str(r))
+            send_email(dss, 'price_signal', '\n'.join(r))
+
+    except Exception as e:
+        print('error')
+        print(e)
+
 
 if __name__ == '__main__':
     try:
@@ -98,7 +115,7 @@ if __name__ == '__main__':
         schedule.every().day.at("18:15").do(mail_1815)
         schedule.every().day.at("01:00").do(down_data_0100)
         schedule.every().day.at("02:00").do(mail_0200)
-
+        schedule.every().day.at("02:30").do(run_price_signal)
 
         print('schedule begin...')
         while True:
