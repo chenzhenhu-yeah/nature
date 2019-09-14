@@ -43,12 +43,12 @@ def down_data(dss):
         print('error')
         print(e)
 
-    try:
-        down_fut_all(dss)
-        to_log('down_fut_all done')
-    except Exception as e:
-        print('error')
-        print(e)
+    # try:
+    #     down_fut_all(dss)
+    #     to_log('down_fut_all done')
+    # except Exception as e:
+    #     print('error')
+    #     print(e)
 
 if __name__ == '__main__':
     down_data(r'../../data/')

@@ -218,3 +218,6 @@ date&ins
 20190701&{'ins': 'sell_order', 'portfolio': '5G', 'code': '300036', 'num': 2000, 'price': 15.40, 'cost': 30800, 'agent': 'pingan', 'name': '超图软件'}
 20190701&{'ins': 'buy_order', 'portfolio': 'overlap', 'code': '300514', 'num': 2000, 'price': 14.52, 'cost': 29040, 'agent': 'pingan', 'name': '友讯达'}
 20190705&{'ins': 'sell_order', 'portfolio': 'overlap', 'code': '300514', 'num': 2000, 'price': 14.56, 'cost': 29120, 'agent': 'pingan', 'name': '友讯达'}
+20190715&{'ins': 'buy_order', 'portfolio': '5G', 'code': '300134', 'num': 2000, 'price': 14.85, 'cost': 29700, 'agent': 'pingan', 'name': '大富科技'}
+20190723&{'ins': 'sell_order', 'portfolio': 'original', 'code': '300408', 'num': 1000, 'price': 20, 'cost': 20000, 'agent': 'pingan', 'name': '三环集团'}
+20190731&{'ins': 'sell_order', 'portfolio': '5G', 'code': '300134', 'num': 2000, 'price': 15.03, 'cost': 30060, 'agent': 'pingan', 'name': '大富科技'}
