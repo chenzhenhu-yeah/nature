@@ -370,7 +370,7 @@ if __name__ == "__main__":
         # pwd = 'zhenhu123'
 
         # 加载配置
-        config = open(get_dss()+'fut/cfg/config.json')
+        config = open(get_dss()+'fut/cfg/config.json') 
         setting = json.load(config)
         front_trade = setting['front_trade']
         front_quote = setting['front_quote']
