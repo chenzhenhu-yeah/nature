@@ -351,7 +351,7 @@ class TestQuote(object):
         """运行"""
         schedule.every().day.at("20:48").do(self.run)
         schedule.every().day.at("05:50").do(self.release)
-        schedule.every().day.at("08:48").do(self.run)
+        schedule.every().day.at("08:48").do(self.run) 
         schedule.every().day.at("15:50").do(self.release)
         schedule.every().day.at("15:52").do(self.change_day)
 
@@ -370,7 +370,7 @@ if __name__ == "__main__":
         # pwd = 'zhenhu123'
 
         # 加载配置
-        config = open(get_dss()+'fut/cfg/config.json') 
+        config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
         front_trade = setting['front_trade']
         front_quote = setting['front_quote']
