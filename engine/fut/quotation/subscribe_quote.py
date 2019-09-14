@@ -19,8 +19,8 @@ from nature import VtBarData
 from nature import SOCKET_BAR, get_dss
 
 class HuQuote(CtpQuote):
-
     #----------------------------------------------------------------------
+
     def __init__(self):
         """Constructor"""
         #to_log('in BollEngine.__init__')
@@ -383,12 +383,10 @@ if __name__ == "__main__":
         investor = ''
         pwd = ''
 
-
         time.sleep(3)
         qq = TestQuote(front_quote, broker, investor, pwd)
 
-        qq.daily_worker() 
-
+        qq.daily_worker()
         # qq.run()
         # input()
         # qq.release()
