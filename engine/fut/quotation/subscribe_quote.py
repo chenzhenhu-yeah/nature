@@ -351,7 +351,7 @@ class TestQuote(object):
         """运行"""
         schedule.every().day.at("20:28").do(self.run)
         schedule.every().day.at("05:50").do(self.release)
-        schedule.every().day.at("08:28").do(self.run)
+        schedule.every().day.at("08:29").do(self.run)
         schedule.every().day.at("15:50").do(self.release)
         schedule.every().day.at("15:52").do(self.change_day)
 
