@@ -338,10 +338,6 @@ class TestQuote(object):
 
     def run(self):
         self.q = HuQuote()
-        self.q.bar_min1_dict = {}
-        self.q.bar_min5_dict = {}
-        self.q.bar_min15_dict = {}
-
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(self.q.id_list)
 
@@ -354,7 +350,7 @@ class TestQuote(object):
     def daily_worker(self):
         """运行"""
         schedule.every().day.at("20:48").do(self.run)
-        schedule.every().day.at("09:21").do(self.run)
+        schedule.every().day.at("09:31").do(self.run)
 
         print(u'行情接收器开始运行')
         while True:
