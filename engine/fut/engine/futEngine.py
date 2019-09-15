@@ -20,7 +20,7 @@ from nature import SOCKET_BAR
 from nature import to_log, is_trade_day, send_email
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book
-from nature import NearBollPortfolio, GatewayPingan, TradeEngine
+from nature import Fut_AtrRsiPortfolio, get_dss
 #from ipdb import set_trace
 
 
@@ -38,7 +38,7 @@ class FutEngine(object):
 
         self.dss = dss
         self.portfolio_list = []
-        self.vtSymbol_list = ['IC1909','c1909','CF909']
+        self.vtSymbol_list = ['CF001','c2001','SR001','ag1912','rb2001']
         self.vtSymbol_dict = {}
         self.minx = minx
 
@@ -51,7 +51,7 @@ class FutEngine(object):
         """每日初始化交易引擎"""
 
         self.portfolio_list = []
-        self.loadPortfolio(AtrRsiPortfolio, 'AtrRsi')
+        self.loadPortfolio(Fut_AtrRsiPortfolio, 'AtrRsi')
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name):
@@ -127,12 +127,12 @@ class FutEngine(object):
         r = []
         try:
             today = time.strftime('%Y%m%d',time.localtime())
-            fname = self.dss + 'fut/bar/' + self.minx + '_' + today + '_' + vtSymbol + '.csv'
+            fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
             #print(fname)
             df = pd.read_csv(fname)
             df = df.sort_values(by=['date','time'])
             df = df.iloc[-initBars:]
-            print(df)
+            #print(df)
 
             for i, row in df.iterrows():
                 d = dict(row)
@@ -172,7 +172,7 @@ class FutEngine(object):
 
 #----------------------------------------------------------------------
 def start():
-    dss = '../../../data/'
+    dss = get_dss()
     engine1 = FutEngine(dss,'min1')
     schedule.every().day.at("20:08").do(engine1.worker_open)
     schedule.every().day.at("15:50").do(engine1.worker_close)
@@ -192,9 +192,6 @@ def start():
         time.sleep(10)
 
 
-
-
-
 if __name__ == '__main__':
     start()
 
@@ -205,4 +202,3 @@ if __name__ == '__main__':
     # dss = '../../../data/'
     # engine5 = FutEngine(dss,'min5')
     # engine5.worker_open()
-    

@@ -19,53 +19,14 @@ setting = json.load(config)
 pro_id = setting['pro_id']              # 设置服务器
 pro = ts.pro_api(pro_id)
 
+#
+# # 获取分钟数据
+# df = ts.pro_bar( api= pro, ts_code='300408.SZ', freq='15min', adj='bfq', start_date='20190901', end_date='20190913')
+# #print(df.head(3))
+# print(df)
 
-def get_ts_code(code):
-    if code[0] == '6':
-        code += '.SH'
-    else:
-        code += '.SZ'
 
-    return code
-
-def be_bottom(code, day):
-    df = get_stk_hfq(get_dss(),code,end_date=day)
-    if df is None:
-        return False
-
-    if len(df) <= 360:
-        return False
-
-    df30 = df.loc[:30]
-    df360 = df.loc[:360]
-    if df30.low.min() <= df360.low.min():
-        return True
-    else:
-        return False
-
-def price_signal(dss, day):
-    df = get_daily(dss, day)
-    # print(df.head(3))
-    # print(len(df))
-
-    df1 = df[df.p_change > 6.18]
-    # print(len(df1))
-    # print(df1.head(3))
-
-    r = []
-    for i,row in df1.iterrows():
-        print(row.code, row['name'], row.p_change)
-        if be_bottom(row.code, day):
-            df2 = pro.concept_detail(ts_code = get_ts_code(row.code))
-            concept_name = df2.concept_name.tolist()
-            r.append( [day, row.code, row['name'], row.p_change, concept_name] )
-        #break
-    return r
-
-if __name__ == '__main__':
-    dates = get_trading_dates(get_dss())
-    #preday = dates[-2]
-    today = dates[-1]
-    print(today)
-    r = price_signal(get_dss(),today)
-    print(str(r))
+#df = ts.get_k_data(code='300408', start='2019-06-01', end='2019-09-11',  ktype='15', autype='hfq')
+df = ts.get_k_data(code='300408', ktype='5', autype=None)
+#print(df.head(3))
+print(df)

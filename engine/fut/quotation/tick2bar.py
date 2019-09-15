@@ -34,47 +34,63 @@ def _Generate_Bar_MinOne(tick, temp_bar, r, today):
         temp_bar.append(bar)
         return
 
-    # 更新数据
-    if bar.high < new_bar.high:
-        bar.high = new_bar.high
-    if bar.low > new_bar.low:
-        bar.low =  new_bar.low
-    bar.close = new_bar.close
-
     if bar.time[3:5] != new_bar.time[3:5] :
         # 将 bar的分钟改为整点，推送并保存bar
+        bar.date = new_bar.date
         bar.time = new_bar.time[:-2] + '00'
         r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-
+        bar.open = new_bar.open
+        bar.high = new_bar.high
+        bar.low = new_bar.low
+        bar.close = new_bar.close
+    else:
+        # 更新数据
+        if bar.high < new_bar.high:
+            bar.high = new_bar.high
+        if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+        bar.close = new_bar.close
 
     temp_bar.append(bar)
 
 def proc_segment(df1,begin,end,num):
     r =[]
     temp_bar = []
-    today = ''          # 每段的today都一样。
+    begin_day = ''
+    end_day = ''
     n = len(df1)
     for k, tick in df1.iterrows():
         if k == 0:
-            today = tick.Localtime[:10]
-        _Generate_Bar_MinOne(tick, temp_bar, r, today)
+            if end > begin:
+                begin_day = tick.UpdateDate
+                end_day = tick.UpdateDate
+            else:
+                if tick.UpdateTime>='00:00:00' and tick.UpdateTime <= '02:30:01':
+                    end_day = tick.UpdateDate
+
+                    dt1 = datetime.datetime.strptime(end_day,'%Y-%m-%d')
+                    dt0 = dt1 - datetime.timedelta(days=1)
+                    begin_day = dt0.strftime('%Y-%m-%d')
+                else:
+                    begin_day = tick.UpdateDate
+
+                    dt0 = datetime.datetime.strptime(begin_day,'%Y-%m-%d')
+                    dt1 = dt0 + datetime.timedelta(days=1)
+                    end_day = dt1.strftime('%Y-%m-%d')
+            #print(begin_day,end_day)
+
+        _Generate_Bar_MinOne(tick, temp_bar, r, tick.UpdateDate)
+
         if k == n-1:
             # 收尾处理
             tick.UpdateTime = end[:-2] + '00'
-            _Generate_Bar_MinOne(tick, temp_bar, r, today)
+            _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-            # 之前的处理方式，已废
-            # if end == '23:59:59':
-            #     # 处理交易时段跨日的情况，如品种 ag, 使生成最后一根bar
-            #     tick.UpdateTime = '00:00:00'
-            #     dt_today = datetime.datetime.strptime(today,'%Y-%m-%d')
-            #     dt_today += datetime.timedelta(days=1)
-            #     _Generate_Bar_MinOne(tick, temp_bar, r, dt_today.strftime('%Y-%m-%d'))
-            # else:
-            #     tick.UpdateTime = end[:-2] + '00'
-            #     _Generate_Bar_MinOne(tick, temp_bar, r, today)
+    # if num == 75:
+    #     print(r)
+    #     print(len(r), num)
 
-    tm_begin = datetime.datetime.strptime(today+' '+begin,'%Y-%m-%d %H:%M:%S')
+    tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
     oneminute = datetime.timedelta(minutes=1)
     next = tm_begin + oneminute
     i = 0
@@ -90,8 +106,12 @@ def proc_segment(df1,begin,end,num):
             # 缺少bar，补齐
             bar1 = [ date, tm, row[2], row[3], row[4], row[5], 0 ]
             r.insert(i,bar1)
-        next = next +oneminute
+        next = next + oneminute
         i += 1
+
+    # if num == 75:
+    #     print(r)
+    #     print(len(r), num)
 
     assert len(r) == num
     return r
@@ -105,19 +125,19 @@ def Generate_Bar_Min5(new_bar, temp_bar, r):
         temp_bar.append(bar)
         return
 
-    # 更新数据
     if bar.high < new_bar.high:
-        bar.high = new_bar.high
+            bar.high = new_bar.high
     if bar.low > new_bar.low:
-        bar.low =  new_bar.low
+            bar.low =  new_bar.low
     bar.close = new_bar.close
 
     if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
         # 将 bar的分钟改为整点，推送并保存bar
+        bar.date = new_bar.date
         bar.time = new_bar.time[:-2] + '00'
         r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-
-    temp_bar.append(bar)
+    else:
+        temp_bar.append(bar)
 
 #----------------------------------------------------------------------
 def Generate_Bar_Min15(new_bar, temp_bar, r):
@@ -129,22 +149,22 @@ def Generate_Bar_Min15(new_bar, temp_bar, r):
         temp_bar.append(bar)
         return
 
-    # 更新数据
     if bar.high < new_bar.high:
-        bar.high = new_bar.high
+            bar.high = new_bar.high
     if bar.low > new_bar.low:
-        bar.low =  new_bar.low
+            bar.low =  new_bar.low
     bar.close = new_bar.close
 
     if new_bar.time[3:5] in ['15','30','45','00']:
         # 将 bar的分钟改为整点，推送并保存bar
+        bar.date = new_bar.date
         bar.time = new_bar.time[:-2] + '00'
         r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-
-    temp_bar.append(bar)
+    else:
+        temp_bar.append(bar)
 
 def tick2bar():
-    tradeDay = '20190904'
+    tradeDay = '20190912'
 
     #读取交易时段文件
     fn = get_dss() + 'fut/cfg/trade_time.csv'
@@ -156,14 +176,15 @@ def tick2bar():
     symbols = setting['symbols']
     symbol_list = symbols.split(',')
 
-    # symbol_list = ['SR001','SR909']
+    #symbol_list = ['CF001']
 
     for symbol in symbol_list:
         # 读取品种的tick文件
         fn = get_dss() + 'fut/tick/tick_' + tradeDay + '_' + symbol + '.csv'
+        print(fn)
         if os.path.exists(fn):
             df = pd.read_csv(fn)
-            #print(df.head(3))
+            # print(df.head(3))
 
             pz = symbol[:2]
             if pz.isalpha():
@@ -183,14 +204,15 @@ def tick2bar():
                     df12 = df[(df.UpdateTime>='00:00:00') & (df.UpdateTime<=row.end)]
                     df1 = pd.concat([df11, df12])
 
-                df1 = df1.reset_index()
-                # print(i,len(df1))
-                # print(df1.head(9))
-                r1 += proc_segment(df1, row.begin, row.end, row.num)
-                #break
+                if len(df1) > 0:
+                    df1 = df1.reset_index()
+                    # print(i,len(df1))
+                    # print(df1.head(9))
+                    r1 += proc_segment(df1, row.begin, row.end, row.num)
+
 
             df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
-            fname = self.dss + 'fut/bar/min1_' + symbol + '.csv'
+            fname = get_dss() + 'fut/bar/min1_' + symbol + '.csv'
             if os.path.exists(fname):
                 df_symbol.to_csv(fname, index=False, mode='a', header=False)
             else:
@@ -201,16 +223,16 @@ def tick2bar():
             temp_bar = []
             for row in r1:
                 new_bar = VtBarData()
-                new_bar.date = row.date
-                new_bar.time = row.time
-                new_bar.open = row.open
-                new_bar.high = row.high
-                new_bar.low =  row.low
-                new_bar.close = row.close
+                new_bar.date = row[0]
+                new_bar.time = row[1]
+                new_bar.open = row[2]
+                new_bar.high = row[3]
+                new_bar.low =  row[4]
+                new_bar.close = row[5]
                 Generate_Bar_Min5(new_bar, temp_bar, r5)
 
             df_symbol = pd.DataFrame(r5, columns=['date','time','open','high','low','close','volume'])
-            fname = self.dss + 'fut/bar/min5_' + symbol + '.csv'
+            fname = get_dss() + 'fut/bar/min5_' + symbol + '.csv'
             if os.path.exists(fname):
                 df_symbol.to_csv(fname, index=False, mode='a', header=False)
             else:
@@ -221,16 +243,16 @@ def tick2bar():
             temp_bar = []
             for row in r1:
                 new_bar = VtBarData()
-                new_bar.date = row.date
-                new_bar.time = row.time
-                new_bar.open = row.open
-                new_bar.high = row.high
-                new_bar.low =  row.low
-                new_bar.close = row.close
-                Generate_Bar_Min5(new_bar, temp_bar, r15)
+                new_bar.date = row[0]
+                new_bar.time = row[1]
+                new_bar.open = row[2]
+                new_bar.high = row[3]
+                new_bar.low =  row[4]
+                new_bar.close = row[5]
+                Generate_Bar_Min15(new_bar, temp_bar, r15)
 
             df_symbol = pd.DataFrame(r15, columns=['date','time','open','high','low','close','volume'])
-            fname = self.dss + 'fut/bar/min15_' + symbol + '.csv'
+            fname = get_dss() + 'fut/bar/min15_' + symbol + '.csv'
             if os.path.exists(fname):
                 df_symbol.to_csv(fname, index=False, mode='a', header=False)
             else:

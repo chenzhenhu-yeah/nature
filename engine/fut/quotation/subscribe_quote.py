@@ -80,8 +80,15 @@ class HuQuote(CtpQuote):
         now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         df = pd.DataFrame([f.__dict__])
         df['Localtime'] = now
+        df['UpdateDate'] = tick.tradeDay
+        if tick.UpdateTime >= '20:59:59':
+            # 夜盘时段，零点前仍为当日日期。
+            dt1 = datetime.datetime.strptime(tick.tradeDay,'%Y-%m-%d')
+            dt0 = dt1 - datetime.timedelta(days=1)
+            df['UpdateDate'] = dt0.strftime('%Y-%m-%d')
+
         cols = ['Localtime','LastPrice','AveragePrice','Volume',
-                'OpenInterest','PreOpenInterest','UpdateMillisec','UpdateTime']
+                'OpenInterest','PreOpenInterest','UpdateMillisec','UpdateDate','UpdateTime']
         df = df[cols]
 
         fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
@@ -221,11 +228,8 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def _Generate_Bar_MinOne(self, tick):
         """生成、推送、保存Bar"""
-
-        today = time.strftime('%Y-%m-%d',time.localtime())
-
         new_bar = VtBarData()
-        new_bar.date = today
+        new_bar.date = tick.UpdateDate
         new_bar.time = tick.UpdateTime
         new_bar.vtSymbol = tick.Instrument
         new_bar.open = tick.LastPrice
@@ -241,22 +245,25 @@ class HuQuote(CtpQuote):
             self.bar_min1_dict[id] = bar
             return
 
-        # 更新数据
-        if bar.high < new_bar.high:
-            bar.high = new_bar.high
-        if bar.low > new_bar.low:
-            bar.low =  new_bar.low
-        bar.close = new_bar.close
-
         if bar.time[3:5] != new_bar.time[3:5] :
             # 将 bar的分钟改为整点，推送并保存bar
             bar.time = new_bar.time[:-2] + '00'
-            #bar.time[6:8] = '00'
-
             self.put_bar(bar, 'min1')
             self._Generate_Bar_Min5(bar)
             self._Generate_Bar_Min15(bar)
             self.save_bar(bar,'min1')
+
+            bar.open = new_bar.open
+            bar.high = new_bar.high
+            bar.low = new_bar.low
+            bar.close = new_bar.close
+        else:
+            # 更新数据
+            if bar.high < new_bar.high:
+                bar.high = new_bar.high
+            if bar.low > new_bar.low:
+                bar.low =  new_bar.low
+            bar.close = new_bar.close
 
         self.bar_min1_dict[id] = bar
 
@@ -285,7 +292,10 @@ class HuQuote(CtpQuote):
             self.put_bar(bar, 'min5')
             self.save_bar(bar,'min5')
 
-        self.bar_min5_dict[id] = bar
+            self.bar_min5_dict.pop(id)
+        else:
+            self.bar_min5_dict[id] = bar
+
 
     #----------------------------------------------------------------------
     def _Generate_Bar_Min15(self, new_bar):
@@ -312,7 +322,9 @@ class HuQuote(CtpQuote):
             self.put_bar(bar, 'min15')
             self.save_bar(bar,'min15')
 
-        self.bar_min15_dict[id] = bar
+            self.bar_min5_dict.pop(id)
+        else:
+            self.bar_min5_dict[id] = bar
 
 class TestQuote(object):
     """TestQuote"""
@@ -324,36 +336,25 @@ class TestQuote(object):
         self.investor = investor
         self.pwd = pwd
 
+    def run(self):
         self.q = HuQuote()
+        self.q.bar_min1_dict = {}
+        self.q.bar_min5_dict = {}
+        self.q.bar_min15_dict = {}
+
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
-        #self.q.OnUserLogin = lambda o, i: self.q.ReqSubscribeMarketData('rb1910')
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(self.q.id_list)
 
     def subscribe_ids(self, ids):
         for id in ids:
             self.q.ReqSubscribeMarketData(id)
 
-    def run(self):
-        self.q.ReqConnect(self.front)
-
-    def release(self):
-        self.q.ReqUserLogout()
-
-    def change_day(self):
-        #清空，以免第二日重复保存
-        self.q.bar_min1_dict = {}
-        self.q.bar_min5_dict = {}
-        self.q.bar_min15_dict = {}
-
 
     #----------------------------------------------------------------------
     def daily_worker(self):
         """运行"""
         schedule.every().day.at("20:48").do(self.run)
-        schedule.every().day.at("05:50").do(self.release)
-        schedule.every().day.at("08:48").do(self.run) 
-        schedule.every().day.at("15:50").do(self.release)
-        schedule.every().day.at("15:52").do(self.change_day)
+        schedule.every().day.at("09:21").do(self.run)
 
         print(u'行情接收器开始运行')
         while True:
