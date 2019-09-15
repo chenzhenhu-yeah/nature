@@ -25,8 +25,26 @@ pro = ts.pro_api(pro_id)
 # #print(df.head(3))
 # print(df)
 
+#
+# #df = ts.get_k_data(code='300408', start='2019-06-01', end='2019-09-11',  ktype='15', autype='hfq')
+# df = ts.get_k_data(code='300408', ktype='5', autype=None)
+# #print(df.head(3))
+# print(df)
 
-#df = ts.get_k_data(code='300408', start='2019-06-01', end='2019-09-11',  ktype='15', autype='hfq')
-df = ts.get_k_data(code='300408', ktype='5', autype=None)
-#print(df.head(3))
-print(df)
+from pyecharts.charts import Bar
+from pyecharts import options as opts
+from pyecharts.globals import ThemeType
+
+from pyecharts import options as opts
+from pyecharts.globals import ThemeType
+
+bar = Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT))
+bar.add_xaxis(["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"])
+bar.add_yaxis("商家A", [5, 20, 36, 10, 75, 90], itemstyle_opts=opts.ItemStyleOpts(color='blue'),)
+bar.render()
+
+# .add_yaxis(
+#             "商家A",
+#             Faker.values(),
+#             itemstyle_opts=opts.ItemStyleOpts(color=JsCode(color_function)),
+#         )
