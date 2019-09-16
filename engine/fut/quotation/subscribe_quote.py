@@ -324,9 +324,9 @@ class HuQuote(CtpQuote):
             self.put_bar(bar, 'min15')
             self.save_bar(bar,'min15')
 
-            self.bar_min5_dict.pop(id)
+            self.bar_min15_dict.pop(id)
         else:
-            self.bar_min5_dict[id] = bar
+            self.bar_min15_dict[id] = bar
 
 class TestQuote(object):
     """TestQuote"""

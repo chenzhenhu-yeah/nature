@@ -193,11 +193,11 @@ def start():
 
 
 if __name__ == '__main__':
-    start()
+    #start()
 
-    # dss = '../../../data/'
-    # engine1 = FutEngine(dss,'min1')
-    # engine1.worker_open()
+    dss = get_dss()
+    engine1 = FutEngine(dss,'min1')
+    engine1.worker_open()
 
     # dss = '../../../data/'
     # engine5 = FutEngine(dss,'min5')
