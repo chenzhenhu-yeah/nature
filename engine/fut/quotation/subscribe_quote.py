@@ -6,6 +6,7 @@ __mtime__ = '20190506'
 
 import os
 import time
+import datetime
 import json
 import pandas as pd
 import schedule
@@ -354,7 +355,7 @@ class TestQuote(object):
     def daily_worker(self):
         """运行"""
         schedule.every().day.at("08:48").do(self.run)
-        schedule.every().day.at("20:48").do(self.run)
+        schedule.every().day.at("21:28").do(self.run)
 
         print(u'行情接收器开始运行')
         while True:
