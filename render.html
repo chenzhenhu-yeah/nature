@@ -7,19 +7,11 @@
 
 </head>
 <body>
-    <div id="18c3e0269b034cf0b1cf40efc40e0e21" style="width:900px; height:500px;"></div>
+    <div id="f579dc597595426b83e2b4e6a1094d9e" style="width:900px; height:500px;"></div>
     <script>
-        var chart_18c3e0269b034cf0b1cf40efc40e0e21 = echarts.init(
-            document.getElementById('18c3e0269b034cf0b1cf40efc40e0e21'), 'light', {renderer: 'canvas'});
-        var option_18c3e0269b034cf0b1cf40efc40e0e21 = {
-    "animation": true,
-    "animationThreshold": 2000,
-    "animationDuration": 1000,
-    "animationEasing": "cubicOut",
-    "animationDelay": 0,
-    "animationDurationUpdate": 300,
-    "animationEasingUpdate": "cubicOut",
-    "animationDelayUpdate": 0,
+        var chart_f579dc597595426b83e2b4e6a1094d9e = echarts.init(
+            document.getElementById('f579dc597595426b83e2b4e6a1094d9e'), 'light', {renderer: 'canvas'});
+        var option_f579dc597595426b83e2b4e6a1094d9e = {
     "series": [
         {
             "type": "bar",
@@ -36,7 +28,7 @@
             "label": {
                 "show": true,
                 "position": "top",
-                "margin": 8
+                "fontSize": 12
             },
             "itemStyle": {
                 "color": "blue"
@@ -50,8 +42,7 @@
             ],
             "selected": {
                 "\u5546\u5bb6A": true
-            },
-            "show": true
+            }
         }
     ],
     "tooltip": {
@@ -66,6 +57,25 @@
         },
         "borderWidth": 0
     },
+    "yAxis": [
+        {
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "inverse": false,
+            "splitLine": {
+                "show": false,
+                "lineStyle": {
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            }
+        }
+    ],
     "xAxis": [
         {
             "show": true,
@@ -74,9 +84,6 @@
             "nameGap": 15,
             "gridIndex": 0,
             "inverse": false,
-            "offset": 0,
-            "splitNumber": 5,
-            "minInterval": 0,
             "splitLine": {
                 "show": false,
                 "lineStyle": {
@@ -95,37 +102,9 @@
                 "\u889c\u5b50"
             ]
         }
-    ],
-    "yAxis": [
-        {
-            "show": true,
-            "scale": false,
-            "nameLocation": "end",
-            "nameGap": 15,
-            "gridIndex": 0,
-            "inverse": false,
-            "offset": 0,
-            "splitNumber": 5,
-            "minInterval": 0,
-            "splitLine": {
-                "show": false,
-                "lineStyle": {
-                    "width": 1,
-                    "opacity": 1,
-                    "curveness": 0,
-                    "type": "solid"
-                }
-            }
-        }
-    ],
-    "title": [
-        {
-            "text": "Bar-Brush \u793a\u4f8b",
-            "subtext": "\u6211\u662f\u526f\u6807\u9898"
-        }
     ]
 };
-        chart_18c3e0269b034cf0b1cf40efc40e0e21.setOption(option_18c3e0269b034cf0b1cf40efc40e0e21);
+        chart_f579dc597595426b83e2b4e6a1094d9e.setOption(option_f579dc597595426b83e2b4e6a1094d9e);
     </script>
 </body>
 </html>

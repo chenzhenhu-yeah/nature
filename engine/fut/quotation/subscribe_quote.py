@@ -72,21 +72,19 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def OnTick(self, f: Tick):
         """"""
-        # 处理Bar
-        #self._Generate_Bar_Min1(f)
-        self._Generate_Bar_MinOne(f)
-
         # 保存Tick到文件
         now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         df = pd.DataFrame([f.__dict__])
-        df['Localtime'] = now
-        df['UpdateDate'] = tick.tradeDay
-        if tick.UpdateTime >= '20:59:59':
-            # 夜盘时段，零点前仍为当日日期。
-            dt1 = datetime.datetime.strptime(tick.tradeDay,'%Y-%m-%d')
-            dt0 = dt1 - datetime.timedelta(days=1)
-            df['UpdateDate'] = dt0.strftime('%Y-%m-%d')
 
+        UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
+        if f.UpdateTime >= '20:59:59':
+            # 夜盘时段，零点前仍为当日日期。
+            dt1 = datetime.datetime.strptime(self.tradeDay,'%Y-%m-%d')
+            dt0 = dt1 - datetime.timedelta(days=1)
+            UpdateDate = dt0.strftime('%Y-%m-%d')
+
+        df['Localtime'] = now
+        df['UpdateDate'] = UpdateDate
         cols = ['Localtime','LastPrice','AveragePrice','Volume',
                 'OpenInterest','PreOpenInterest','UpdateMillisec','UpdateDate','UpdateTime']
         df = df[cols]
@@ -96,6 +94,10 @@ class HuQuote(CtpQuote):
             df.to_csv(fname, index=False, mode='a', header=False)
         else:
             df.to_csv(fname, index=False, mode='a')
+
+        # 处理Bar
+        #self._Generate_Bar_Min1(f)
+        self._Generate_Bar_MinOne(f, UpdateDate)
 
     #----------------------------------------------------------------------
     def send_bar(self, s):
@@ -226,10 +228,10 @@ class HuQuote(CtpQuote):
         self.bar_min1_dict[id] = bar
 
     #----------------------------------------------------------------------
-    def _Generate_Bar_MinOne(self, tick):
+    def _Generate_Bar_MinOne(self, tick, UpdateDate):
         """生成、推送、保存Bar"""
         new_bar = VtBarData()
-        new_bar.date = tick.UpdateDate
+        new_bar.date = UpdateDate
         new_bar.time = tick.UpdateTime
         new_bar.vtSymbol = tick.Instrument
         new_bar.open = tick.LastPrice
@@ -341,6 +343,8 @@ class TestQuote(object):
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(self.q.id_list)
 
+        self.q.ReqConnect(self.front)
+
     def subscribe_ids(self, ids):
         for id in ids:
             self.q.ReqSubscribeMarketData(id)
@@ -383,11 +387,12 @@ if __name__ == "__main__":
         time.sleep(3)
         qq = TestQuote(front_quote, broker, investor, pwd)
 
-        qq.daily_worker()
-        # qq.run()
-        # input()
-        # qq.release()
-        # input()
+        #qq.daily_worker()
+        print('begin')
+        qq.run()
+        print('wait')
+        input()
+
     # except Exception as e:
     #     print('error')
     #     print(e)
