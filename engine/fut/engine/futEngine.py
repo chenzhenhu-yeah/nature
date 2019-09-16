@@ -159,7 +159,7 @@ class FutEngine(object):
         """记录交易数据（由portfolio调用）"""
 
         # 记录成交数据
-        df = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         r = [[dt,pfName,self.minx,vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
         df = pd.DataFrame(r, columns=['datetimet','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
