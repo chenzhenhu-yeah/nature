@@ -164,7 +164,7 @@ def Generate_Bar_Min15(new_bar, temp_bar, r):
         temp_bar.append(bar)
 
 def tick2bar():
-    tradeDay = '20190912'
+    tradeDay = '20190916'
 
     #读取交易时段文件
     fn = get_dss() + 'fut/cfg/trade_time.csv'

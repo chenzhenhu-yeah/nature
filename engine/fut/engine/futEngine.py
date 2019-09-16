@@ -103,11 +103,13 @@ class FutEngine(object):
                     #print(type(d))
                     bar = VtBarData()
                     bar.__dict__ = d
+                    bar.vtSymbol = id
+                    bar.symbol = id
                     if id not in self.vtSymbol_dict:
                         self.vtSymbol_dict[id] = bar
                     elif self.vtSymbol_dict[id].time != bar.time:
                         self.vtSymbol_dict[id] = bar
-                        self.onBar(bar)
+                        #self.onBar(bar)
                         for p in self.portfolio_list:
                             p.onBar(bar)
                 except Exception as e:
@@ -122,8 +124,8 @@ class FutEngine(object):
         print(type(bar))
 
     #----------------------------------------------------------------------
-    def loadInitBar(self, vtSymbol, initBars):
-        """读取Bar数据，"""
+    def _bc_loadInitBar(self, vtSymbol, initBars):
+        """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
         r = []
         try:
             today = time.strftime('%Y%m%d',time.localtime())
@@ -148,6 +150,20 @@ class FutEngine(object):
         return r
 
     #----------------------------------------------------------------------
+    def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
+        """记录交易数据（由portfolio调用）"""
+
+        # 记录成交数据
+        df = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        r = [[dt,pfName,self.minx,vtSymbol, direction, offset, price, volume]]
+        print('send order: ', r)
+        df = pd.DataFrame(r, columns=['datetimet','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
+        fn = get_dss() + 'fut/deal.csv'
+        df.to_csv(fn, index=False, mode='a')
+
+        #self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName) #发单到真实交易路由
+
+    #----------------------------------------------------------------------
     def worker_open(self):
         """盘前加载配置及数据"""
         to_log('in FutEngine.worker_open')
@@ -161,14 +177,10 @@ class FutEngine(object):
         to_log('in FutEngine.worker_close')
 
         print('begin worker_close')
-        # 打印当日成交记录
-        tradeList = self.getTradeData()
-        to_log( '当日成交记录：' + str(tradeList) )
 
         # 保存信号参数
         for p in portfolio_list:
             p.saveParam()
-
 
 #----------------------------------------------------------------------
 def start():
@@ -199,6 +211,6 @@ if __name__ == '__main__':
     engine1 = FutEngine(dss,'min1')
     engine1.worker_open()
 
-    # dss = '../../../data/'
-    # engine5 = FutEngine(dss,'min5')
-    # engine5.worker_open()
+    dss = get_dss()
+    engine5 = FutEngine(dss,'min5')
+    engine5.worker_open()

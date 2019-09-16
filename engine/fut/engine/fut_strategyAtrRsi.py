@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+import pandas as pd
 from csv import DictReader
 from collections import defaultdict
 
@@ -48,7 +49,7 @@ class Fut_AtrRsiSignal(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar):
         """新推送过来一个bar，进行处理"""
-        #print(bar.date, self.vtSymbol)
+        print(bar.time, self.vtSymbol)
 
         self.bar = bar
         self.am.updateBar(bar)
@@ -142,6 +143,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
 
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
+            # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
             signal1 = Fut_AtrRsiSignal(self, vtSymbol)
             l = self.signalDict[vtSymbol]
             l.append(signal1)
@@ -166,7 +168,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
         priceTick = self.PRICETICK_DICT[signal.vtSymbol]
         price = int(round(price/priceTick, 0)) * priceTick
 
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier)
+        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
 
     #----------------------------------------------------------------------
     def loadParam(self):
