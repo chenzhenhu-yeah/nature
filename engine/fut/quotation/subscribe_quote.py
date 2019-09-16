@@ -80,7 +80,7 @@ class HuQuote(CtpQuote):
         UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
         if f.UpdateTime >= '20:59:59':
             # 夜盘时段，零点前仍为当日日期。
-            dt1 = datetime.datetime.strptime(self.tradeDay,'%Y-%m-%d')
+            dt1 = datetime.datetime.strptime(self.tradeDay,'%Y%m%d')
             dt0 = dt1 - datetime.timedelta(days=1)
             UpdateDate = dt0.strftime('%Y-%m-%d')
 
@@ -355,7 +355,7 @@ class TestQuote(object):
     def daily_worker(self):
         """运行"""
         schedule.every().day.at("08:48").do(self.run)
-        schedule.every().day.at("21:28").do(self.run)
+        schedule.every().day.at("21:39").do(self.run)
 
         print(u'行情接收器开始运行')
         while True:
