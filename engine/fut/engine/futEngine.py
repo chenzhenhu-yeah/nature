@@ -37,10 +37,15 @@ class FutEngine(object):
         """Constructor"""
 
         self.dss = dss
-        self.portfolio_list = []
-        self.vtSymbol_list = ['CF001','c2001','SR001','ag1912','rb2001']
-        self.vtSymbol_dict = {}
         self.minx = minx
+        self.portfolio_list = []
+        self.vtSymbol_dict = {}
+
+        # 加载配置
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols']
+        self.vtSymbol_list = symbols.split(',')
 
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
@@ -179,23 +184,23 @@ class FutEngine(object):
         print('begin worker_close')
 
         # 保存信号参数
-        for p in portfolio_list:
+        for p in self.portfolio_list:
             p.saveParam()
 
 #----------------------------------------------------------------------
 def start():
     dss = get_dss()
     engine1 = FutEngine(dss,'min1')
-    schedule.every().day.at("20:08").do(engine1.worker_open)
-    schedule.every().day.at("15:50").do(engine1.worker_close)
+    schedule.every().day.at("20:46").do(engine1.worker_open)
+    schedule.every().day.at("15:51").do(engine1.worker_close)
 
-    #engine5 = FutEngine(dss,'min5')
-    #schedule.every().day.at("20:08").do(engine5.worker_open)
-    #schedule.every().day.at("15:50").do(engine5.worker_close)
+    engine5 = FutEngine(dss,'min5')
+    schedule.every().day.at("20:47").do(engine5.worker_open)
+    schedule.every().day.at("15:52").do(engine5.worker_close)
 
-    #engine15 = FutEngine(dss,'min15')
-    #schedule.every().day.at("20:08").do(engine15.worker_open)
-    #schedule.every().day.at("15:50").do(engine15.worker_close)
+    engine15 = FutEngine(dss,'min15')
+    schedule.every().day.at("20:48").do(engine15.worker_open)
+    schedule.every().day.at("15:53").do(engine15.worker_close)
 
 
     print(u'期货交易引擎开始运行')
@@ -205,12 +210,12 @@ def start():
 
 
 if __name__ == '__main__':
-    #start()
+    start()
 
-    dss = get_dss()
-    engine1 = FutEngine(dss,'min1')
-    engine1.worker_open()
-
-    dss = get_dss()
-    engine5 = FutEngine(dss,'min5')
-    engine5.worker_open()
+    # dss = get_dss()
+    # engine1 = FutEngine(dss,'min1')
+    # engine1.worker_open()
+    #
+    # dss = get_dss()
+    # engine5 = FutEngine(dss,'min5')
+    # engine5.worker_open()

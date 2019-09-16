@@ -132,12 +132,14 @@ class Fut_AtrRsiPortfolio(Portfolio):
         with open(filename,encoding='utf-8') as f:
             r = DictReader(f)
             for d in r:
-                self.vtSymbolList.append(d['vtSymbol'])
-                self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
-                self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-                self.VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-                self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-                self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
+                # 当前可做的品种必须是引擎中有数据的品种
+                if d['vtSymbol'] in self.engine.vtSymbol_list:
+                    self.vtSymbolList.append(d['vtSymbol'])
+                    self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
+                    self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
+                    self.VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
+                    self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
+                    self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
 
         self.portfolioValue = 100E4
 

@@ -387,11 +387,11 @@ if __name__ == "__main__":
         time.sleep(3)
         qq = TestQuote(front_quote, broker, investor, pwd)
 
-        #qq.daily_worker()
-        print('begin')
-        qq.run()
-        print('wait')
-        input()
+        qq.daily_worker()
+        # print('begin')
+        # qq.run()
+        # print('wait')
+        # input()
 
     # except Exception as e:
     #     print('error')
