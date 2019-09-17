@@ -16,24 +16,24 @@ config = open(dss+'fut/cfg/config.json')
 setting = json.load(config)
 
 # 海通
-# kq_ht_window_handle = setting['kq_ht_window_handle']
-# kq_ht_app_path = setting['kq_ht_app_path']
 # app = application.Application()
-# app.connect(path = kq_ht_app_path)
-# dlg_spec = app.window(handle = kq_ht_window_handle)
+# app.connect(path = setting['kq_ht_app_path'])
+# dlg_spec = app.window( handle = int(setting['kq_ht_window_handle'], 16) )
 
 # simnow
-kq_simnow_window_handle = setting['kq_simnow_window_handle']
-kq_simnow_app_path = setting['kq_simnow_app_path']
 app = application.Application()
-app.connect(path = kq_simnow_app_path)
-dlg_spec = app.window(handle = kq_simnow_window_handle)
+app.connect(path = setting['kq_simnow_app_path'])
+dlg_spec = app.window( handle = int(setting['kq_simnow_window_handle'], 16) )
+
+# dlg_spec = app.window(handle = 0x408E8)
+# dlg_spec.print_control_identifiers()
+# dlg_spec.print_ctrl_ids()
 
 def kq_buy(code,price,num):
     """买开仓"""
     r = True
     try:
-        to_log('in kqgj_buy')
+        to_log('in kq_buy')
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)    #合约
@@ -67,7 +67,7 @@ def kq_sell(code,price,num):
     """卖平仓"""
     r = True
     try:
-        to_log('in kqgj_sell')
+        to_log('in kq_sell')
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)    #合约
@@ -211,10 +211,8 @@ def zggj_buy(code,price,num):
 
 if __name__ == "__main__":
     #测试用
-    code = 'c1909'
-    price = '1235'
+    code = 'c2001'
+    price = '1851'
     num = '1'
 
-    #kq_buy(code,price,num)
-
-    #dlg_spec.print_control_identifiers()
+    kq_buy(code,price,num)

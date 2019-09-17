@@ -250,6 +250,7 @@ class HuQuote(CtpQuote):
 
         if bar.time[3:5] != new_bar.time[3:5] :
             # 将 bar的分钟改为整点，推送并保存bar
+            bar.date = new_bar.date 
             bar.time = new_bar.time[:-2] + '00'
             self.put_bar(bar, 'min1')
             self._Generate_Bar_Min5(bar)
