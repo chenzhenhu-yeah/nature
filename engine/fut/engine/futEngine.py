@@ -19,7 +19,7 @@ from multiprocessing.connection import Client
 from nature import SOCKET_BAR
 from nature import to_log, is_trade_day, send_email
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import Book
+from nature import Book, a_file
 from nature import Fut_AtrRsiPortfolio, get_dss
 #from ipdb import set_trace
 
@@ -160,13 +160,18 @@ class FutEngine(object):
 
         # 记录成交数据
         dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        r = [[dt,pfName,self.minx,vtSymbol, direction, offset, price, volume]]
-        print('send order: ', r)
-        df = pd.DataFrame(r, columns=['datetimet','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
+        time.sleep(0.1)
+        order_id = str(int(time.time()))
         fn = get_dss() + 'fut/deal.csv'
-        df.to_csv(fn, index=False, mode='a')
+        r = [[dt,pfName,order_id,self.minx,vtSymbol, direction, offset, price, volume]]
+        print('send order: ', r)
 
-        #self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName) #发单到真实交易路由
+        # df = pd.DataFrame(r, columns=['datetime','order_id','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
+        # df.to_csv(fn, index=False, mode='a')
+
+        a_file(fn, str(r)[2:-2])
+
+
 
     #----------------------------------------------------------------------
     def worker_open(self):
