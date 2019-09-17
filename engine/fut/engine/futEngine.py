@@ -162,16 +162,16 @@ class FutEngine(object):
         dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         time.sleep(0.1)
         order_id = str(int(time.time()))
-        fn = get_dss() + 'fut/deal.csv'
+
         r = [[dt,pfName,order_id,self.minx,vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
 
         # df = pd.DataFrame(r, columns=['datetime','order_id','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
+        # fn = get_dss() + 'fut/deal.csv'
         # df.to_csv(fn, index=False, mode='a')
 
+        fn = 'fut/deal.csv'
         a_file(fn, str(r)[2:-2])
-
-
 
     #----------------------------------------------------------------------
     def worker_open(self):

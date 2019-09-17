@@ -12,19 +12,24 @@ import json
 from nature import to_log, get_dss
 
 dss = get_dss()
-config = open(dss+'csv/config.json')
+config = open(dss+'fut/cfg/config.json')
 setting = json.load(config)
 
-kqgj_window_handle = setting['kqgj_window_handle']
-kqgj_app_path = setting['kqgj_app_path']
-#print(kqgj_window_handle)
-#print(kqgj_app_path)
+# 海通
+# kq_ht_window_handle = setting['kq_ht_window_handle']
+# kq_ht_app_path = setting['kq_ht_app_path']
+# app = application.Application()
+# app.connect(path = kq_ht_app_path)
+# dlg_spec = app.window(handle = kq_ht_window_handle)
 
+# simnow
+kq_simnow_window_handle = setting['kq_simnow_window_handle']
+kq_simnow_app_path = setting['kq_simnow_app_path']
 app = application.Application()
-app.connect(path = kqgj_app_path)
-dlg_spec = app.window(handle = kqgj_window_handle)
+app.connect(path = kq_simnow_app_path)
+dlg_spec = app.window(handle = kq_simnow_window_handle)
 
-def kqgj_buy(code,price,num):
+def kq_buy(code,price,num):
     """买开仓"""
     r = True
     try:
@@ -58,7 +63,7 @@ def kqgj_buy(code,price,num):
 
     return r
 
-def kqgj_sell(code,price,num):
+def kq_sell(code,price,num):
     """卖平仓"""
     r = True
     try:
@@ -93,7 +98,7 @@ def kqgj_sell(code,price,num):
     return r
 
 
-def kqgj_short(code,price,num):
+def kq_short(code,price,num):
     """卖开仓"""
     r = True
     try:
@@ -127,7 +132,7 @@ def kqgj_short(code,price,num):
 
     return r
 
-def kqgj_cover(code,price,num):
+def kq_cover(code,price,num):
     """买平仓"""
     r = True
     try:
@@ -210,12 +215,6 @@ if __name__ == "__main__":
     price = '1235'
     num = '1'
 
-    #kqgj_buy(code,price,num)
-
-    #gtja_sell(code,price,num)
-    #pingan_buy(code,price,num)
-    #pingan_sell(code,price,num)
-    #cf_buy(code,price,num)
-    #cf_sell(code,price,num)
+    #kq_buy(code,price,num)
 
     #dlg_spec.print_control_identifiers()

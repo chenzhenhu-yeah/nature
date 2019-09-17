@@ -64,7 +64,7 @@ class HuQuote(CtpQuote):
         tick.PreOpenInterest = pDepthMarketData.getPreOpenInterest()
 
         if (tick.UpdateTime>='08:59:59' and tick.UpdateTime <= '15:00:01') or \
-        (tick.UpdateTime>='20:59:59' and tick.UpdateTime <= '23:30:01') or \
+        (tick.UpdateTime>='20:59:59' and tick.UpdateTime <= '23:59:59') or \
         (tick.UpdateTime>='00:00:00' and tick.UpdateTime <= '02:30:01') :
             #threading.Thread( target=self.OnTick, args=(tick,) ).start()
             #多线程容易出错。
