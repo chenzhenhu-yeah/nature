@@ -86,7 +86,7 @@ def proc_segment(df1,begin,end,num):
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    # if num == 75:
+    # if num == 60:
     #     print(r)
     #     print(len(r), num)
 
@@ -109,10 +109,11 @@ def proc_segment(df1,begin,end,num):
         next = next + oneminute
         i += 1
 
-    # if num == 75:
-    #     print(r)
-    #     print(len(r), num)
+    # if num == 60:
+    #      print(r)
+    #      print(len(r), num)
 
+    # print(len(r), num)
     assert len(r) == num
     return r
 
@@ -164,7 +165,7 @@ def Generate_Bar_Min15(new_bar, temp_bar, r):
         temp_bar.append(bar)
 
 def tick2bar():
-    tradeDay = '20190916'
+    tradeDay = '20190918'
 
     #读取交易时段文件
     fn = get_dss() + 'fut/cfg/trade_time.csv'
@@ -176,7 +177,7 @@ def tick2bar():
     symbols = setting['symbols']
     symbol_list = symbols.split(',')
 
-    #symbol_list = ['CF001']
+    symbol_list = ['ag1912']
 
     for symbol in symbol_list:
         # 读取品种的tick文件
@@ -186,6 +187,7 @@ def tick2bar():
             df = pd.read_csv(fn)
             # print(df.head(3))
 
+            # 读品种配置文件
             pz = symbol[:2]
             if pz.isalpha():
                 pass
@@ -205,6 +207,8 @@ def tick2bar():
                     df1 = pd.concat([df11, df12])
 
                 if len(df1) > 0:
+                    # 排序很重要，因为tick送过来的顺序可能是乱的
+                    df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
                     df1 = df1.reset_index()
                     # print(i,len(df1))
                     # print(df1.head(9))

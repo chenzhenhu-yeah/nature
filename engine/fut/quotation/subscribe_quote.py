@@ -35,6 +35,7 @@ class HuQuote(CtpQuote):
 
         self.dss = get_dss()
         self.tradeDay = ''
+        self.temp_tradeDay = ''
         self.bar_min1_dict = {}
         self.bar_min5_dict = {}
         self.bar_min15_dict = {}
@@ -55,7 +56,8 @@ class HuQuote(CtpQuote):
         tick.OpenInterest = pDepthMarketData.getOpenInterest()
         tick.Volume = pDepthMarketData.getVolume()
 
-        self.tradeDay = pDepthMarketData.getTradingDay()
+        # 只做为临时变量，因郑交所与其他不一样!!!
+        self.temp_tradeDay = pDepthMarketData.getTradingDay()
 
         tick.UpdateTime = pDepthMarketData.getUpdateTime()
         tick.UpdateMillisec = pDepthMarketData.getUpdateMillisec()
@@ -76,6 +78,15 @@ class HuQuote(CtpQuote):
         # 保存Tick到文件
         now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         df = pd.DataFrame([f.__dict__])
+
+        # 以白银作为首笔，确定当前的self.tradeDay
+        if self.tradeDay == '':
+            if f.Instrument[:2] == 'ag':
+                # 赋值后，在此交易时段内保持不变。
+                self.tradeDay = self.temp_tradeDay
+            else:
+                # 等待首笔Tick品种为白银
+                return
 
         UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
         if f.UpdateTime >= '20:59:59':
@@ -177,58 +188,6 @@ class HuQuote(CtpQuote):
             return False
 
     #----------------------------------------------------------------------
-    def _Generate_Bar_Min1(self, tick):
-        """生成、推送、保存Bar"""
-        id = tick.Instrument
-        if id in self.bar_min1_dict:
-            bar = self.bar_min1_dict[id]
-        else:
-            bar = VtBarData()
-
-        today = time.strftime('%Y-%m-%d',time.localtime())
-        min = ''.join(tick.UpdateTime)
-        #print('before ',min)
-        min = min[:-2] + '00'
-        #print('after  ',min)
-
-        if bar.time != min:
-            if len(bar.time) > 0:
-                df = pd.DataFrame([bar.__dict__])
-                cols = ['date','time','open','high','low','close','volume']
-                df = df[cols]
-
-                # send bar to port
-                #self.send_bar(str(bar.__dict__))
-
-                self.put_bar(df, id, 'min1')
-                self._Generate_Bar_Min5(bar)
-
-                # save bar
-                # 出现了怪的问题，发布了多条重复的tick，但分种线的加工不应该出现此问题，多线程 ? ? ?
-                fname = self.dss + 'fut/put/rec/min1_' + self.tradeDay + '_' + id + '.csv'
-                if os.path.exists(fname):
-                    df.to_csv(fname, index=False, mode='a', header=False)
-                else:
-                    df.to_csv(fname, index=False, mode='a')
-            bar.date = today
-            bar.time = min
-            bar.vtSymbol = tick.Instrument
-            bar.open = tick.LastPrice
-            bar.high = tick.LastPrice
-            bar.low =  tick.LastPrice
-            bar.close = tick.LastPrice
-            bar.volume = tick.Volume
-        else:
-            if bar.high < tick.LastPrice:
-                bar.high = tick.LastPrice
-            if bar.low > tick.LastPrice:
-                bar.low =  tick.LastPrice
-            bar.close = tick.LastPrice
-            bar.volume = tick.Volume
-
-        self.bar_min1_dict[id] = bar
-
-    #----------------------------------------------------------------------
     def _Generate_Bar_MinOne(self, tick, UpdateDate):
         """生成、推送、保存Bar"""
         new_bar = VtBarData()
@@ -250,7 +209,7 @@ class HuQuote(CtpQuote):
 
         if bar.time[3:5] != new_bar.time[3:5] :
             # 将 bar的分钟改为整点，推送并保存bar
-            bar.date = new_bar.date 
+            bar.date = new_bar.date
             bar.time = new_bar.time[:-2] + '00'
             self.put_bar(bar, 'min1')
             self._Generate_Bar_Min5(bar)

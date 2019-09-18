@@ -3,6 +3,8 @@ SOCKET_LOGGER = 9000
 SOCKET_FILER  = 9001
 SOCKET_ORDER  = 9002
 SOCKET_BAR    = 9003
+SOCKET_KQ_SIMNOW = 9004
+SOCKET_KQ_HT  = 9005
 
 from nature.logger import to_log, read_log_today
 

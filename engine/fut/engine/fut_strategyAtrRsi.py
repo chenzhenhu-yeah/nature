@@ -188,7 +188,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
         r = []
         for code in self.vtSymbolList:
             if self.posDict[code] != 0:   #有持仓需保存参数
-                for signal in self.portfolio.signalDict[code]:
+                for signal in self.signalDict[code]:
                     r.append([code, signal.buyPrice, signal.intraTradeLow, signal.longStop])
 
         df = pd.DataFrame(r, columns=['vtSymbol','buyPrice','intraTradeLow','longStop'])

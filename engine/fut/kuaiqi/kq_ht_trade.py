@@ -9,21 +9,16 @@ from pywinauto import application
 import time
 import json
 
-from nature import to_log, get_dss
+from nature import to_log, get_dss, SOCKET_KQ_SIMNOW, SOCKET_KQ_HT
 
 dss = get_dss()
 config = open(dss+'fut/cfg/config.json')
 setting = json.load(config)
 
 # 海通
-# app = application.Application()
-# app.connect(path = setting['kq_ht_app_path'])
-# dlg_spec = app.window( handle = int(setting['kq_ht_window_handle'], 16) )
-
-# simnow
 app = application.Application()
-app.connect(path = setting['kq_simnow_app_path'])
-dlg_spec = app.window( handle = int(setting['kq_simnow_window_handle'], 16) )
+app.connect(path = setting['kq_ht_app_path'])
+dlg_spec = app.window( handle = int(setting['kq_ht_window_handle'], 16) )
 
 # dlg_spec = app.window(handle = 0x408E8)
 # dlg_spec.print_control_identifiers()
@@ -209,10 +204,38 @@ def zggj_buy(code,price,num):
 
     #return r
 
+# 文件通信接口  -----------------------------------------------------------
+def kq_ht_service(self):
+    print('in kq_ht_svervice')
+
+    address = ('localhost', SOCKET_KQ_HT)
+    while True:
+        with Listener(address, authkey=b'secret password') as listener:
+            with listener.accept() as conn:
+                #['datetime','order_id','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume']
+                s = conn.recv()
+                l = eval(s)
+                code      = l[4]
+                direction = l[5]
+                offset    = l[6]
+                price     = l[7]
+                num       = l[8]
+                if direction == '多' and offset == '开仓':
+                    kq_buy(code,price,num)
+                if direction == '空' and offset == '开仓':
+                    kq_short(code,price,num)
+                if direction == '多' and offset == '平仓':
+                    kq_cover(code,price,num)
+                if direction == '空' and offset == '平仓':
+                    kq_sell(code,price,num)
+
 if __name__ == "__main__":
     #测试用
     code = 'c2001'
-    price = '1851'
+    price = '1831'
     num = '1'
 
     kq_buy(code,price,num)
+    # kq_sell(code,price,num)
+    # kq_short(code,price,num)
+    # kq_cover(code,price,num)
