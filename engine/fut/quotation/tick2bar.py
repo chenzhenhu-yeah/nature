@@ -264,5 +264,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    #tradeDay = '20190918'
+    tradeDay = '20190919'
     tick2bar(tradeDay)

@@ -196,15 +196,15 @@ class FutEngine(object):
 def start():
     dss = get_dss()
     engine1 = FutEngine(dss,'min1')
-    schedule.every().day.at("20:45").do(engine1.worker_open)
+    schedule.every().day.at("20:55").do(engine1.worker_open)
     schedule.every().day.at("15:11").do(engine1.worker_close)
 
     engine5 = FutEngine(dss,'min5')
-    schedule.every().day.at("20:46").do(engine5.worker_open)
+    schedule.every().day.at("20:56").do(engine5.worker_open)
     schedule.every().day.at("15:12").do(engine5.worker_close)
 
     engine15 = FutEngine(dss,'min15')
-    schedule.every().day.at("20:47").do(engine15.worker_open)
+    schedule.every().day.at("20:57").do(engine15.worker_open)
     schedule.every().day.at("15:13").do(engine15.worker_close)
 
 
