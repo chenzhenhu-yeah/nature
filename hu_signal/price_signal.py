@@ -60,7 +60,7 @@ def price_signal(dss, day):
             r.append( str([day, row.code, row['name'], row.p_change, concept_name]) )
 
             # 拷贝数据文件到下载目录，以备下载。
-            ins = 'copy ' + get_dss() + 'hfq/' + row.code + '.csv ' + 'C:/Users/Administrator/Downloads/' + row.code + '_' + row['name']+ '.csv '
+            ins = 'copy ' + get_dss() + 'hfq\\' + row.code + '.csv ' + 'C:\\Users\\Administrator\\Downloads\\' + row.code + '_' + row['name']+ '.csv '
             print(ins)
             os.system(ins)
         #break

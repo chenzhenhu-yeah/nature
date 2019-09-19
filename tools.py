@@ -94,7 +94,7 @@ def get_dss():
     path = os.getcwd()
     i = path.find('repo')
     #print(path[:i])
-    return path[:i] + 'repo/data/'
+    return path[:i] + 'repo\\data\\'
 
 if __name__ == '__main__':
     get_dss()
