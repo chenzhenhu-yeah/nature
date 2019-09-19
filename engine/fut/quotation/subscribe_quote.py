@@ -298,8 +298,12 @@ class TestQuote(object):
         self.broker = broker
         self.investor = investor
         self.pwd = pwd
+        self.q = None
 
     def run(self):
+        del self.q
+        time.sleep(10)
+
         self.q = HuQuote()
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(self.q.id_list)
