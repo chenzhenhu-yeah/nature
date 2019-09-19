@@ -58,7 +58,10 @@ if __name__ == "__main__":
     tt = TestTrade(front_trade, broker, investor, pwd, appid, auth_code, proc)
     tt.run()
     time.sleep(5)
-    # tt.t.ReqOrderInsert('j1905', DirectType.Buy, OffsetType.Open, 2060, 3)
+
+    # simnow 发单测试成功(2019-09-19), 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
+    # 修改了 trade.py 中的 ReqOrderInsert，添加 ExchangeID 字段
+    tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1831, 1, 'DCE')
 
 
     input()

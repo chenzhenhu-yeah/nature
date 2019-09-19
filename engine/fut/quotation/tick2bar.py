@@ -11,7 +11,7 @@ from multiprocessing.connection import Client
 from nature import CtpTrade
 from nature import CtpQuote
 from nature import Tick
-from nature import VtBarData
+from nature import VtBarData, to_log
 from nature import SOCKET_BAR, get_dss
 
 
@@ -90,6 +90,7 @@ def proc_segment(df1,begin,end,num):
     #     print(r)
     #     print(len(r), num)
 
+    # 如果有数据缺失，补全。
     tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
     oneminute = datetime.timedelta(minutes=1)
     next = tm_begin + oneminute
@@ -104,6 +105,7 @@ def proc_segment(df1,begin,end,num):
             pass
         else:
             # 缺少bar，补齐
+            to_log( '当tick2bar时数据有缺失：'+ date + ' ' + tm + ' ' + str(row[2]) )
             bar1 = [ date, tm, row[2], row[3], row[4], row[5], 0 ]
             r.insert(i,bar1)
         next = next + oneminute
@@ -164,8 +166,7 @@ def Generate_Bar_Min15(new_bar, temp_bar, r):
     else:
         temp_bar.append(bar)
 
-def tick2bar():
-    tradeDay = '20190918'
+def tick2bar(tradeDay):
 
     #读取交易时段文件
     fn = get_dss() + 'fut/cfg/trade_time.csv'
@@ -177,7 +178,7 @@ def tick2bar():
     symbols = setting['symbols']
     symbol_list = symbols.split(',')
 
-    symbol_list = ['ag1912']
+    #symbol_list = ['ag1912']
 
     for symbol in symbol_list:
         # 读取品种的tick文件
@@ -263,4 +264,5 @@ def tick2bar():
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tick2bar()
+    #tradeDay = '20190918'
+    tick2bar(tradeDay)

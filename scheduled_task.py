@@ -13,6 +13,7 @@ from nature.down_k.down_data import down_data
 from nature.engine.stk.nearboll.use_ma import use_ma
 from nature import has_factor, stk_report
 from nature.hu_signal.price_signal import price_signal
+from nature.engine.fut.quotation.tick2bar import tick2bar
 
 dss = r'../data/'
 
@@ -101,15 +102,29 @@ def run_price_signal():
         print('error')
         print(e)
 
+def run_tick2bar():
+    try:
+        now = datetime.now()
+        today = now.strftime('%Y%m%d')
+        weekday = int(now.strftime('%w'))
+        print(today,weekday)
+        if 1 <= weekday <= 5:
+            tick2bar(today)
+
+    except Exception as e:
+        print('error')
+        print(e)
 
 if __name__ == '__main__':
     try:
+
         '''
         schedule.every(3).seconds.do(down_data_0100)
         '''
 
         # 盘中
         schedule.every().day.at("15:15").do(mail_1515)
+        # schedule.every().day.at("15:30").do(run_tick2bar)
 
         #盘后
         schedule.every().day.at("18:15").do(mail_1815)

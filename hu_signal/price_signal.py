@@ -19,7 +19,6 @@ setting = json.load(config)
 pro_id = setting['pro_id']              # 设置服务器
 pro = ts.pro_api(pro_id)
 
-
 def get_ts_code(code):
     if code[0] == '6':
         code += '.SH'
@@ -54,11 +53,16 @@ def price_signal(dss, day):
 
     r = []
     for i,row in df1.iterrows():
-        print(row.code, row['name'], row.p_change)
+        # print(row.code, row['name'], row.p_change)
         if be_bottom(row.code, day):
             df2 = pro.concept_detail(ts_code = get_ts_code(row.code))
             concept_name = df2.concept_name.tolist()
             r.append( str([day, row.code, row['name'], row.p_change, concept_name]) )
+
+            # 拷贝数据文件到下载目录，以备下载。
+            ins = 'copy ' + get_dss() + 'hfq/' + row.code + '.csv ' + 'C:/Users/Administrator/Downloads/' + row.code + '_' + row['name']+ '.csv '
+            print(ins)
+            os.system(ins)
         #break
     return r
 

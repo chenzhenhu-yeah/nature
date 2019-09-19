@@ -491,7 +491,7 @@ class CtpTrade():
         self.password = pwd
         self.t.ReqAuthenticate(broker, user, proc_info, auth_code, appid)
 
-    def ReqOrderInsert(self, pInstrument: str, pDirection: DirectType, pOffset: OffsetType, pPrice: float = 0.0, pVolume: int = 1, pType: OrderType = OrderType.Limit, pCustom: int = 0):
+    def ReqOrderInsert(self, pInstrument: str, pDirection: DirectType, pOffset: OffsetType, pPrice: float = 0.0, pVolume: int = 1, exchangeid: str='',  pType: OrderType = OrderType.Limit, pCustom: int = 0):
         """委托
 
         :param pInstrument:
@@ -550,6 +550,7 @@ class CtpTrade():
             OrderPriceType=OrderPriceType,
             TimeCondition=TimeCondition,
             LimitPrice=LimitPrice,
+            ExchangeID=exchangeid,
         )
 
     def ReqOrderAction(self, OrderID: str):
