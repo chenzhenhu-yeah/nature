@@ -178,7 +178,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
         df = pd.read_csv(filename)
         for i, row in df.iterrows():
             code = row.vtSymbol
-            for signal in self.portfolio.signalDict[code]:
+            for signal in self.signalDict[code]:
                 signal.buyPrice = row.buyPrice,
                 signal.intraTradeLow = row.intraTradeLow
                 signal.longStop = row.longStop

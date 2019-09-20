@@ -215,12 +215,12 @@ def start():
 
 
 if __name__ == '__main__':
-    start()
+    # start()
 
-    # dss = get_dss()
-    # engine1 = FutEngine(dss,'min1')
-    # engine1.worker_open()
-    #
-    # dss = get_dss()
-    # engine5 = FutEngine(dss,'min5')
-    # engine5.worker_open()
+    dss = get_dss()
+    engine15 = FutEngine(dss,'min15')
+    engine15.worker_open()
+
+    dss = get_dss()
+    engine5 = FutEngine(dss,'min5')
+    engine5.worker_open()

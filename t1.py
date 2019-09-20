@@ -22,11 +22,9 @@ try:
 except Exception as e:
     print(e)
     print('-'*30)
-    traceback.print_exc()
-
-
-
-
+    #traceback.print_exc()
+    s = traceback.format_exc()
+    print(s)
 
 
 

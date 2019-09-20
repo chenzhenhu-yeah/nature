@@ -6,6 +6,7 @@ import schedule
 import time
 from datetime import datetime
 from multiprocessing.connection import Client
+import traceback
 
 from nature import to_log
 from nature import get_trading_dates, send_email
@@ -117,19 +118,18 @@ def run_tick2bar():
 
 if __name__ == '__main__':
     try:
-
         '''
         schedule.every(3).seconds.do(down_data_0100)
         '''
 
         # 盘中
-        schedule.every().day.at("15:15").do(mail_1515)
-        schedule.every().day.at("16:30").do(run_tick2bar)
+        schedule.every().day.at("15:30").do(run_tick2bar)
+        schedule.every().day.at("15:45").do(mail_1515)
 
         #盘后
-        schedule.every().day.at("18:15").do(mail_1815)
+        #schedule.every().day.at("18:15").do(mail_1815)
         schedule.every().day.at("01:00").do(down_data_0100)
-        schedule.every().day.at("02:00").do(mail_0200)
+        #schedule.every().day.at("02:00").do(mail_0200)
         schedule.every().day.at("02:30").do(run_price_signal)
 
         print('schedule begin...')
@@ -137,5 +137,10 @@ if __name__ == '__main__':
             schedule.run_pending()
             time.sleep(10)
     except Exception as e:
-        print('error')
-        print(e)
+        now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        print(now)
+        print('-'*60)
+        traceback.print_exc()
+
+        s = traceback.format_exc()
+        to_log(s)
