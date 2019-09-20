@@ -65,7 +65,12 @@ class CtpQuote(object):
         """退出接口(正常退出,不会触发OnFrontDisconnected)"""
         to_log('in CtpQuote.ReqUserLogout')
 
+        self.q.ReqUserLogout()
+        self.q.RegisterSpi(None)
+        # 以上两句是本人后加的
+
         self.q.Release()
+
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
         self.logined = False

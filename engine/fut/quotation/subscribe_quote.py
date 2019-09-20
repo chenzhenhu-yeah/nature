@@ -12,6 +12,7 @@ import pandas as pd
 import schedule
 import threading
 from multiprocessing.connection import Client
+import traceback
 
 from nature import CtpTrade
 from nature import CtpQuote
@@ -301,8 +302,9 @@ class TestQuote(object):
         self.q = None
 
     def run(self):
+        time.sleep(3)
         del self.q
-        time.sleep(10)
+        time.sleep(3)
 
         self.q = HuQuote()
         self.q.OnConnected = lambda x: self.q.ReqUserLogin(self.investor, self.pwd, self.broker)
@@ -313,6 +315,10 @@ class TestQuote(object):
     def subscribe_ids(self, ids):
         for id in ids:
             self.q.ReqSubscribeMarketData(id)
+
+    def release(self):
+        # 对quote的 ReqUserLogout方法做了修改
+        self.q.ReqUserLogout()
 
 
     #----------------------------------------------------------------------
@@ -327,7 +333,7 @@ class TestQuote(object):
             time.sleep(10)
 
 if __name__ == "__main__":
-    # try:
+    try:
         # # 海通
         # front_trade = 'tcp://180.168.212.75:41305'
         # front_quote = 'tcp://180.168.212.75:41313'
@@ -358,8 +364,11 @@ if __name__ == "__main__":
         # print('wait')
         # input()
 
-    # except Exception as e:
-    #     print('error')
-    #     print(e)
-    #     while True:
-    #         time.sleep(300)
+    except Exception as e:
+        now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        print(now)
+        print('-'*60)
+        traceback.print_exc()
+
+        qq.run()
+        input()

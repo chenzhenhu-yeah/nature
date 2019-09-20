@@ -16,6 +16,13 @@ import tushare as ts
 
 
 
+import traceback
+try:
+    i = 3/0
+except Exception as e:
+    print(e)
+    print('-'*30)
+    traceback.print_exc()
 
 
 
