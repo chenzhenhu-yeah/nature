@@ -95,7 +95,10 @@ def run_price_signal():
         if 2 <= weekday <= 6:
             dates = get_trading_dates(dss)
             today = dates[-1]
-            r = price_signal(dss,today)
+            arr = price_signal(dss,today)
+            r = []
+            for a in arr:
+                r.append(str(a))
             #print(str(r))
             send_email(dss, 'price_signal', '\n'.join(r))
 
@@ -127,7 +130,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:45").do(mail_1515)
 
         #盘后
-        #schedule.every().day.at("18:15").do(mail_1815)
+        #schedule.every().day.at("00:15").do(mail_1815)
         schedule.every().day.at("01:00").do(down_data_0100)
         #schedule.every().day.at("02:00").do(mail_0200)
         schedule.every().day.at("02:30").do(run_price_signal)

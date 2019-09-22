@@ -9,23 +9,16 @@ import re
 import datetime
 import time
 
-from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
+from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, get_ts_code
 
 import json
 import tushare as ts
+
 # 加载配置
 config = open(get_dss()+'csv/config.json')
 setting = json.load(config)
 pro_id = setting['pro_id']              # 设置服务器
 pro = ts.pro_api(pro_id)
-
-def get_ts_code(code):
-    if code[0] == '6':
-        code += '.SH'
-    else:
-        code += '.SZ'
-
-    return code
 
 def be_bottom(code, day):
     df = get_stk_hfq(get_dss(),code,end_date=day)
@@ -56,14 +49,18 @@ def price_signal(dss, day):
         # print(row.code, row['name'], row.p_change)
         if be_bottom(row.code, day):
             df2 = pro.concept_detail(ts_code = get_ts_code(row.code))
-            concept_name = df2.concept_name.tolist()
-            r.append( str([day, row.code, row['name'], row.p_change, concept_name]) )
+            concept = str( df2.concept_name.tolist() )
+            r.append( [day, row.code, row['name'], row.p_change, concept] )
 
-            # 拷贝数据文件到下载目录，以备下载。
+            # 拷贝数据文件到下载目录，以备下载。windows下一定要用\\
             ins = 'copy ' + get_dss() + 'hfq\\' + row.code + '.csv ' + 'C:\\Users\\Administrator\\Downloads\\' + row.code + '_' + row['name']+ '.csv '
             print(ins)
             os.system(ins)
         #break
+    df = pd.DataFrame(r,columns=['date','code','name','change','concept'])
+    fn = get_dss() + 'csv/price_signal.csv'
+    df.to_csv(fn,index=False,mode='a')
+
     return r
 
 if __name__ == '__main__':

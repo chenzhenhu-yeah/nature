@@ -11,6 +11,8 @@ def get_hu_k_data(xcod,tim0,strInterface='k'):
         #df3=ts.get_hist_data(xcod,start=tim0,end=None,retry_count=5,pause=1);
         #df3.index=pd.to_datetime(df3.index)
         pass
+    elif strInterface == 'pro':
+        pass
     else:
         df3=ts.get_k_data(xcod,start=tim0,autype='bfq',);
         df3.index=df3['date']
@@ -70,7 +72,9 @@ def down_stk_bfq_all(dss,time0='2018-01-01',strInterface='k'):
     for code in codes:
         #down_stk_hfq_single(code,time0,strInterface);
         try:
-            down_stk_bfq_single(code,dss,time0,strInterface);
+            down_stk_bfq_single(code,dss,time0,strInterface)
+            # 流控，每分种200次,
+            time.sleep(0.3)
             #print('{} got it'.format(code))
         except:
             print('{} error!'.format(code))

@@ -5,12 +5,28 @@ import time
 import numpy as np
 import pandas as pd
 import tushare as ts
+import json
 
-def get_hu_k_data(xcod,tim0,strInterface='k'):
+from nature import get_dss, get_ts_code
+
+# 加载配置
+config = open(get_dss()+'csv/config.json')
+setting = json.load(config)
+pro_id = setting['pro_id']
+pro = ts.pro_api(pro_id)
+
+def get_hu_k_data(xcod,tim0,strInterface='pro'):
     if strInterface == 'hist':
         #df3=ts.get_hist_data(xcod,start=tim0,end=None,retry_count=5,pause=1);
         #df3.index=pd.to_datetime(df3.index)
         pass
+    elif strInterface == 'pro':
+        begin_dt = tim0[:4] + tim0[5:7] + tim0[8:10]
+        df3 = ts.pro_bar(api=pro, ts_code=get_ts_code(xcod), adj='hfq', start_date=begin_dt)
+        df3['volume']=df3['vol']
+        df3['date']=df3['trade_date']
+        df3.index=df3['date']
+        df3.index=pd.to_datetime(df3.index, format='%Y%m%d')
     else:
         df3=ts.get_k_data(xcod,start=tim0,autype='hfq',);
         df3.index=df3['date']
@@ -24,7 +40,7 @@ def get_hu_k_data(xcod,tim0,strInterface='k'):
     #print(df2.head())
     return df2
 
-def down_stk_hfq_single(code,dss,tim01,strInterface='k'):
+def down_stk_hfq_single(code,dss,tim01,strInterface='pro'):
     xcod = code
     tim0 = tim01
     xd0=[];xd=[];
@@ -54,7 +70,7 @@ def down_stk_hfq_single(code,dss,tim01,strInterface='k'):
         xd=np.round(xd,3);
         xd.to_csv(fss)
 
-def down_stk_hfq_all(dss,time0='2018-01-01',strInterface='k'):
+def down_stk_hfq_all(dss,time0='2018-01-01',strInterface='pro'):
     codes = []
     listfile = os.listdir(dss + 'daily')
     listfile.sort(reverse=True)
@@ -71,9 +87,12 @@ def down_stk_hfq_all(dss,time0='2018-01-01',strInterface='k'):
         #down_stk_hfq_single(code,time0,strInterface);
         try:
             down_stk_hfq_single(code,dss,time0,strInterface);
+            # 流控，每分种200次, 稳妥起见，实际按每分钟约120次
+            time.sleep(0.5)
             #print('{} got it'.format(code))
         except:
             print('{} error!'.format(code))
 
 if __name__ == '__main__':
     down_stk_hfq_all(r'../../data/')
+    #down_stk_hfq_single('002918', r'../../data/','2018-01-01','pro')

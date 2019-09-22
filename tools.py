@@ -96,6 +96,15 @@ def get_dss():
     #print(path[:i])
     return path[:i] + 'repo\\data\\'
 
+#----------------------------------------------------------------------
+def get_ts_code(code):
+    if code[0] == '6':
+        code += '.SH'
+    else:
+        code += '.SZ'
+
+    return code
+
 if __name__ == '__main__':
     get_dss()
     pass
