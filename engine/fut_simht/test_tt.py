@@ -37,23 +37,20 @@ class TestTrade(object):
 
     def run(self):
         self.t.ReqConnect(self.front)
-        # self.t.ReqConnect('tcp://192.168.52.4:41205')
 
     def release(self):
         self.t.ReqUserLogout()
 
 
-
-
 if __name__ == "__main__":
-    front_trade = 'tcp://180.168.146.187:10101'
-    front_quote = 'tcp://180.168.146.187:10111'
-    broker = '9999'
-    investor = '144793'
-    pwd = 'zhenhu123'
-    appid = 'simnow_client_test'
-    auth_code = '0000000000000000'
-    proc = ''
+    front_trade = 'tcp://180.168.212.79:31207'
+    front_quote = 'tcp://180.168.146.97:31219'
+    broker = '8000'
+    investor = '41013941'
+    pwd = '051017'
+    appid = 'client_nature_1.0.0'
+    auth_code = 'TSTCTPGNYLYYEYWS'
+    proc = 'naturev1.0.0'
 
     tt = TestTrade(front_trade, broker, investor, pwd, appid, auth_code, proc)
     tt.run()
@@ -61,8 +58,7 @@ if __name__ == "__main__":
 
     # simnow 发单测试成功(2019-09-19), 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
     # 修改了 trade.py 中的 ReqOrderInsert，添加 ExchangeID 字段
-    tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1831, 1, 'DCE')
-
+    # tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1831, 1, 'DCE')
 
     input()
     tt.release()
