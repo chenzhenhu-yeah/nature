@@ -42,3 +42,5 @@ from nature.engine.fut.py_ctp.structs import Tick
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyBoll import Fut_BollPortfolio
+
+from nature.engine.fut_simnow.gateway_simnow_ctp import Gateway_Simnow_CTP
