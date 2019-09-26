@@ -11,9 +11,10 @@ import schedule
 import threading
 from multiprocessing.connection import Client
 
-from nature import CtpTrade
-from nature import CtpQuote
-from nature import Tick
+from py_ctp.trade import CtpTrade
+from py_ctp.quote import CtpQuote
+from py_ctp.structs import Tick
+
 from nature import VtBarData
 from nature import SOCKET_BAR
 

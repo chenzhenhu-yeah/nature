@@ -14,7 +14,7 @@ from nature.down_k.down_data import down_data
 from nature.engine.stk.nearboll.use_ma import use_ma
 from nature import has_factor, stk_report
 from nature.hu_signal.price_signal import price_signal
-from nature.engine.fut.quotation.tick2bar import tick2bar
+from nature.engine.fut.ctp_ht.tick2bar import tick2bar
 
 dss = r'../data/'
 

@@ -36,11 +36,8 @@ from nature.strategy import Signal, Portfolio
 from nature.engine.stk.nearboll.stk_nearBollStrategy import stk_NearBollPortfolio
 from nature.engine.stk.stkEngine import StkEngine
 
-from nature.engine.fut.py_ctp.trade import CtpTrade
-from nature.engine.fut.py_ctp.quote import CtpQuote
-from nature.engine.fut.py_ctp.structs import Tick
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyBoll import Fut_BollPortfolio
 
-from nature.engine.fut_simnow.gateway_simnow_ctp import Gateway_Simnow_CTP
+from nature.engine.fut.ctp_simnow.gateway_simnow_ctp import Gateway_Simnow_CTP

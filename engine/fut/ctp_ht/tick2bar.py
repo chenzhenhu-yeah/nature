@@ -8,9 +8,11 @@ import schedule
 import threading
 from multiprocessing.connection import Client
 
-from nature import CtpTrade
-from nature import CtpQuote
-from nature import Tick
+
+from py_ctp.trade import CtpTrade
+from py_ctp.quote import CtpQuote
+from py_ctp.structs import Tick
+
 from nature import VtBarData, to_log
 from nature import SOCKET_BAR, get_dss
 
@@ -264,5 +266,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tradeDay = '20190919'
+    tradeDay = '20190912'
     tick2bar(tradeDay)

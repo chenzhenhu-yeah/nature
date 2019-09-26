@@ -12,7 +12,7 @@ from .structs import InfoField, Tick
 from .ctp_quote import Quote
 from .ctp_struct import CThostFtdcRspUserLoginField, CThostFtdcRspInfoField, CThostFtdcDepthMarketDataField, CThostFtdcSpecificInstrumentField
 
-from nature import to_log
+# from nature import to_log
 
 class CtpQuote(object):
     """"""
@@ -27,7 +27,7 @@ class CtpQuote(object):
 
         :param pAddress:
         """
-        to_log('in CtpQuote.ReqConnect')
+        # # to_log('in CtpQuote.ReqConnect')
         self.q.CreateApi()
         spi = self.q.CreateSpi()
         self.q.RegisterSpi(spi)
@@ -50,7 +50,7 @@ class CtpQuote(object):
         :param pwd:
         :param broker:
         """
-        to_log('in CtpQuote.ReqUserLogin')
+        # to_log('in CtpQuote.ReqUserLogin')
         self.q.ReqUserLogin(BrokerID=broker, UserID=user, Password=pwd)
 
     def ReqSubscribeMarketData(self, pInstrument: str):
@@ -58,12 +58,12 @@ class CtpQuote(object):
 
         :param pInstrument:
         """
-        to_log('in CtpQuote.ReqSubscribeMarketData')
+        # to_log('in CtpQuote.ReqSubscribeMarketData')
         self.q.SubscribeMarketData(pInstrument)
 
     def ReqUserLogout(self):
         """退出接口(正常退出,不会触发OnFrontDisconnected)"""
-        to_log('in CtpQuote.ReqUserLogout')
+        # to_log('in CtpQuote.ReqUserLogout')
 
         self.q.ReqUserLogout()
         self.q.RegisterSpi(None)
@@ -78,12 +78,12 @@ class CtpQuote(object):
 
     def _OnFrontConnected(self):
         """"""
-        to_log('in CtpQuote._OnFrontConnected')
+        # to_log('in CtpQuote._OnFrontConnected')
         self.OnConnected(self,)
 
     def _OnFrontDisConnected(self, reason: int):
         """"""
-        to_log('in CtpQuote._OnFrontDisConnected')
+        # to_log('in CtpQuote._OnFrontDisConnected')
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
         self.logined = False
@@ -91,7 +91,7 @@ class CtpQuote(object):
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        to_log('in CtpQuote._OnRspUserLogin')
+        # to_log('in CtpQuote._OnRspUserLogin')
         info = InfoField()
         info.ErrorID = pRspInfo.getErrorID()
         info.ErrorMsg = pRspInfo.getErrorMsg()
@@ -99,11 +99,13 @@ class CtpQuote(object):
         self.OnUserLogin(self, info)
 
     def _OnRspSubMarketData(self, pSpecificInstrument: CThostFtdcSpecificInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        to_log('in CtpQuote._OnRspSubMarketData')
+        # to_log('in CtpQuote._OnRspSubMarketData')
+        pass
 
     def _OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField):
         """"""
-        to_log('in CtpQuote._OnRtnDepthMarketData')
+        # to_log('in CtpQuote._OnRtnDepthMarketData')
+        pass 
 
         tick: Tick = None
         # 这个逻辑交由应用端处理更合理 ==> 第一个tick不送给客户端(以处理隔夜早盘时收到夜盘的数据的问题)
@@ -141,7 +143,7 @@ class CtpQuote(object):
 
     def OnDisConnected(self, obj, error: int):
         """"""
-        to_log('in CtpQuote.OndisConnected')
+        # to_log('in CtpQuote.OndisConnected')
 
         print(f'=== [QUOTE] OnDisConnected===\nerror: {str(error)}')
 
