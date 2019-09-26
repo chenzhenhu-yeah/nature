@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-__title__ = 'test py ctp of se'
-__author__ = 'HaiFeng'
-__mtime__ = '20190506'
 
-from py_ctp.trade import CtpTrade
-from py_ctp.quote import CtpQuote
-from py_ctp.enums import *
 import time
+
+from nature import CtpTrade
+from nature import CtpQuote
+from nature import DirectType, OffsetType
 
 
 class TestTrade(object):

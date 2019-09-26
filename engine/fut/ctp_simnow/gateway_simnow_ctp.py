@@ -3,9 +3,9 @@ import time
 import schedule
 import threading
 
-from py_ctp.trade import CtpTrade
-from py_ctp.quote import CtpQuote
-from py_ctp.enums import *
+from nature import CtpTrade
+from nature import CtpQuote
+from nature import DirectType, OffsetType
 
 
 def get_exchangeID(symbol):

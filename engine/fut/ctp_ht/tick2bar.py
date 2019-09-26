@@ -9,9 +9,9 @@ import threading
 from multiprocessing.connection import Client
 
 
-from py_ctp.trade import CtpTrade
-from py_ctp.quote import CtpQuote
-from py_ctp.structs import Tick
+from nature import CtpTrade
+from nature import CtpQuote
+from nature import Tick
 
 from nature import VtBarData, to_log
 from nature import SOCKET_BAR, get_dss
