@@ -47,7 +47,7 @@ class Gateway_Simnow_CTP(object):
         self.t.OnTrade = lambda obj, o: None
         self.t.OnInstrumentStatus = lambda obj, inst, stat: None
 
-        threading.Thread(target=self.start, args=(self,)).start()
+        threading.Thread(target=self.start, args=()).start()
 
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
@@ -62,18 +62,28 @@ class Gateway_Simnow_CTP(object):
     #停止单需要盯min1,肯定要单启一个线程，线程中循环遍历队列（内部变量），无需同步，用List的pop(0)和append来实现。
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
-        exchangeID = get_exchangeID(code)
-        if exchangeID == '':
-            return 'error'
+        try:
+            exchangeID = get_exchangeID(code)
+            if exchangeID == '':
+                return 'error'
 
-        if direction == DIRECTION_LONG and offset == '开仓':
-            self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
-        if direction == DIRECTION_SHORT and offset == '开仓':
-            self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
-        if direction == DIRECTION_LONG and offset == '平仓':
-            self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
-        if direction == DIRECTION_SHORT and offset == '平仓':
-            self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
+            if direction == DIRECTION_LONG and offset == '开仓':
+                self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
+            if direction == DIRECTION_SHORT and offset == '开仓':
+                self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
+            if direction == DIRECTION_LONG and offset == '平仓':
+                self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
+            if direction == DIRECTION_SHORT and offset == '平仓':
+                self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
+        except Exception as e:
+            now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+            print(now)
+            print('-'*60)
+            traceback.print_exc()
+
+            # s = traceback.format_exc()
+            # to_log(s)
+
 
     #----------------------------------------------------------------------
     def start(self):

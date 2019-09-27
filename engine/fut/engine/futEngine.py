@@ -21,6 +21,7 @@ from nature import to_log, is_trade_day, send_email
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book, a_file
 from nature import Fut_AtrRsiPortfolio, get_dss
+from nature import Gateway_Simnow_CTP
 #from ipdb import set_trace
 
 
@@ -33,11 +34,12 @@ class FutEngine(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self,dss,minx):
+    def __init__(self,dss,minx,gateway):
         """Constructor"""
 
         self.dss = dss
         self.minx = minx
+        self.gateway = gateway
         self.portfolio_list = []
         self.vtSymbol_dict = {}
 
@@ -165,13 +167,10 @@ class FutEngine(object):
 
         r = [[dt,pfName,order_id,self.minx,vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
-
-        # df = pd.DataFrame(r, columns=['datetime','order_id','pfname','minx','vtSymbol', 'direction', 'offset', 'price', 'volume'])
-        # fn = get_dss() + 'fut/deal.csv'
-        # df.to_csv(fn, index=False, mode='a')
-
         fn = 'fut/deal.csv'
         a_file(fn, str(r)[2:-2])
+
+        self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName)
 
     #----------------------------------------------------------------------
     def worker_open(self):
@@ -216,11 +215,12 @@ def start():
 
 if __name__ == '__main__':
     # start()
+    gateway = Gateway_Simnow_CTP()
 
     dss = get_dss()
-    engine15 = FutEngine(dss,'min15')
+    engine15 = FutEngine(dss,'min15',gateway)
     engine15.worker_open()
 
     dss = get_dss()
-    engine5 = FutEngine(dss,'min5')
+    engine5 = FutEngine(dss,'min5',gateway)
     engine5.worker_open()
