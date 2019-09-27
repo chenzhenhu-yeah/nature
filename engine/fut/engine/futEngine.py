@@ -15,6 +15,7 @@ import json
 import threading
 from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
+import traceback
 
 from nature import SOCKET_BAR
 from nature import to_log, is_trade_day, send_email
@@ -217,9 +218,9 @@ if __name__ == '__main__':
     # start()
     gateway = Gateway_Simnow_CTP()
 
-    dss = get_dss()
-    engine15 = FutEngine(dss,'min15',gateway)
-    engine15.worker_open()
+    # dss = get_dss()
+    # engine15 = FutEngine(dss,'min15',gateway)
+    # engine15.worker_open()
 
     dss = get_dss()
     engine5 = FutEngine(dss,'min5',gateway)

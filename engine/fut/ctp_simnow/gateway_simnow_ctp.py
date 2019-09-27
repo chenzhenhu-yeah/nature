@@ -2,6 +2,7 @@
 import time
 import schedule
 import threading
+import traceback
 
 from nature import CtpTrade
 from nature import CtpQuote
