@@ -64,7 +64,8 @@ class Gateway_Simnow_CTP(object):
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
         try:
-            if self.logined == False:
+            if self.t.logined == False:
+                print('ctp trade not login')
                 return ''
 
             exchangeID = get_exchangeID(code)
@@ -91,7 +92,7 @@ class Gateway_Simnow_CTP(object):
 
     #----------------------------------------------------------------------
     def start(self):
-        schedule.every().day.at("22:02").do(self.run)
+        schedule.every().day.at("22:06").do(self.run)
         schedule.every().day.at("15:06").do(self.release)
 
         print(u'gateway_simnow_ctp 期货交易引擎开始运行')
