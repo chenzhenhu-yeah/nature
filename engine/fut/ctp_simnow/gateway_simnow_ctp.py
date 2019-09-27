@@ -7,7 +7,7 @@ import traceback
 from nature import CtpTrade
 from nature import CtpQuote
 from nature import DirectType, OffsetType
-
+from nature.strategy import DIRECTION_LONG, DIRECTION_SHORT, OFFSET_OPEN, OFFSET_CLOSE
 
 def get_exchangeID(symbol):
     # 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
