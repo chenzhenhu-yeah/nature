@@ -7,6 +7,7 @@ __mtime__ = '2016/9/23'
 """
 import platform
 import os
+import time 
 
 from .structs import InfoField, Tick
 from .ctp_quote import Quote
@@ -105,7 +106,7 @@ class CtpQuote(object):
     def _OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField):
         """"""
         # to_log('in CtpQuote._OnRtnDepthMarketData')
-        pass 
+        pass
 
         tick: Tick = None
         # 这个逻辑交由应用端处理更合理 ==> 第一个tick不送给客户端(以处理隔夜早盘时收到夜盘的数据的问题)
@@ -144,6 +145,9 @@ class CtpQuote(object):
     def OnDisConnected(self, obj, error: int):
         """"""
         # to_log('in CtpQuote.OndisConnected')
+        now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        print(now)
+        print('-'*60)
 
         print(f'=== [QUOTE] OnDisConnected===\nerror: {str(error)}')
 
