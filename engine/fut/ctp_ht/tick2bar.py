@@ -56,28 +56,47 @@ def _Generate_Bar_MinOne(tick, temp_bar, r, today):
     temp_bar.append(bar)
 
 def proc_segment(df1,begin,end,num):
+    """
+    df1:该时段内的tick明细
+    begin:该时段起始时间
+    end:该时段结束时间
+    num:该时段应包含的bar数目
+    """
     r =[]
     temp_bar = []
     begin_day = ''
     end_day = ''
     n = len(df1)
     for k, tick in df1.iterrows():
+        # 第一条记录，确定关键变量的初始值
         if k == 0:
             if end > begin:
+                # begin_day与end_day为同一天
                 begin_day = tick.UpdateDate
                 end_day = tick.UpdateDate
             else:
+                # 跨零点
                 if tick.UpdateTime>='00:00:00' and tick.UpdateTime <= '02:30:01':
+                    # 正常情况下，这段逻辑用不着。仅适用于数据缺失的情况。
                     end_day = tick.UpdateDate
 
                     dt1 = datetime.datetime.strptime(end_day,'%Y-%m-%d')
-                    dt0 = dt1 - datetime.timedelta(days=1)
+                    weekday = int(dt1.strftime('%w'))
+                    if weekday == 1:
+                        dt0 = dt1 - datetime.timedelta(days=3)
+                    else:
+                        dt0 = dt1 - datetime.timedelta(days=1)
+
                     begin_day = dt0.strftime('%Y-%m-%d')
                 else:
                     begin_day = tick.UpdateDate
-
                     dt0 = datetime.datetime.strptime(begin_day,'%Y-%m-%d')
-                    dt1 = dt0 + datetime.timedelta(days=1)
+                    weekday = int(dt0.strftime('%w'))
+                    if weekday == 5:
+                        dt1 = dt0 + datetime.timedelta(days=3)
+                    else:
+                        dt1 = dt0 + datetime.timedelta(days=1)
+
                     end_day = dt1.strftime('%Y-%m-%d')
             #print(begin_day,end_day)
 
@@ -100,6 +119,19 @@ def proc_segment(df1,begin,end,num):
     while i < num:
         date = next.strftime('%Y-%m-%d')
         tm   = next.strftime('%H:%M:%S')
+
+        # 周末，要加两天。节假日通常不开夜盘。
+        if tm == '00:00:00' and date != end_day:
+            #print(date, end_day)
+            #print(next)
+
+            two_days = datetime.timedelta(days=2)
+            next += two_days
+            date = next.strftime('%Y-%m-%d')
+
+            #print(next)
+
+
         #print(date,tm)
         #print(i)
         row = r[i]
@@ -174,7 +206,7 @@ def tick2bar(tradeDay):
     fn = get_dss() + 'fut/cfg/trade_time.csv'
     df_tm = pd.read_csv(fn)
 
-    # 加载配置
+    # 加载配置，目前盯市哪些业务品种
     config = open(get_dss()+'fut/cfg/config.json')
     setting = json.load(config)
     symbols = setting['symbols']
@@ -182,6 +214,7 @@ def tick2bar(tradeDay):
 
     #symbol_list = ['ag1912']
 
+    # 逐一处理每个业务品种
     for symbol in symbol_list:
         # 读取品种的tick文件
         fn = get_dss() + 'fut/tick/tick_' + tradeDay + '_' + symbol + '.csv'
@@ -190,15 +223,16 @@ def tick2bar(tradeDay):
             df = pd.read_csv(fn)
             # print(df.head(3))
 
-            # 读品种配置文件
+            # 读品种配置文件，获取四个交易时段
             pz = symbol[:2]
             if pz.isalpha():
                 pass
             else:
+                # 大连交易所业务品种只有一个字母
                 pz = symbol[:1]
-            df2 = df_tm[df_tm.symbol==pz].sort_values(by='seq')
-            #print(df2)
 
+            # 逐个时段遍历处理
+            df2 = df_tm[df_tm.symbol==pz].sort_values(by='seq')
             r1 = []
             for i,row in df2.iterrows():
                 if row.end > row.begin:
@@ -266,5 +300,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tradeDay = '20190912'
+    tradeDay = '20190930'
     tick2bar(tradeDay)

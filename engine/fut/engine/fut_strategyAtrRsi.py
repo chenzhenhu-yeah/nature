@@ -2,12 +2,63 @@
 
 import pandas as pd
 from csv import DictReader
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
-from nature import to_log
+from nature import to_log, get_dss
 from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
-from nature import Signal, Portfolio
+from nature import Signal
+
+class Contract(object):
+    def __init__(self,symbol,size,price_tick,variable_commission,fixed_commission,slippage):
+        """Constructor"""
+        self.symbol = symbol
+        self.size = size
+        self.price_tick = price_tick
+        self.variable_commission = variable_commission
+        self.fixed_commission = fixed_commission
+        self.slippage = slippage
+
+contract_dict = {}
+filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
+with open(filename_setting_fut,encoding='utf-8') as f:
+    r = DictReader(f)
+    for d in r:
+        contract_dict[ d['vtSymbol'] ] = Contract(d['vtSymbol'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']))
+
+def get_contract(symbol):
+    if symbol in contract_dict:
+        return contract_dict[symbol]
+    else:
+        return None
+
+########################################################################
+class TurtleResult(object):
+    """一次完整的开平交易"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        """Constructor"""
+        self.unit = 0
+        self.entry = 0                  # 开仓均价
+        self.exit = 0                   # 平仓均价
+        self.pnl = 0                    # 盈亏
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        """开仓或者加仓"""
+        cost = self.unit * self.entry    # 计算之前的开仓成本
+        cost += change * price          # 加上新仓位的成本
+        self.unit += change              # 加上新仓位的数量
+        self.entry = cost / self.unit    # 计算新的平均开仓成本
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        """平仓"""
+        self.exit = price
+        self.pnl = self.unit * (self.exit - self.entry)
+
+        # print(self.entry, self.exit, self.pnl)
 
 ########################################################################
 class Fut_AtrRsiSignal(Signal):
@@ -17,11 +68,11 @@ class Fut_AtrRsiSignal(Signal):
         Signal.__init__(self, portfolio, vtSymbol)
 
         # 策略参数
-        self.atrLength = 22          # 计算ATR指标的窗口数
-        self.atrMaLength = 10        # 计算ATR均线的窗口数
+        self.atrLength =1           # 计算ATR指标的窗口数
+        self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
-        self.trailingPercent = 0.8   # 百分比移动止损
+        self.trailingPercent = 0.3   # 百分比移动止损
         self.initBars = 90           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
 
@@ -29,12 +80,17 @@ class Fut_AtrRsiSignal(Signal):
         self.atrValue = 0                        # 最新的ATR指标数值
         self.atrMa = 0                           # ATR移动平均的数值
         self.rsiValue = 0                        # RSI指标的数值
+        self.iswave = True
 
         # 需要持久化保存的参数
         self.buyPrice = 0
         self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
         self.intraTradeLow = 100E4                   # 持仓期内的最低点
-        self.longStop = 100E4                        # 多头止损
+        self.stop = 100E4                        # 多头止损
+        self.cost = 0
+        self.unit = 0
+        self.result = None              # 当前的交易
+        self.resultList = []            # 交易列表
 
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
@@ -47,9 +103,20 @@ class Fut_AtrRsiSignal(Signal):
             self.am.updateBar(bar)
 
     #----------------------------------------------------------------------
+    def set_param(self, param_dict):
+        if 'atrMaLength' in param_dict:
+            self.atrMaLength = param_dict['atrMaLength']
+        if 'rsiLength' in param_dict:
+            self.rsiLength = param_dict['rsiLength']
+        if 'trailingPercent' in param_dict:
+            self.trailingPercent = param_dict['trailingPercent']
+
+        print(self.atrMaLength, self.rsiLength, self.trailingPercent)
+
+    #----------------------------------------------------------------------
     def onBar(self, bar):
         """新推送过来一个bar，进行处理"""
-        print(bar.time, self.vtSymbol)
+        #print(bar.time, self.vtSymbol)
 
         self.bar = bar
         self.am.updateBar(bar)
@@ -64,93 +131,185 @@ class Fut_AtrRsiSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
         atrArray = self.am.atr(self.atrLength, array=True)
+        # print(len(atrArray))
+
         self.atrValue = atrArray[-1]
         self.atrMa = atrArray[-self.atrMaLength:].mean()
+
+        atrMa10 = atrArray[-10:].mean()
+        atrMa50 = atrArray[-50:].mean()
+
+        self.iswave = False if atrMa10 < 0.85*atrMa50  else True
 
         self.rsiValue = self.am.rsi(self.rsiLength)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
-        # 判断是否要进行交易
 
-        pos = self.portfolio.posDict[self.vtSymbol]
         # 当前无仓位
-        if pos == 0:
+        if self.unit == 0:
             self.intraTradeHigh = bar.high
             self.intraTradeLow = bar.low
 
             # ATR数值上穿其移动平均线，说明行情短期内波动加大
             # 即处于趋势的概率较大，适合CTA开仓
-            if self.atrValue > self.atrMa:
+            if self.atrValue > self.atrMa and self.iswave == False:
                 # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
                 if self.rsiValue > self.rsiBuy:
                     # 这里为了保证成交，选择超价5个整指数点下单
                     self.buy(bar.close, self.fixedSize)
+                    self.cost = bar.close
+                    self.stop = 0
+
+                    # print(bar.datetime, '开多')
+                    # print('rsi: ', self.rsiValue)
+                    # print('atr: ', self.atrValue, self.atrMa)
+
                 elif self.rsiValue < self.rsiSell:
                     self.short(bar.close, self.fixedSize)
+                    self.cost = bar.close
+                    self.stop = 100E4
+
+                    # print(bar.datetime, '开空')
+                    # print('rsi: ', self.rsiValue)
+                    # print('atr: ', self.atrValue, self.atrMa)
+
 
         # 持有多头仓位
-        elif pos > 0:
+        elif self.unit > 0:
             # 计算多头持有期内的最高价，以及重置最低价
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-            self.intraTradeLow = bar.low
 
             # 计算多头移动止损
-            longStop = self.intraTradeHigh * (1-self.trailingPercent/100)
+            # if self.rsiValue < 35:
+            #     self.stop = bar.close
 
-            # 发出本地止损委托
-            if bar.close <= longStop:
-                self.sell(bar.close, abs(pos))
+            # self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
+            if self.stop < self.cost:
+                self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/200) )
+            else:
+                self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
+
+            if bar.close <= self.stop:
+                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
 
         # 持有空头仓位
-        elif pos < 0:
+        elif self.unit < 0:
             self.intraTradeLow = min(self.intraTradeLow, bar.low)
-            self.intraTradeHigh = bar.high
 
-            shortStop = self.intraTradeLow * (1+self.trailingPercent/100)
-            if bar.close >= shortStop:
-                self.cover(bar.close, abs(pos))
+            # if self.rsiValue > 65:
+            #     self.stop = bar.close
 
-class Fut_AtrRsiPortfolio(Portfolio):
+            # self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
+            if self.stop > self.cost:
+                self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/200) )
+            else:
+                self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
+
+            if bar.close >= self.stop:
+                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
+
+ #----------------------------------------------------------------------
+    def buy(self, price, volume):
+        """买入开仓"""
+        self.open(price, volume)
+        self.newSignal(DIRECTION_LONG, OFFSET_OPEN, price, volume)
+
     #----------------------------------------------------------------------
-    def __init__(self, engine, name):
-        Portfolio.__init__(self, engine)
+    def sell(self, price, volume):
+        """卖出平仓"""
+        volume = abs(self.unit)
 
+        self.close(price)
+        self.newSignal(DIRECTION_SHORT, OFFSET_CLOSE, price, volume)
+
+    #----------------------------------------------------------------------
+    def short(self, price, volume):
+        """卖出开仓"""
+        self.open(price, -volume)
+        self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, price, volume)
+
+    #----------------------------------------------------------------------
+    def cover(self, price, volume):
+        """买入平仓"""
+        volume = abs(self.unit)
+
+        self.close(price)
+        self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        """开仓"""
+        self.unit += change
+
+        if not self.result:
+            self.result = TurtleResult()
+        self.result.open(price, change)
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        """平仓"""
+        self.unit = 0
+
+        self.result.close(price)
+        self.resultList.append(self.result)
+        self.result = None
+
+class Fut_AtrRsiPortfolio(object):
+
+    #----------------------------------------------------------------------
+    def __init__(self, engine, symbol_list, signal_param, name='AtrRsi'):
+        self.engine = engine                 # 所属引擎
         self.name = name
-        self.vtSymbolList = []
-        self.SIZE_DICT = {}
-        self.PRICETICK_DICT = {}
-        self.VARIABLE_COMMISSION_DICT = {}
-        self.FIXED_COMMISSION_DICT = {}
-        self.SLIPPAGE_DICT = {}
+        self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
+        self.posDict = {}           # 真实持仓量字典,code为键,pos为值
+        self.portfolioValue = 100E4     # 组合市值
+
+        self.vtSymbolList = symbol_list
+
+        self.currentDt = None
+        self.result = None
+        self.resultList = []
+        self.tradeDict = OrderedDict()
+
+        self.signal_param = signal_param
+        print(self.signal_param)
 
     #----------------------------------------------------------------------
     def init(self):
         """初始化信号字典、持仓字典"""
-        filename = self.engine.dss + 'fut/cfg/setting_fut_' + self.name + '.csv'
-
-        with open(filename,encoding='utf-8') as f:
-            r = DictReader(f)
-            for d in r:
-                # 当前可做的品种必须是引擎中有数据的品种
-                if d['vtSymbol'] in self.engine.vtSymbol_list:
-                    self.vtSymbolList.append(d['vtSymbol'])
-                    self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
-                    self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-                    self.VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-                    self.FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-                    self.SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
-
-        self.portfolioValue = 100E4
 
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
             # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
             signal1 = Fut_AtrRsiSignal(self, vtSymbol)
+
+            if vtSymbol in self.signal_param:
+                param_dict = self.signal_param[vtSymbol]
+                signal1.set_param(param_dict)
+                #print('here')
+
             l = self.signalDict[vtSymbol]
             l.append(signal1)
 
         print(u'投资组合的合约代码%s' %(self.vtSymbolList))
+
+    #----------------------------------------------------------------------
+    def onBar(self, bar):
+        """引擎新推送过来bar，传递给每个signal"""
+        self.currentDt = bar.datetime
+        previousResult = self.result
+        self.result = DailyResult(self.currentDt)
+        self.result.updatePos(self.posDict)
+        self.resultList.append(self.result)
+        if previousResult:
+            self.result.updatePreviousClose(previousResult.closeDict)
+        self.result.updateBar(bar)
+
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -158,19 +317,29 @@ class Fut_AtrRsiPortfolio(Portfolio):
         对交易信号进行过滤，符合条件的才发单执行。
         计算真实交易价格和数量。
         """
-        multiplier = 1
+        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
+        multiplier = int(round(multiplier, 0))
+        #print(multiplier)
+        # multiplier = 1
 
         # 计算合约持仓
         if direction == DIRECTION_LONG:
-            self.posDict[signal.vtSymbol] += volume
+            self.posDict[signal.vtSymbol] += volume*multiplier
         else:
-            self.posDict[signal.vtSymbol] -= volume
+            self.posDict[signal.vtSymbol] -= volume*multiplier
 
         # 对价格四舍五入
-        priceTick = self.PRICETICK_DICT[signal.vtSymbol]
+        priceTick = get_contract(signal.vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
 
         self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
+
+        # 记录成交数据
+        trade = TradeData(self.currentDt,signal.vtSymbol, direction, offset, price, volume*multiplier)
+        l = self.tradeDict.setdefault(self.currentDt, [])
+        l.append(trade)
+
+        self.result.updateTrade(trade)
 
     #----------------------------------------------------------------------
     def loadParam(self):
@@ -181,7 +350,7 @@ class Fut_AtrRsiPortfolio(Portfolio):
             for signal in self.signalDict[code]:
                 signal.buyPrice = row.buyPrice,
                 signal.intraTradeLow = row.intraTradeLow
-                signal.longStop = row.longStop
+                signal.stop = row.stop
 
     #----------------------------------------------------------------------
     def saveParam(self):
@@ -189,8 +358,117 @@ class Fut_AtrRsiPortfolio(Portfolio):
         for code in self.vtSymbolList:
             if self.posDict[code] != 0:   #有持仓需保存参数
                 for signal in self.signalDict[code]:
-                    r.append([code, signal.buyPrice, signal.intraTradeLow, signal.longStop])
+                    r.append([code, signal.buyPrice, signal.intraTradeLow, signal.stop])
 
-        df = pd.DataFrame(r, columns=['vtSymbol','buyPrice','intraTradeLow','longStop'])
+        df = pd.DataFrame(r, columns=['vtSymbol','buyPrice','intraTradeLow','stop'])
         filename = self.engine.dss + 'fut/cfg/AtrRsi_param.csv'
         df.to_csv(filename, index=False)
+
+########################################################################
+class TradeData(object):
+    """"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, dt, vtSymbol, direction, offset, price, volume):
+        """Constructor"""
+        self.dt = dt
+        self.vtSymbol = vtSymbol
+        self.direction = direction
+        self.offset = offset
+        self.price = price
+        self.volume = volume
+
+
+########################################################################
+class DailyResult(object):
+    """每日的成交记录"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, date):
+        """Constructor"""
+        self.date = date
+
+        self.closeDict = {}                     # 收盘价字典
+        self.previousCloseDict = {}             # 昨收盘字典
+
+        self.tradeDict = defaultdict(list)      # 成交字典
+        self.posDict = {}                       # 持仓字典（开盘时）
+
+        self.tradingPnl = 0                     # 交易盈亏
+        self.holdingPnl = 0                     # 持仓盈亏
+        self.totalPnl = 0                       # 总盈亏
+        self.commission = 0                     # 佣金
+        self.slippage = 0                       # 滑点
+        self.netPnl = 0                         # 净盈亏
+        self.tradeCount = 0                     # 成交笔数
+
+    #----------------------------------------------------------------------
+    def updateTrade(self, trade):
+        """更新交易"""
+        l = self.tradeDict[trade.vtSymbol]
+        l.append(trade)
+        self.tradeCount += 1
+
+    #----------------------------------------------------------------------
+    def updatePos(self, d):
+        """更新昨持仓"""
+        self.posDict.update(d)
+
+    #----------------------------------------------------------------------
+    def updateBar(self, bar):
+        """更新K线"""
+        self.closeDict[bar.vtSymbol] = bar.close
+
+    #----------------------------------------------------------------------
+    def updatePreviousClose(self, d):
+        """更新昨收盘"""
+        self.previousCloseDict.update(d)
+
+    #----------------------------------------------------------------------
+    def calculateTradingPnl(self):
+        """计算当日交易盈亏"""
+        for vtSymbol, l in self.tradeDict.items():
+            close = self.closeDict[vtSymbol]
+            ct = get_contract(vtSymbol)
+            size = ct.size
+            slippage = ct.slippage
+            variableCommission = ct.variable_commission
+            fixedCommission = ct.fixed_commission
+
+            for trade in l:
+                if trade.direction == DIRECTION_LONG:
+                    side = 1
+                else:
+                    side = -1
+
+                commissionCost = (trade.volume * fixedCommission +
+                                  trade.volume * trade.price * variableCommission)
+                slippageCost = trade.volume * slippage
+                pnl = (close - trade.price) * trade.volume * side * size
+
+                self.commission += commissionCost
+                self.slippage += slippageCost
+                self.tradingPnl += pnl
+
+    #----------------------------------------------------------------------
+    def calculateHoldingPnl(self):
+        """计算当日持仓盈亏"""
+        for vtSymbol, pos in self.posDict.items():
+            #print(vtSymbol, pos)
+
+            previousClose = self.previousCloseDict.get(vtSymbol, 0)
+            close = self.closeDict[vtSymbol]
+            ct = get_contract(vtSymbol)
+            size = ct.size
+
+
+            pnl = (close - previousClose) * pos * size
+            self.holdingPnl += pnl
+
+    #----------------------------------------------------------------------
+    def calculatePnl(self):
+        """计算总盈亏"""
+        self.calculateHoldingPnl()
+        self.calculateTradingPnl()
+        self.totalPnl = self.holdingPnl + self.tradingPnl
+        self.netPnl = self.totalPnl - self.commission - self.slippage

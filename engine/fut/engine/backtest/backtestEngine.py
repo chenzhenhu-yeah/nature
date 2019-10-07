@@ -3,7 +3,7 @@ from __future__ import print_function
 
 from datetime import datetime
 from collections import OrderedDict, defaultdict
-
+import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,11 +12,6 @@ from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_BollPortfolio
 
-SIZE_DICT = {}
-PRICETICK_DICT = {}
-VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
-SLIPPAGE_DICT = {}
 
 ########################################################################
 class BacktestingEngine(object):
@@ -28,41 +23,27 @@ class BacktestingEngine(object):
         self.dss = get_dss()
 
         self.portfolio = None                # 一对一
-        self.portfolioValue = 100E4
         self.startDt = None
         self.endDt = None
         self.currentDt = None
 
-        self.barDict = None
-        self.min1barDict = OrderedDict()
-        self.min5barDict = OrderedDict()
-        self.min15barDict = OrderedDict()
-        self.min30barDict = OrderedDict()
+        self.barDict = OrderedDict()
 
-        self.result = None
-        self.resultList = []
-        self.tradeDict = OrderedDict()
+        # 加载配置
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols']
+        self.vtSymbol_list = symbols.split(',')
+
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass, name):
+    def loadPortfolio(self, PortfolioClass, name, signal_param):
         """每日重新加载投资组合"""
         print('\n')
 
-        p = PortfolioClass(self, name)
+        p = PortfolioClass(self, name, signal_param)
         p.init()
         self.portfolio = p
-
-        global SIZE_DICT
-        global PRICETICK_DICT
-        global VARIABLE_COMMISSION_DICT
-        global FIXED_COMMISSION_DICT
-        global SLIPPAGE_DICT
-
-        SIZE_DICT = p.SIZE_DICT
-        PRICETICK_DICT = p.PRICETICK_DICT
-        VARIABLE_COMMISSION_DICT = p.VARIABLE_COMMISSION_DICT
-        FIXED_COMMISSION_DICT = p.FIXED_COMMISSION_DICT
-        SLIPPAGE_DICT = p.SLIPPAGE_DICT
 
     #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
@@ -71,10 +52,10 @@ class BacktestingEngine(object):
         self.endDt = endDt
 
     #----------------------------------------------------------------------
-    def loadData_min1(self, vtSymbol):
+    def loadData(self, vtSymbol, filename):
         """加载数据"""
 
-        df = pd.read_csv(self.dss+'fut/bct/'+vtSymbol+'.csv')
+        df = pd.read_csv(filename)
         for i, d in df.iterrows():
             #print(d)
 
@@ -99,87 +80,11 @@ class BacktestingEngine(object):
             #bar.datetime = bar.date + ' ' + bar.time
             bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
 
-            self.min1barDict[bar.datetime] = bar
+            self.barDict[bar.datetime] = bar
             # print(bar.__dict__)
             # break
 
         self.output(u'全部数据加载完成')
-        self.barDict = self.min1barDict
-
-    #----------------------------------------------------------------------
-    def calcData_min5(self):
-        """加载数据"""
-        bar_minX = VtBarData()
-
-        for dt, bar in self.min1barDict.items():
-            if str(bar.datetime)[-5:-3] in ['00','05','10','15','20','25','30','35','40','45','50','55']:
-                if bar_minX.datetime is not None:
-                    self.min5barDict[bar_minX.datetime] = bar_minX
-                    bar_minX = VtBarData()
-            if bar_minX.datetime is None:
-                bar_minX.__dict__ = bar.__dict__
-            else:
-                if bar_minX.high < bar.high:
-                    bar_minX.high = bar.high
-                if bar_minX.low > bar.low:
-                    bar_minX.low = bar.low
-                bar_minX.close = bar.close
-                bar_minX.volume = bar.volume
-
-        if bar_minX.datetime is not None:
-            self.min5barDict[bar_minX.datetime] = bar_minX
-
-        self.barDict = self.min5barDict
-
-    #----------------------------------------------------------------------
-    def calcData_min15(self):
-        """加载数据"""
-        bar_minX = VtBarData()
-
-        for dt, bar in self.min1barDict.items():
-            if str(bar.datetime)[-5:-3] in ['00','15','30','45']:
-                if bar_minX.datetime is not None:
-                    self.min15barDict[bar_minX.datetime] = bar_minX
-                    bar_minX = VtBarData()
-            if bar_minX.datetime is None:
-                bar_minX.__dict__ = bar.__dict__
-            else:
-                if bar_minX.high < bar.high:
-                    bar_minX.high = bar.high
-                if bar_minX.low > bar.low:
-                    bar_minX.low = bar.low
-                bar_minX.close = bar.close
-                bar_minX.volume = bar.volume
-
-        if bar_minX.datetime is not None:
-            self.min15barDict[bar_minX.datetime] = bar_minX
-
-        self.barDict = self.min15barDict
-
-    #----------------------------------------------------------------------
-    def calcData_min30(self):
-        """加载数据"""
-        bar_minX = VtBarData()
-
-        for dt, bar in self.min1barDict.items():
-            if str(bar.datetime)[-5:-3] in ['00','30']:
-                if bar_minX.datetime is not None:
-                    self.min30barDict[bar_minX.datetime] = bar_minX
-                    bar_minX = VtBarData()
-            if bar_minX.datetime is None:
-                bar_minX.__dict__ = bar.__dict__
-            else:
-                if bar_minX.high < bar.high:
-                    bar_minX.high = bar.high
-                if bar_minX.low > bar.low:
-                    bar_minX.low = bar.low
-                bar_minX.close = bar.close
-                bar_minX.volume = bar.volume
-
-        if bar_minX.datetime is not None:
-            self.min30barDict[bar_minX.datetime] = bar_minX
-
-        self.barDict = self.min30barDict
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars):
@@ -203,36 +108,22 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def runBacktesting(self, barType='min1'):
         """运行回测"""
-        self.output(u'开始回放K线数据  '+ barType)
+        #self.output(u'开始回放K线数据  '+ barType)
 
         # 初始化回测结果
-        self.result = None
-        self.resultList = []
-        self.tradeDict = OrderedDict()
 
         for dt, bar in self.barDict.items():
             if dt >= self.startDt and dt <= self.endDt:
                 #print(dt)
-
                 self.currentDt = dt
-                previousResult = self.result
-
-                self.result = DailyResult(dt)
-                self.result.updatePos(self.portfolio.posDict)
-                self.resultList.append(self.result)
-
-                if previousResult:
-                    self.result.updatePreviousClose(previousResult.closeDict)
-
                 self.portfolio.onBar(bar)
-                self.result.updateBar(bar)
 
-        self.output(u'K线数据回放结束')
+        #self.output(u'K线数据回放结束')
 
-        td_list = self.getTradeData()
-        with open(barType+'_t1.txt','w') as f:
-            for td in td_list:
-                print(td.__dict__, file=f)
+        # td_list = self.getTradeData()
+        # with open(barType+'_t1.txt','w') as f:
+        #     for td in td_list:
+        #         print(td.__dict__, file=f)
 
 
     #----------------------------------------------------------------------
@@ -240,10 +131,10 @@ class BacktestingEngine(object):
         """计算结果"""
         self.output(u'开始统计回测结果')
 
-        for result in self.resultList:
+        for result in self.portfolio.resultList:
             result.calculatePnl()
 
-        resultList = self.resultList
+        resultList = self.portfolio.resultList
         dateList = [result.date for result in resultList]
 
         startDate = dateList[0]
@@ -252,8 +143,8 @@ class BacktestingEngine(object):
 
         profitDays = 0
         lossDays = 0
-        endBalance = self.portfolioValue
-        highlevel = self.portfolioValue
+        endBalance = self.portfolio.portfolioValue
+        highlevel = self.portfolio.portfolioValue
         totalNetPnl = 0
         totalCommission = 0
         totalSlippage = 0
@@ -292,13 +183,13 @@ class BacktestingEngine(object):
 
         maxDrawdown = min(drawdownList)
         maxDdPercent = min(ddPercentList)
-        totalReturn = (endBalance / self.portfolioValue - 1) * 100
+        totalReturn = (endBalance / self.portfolio.portfolioValue - 1) * 100
         dailyReturn = np.mean(returnList) * 100
         annualizedReturn = dailyReturn * annualDays
         returnStd = np.std(returnList) * 100
 
         if returnStd:
-            sharpeRatio = dailyReturn / returnStd * np.sqrt(annualDays)
+            sharpeRatio = dailyReturn / returnStd * np.sqrt(annualDays*72)
         else:
             sharpeRatio = 0
 
@@ -353,7 +244,7 @@ class BacktestingEngine(object):
         self.output(u'盈利交易日\t%s' % result['profitDays'])
         self.output(u'亏损交易日：\t%s' % result['lossDays'])
 
-        self.output(u'起始资金：\t%s' % self.portfolioValue)
+        self.output(u'起始资金：\t%s' % self.portfolio.portfolioValue)
         self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
 
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
@@ -397,15 +288,10 @@ class BacktestingEngine(object):
         plt.show()
 
     #----------------------------------------------------------------------
-    def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume):
+    def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
         """记录交易数据（由portfolio调用）"""
 
-        # 记录成交数据
-        trade = TradeData(self.currentDt,vtSymbol, direction, offset, price, volume)
-        l = self.tradeDict.setdefault(self.currentDt, [])
-        l.append(trade)
-
-        self.result.updateTrade(trade)
+        pass
 
     #----------------------------------------------------------------------
     def output(self, content):
@@ -419,16 +305,19 @@ class BacktestingEngine(object):
 
         # 输出统计结果
         self.output('-' * 30)
-        self.output(u'首个交易日：\t%s' % result['startDate'])
-        self.output(u'最后交易日：\t%s' % result['endDate'])
+        # self.output(u'首个交易日：\t%s' % result['startDate'])
+        # self.output(u'最后交易日：\t%s' % result['endDate'])
 
-        self.output(u'起始资金：\t%s' % self.portfolioValue)
-        self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
+        # self.output(u'起始资金：\t%s' % self.portfolio.portfolioValue)
+        # self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
 
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
-        self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
+        # self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
+        # self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))
         self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))
 
+        # self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
+        # self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
         self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
 
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
@@ -450,115 +339,6 @@ class BacktestingEngine(object):
         return tradeList
 
 
-########################################################################
-class TradeData(object):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, dt, vtSymbol, direction, offset, price, volume):
-        """Constructor"""
-        self.dt = dt
-        self.vtSymbol = vtSymbol
-        self.direction = direction
-        self.offset = offset
-        self.price = price
-        self.volume = volume
-
-
-########################################################################
-class DailyResult(object):
-    """每日的成交记录"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, date):
-        """Constructor"""
-        self.date = date
-
-        self.closeDict = {}                     # 收盘价字典
-        self.previousCloseDict = {}             # 昨收盘字典
-
-        self.tradeDict = defaultdict(list)      # 成交字典
-        self.posDict = {}                       # 持仓字典（开盘时）
-
-        self.tradingPnl = 0                     # 交易盈亏
-        self.holdingPnl = 0                     # 持仓盈亏
-        self.totalPnl = 0                       # 总盈亏
-        self.commission = 0                     # 佣金
-        self.slippage = 0                       # 滑点
-        self.netPnl = 0                         # 净盈亏
-        self.tradeCount = 0                     # 成交笔数
-
-    #----------------------------------------------------------------------
-    def updateTrade(self, trade):
-        """更新交易"""
-        l = self.tradeDict[trade.vtSymbol]
-        l.append(trade)
-        self.tradeCount += 1
-
-    #----------------------------------------------------------------------
-    def updatePos(self, d):
-        """更新昨持仓"""
-        self.posDict.update(d)
-
-    #----------------------------------------------------------------------
-    def updateBar(self, bar):
-        """更新K线"""
-        self.closeDict[bar.vtSymbol] = bar.close
-
-    #----------------------------------------------------------------------
-    def updatePreviousClose(self, d):
-        """更新昨收盘"""
-        self.previousCloseDict.update(d)
-
-    #----------------------------------------------------------------------
-    def calculateTradingPnl(self):
-        """计算当日交易盈亏"""
-        for vtSymbol, l in self.tradeDict.items():
-            close = self.closeDict[vtSymbol]
-            size = SIZE_DICT[vtSymbol]
-
-
-            slippage = SLIPPAGE_DICT[vtSymbol]
-            variableCommission = VARIABLE_COMMISSION_DICT[vtSymbol]
-            fixedCommission = FIXED_COMMISSION_DICT[vtSymbol]
-
-            for trade in l:
-                if trade.direction == DIRECTION_LONG:
-                    side = 1
-                else:
-                    side = -1
-
-                commissionCost = (trade.volume * fixedCommission +
-                                  trade.volume * trade.price * variableCommission)
-                slippageCost = trade.volume * slippage
-                pnl = (close - trade.price) * trade.volume * side * size
-
-                self.commission += commissionCost
-                self.slippage += slippageCost
-                self.tradingPnl += pnl
-
-    #----------------------------------------------------------------------
-    def calculateHoldingPnl(self):
-        """计算当日持仓盈亏"""
-        for vtSymbol, pos in self.posDict.items():
-            #print(vtSymbol, pos)
-
-            previousClose = self.previousCloseDict.get(vtSymbol, 0)
-            close = self.closeDict[vtSymbol]
-            size = SIZE_DICT[vtSymbol]
-
-
-            pnl = (close - previousClose) * pos * size
-            self.holdingPnl += pnl
-
-    #----------------------------------------------------------------------
-    def calculatePnl(self):
-        """计算总盈亏"""
-        self.calculateHoldingPnl()
-        self.calculateTradingPnl()
-        self.totalPnl = self.holdingPnl + self.tradingPnl
-        self.netPnl = self.totalPnl - self.commission - self.slippage
-
 
 #----------------------------------------------------------------------
 def formatNumber(n):
@@ -567,32 +347,47 @@ def formatNumber(n):
     return format(rn, ',')  # 加上千分符
 
 
-
-if __name__ == '__main__':
-    #try:
-        # 创建回测引擎对象
+def run_once(symbol,start_date,end_date,signal_param,filename):
+    # 创建回测引擎对象
         e = BacktestingEngine()
-
-        e.loadData_min1('c1901')
-        e.calcData_min5()
-        #e.setPeriod(datetime(2018, 7, 18), datetime(2019, 11, 30))
-        e.setPeriod('20171023 00:00:00', '20191130 00:00:00')
-        e.loadPortfolio(Fut_AtrRsiPortfolio, 'c1901')
-
-        # e.setPeriod(datetime(2018, 7, 18), datetime(2019, 7, 30))
-        # e.loadData('IF88')
-        # e.loadPortfolio(Fut_BollPortfolio, 'IF88')
+        e.setPeriod(start_date, end_date)
+        e.loadData(symbol,filename)
+        e.loadPortfolio(Fut_AtrRsiPortfolio, [symbol], signal_param)
 
         e.runBacktesting()
 
-        td_list = e.getTradeData()
-        with open('t1.txt','w') as f:
-            for td in td_list:
-                print(td.__dict__, file=f)
+        #return e.calc_btKey()
 
         e.calc_btKey()
         #e.showResult()
 
-    # except Exception as e:
-    #     print('error')
-    #     print(e)
+
+if __name__ == '__main__':
+
+        symbol = 'ag1912'
+        #symbol = 'c2001'
+        start_date = '20190923 00:00:00'
+        end_date   = '20191001 00:00:00'
+        start_date = '20180101 00:00:00'
+        end_date   = '20181231 00:00:00'
+        #symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
+
+        vtSymbol = 'c1805'
+        symbol_list = [vtSymbol]
+
+        r = []
+        #filename = self.dss+'fut/bar/min5_'+vtSymbol+'.csv'
+        filename = 'data/min5_'+vtSymbol+'.csv'
+        # for symbol in symbol_list:
+        #     for atrMaLength in [14]:
+        #         for rsiLength in [5,10,15]:
+        #             for trailingPercent in [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+        #                 signal_param = {symbol:{'atrMaLength':atrMaLength, 'rsiLength':rsiLength, 'trailingPercent':trailingPercent}}
+        #                 result = run_once(symbol,start_date,end_date,signal_param,filename)
+        #                 r.append([ atrMaLength,rsiLength,trailingPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
+        #
+        # df = pd.DataFrame(r)
+        # df.to_csv('a6.csv', index=False)
+
+        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':5, 'trailingPercent':0.8}}
+        run_once(vtSymbol,start_date,end_date,signal_param,filename)

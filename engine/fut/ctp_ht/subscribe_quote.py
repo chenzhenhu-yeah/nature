@@ -38,6 +38,7 @@ class HuQuote(CtpQuote):
 
         self.dss = get_dss()
         self.tradeDay = ''
+        self.night_day = ''
         self.temp_tradeDay = ''
         self.bar_min1_dict = {}
         self.bar_min5_dict = {}
@@ -85,18 +86,19 @@ class HuQuote(CtpQuote):
         # 以白银作为首笔，确定当前的self.tradeDay
         if self.tradeDay == '':
             if f.Instrument[:2] == 'ag':
-                # 赋值后，在此交易时段内保持不变。
                 self.tradeDay = self.temp_tradeDay
+                # 赋值后，在此交易时段内保持不变。
             else:
                 # 等待首笔Tick品种为白银
                 return
 
         UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
+        if f.UpdateTime >= '20:59:59' and self.night_day == '':
+            # 夜盘时段，零点前仍为当日日期。 早期即确定初始值，值是确定的。
+            self.night_day = time.strftime('%Y-%m-%d',time.localtime())
+
         if f.UpdateTime >= '20:59:59':
-            # 夜盘时段，零点前仍为当日日期。
-            dt1 = datetime.datetime.strptime(self.tradeDay,'%Y%m%d')
-            dt0 = dt1 - datetime.timedelta(days=1)
-            UpdateDate = dt0.strftime('%Y-%m-%d')
+            UpdateDate = self.night_day
 
         df['Localtime'] = now
         df['UpdateDate'] = UpdateDate
