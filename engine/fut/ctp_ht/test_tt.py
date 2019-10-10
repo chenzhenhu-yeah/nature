@@ -42,13 +42,13 @@ class TestTrade(object):
 
 
 if __name__ == "__main__":
-    front_trade = 'tcp://180.168.146.187:10101'
-    front_quote = 'tcp://180.168.146.187:10111'
-    broker = '9999'
-    investor = '144793'
+    front_trade = 'tcp://180.168.212.70:41305'
+    front_quote = 'tcp://180.168.212.70:41313'
+    broker = '8000'
+    investor = '71081980'
     pwd = 'zhenhu123'
-    appid = 'simnow_client_test'
-    auth_code = '0000000000000000'
+    appid = 'client_nature_1.0.0'
+    auth_code = 'PRDCTPJUHRZNIHFL'
     proc = ''
 
     tt = TestTrade(front_trade, broker, investor, pwd, appid, auth_code, proc)
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     # simnow 发单测试成功(2019-09-19), 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
     # 修改了 trade.py 中的 ReqOrderInsert，添加 ExchangeID 字段
-    tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1831, 1, 'DCE')
+    tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1811, 1, 'DCE')
 
 
     input()
