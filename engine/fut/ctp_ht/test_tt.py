@@ -42,13 +42,16 @@ class TestTrade(object):
 
 
 if __name__ == "__main__":
-    front_trade = 'tcp://180.168.212.70:41305'
-    front_quote = 'tcp://180.168.212.70:41313'
-    broker = '8000'
-    investor = '71081980'
-    pwd = 'zhenhu123'
-    appid = 'client_nature_1.0.0'
-    auth_code = 'PRDCTPJUHRZNIHFL'
+
+    # 加载配置
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    front_trade = setting['front_trade']
+    broker = setting['broker']
+    investor = setting['investor']
+    pwd = setting['pwd']
+    appid = setting['appid']
+    auth_code = setting['auth_code']
     proc = ''
 
     tt = TestTrade(front_trade, broker, investor, pwd, appid, auth_code, proc)

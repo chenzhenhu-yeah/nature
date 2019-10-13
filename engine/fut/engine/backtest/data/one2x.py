@@ -200,8 +200,8 @@ def Generate_Bar_Min15(new_bar, temp_bar, r):
     else:
         temp_bar.append(bar)
 
-def one2five(filename):
-
+def one2five(symbol):
+    filename = 'min1_'+symbol+'.csv'
     df = pd.read_csv(filename)
 
     # 生成min5
@@ -219,7 +219,7 @@ def one2five(filename):
         Generate_Bar_Min5(new_bar, temp_bar, r5)
 
     df_symbol = pd.DataFrame(r5, columns=['date','time','open','high','low','close','volume'])
-    fname = 'min5_c1805.csv'
+    fname = 'min5_'+symbol+'.csv'
     if os.path.exists(fname):
         df_symbol.to_csv(fname, index=False, mode='a', header=False)
     else:
@@ -227,5 +227,5 @@ def one2five(filename):
 
 
 if __name__ == "__main__":
-    filename = 'min1_c1805.csv'
-    one2five(filename)
+    symbol = 'c1805'
+    one2five(symbol)

@@ -72,7 +72,7 @@ class Fut_AtrRsiSignal(Signal):
         self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
-        self.trailingPercent = 0.3   # 百分比移动止损
+        self.trailingPercent = 0.8   # 百分比移动止损
         self.initBars = 90           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
 
@@ -184,7 +184,7 @@ class Fut_AtrRsiSignal(Signal):
             # if self.rsiValue < 35:
             #     self.stop = bar.close
 
-            # self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
+            #self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
             if self.stop < self.cost:
                 self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/200) )
             else:
@@ -201,7 +201,7 @@ class Fut_AtrRsiSignal(Signal):
             # if self.rsiValue > 65:
             #     self.stop = bar.close
 
-            # self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
+            #self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
             if self.stop > self.cost:
                 self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/200) )
             else:
@@ -260,9 +260,10 @@ class Fut_AtrRsiSignal(Signal):
 class Fut_AtrRsiPortfolio(object):
 
     #----------------------------------------------------------------------
-    def __init__(self, engine, symbol_list, signal_param, name='AtrRsi'):
+    def __init__(self, engine, symbol_list, signal_param={}, name='AtrRsi'):
         self.engine = engine                 # 所属引擎
         self.name = name
+
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}           # 真实持仓量字典,code为键,pos为值
         self.portfolioValue = 100E4     # 组合市值
@@ -275,7 +276,7 @@ class Fut_AtrRsiPortfolio(object):
         self.tradeDict = OrderedDict()
 
         self.signal_param = signal_param
-        print(self.signal_param)
+        #print(self.signal_param)
 
     #----------------------------------------------------------------------
     def init(self):
@@ -310,6 +311,7 @@ class Fut_AtrRsiPortfolio(object):
 
         for signal in self.signalDict[bar.vtSymbol]:
             signal.onBar(bar)
+            #self.portfolioValue += self.result.calculatePnl()
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -340,6 +342,23 @@ class Fut_AtrRsiPortfolio(object):
         l.append(trade)
 
         self.result.updateTrade(trade)
+
+    #----------------------------------------------------------------------
+    def daily_open(self):
+        # 从文件中读取posDict、portfolioValue
+
+        # 所有Signal读取保存到文件的变量
+        pass
+
+    #----------------------------------------------------------------------
+    def daily_close(self):
+        # 保存posDict、portfolioValue到文件
+
+        # 保存Signal变量到文件
+
+
+
+        pass
 
     #----------------------------------------------------------------------
     def loadParam(self):
@@ -472,3 +491,5 @@ class DailyResult(object):
         self.calculateTradingPnl()
         self.totalPnl = self.holdingPnl + self.tradingPnl
         self.netPnl = self.totalPnl - self.commission - self.slippage
+
+        return self.netPnl

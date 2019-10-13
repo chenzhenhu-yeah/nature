@@ -358,23 +358,25 @@ def run_once(symbol,start_date,end_date,signal_param,filename):
 
         #return e.calc_btKey()
 
-        e.calc_btKey()
-        #e.showResult()
+        #e.calc_btKey()
+        e.showResult()
 
 
 if __name__ == '__main__':
 
-        symbol = 'ag1912'
-        #symbol = 'c2001'
-        start_date = '20190923 00:00:00'
-        end_date   = '20191001 00:00:00'
-        start_date = '20180101 00:00:00'
-        end_date   = '20181231 00:00:00'
+        # start_date = '20190923 00:00:00'
+        # end_date   = '20191001 00:00:00'
         #symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
 
-        vtSymbol = 'c1805'
-        symbol_list = [vtSymbol]
+        # vtSymbol = 'c1805'
+        # start_date = '20180101 00:00:00'
+        # end_date   = '20181231 00:00:00'
 
+        vtSymbol = 'c1901'
+        start_date = '20180515 00:00:00'
+        end_date   = '20181231 00:00:00'
+
+        symbol_list = [vtSymbol]
         r = []
         #filename = self.dss+'fut/bar/min5_'+vtSymbol+'.csv'
         filename = 'data/min5_'+vtSymbol+'.csv'
@@ -386,8 +388,8 @@ if __name__ == '__main__':
         #                 result = run_once(symbol,start_date,end_date,signal_param,filename)
         #                 r.append([ atrMaLength,rsiLength,trailingPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
         #
-        # df = pd.DataFrame(r)
-        # df.to_csv('a6.csv', index=False)
+        # df = pd.DataFrame(r, columns=['atrMaLength','rsiLength','trailingPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
+        # df.to_csv('a1.csv', index=False)
 
-        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':5, 'trailingPercent':0.8}}
+        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':10, 'trailingPercent':0.8}}
         run_once(vtSymbol,start_date,end_date,signal_param,filename)

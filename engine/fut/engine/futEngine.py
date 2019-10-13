@@ -66,9 +66,9 @@ class FutEngine(object):
         """加载投资组合"""
         to_log('in FutEngine.loadPortfolio')
 
-        p = PortfolioClass(self, name)
-        p.init()
-        p.loadParam()
+        p = PortfolioClass(self, self.vtSymbol_list, {}, name)
+        p.init()     
+        p.daily_open()
         self.portfolio_list.append(p)
 
     # 进程间通信接口，暂未启用-------------------------------------------------
@@ -171,7 +171,8 @@ class FutEngine(object):
         fn = 'fut/deal.csv'
         a_file(fn, str(r)[2:-2])
 
-        self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName)
+        if self.gateway is not None:
+            self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName)
 
     #----------------------------------------------------------------------
     def worker_open(self):
@@ -190,22 +191,22 @@ class FutEngine(object):
 
         # 保存信号参数
         for p in self.portfolio_list:
-            p.saveParam()
+            p.daily_close()
 
 #----------------------------------------------------------------------
 def start():
     dss = get_dss()
-    engine1 = FutEngine(dss,'min1')
-    schedule.every().day.at("20:45").do(engine1.worker_open)
-    schedule.every().day.at("15:11").do(engine1.worker_close)
+    # engine1 = FutEngine(dss,'min1')
+    # schedule.every().day.at("20:45").do(engine1.worker_open)
+    # schedule.every().day.at("15:11").do(engine1.worker_close)
 
     engine5 = FutEngine(dss,'min5')
     schedule.every().day.at("20:46").do(engine5.worker_open)
     schedule.every().day.at("15:12").do(engine5.worker_close)
 
-    engine15 = FutEngine(dss,'min15')
-    schedule.every().day.at("20:47").do(engine15.worker_open)
-    schedule.every().day.at("15:13").do(engine15.worker_close)
+    # engine15 = FutEngine(dss,'min15')
+    # schedule.every().day.at("20:47").do(engine15.worker_open)
+    # schedule.every().day.at("15:13").do(engine15.worker_close)
 
 
     print(u'期货交易引擎开始运行')
@@ -216,7 +217,8 @@ def start():
 
 if __name__ == '__main__':
     # start()
-    gateway = Gateway_Simnow_CTP()
+    #gateway = Gateway_Simnow_CTP()
+    gateway = None
 
     # dss = get_dss()
     # engine15 = FutEngine(dss,'min15',gateway)
