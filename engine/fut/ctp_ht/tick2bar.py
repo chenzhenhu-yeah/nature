@@ -130,6 +130,7 @@ def proc_segment(df1,begin,end,num):
             date = next.strftime('%Y-%m-%d')
 
             #print(next)
+            #print(date)
 
 
         #print(date,tm)
@@ -300,5 +301,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tradeDay = '20190930'
+    tradeDay = '20191014'
     tick2bar(tradeDay)

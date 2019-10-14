@@ -9,7 +9,7 @@ import re
 import datetime
 import time
 
-from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq 
+from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 
 import json
 import tushare as ts
@@ -17,15 +17,45 @@ import tushare as ts
 
 
 
-import traceback
-try:
-    i = 3/0
-except Exception as e:
-    print(e)
-    print('-'*30)
-    #traceback.print_exc()
-    s = traceback.format_exc()
-    print(s)
+
+
+dict = {'Name': 'Runoob', 'Age': 7}
+dict2 = {'Name': 'female' }
+
+dict.update(dict2)
+print ("更新字典 dict : ", dict)
+
+
+#
+# filename = get_dss() + 'fut/cfg/portfolio_var_' + 'atrrsi' + '.csv'
+# df = pd.read_csv(filename, sep='$')
+# df = df.sort_values(by='datetime',ascending=False)
+# print(df)
+#
+# if len(df) > 0:
+#     rec = df.iloc[-1,:]
+#     print(rec)
+#     p = rec.portfolioValue
+#     d = eval(rec.posDict)
+#     print(d)
+#     print(type(d))
+
+# dt = '20191011'
+# r = [ [dt, 100, {'c2001':1, 'ag1912':2}] ]
+# df = pd.DataFrame(r, columns=['datetime','portfolioValue','posDict'])
+# filename = get_dss() + 'fut/cfg/portfolio_var_' + 'atrrsi' + '.csv'
+# df.to_csv(filename,index=False,sep='$',mode='a',header=False)
+
+
+# import traceback
+# try:
+#     i = 3/0
+# except Exception as e:
+#     print(e)
+#     print('-'*30)
+#     #traceback.print_exc()
+#     s = traceback.format_exc()
+#     print(s)
 
 
 

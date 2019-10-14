@@ -35,7 +35,7 @@ class FutEngine(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self,dss,minx,gateway):
+    def __init__(self,dss,minx,gateway=None):
         """Constructor"""
 
         self.dss = dss
@@ -59,7 +59,7 @@ class FutEngine(object):
         """每日初始化交易引擎"""
 
         self.portfolio_list = []
-        self.loadPortfolio(Fut_AtrRsiPortfolio, 'AtrRsi')
+        self.loadPortfolio(Fut_AtrRsiPortfolio, 'atrrsi')
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name):
@@ -67,7 +67,7 @@ class FutEngine(object):
         to_log('in FutEngine.loadPortfolio')
 
         p = PortfolioClass(self, self.vtSymbol_list, {}, name)
-        p.init()     
+        p.init()
         p.daily_open()
         self.portfolio_list.append(p)
 
@@ -146,14 +146,18 @@ class FutEngine(object):
 
             for i, row in df.iterrows():
                 d = dict(row)
-                #print(d)
-                #print(type(d))
+                # print(d)
+                # print(type(d))
                 bar = VtBarData()
                 bar.__dict__ = d
                 r.append(bar)
         except Exception as e:
             print('error ')
             print(e)
+            print('-'*30)
+            #traceback.print_exc()
+            s = traceback.format_exc()
+            print(s)
 
         return r
 
@@ -168,7 +172,7 @@ class FutEngine(object):
 
         r = [[dt,pfName,order_id,self.minx,vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
-        fn = 'fut/deal.csv'
+        fn = 'fut/check/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         if self.gateway is not None:
@@ -201,8 +205,8 @@ def start():
     # schedule.every().day.at("15:11").do(engine1.worker_close)
 
     engine5 = FutEngine(dss,'min5')
-    schedule.every().day.at("20:46").do(engine5.worker_open)
-    schedule.every().day.at("15:12").do(engine5.worker_close)
+    schedule.every().day.at("20:56").do(engine5.worker_open)
+    schedule.every().day.at("15:02").do(engine5.worker_close)
 
     # engine15 = FutEngine(dss,'min15')
     # schedule.every().day.at("20:47").do(engine15.worker_open)
@@ -216,14 +220,15 @@ def start():
 
 
 if __name__ == '__main__':
-    # start()
-    #gateway = Gateway_Simnow_CTP()
-    gateway = None
+    start()
 
+    # #gateway = Gateway_Simnow_CTP()
+    # gateway = None
+    #
+    # # dss = get_dss()
+    # # engine1 = FutEngine(dss,'min1',gateway)
+    # # engine1.worker_open()
+    #
     # dss = get_dss()
-    # engine15 = FutEngine(dss,'min15',gateway)
-    # engine15.worker_open()
-
-    dss = get_dss()
-    engine5 = FutEngine(dss,'min5',gateway)
-    engine5.worker_open()
+    # engine5 = FutEngine(dss,'min5',gateway)
+    # engine5.worker_open()
