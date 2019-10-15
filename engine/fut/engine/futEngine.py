@@ -18,10 +18,11 @@ from multiprocessing.connection import Client
 import traceback
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email
+from nature import to_log, is_trade_day, send_email, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book, a_file
-from nature import Fut_AtrRsiPortfolio, get_dss
+
+from nature import Fut_AtrRsiPortfolio
 from nature import Gateway_Simnow_CTP
 #from ipdb import set_trace
 
@@ -35,14 +36,14 @@ class FutEngine(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self,dss,minx,gateway=None):
+    def __init__(self,minx):
         """Constructor"""
 
-        self.dss = dss
+        self.dss = get_dss()
         self.minx = minx
-        self.gateway = gateway
-        self.portfolio_list = []
-        self.vtSymbol_dict = {}
+
+        self.gateway = None                # 路由
+        self.portfolio_list = []           # 组合
 
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
@@ -58,8 +59,12 @@ class FutEngine(object):
     def init_daily(self):
         """每日初始化交易引擎"""
 
+        # 初始化组合
         self.portfolio_list = []
         self.loadPortfolio(Fut_AtrRsiPortfolio, 'atrrsi')
+
+        # 初始化路由
+        # gateway = Gateway_Simnow_CTP()
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name):
@@ -99,6 +104,7 @@ class FutEngine(object):
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
         print('in put_svervice')
+        vtSymbol_dict = {}         # 缓存中间bar
         while True:
             time.sleep(1)
             for id in self.vtSymbol_list:
@@ -113,10 +119,10 @@ class FutEngine(object):
                     bar.__dict__ = d
                     bar.vtSymbol = id
                     bar.symbol = id
-                    if id not in self.vtSymbol_dict:
-                        self.vtSymbol_dict[id] = bar
-                    elif self.vtSymbol_dict[id].time != bar.time:
-                        self.vtSymbol_dict[id] = bar
+                    if id not in vtSymbol_dict:
+                        vtSymbol_dict[id] = bar
+                    elif vtSymbol_dict[id].time != bar.time:
+                        vtSymbol_dict[id] = bar
                         #self.onBar(bar)
                         for p in self.portfolio_list:
                             p.onBar(bar)
@@ -138,12 +144,12 @@ class FutEngine(object):
         print(type(bar))
 
     #----------------------------------------------------------------------
-    def _bc_loadInitBar(self, vtSymbol, initBars):
+    def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
         r = []
         try:
             today = time.strftime('%Y%m%d',time.localtime())
-            fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
             #print(fname)
             df = pd.read_csv(fname)
             df = df.sort_values(by=['date','time'])
@@ -197,20 +203,24 @@ class FutEngine(object):
         """盘后保存及展示数据"""
         to_log('in FutEngine.worker_close')
 
-        print('begin worker_close')
+        self.gateway = None                # 路由
 
         # 保存信号参数
         for p in self.portfolio_list:
             p.daily_close()
 
+        self.portfolio_list = []           # 组合
+
+        print('begin worker_close')
+
 #----------------------------------------------------------------------
 def start():
-    dss = get_dss()
+
     # engine1 = FutEngine(dss,'min1')
     # schedule.every().day.at("20:45").do(engine1.worker_open)
     # schedule.every().day.at("15:11").do(engine1.worker_close)
 
-    engine5 = FutEngine(dss,'min5')
+    engine5 = FutEngine('min5')
     schedule.every().day.at("20:56").do(engine5.worker_open)
     schedule.every().day.at("15:02").do(engine5.worker_close)
 
@@ -228,13 +238,9 @@ def start():
 if __name__ == '__main__':
     #start()
 
-    # #gateway = Gateway_Simnow_CTP()
-    gateway = None
-    #
-    # dss = get_dss()
-    # engine1 = FutEngine(dss,'min1',gateway)
+
+    # engine1 = FutEngine('min1')
     # engine1.worker_open()
-    #
-    dss = get_dss()
-    engine5 = FutEngine(dss,'min5',gateway)
+
+    engine5 = FutEngine('min5')
     engine5.worker_open()

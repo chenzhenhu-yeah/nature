@@ -87,7 +87,7 @@ class BacktestingEngine(object):
         self.output(u'全部数据加载完成')
 
     #----------------------------------------------------------------------
-    def _bc_loadInitBar(self, vtSymbol, initBars):
+    def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
 
         dt_list = self.barDict.keys()

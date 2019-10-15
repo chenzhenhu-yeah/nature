@@ -99,6 +99,7 @@ class Fut_AtrRsiSignal(Signal):
         self.initBars = 90           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
         self.ratio_atrMa = 0.85
+        self.minx = 'min5'
 
         # 策略变量
         self.atrValue = 0                        # 最新的ATR指标数值
@@ -121,7 +122,7 @@ class Fut_AtrRsiSignal(Signal):
         self.rsiSell = 50 - self.rsiEntry
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars)
+        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)
         for bar in initData:
             self.bar = bar
             self.am.updateBar(bar)
