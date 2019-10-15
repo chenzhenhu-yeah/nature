@@ -44,12 +44,7 @@ class FutEngine(object):
 
         self.gateway = None                # 路由
         self.portfolio_list = []           # 组合
-
-        # 加载配置
-        config = open(get_dss()+'fut/cfg/config.json')
-        setting = json.load(config)
-        symbols = setting['symbols']
-        self.vtSymbol_list = symbols.split(',')
+        self.vtSymbol_list = []            # 品种
 
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
@@ -58,6 +53,13 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def init_daily(self):
         """每日初始化交易引擎"""
+
+        # 加载品种
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols']
+        self.vtSymbol_list = symbols.split(',')
+
 
         # 初始化组合
         self.portfolio_list = []
@@ -236,11 +238,11 @@ def start():
 
 
 if __name__ == '__main__':
-    #start()
+    start()
 
 
     # engine1 = FutEngine('min1')
     # engine1.worker_open()
 
-    engine5 = FutEngine('min5')
-    engine5.worker_open()
+    # engine5 = FutEngine('min5')
+    # engine5.worker_open()

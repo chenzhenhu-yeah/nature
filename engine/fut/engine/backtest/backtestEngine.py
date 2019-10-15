@@ -25,16 +25,8 @@ class BacktestingEngine(object):
         self.portfolio = None                # 一对一
         self.startDt = None
         self.endDt = None
-        self.currentDt = None
-
+        self.backtest_dt_list = []
         self.barDict = OrderedDict()
-
-        # 加载配置
-        config = open(get_dss()+'fut/cfg/config.json')
-        setting = json.load(config)
-        symbols = setting['symbols']
-        self.vtSymbol_list = symbols.split(',')
-
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, name, signal_param):
@@ -91,15 +83,14 @@ class BacktestingEngine(object):
         """读取startDt前n条Bar数据，用于初始化am"""
 
         dt_list = self.barDict.keys()
-        #print(len(dt_list))
-        dt_list = [x for x in dt_list if x<self.startDt]
-        #print(len(dt_list))
-        dt_list = dt_list[-initBars:]
+        dt_list = [x for x in dt_list if x>=self.startDt and x<=self.endDt]
         dt_list = sorted(dt_list)
-        #print(dt_list)
+
+        init_dt_list = dt_list[:initBars]
+        self.backtest_dt_list = dt_list[initBars:]
 
         r = []
-        for dt in dt_list:
+        for dt in init_dt_list:
             bar = self.barDict[dt]
             r.append(bar)
 
@@ -112,19 +103,9 @@ class BacktestingEngine(object):
 
         # 初始化回测结果
 
-        for dt, bar in self.barDict.items():
-            if dt >= self.startDt and dt <= self.endDt:
-                #print(dt)
-                self.currentDt = dt
-                self.portfolio.onBar(bar)
-
-        #self.output(u'K线数据回放结束')
-
-        # td_list = self.getTradeData()
-        # with open(barType+'_t1.txt','w') as f:
-        #     for td in td_list:
-        #         print(td.__dict__, file=f)
-
+        for dt in self.backtest_dt_list:
+            bar = self.barDict[dt]
+            self.portfolio.onBar(bar)
 
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
