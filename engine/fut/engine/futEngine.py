@@ -121,10 +121,13 @@ class FutEngine(object):
                         for p in self.portfolio_list:
                             p.onBar(bar)
                 except Exception as e:
-                    print('-'*30)
-                    #traceback.print_exc()
-                    s = traceback.format_exc()
-                    print(s)
+                    # print('-'*30)
+                    # #traceback.print_exc()
+                    # s = traceback.format_exc()
+                    # print(s)
+
+                    # 对文件并发访问，存着读空文件的可能！！！
+                    print('file error ')
 
 
 
@@ -228,10 +231,10 @@ if __name__ == '__main__':
     # #gateway = Gateway_Simnow_CTP()
     gateway = None
     #
-    dss = get_dss()
-    engine1 = FutEngine(dss,'min1',gateway)
-    engine1.worker_open()
-    #
     # dss = get_dss()
-    # engine5 = FutEngine(dss,'min5',gateway)
-    # engine5.worker_open()
+    # engine1 = FutEngine(dss,'min1',gateway)
+    # engine1.worker_open()
+    #
+    dss = get_dss()
+    engine5 = FutEngine(dss,'min5',gateway)
+    engine5.worker_open()

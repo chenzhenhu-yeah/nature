@@ -59,7 +59,9 @@ class TurtleResult(object):
                self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
                self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
                self.signal.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost','intraTradeHigh','intraTradeLow','stop'])
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
+                                      'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/check/signal_atrrsi_' + self.signal.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
@@ -74,7 +76,9 @@ class TurtleResult(object):
                self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
                self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
                self.signal.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost','intraTradeHigh','intraTradeLow','stop'])
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
+                                      'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/check/signal_atrrsi_' + self.signal.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
