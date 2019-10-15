@@ -354,7 +354,7 @@ class Fut_AtrRsiPortfolio(object):
             signal.onBar(bar)
             #self.portfolioValue += self.result.calculatePnl()
 
-        print('come here')
+        #print('come here')
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
