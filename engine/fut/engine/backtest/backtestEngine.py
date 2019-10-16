@@ -29,11 +29,11 @@ class BacktestingEngine(object):
         self.barDict = OrderedDict()
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass, name, signal_param):
+    def loadPortfolio(self, PortfolioClass, symbol_list, signal_param):
         """每日重新加载投资组合"""
         print('\n')
 
-        p = PortfolioClass(self, name, signal_param)
+        p = PortfolioClass(self, symbol_list, signal_param)
         p.init()
         self.portfolio = p
 

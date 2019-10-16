@@ -63,7 +63,7 @@ class FutEngine(object):
 
         # 初始化组合
         self.portfolio_list = []
-        self.loadPortfolio(Fut_AtrRsiPortfolio, 'atrrsi')
+        self.loadPortfolio(Fut_AtrRsiPortfolio)
 
         # 初始化路由
         # gateway = Gateway_Simnow_CTP()
@@ -73,7 +73,7 @@ class FutEngine(object):
         """加载投资组合"""
         to_log('in FutEngine.loadPortfolio')
 
-        p = PortfolioClass(self, self.vtSymbol_list, {}, name)
+        p = PortfolioClass(self, self.vtSymbol_list, {})
         p.init()
         p.daily_open()
         self.portfolio_list.append(p)

@@ -100,14 +100,17 @@ class Fut_AtrRsiSignal(Signal):
         self.fixedSize = 1           # 每次交易的数量
         self.ratio_atrMa = 0.85
         self.minx = 'min5'
+        # 初始化RSI入场阈值
+        self.rsiBuy = 50 + self.rsiEntry
+        self.rsiSell = 50 - self.rsiEntry
 
-        # 策略变量
+        # 策略临时变量
         self.atrValue = 0                        # 最新的ATR指标数值
         self.atrMa = 0                           # ATR移动平均的数值
         self.rsiValue = 0                        # RSI指标的数值
         self.iswave = True
 
-        # 需要持久化保存的参数
+        # 需要持久化保存的变量
         self.unit = 0
         self.cost = 0
         self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
@@ -116,10 +119,6 @@ class Fut_AtrRsiSignal(Signal):
 
         self.result = None              # 当前的交易
         self.resultList = []            # 交易列表
-
-        # 初始化RSI入场阈值
-        self.rsiBuy = 50 + self.rsiEntry
-        self.rsiSell = 50 - self.rsiEntry
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)
@@ -135,8 +134,8 @@ class Fut_AtrRsiSignal(Signal):
             self.rsiLength = param_dict['rsiLength']
         if 'trailingPercent' in param_dict:
             self.trailingPercent = param_dict['trailingPercent']
-
-        # print(self.atrMaLength, self.rsiLength, self.trailingPercent)
+        if 'victoryPercent' in param_dict:
+            self.victoryPercent = param_dict['victoryPercent']
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -306,35 +305,27 @@ class Fut_AtrRsiSignal(Signal):
 class Fut_AtrRsiPortfolio(object):
 
     #----------------------------------------------------------------------
-    def __init__(self, engine, symbol_list, signal_param={}, name='AtrRsi'):
+    def __init__(self, engine, symbol_list, signal_param={}):
         self.engine = engine                 # 所属引擎
-        self.name = name
+        self.name = 'atrrsi'
 
+        self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}                    # 真实持仓量字典,code为键,pos为值
-        self.portfolioValue = 100E4          # 组合市值
+
+        self.result = None
+        self.resultList = []
 
         self.vtSymbolList = symbol_list
 
-        self.currentDt = None
-        self.result = None
-        self.resultList = []
-        # self.tradeDict = OrderedDict()
-
-        self.signal_param = signal_param
-        #print(self.signal_param)
-
-    #----------------------------------------------------------------------
-    def init(self):
-        """初始化信号字典、持仓字典"""
-
+        # 初始化信号字典、持仓字典
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
             # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
             signal1 = Fut_AtrRsiSignal(self, vtSymbol)
 
-            if vtSymbol in self.signal_param:
-                param_dict = self.signal_param[vtSymbol]
+            if vtSymbol in signal_param:
+                param_dict = signal_param[vtSymbol]
                 signal1.set_param(param_dict)
                 #print('here')
 
@@ -344,15 +335,20 @@ class Fut_AtrRsiPortfolio(object):
         print(u'投资组合的合约代码%s' %(self.vtSymbolList))
 
     #----------------------------------------------------------------------
+    def init(self):
+        pass
+
+    #----------------------------------------------------------------------
     def onBar(self, bar):
         """引擎新推送过来bar，传递给每个signal"""
-        self.currentDt = bar.date + ' ' + bar.time
-        previousResult = self.result
-        self.result = DailyResult(self.currentDt)
-        self.result.updatePos(self.posDict)
-        self.resultList.append(self.result)
-        if previousResult:
-            self.result.updatePreviousClose(previousResult.closeDict)
+
+        if self.result is None or self.result.date != bar.date + ' ' + bar.time:
+            previousResult = self.result
+            self.result = DailyResult(bar.date + ' ' + bar.time)
+            self.result.updatePos(self.posDict)
+            self.resultList.append(self.result)
+            if previousResult:
+                self.result.updatePreviousClose(previousResult.closeDict)
         self.result.updateBar(bar)
 
         for signal in self.signalDict[bar.vtSymbol]:
@@ -385,8 +381,8 @@ class Fut_AtrRsiPortfolio(object):
         self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
 
         # 记录成交数据
-        trade = TradeData(self.currentDt,signal.vtSymbol, direction, offset, price, volume*multiplier)
-        # l = self.tradeDict.setdefault(self.currentDt, [])
+        trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
+        # l = self.tradeDict.setdefault(self.result.date, [])
         # l.append(trade)
 
         self.result.updateTrade(trade)
@@ -412,8 +408,7 @@ class Fut_AtrRsiPortfolio(object):
     #----------------------------------------------------------------------
     def daily_close(self):
         # 保存posDict、portfolioValue到文件
-        # dt = self.currentDt.strptime('%Y-%m-%d')
-        dt = self.currentDt
+        dt = self.result.date
         r = [ [dt, self.portfolioValue, str(self.posDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','posDict'])
         filename = self.engine.dss + 'fut/check/portfolio_atrrsi_var.csv'
@@ -422,7 +417,9 @@ class Fut_AtrRsiPortfolio(object):
         # 保存组合市值
         tr = []
         totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
-        for result in self.resultList:
+        n = len(self.resultList)
+        for i in range(n-1):
+            result = self.resultList[i]
             result.calculatePnl()
             totalTradeCount += result.tradeCount
             totalTradingPnl += result.tradingPnl
@@ -442,8 +439,6 @@ class Fut_AtrRsiPortfolio(object):
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
         filename = self.engine.dss + 'fut/check/portfolio_atrrsi_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
-
-
 
         # 保存Signal变量到文件
         for code in self.vtSymbolList:
