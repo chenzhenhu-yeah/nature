@@ -69,7 +69,7 @@ class FutEngine(object):
         # gateway = Gateway_Simnow_CTP()
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass, name):
+    def loadPortfolio(self, PortfolioClass):
         """加载投资组合"""
         to_log('in FutEngine.loadPortfolio')
 
@@ -223,7 +223,7 @@ def start():
     # schedule.every().day.at("15:11").do(engine1.worker_close)
 
     engine5 = FutEngine('min5')
-    schedule.every().day.at("20:56").do(engine5.worker_open)
+    schedule.every().day.at("08:56").do(engine5.worker_open)
     schedule.every().day.at("15:02").do(engine5.worker_close)
 
     # engine15 = FutEngine(dss,'min15')
