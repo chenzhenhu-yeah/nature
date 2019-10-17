@@ -9,28 +9,47 @@ from nature import CtpQuote
 from nature import DirectType, OffsetType
 from nature.strategy import DIRECTION_LONG, DIRECTION_SHORT, OFFSET_OPEN, OFFSET_CLOSE
 
-def get_exchangeID(symbol):
-    # 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
+
+class Contract(object):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
+        """Constructor"""
+        self.pz = pz
+        self.size = size
+        self.price_tick = price_tick
+        self.variable_commission = variable_commission
+        self.fixed_commission = fixed_commission
+        self.slippage = slippage
+        self.exchangeID = exchangeID
+
+contract_dict = {}
+filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
+with open(filename_setting_fut,encoding='utf-8') as f:
+    r = DictReader(f)
+    for d in r:
+        contract_dict[ d['pz'] ] = Contract(d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage'],d['exchangeID']))
+
+def get_contract(symbol):
     pz = symbol[:2]
     if pz.isalpha():
         pass
     else:
         pz = symbol[:1]
 
-    r = ''
-    if pz in ['c']:
-        r = 'DCE'
-    if pz in ['CF','SR']:
-        r = 'CZCE'
-    if pz in ['ag','rb']:
-        r = 'SHFE'
-    return r
+    if pz in contract_dict:
+        return contract_dict[pz]
+    else:
+        #return None
+        assert False
+
+def get_exchangeID(symbol):
+    c = get_contract(symbol)    
+    return c.exchangeID
 
 class Gateway_Ht_CTP(object):
     def __init__(self):
             # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
-        setting = json.load(config)        
+        setting = json.load(config)
         self.front = setting['front_trade']
         self.broker = setting['broker']
         self.investor = setting['investor']

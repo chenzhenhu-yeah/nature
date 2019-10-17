@@ -13,8 +13,6 @@ import schedule
 import threading
 from multiprocessing.connection import Client
 import traceback
-from csv import DictReader
-
 
 
 from nature import CtpTrade
@@ -23,37 +21,6 @@ from nature import Tick
 
 from nature import VtBarData
 from nature import SOCKET_BAR, get_dss
-
-class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
-        """Constructor"""
-        self.pz = pz
-        self.size = size
-        self.price_tick = price_tick
-        self.variable_commission = variable_commission
-        self.fixed_commission = fixed_commission
-        self.slippage = slippage
-        self.exchangeID = exchangeID
-
-contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
-with open(filename_setting_fut,encoding='utf-8') as f:
-    r = DictReader(f)
-    for d in r:
-        contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
-
-def get_contract(symbol):
-    pz = symbol[:2]
-    if pz.isalpha():
-        pass
-    else:
-        pz = symbol[:1]
-
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        #return None
-        assert False
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
@@ -74,6 +41,8 @@ class HuQuote(CtpQuote):
         self.night_day = ''
         self.temp_tradeDay = ''
         self.bar_min1_dict = {}
+        self.bar_min5_dict = {}
+        self.bar_min15_dict = {}
 
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
@@ -148,6 +117,18 @@ class HuQuote(CtpQuote):
         self._Generate_Bar_MinOne(f, UpdateDate)
 
     #----------------------------------------------------------------------
+    def send_bar(self, s):
+        address = ('localhost', SOCKET_BAR)
+        try :
+            with Client(address, authkey=b'secret password') as conn2:
+                conn2.send(s)
+                time.sleep(0.030)
+        except Exception as e:
+            #print('error，发送太密集')
+            #print(e)
+            pass
+
+    #----------------------------------------------------------------------
     def put_bar(self, bar, minx):
         df = pd.DataFrame([bar.__dict__])
         cols = ['date','time','open','high','low','close','volume']
@@ -155,6 +136,61 @@ class HuQuote(CtpQuote):
 
         fname = self.dss + 'fut/put/' + minx + '_' + bar.vtSymbol + '.csv'
         df.to_csv(fname, index=False)
+
+    #----------------------------------------------------------------------
+    def save_bar(self, bar, minx):
+        df = pd.DataFrame([bar.__dict__])
+        cols = ['date','time','open','high','low','close','volume']
+        df = df[cols]
+
+        fname = self.dss + 'fut/put/rec/' + minx + '_' + self.tradeDay + '_' + bar.vtSymbol + '.csv'
+        if os.path.exists(fname):
+            df.to_csv(fname, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fname, index=False, mode='a')
+
+    #----------------------------------------------------------------------
+    def special_time(self, new_bar):
+        fn = get_dss() + 'fut/cfg/trade_time.csv'
+        pz = new_bar.vtSymbol[:2]
+        if pz.isalpha():
+            pass
+        else:
+            pz = new_bar.vtSymbol[:1]
+        df2 = pd.read_csv(fn)
+        df2 = df2[df2.symbol==pz].sort_values(by='seq')
+        df2 = df2.reset_index()
+
+        assert len(df2) == 4
+        # if len(df2) != 4:
+        #     print(df2)
+        #     print(new_bar.vtSymbol)
+
+        # end1 = df2.iat[0,4]
+        # end2 = df2.iat[3,4]
+        end1 = df2.at[0,'end']
+        end2 = df2.at[3,'end']
+
+
+        sp1 = ''
+        sp2 = ''
+
+        # 夜间时段
+        if end1[:5] == '23:00':
+            sp1 = '22:58'
+        if end1[:5] == '23:30':
+            sp1 = '23:28'
+        if end1[:5] == '02:30':
+            sp1 = '02:28'
+
+        # 下午收盘
+        if end2[:5] == '15:00':
+            sp2 = '14:58'
+
+        if new_bar.time[:5] == sp1 or new_bar.time[:5] == sp2:
+            return True
+        else:
+            return False
 
     #----------------------------------------------------------------------
     def _Generate_Bar_MinOne(self, tick, UpdateDate):
@@ -181,6 +217,9 @@ class HuQuote(CtpQuote):
             bar.date = new_bar.date
             bar.time = new_bar.time[:-2] + '00'
             self.put_bar(bar, 'min1')
+            self._Generate_Bar_Min5(bar)
+            self._Generate_Bar_Min15(bar)
+            self.save_bar(bar,'min1')
 
             bar.open = new_bar.open
             bar.high = new_bar.high
@@ -196,10 +235,64 @@ class HuQuote(CtpQuote):
 
         self.bar_min1_dict[id] = bar
 
-        c = get_contract(bar.vtSymbol)
-        if c.exchangeID == 'CZCE':
-            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['14:59:59','23:29:59']:
-                self.put_bar(bar, 'min1')
+    #----------------------------------------------------------------------
+    def _Generate_Bar_Min5(self, new_bar):
+        """生成、推送、保存Bar"""
+
+        id = new_bar.vtSymbol
+        if id in self.bar_min5_dict:
+            bar = self.bar_min5_dict[id]
+        else:
+            bar = new_bar
+            self.bar_min5_dict[id] = bar
+            return
+
+        # 更新数据
+        if bar.high < new_bar.high:
+            bar.high = new_bar.high
+        if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+        bar.close = new_bar.close
+
+        if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00'] or self.special_time(new_bar):
+            # 将 bar的分钟改为整点，推送并保存bar
+            bar.time = new_bar.time[:-2] + '00'
+            self.put_bar(bar, 'min5')
+            self.save_bar(bar,'min5')
+
+            self.bar_min5_dict.pop(id)
+        else:
+            self.bar_min5_dict[id] = bar
+
+
+    #----------------------------------------------------------------------
+    def _Generate_Bar_Min15(self, new_bar):
+        """生成、推送、保存Bar"""
+
+        id = new_bar.vtSymbol
+        if id in self.bar_min15_dict:
+            bar = self.bar_min15_dict[id]
+        else:
+            bar = new_bar
+            self.bar_min15_dict[id] = bar
+            return
+
+        # 更新数据
+        if bar.high < new_bar.high:
+            bar.high = new_bar.high
+        if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+        bar.close = new_bar.close
+
+        if new_bar.time[3:5] in ['15','30','45','00'] or self.special_time(new_bar):
+            # 将 bar的分钟改为整点，推送并保存bar
+            bar.time = new_bar.time[:-2] + '00'
+            self.put_bar(bar, 'min15')
+            self.save_bar(bar,'min15')
+
+            self.bar_min15_dict.pop(id)
+        else:
+            self.bar_min15_dict[id] = bar
 
 class TestQuote(object):
     """TestQuote"""

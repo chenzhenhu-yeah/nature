@@ -29,6 +29,63 @@ from nature import Gateway_Simnow_CTP
 
 
 ########################################################################
+class BarGenerator(object):
+    """
+    K线合成器，支持：
+    1. 基于Tick合成1分钟K线
+    2. 基于1分钟K线合成X分钟K线（X可以是2、3、5、10、15、30	）
+    """
+
+    #----------------------------------------------------------------------
+    def __init__(self, minx):
+        """Constructor"""
+        self.minx = minx
+        self.bar_minx_dict = {}
+
+    #----------------------------------------------------------------------
+    def update_bar(self, new_bar):
+
+        id = new_bar.vtSymbol
+        if id in self.bar_minx_dict:
+            bar = self.bar_minx_dict[id]
+        else:
+            bar = new_bar
+            self.bar_minx_dict[id] = bar
+            return None
+
+        # 更新数据
+        if bar.high < new_bar.high:
+            bar.high = new_bar.high
+        if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+        bar.close = new_bar.close
+
+        if self.minx == 'min5' and new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
+            # 将 bar的分钟改为整点，推送并保存bar
+            bar.time = new_bar.time[:-2] + '00'
+            return self.bar_minx_dict.pop(id)
+        elif self.minx == 'min15' and new_bar.time[3:5] in ['15','30','45','00']:
+            # 将 bar的分钟改为整点，推送并保存bar
+            bar.time = new_bar.time[:-2] + '00'
+            return self.bar_minx_dict.pop(id)
+        else:
+            self.bar_minx_dict[id] = bar
+
+        return None
+
+    #----------------------------------------------------------------------
+    def save_bar(self, bar):
+        df = pd.DataFrame([bar.__dict__])
+        cols = ['date','time','open','high','low','close','volume']
+        df = df[cols]
+
+        fname = get_dss() + 'fut/put/rec/' + self.minx + '_' + bar.vtSymbol + '.csv'
+        if os.path.exists(fname):
+            df.to_csv(fname, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fname, index=False, mode='a')
+
+########################################################################
 class FutEngine(object):
     """
     交易引擎不间断运行。开市前，重新初始化引擎，并加载数据；闭市后，保存数据到文件。
@@ -78,40 +135,17 @@ class FutEngine(object):
         p.daily_open()
         self.portfolio_list.append(p)
 
-    # 进程间通信接口，暂未启用-------------------------------------------------
-    def bar_service(self):
-        print('in bar_svervice')
-
-        r, dt = is_trade_day()
-        if r == False:
-            return
-
-        address = ('localhost', SOCKET_BAR)
-        while True:
-            with Listener(address, authkey=b'secret password') as listener:
-                with listener.accept() as conn:
-                    #print('connection accepted from', listener.last_accepted)
-                    s = conn.recv()
-                    d = eval(s)
-                    bar = VtBarData()
-                    bar.__dict__ = d
-                    for p in self.portfolio_list:
-                        p.onBar(bar)
-                        #threading.Thread( target=p.onBar, args=(bar,) ).start()
-
-                        #threading.Thread( target=self.onBar, args=(bar,) ).start()
-                        #self.onBar(bar)
-
-
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
         print('in put_svervice')
         vtSymbol_dict = {}         # 缓存中间bar
+        g5 = BarGenerator('min5')
+
         while True:
             time.sleep(1)
             for id in self.vtSymbol_list:
                 try:
-                    fname = self.dss + 'fut/put/'+ self.minx + '_' + id + '.csv'
+                    fname = self.dss + 'fut/put/min1_' + id + '.csv'
                     #print(fname)
                     df = pd.read_csv(fname)
                     d = dict(df.loc[0,:])
@@ -121,29 +155,29 @@ class FutEngine(object):
                     bar.__dict__ = d
                     bar.vtSymbol = id
                     bar.symbol = id
+
                     if id not in vtSymbol_dict:
                         vtSymbol_dict[id] = bar
                     elif vtSymbol_dict[id].time != bar.time:
                         vtSymbol_dict[id] = bar
-                        #self.onBar(bar)
-                        for p in self.portfolio_list:
-                            p.onBar(bar)
+
+                        bar_min5 = g5.update_bar(bar)
+                        if bar_min5 is not None:
+                            g5.save_bar(bar_min5)
+                            for p in self.portfolio_list:
+                                p.onBar(bar_min5)
+
+                        # for p in self.portfolio_list:
+                        #     p.onBar(bar)
+
                 except Exception as e:
-                    # print('-'*30)
-                    # #traceback.print_exc()
-                    # s = traceback.format_exc()
-                    # print(s)
+                    print('-'*30)
+                    #traceback.print_exc()
+                    s = traceback.format_exc()
+                    print(s)
 
                     # 对文件并发访问，存着读空文件的可能！！！
                     print('file error ')
-
-
-
-    #----------------------------------------------------------------------
-    def onBar(self, bar):
-        print('in On_Bar')
-        print(bar.__dict__)
-        print(type(bar))
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
@@ -223,7 +257,7 @@ def start():
     # schedule.every().day.at("15:11").do(engine1.worker_close)
 
     engine5 = FutEngine('min5')
-    schedule.every().day.at("08:56").do(engine5.worker_open)
+    schedule.every().day.at("14:26").do(engine5.worker_open)
     schedule.every().day.at("15:02").do(engine5.worker_close)
 
     # engine15 = FutEngine(dss,'min15')
@@ -236,10 +270,8 @@ def start():
         schedule.run_pending()
         time.sleep(10)
 
-
 if __name__ == '__main__':
     start()
-
 
     # engine1 = FutEngine('min1')
     # engine1.worker_open()
