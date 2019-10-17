@@ -5,6 +5,7 @@ from csv import DictReader
 from datetime import datetime
 from collections import OrderedDict, defaultdict
 
+import os
 import schedule
 import time
 from datetime import datetime
@@ -30,11 +31,6 @@ from nature import Gateway_Simnow_CTP
 
 ########################################################################
 class BarGenerator(object):
-    """
-    K线合成器，支持：
-    1. 基于Tick合成1分钟K线
-    2. 基于1分钟K线合成X分钟K线（X可以是2、3、5、10、15、30	）
-    """
 
     #----------------------------------------------------------------------
     def __init__(self, minx):
@@ -93,12 +89,10 @@ class FutEngine(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self,minx):
+    def __init__(self):
         """Constructor"""
 
         self.dss = get_dss()
-        self.minx = minx
-
         self.gateway = None                # 路由
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
@@ -218,7 +212,7 @@ class FutEngine(object):
         time.sleep(0.1)
         order_id = str(int(time.time()))
 
-        r = [[dt,pfName,order_id,self.minx,vtSymbol, direction, offset, price, volume]]
+        r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
         fn = 'fut/check/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
@@ -252,18 +246,9 @@ class FutEngine(object):
 #----------------------------------------------------------------------
 def start():
 
-    # engine1 = FutEngine(dss,'min1')
-    # schedule.every().day.at("20:45").do(engine1.worker_open)
-    # schedule.every().day.at("15:11").do(engine1.worker_close)
-
-    engine5 = FutEngine('min5')
-    schedule.every().day.at("14:26").do(engine5.worker_open)
+    engine5 = FutEngine()
+    schedule.every().day.at("20:56").do(engine5.worker_open)
     schedule.every().day.at("15:02").do(engine5.worker_close)
-
-    # engine15 = FutEngine(dss,'min15')
-    # schedule.every().day.at("20:47").do(engine15.worker_open)
-    # schedule.every().day.at("15:13").do(engine15.worker_close)
-
 
     print(u'期货交易引擎开始运行')
     while True:
@@ -273,8 +258,5 @@ def start():
 if __name__ == '__main__':
     start()
 
-    # engine1 = FutEngine('min1')
-    # engine1.worker_open()
-
-    # engine5 = FutEngine('min5')
+    # engine5 = FutEngine()
     # engine5.worker_open()

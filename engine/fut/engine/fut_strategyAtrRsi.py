@@ -320,8 +320,8 @@ class Fut_AtrRsiPortfolio(object):
         self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}                    # 真实持仓量字典,code为键,pos为值
-
-        self.result = None
+    
+        self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
 
         self.vtSymbolList = symbol_list
@@ -350,13 +350,14 @@ class Fut_AtrRsiPortfolio(object):
     def onBar(self, bar):
         """引擎新推送过来bar，传递给每个signal"""
 
-        if self.result is None or self.result.date != bar.date + ' ' + bar.time:
+        if self.result.date != bar.date + ' ' + bar.time:
             previousResult = self.result
             self.result = DailyResult(bar.date + ' ' + bar.time)
             self.result.updatePos(self.posDict)
             self.resultList.append(self.result)
             if previousResult:
                 self.result.updatePreviousClose(previousResult.closeDict)
+
         self.result.updateBar(bar)
 
         for signal in self.signalDict[bar.vtSymbol]:
