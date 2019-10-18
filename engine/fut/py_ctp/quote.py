@@ -7,7 +7,7 @@ __mtime__ = '2016/9/23'
 """
 import platform
 import os
-import time 
+import time
 
 from .structs import InfoField, Tick
 from .ctp_quote import Quote
@@ -79,7 +79,7 @@ class CtpQuote(object):
 
     def _OnFrontConnected(self):
         """"""
-        # to_log('in CtpQuote._OnFrontConnected')
+        #print('in CtpQuote._OnFrontConnected')
         self.OnConnected(self,)
 
     def _OnFrontDisConnected(self, reason: int):
@@ -92,7 +92,7 @@ class CtpQuote(object):
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        # to_log('in CtpQuote._OnRspUserLogin')
+        #print('in CtpQuote._OnRspUserLogin')
         info = InfoField()
         info.ErrorID = pRspInfo.getErrorID()
         info.ErrorMsg = pRspInfo.getErrorMsg()
@@ -100,12 +100,12 @@ class CtpQuote(object):
         self.OnUserLogin(self, info)
 
     def _OnRspSubMarketData(self, pSpecificInstrument: CThostFtdcSpecificInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        # to_log('in CtpQuote._OnRspSubMarketData')
+        #print('in CtpQuote._OnRspSubMarketData')
         pass
 
     def _OnRtnDepthMarketData(self, pDepthMarketData: CThostFtdcDepthMarketDataField):
         """"""
-        # to_log('in CtpQuote._OnRtnDepthMarketData')
+        #print('in CtpQuote._OnRtnDepthMarketData')
         pass
 
         tick: Tick = None

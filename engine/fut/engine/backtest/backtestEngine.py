@@ -339,8 +339,9 @@ def run_once(symbol,start_date,end_date,signal_param,filename):
 
         #return e.calc_btKey()
 
-        #e.calc_btKey()
-        e.showResult()
+        e.calc_btKey()
+        #e.showResult()
+        #e.portfolio.daily_close()
 
 
 if __name__ == '__main__':
@@ -349,13 +350,13 @@ if __name__ == '__main__':
         # end_date   = '20191001 00:00:00'
         #symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
 
-        # vtSymbol = 'c1805'
-        # start_date = '20180101 00:00:00'
-        # end_date   = '20181231 00:00:00'
-
-        vtSymbol = 'c1901'
-        start_date = '20180515 00:00:00'
+        vtSymbol = 'c1805'
+        start_date = '20180101 00:00:00'
         end_date   = '20181231 00:00:00'
+
+        # vtSymbol = 'c1901'
+        # start_date = '20180515 00:00:00'
+        # end_date   = '20181231 00:00:00'
 
         symbol_list = [vtSymbol]
         r = []

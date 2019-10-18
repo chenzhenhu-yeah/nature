@@ -10,13 +10,14 @@ import pandas as pd
 import schedule
 import threading
 from multiprocessing.connection import Client
+import json
 
 from nature import CtpTrade
 from nature import CtpQuote
 from nature import Tick
 
 from nature import VtBarData
-from nature import SOCKET_BAR
+from nature import SOCKET_BAR, get_dss
 
 class HuQuote(CtpQuote):
 
@@ -25,17 +26,10 @@ class HuQuote(CtpQuote):
         """Constructor"""
         #to_log('in BollEngine.__init__')
         CtpQuote.__init__(self)
-        self.id_list = ['c1909','c2001',
-                        'SR909','SR001',
-                        'CF909','CF001',
-                        'rb1910','rb2001',
-                        'IH1909','IH1912',
-                        'IC1909','IC1912',
-                        'IF1909','IF1912',
-                        ]
+        self.id_list = ['c1909','c2001']
 
         #self.id_list = ['IC1909','c1909','CF909']
-        self.dss = '../../../data/'
+        self.dss = get_dss()
         self.tradeDay = ''
         self.bar_dict = {}
 
@@ -210,13 +204,17 @@ class TestQuote(object):
             time.sleep(10)
 
 if __name__ == "__main__":
-    front_trade = 'tcp://180.168.146.187:10101'
-    front_quote = 'tcp://180.168.146.187:10111'
-    broker = '9999'
+    # 加载配置
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    front_trade = setting['front_trade']
+    front_quote = setting['front_quote']
+    broker = setting['broker']
+
     investor = ''
     pwd = ''
 
-    time.sleep(3)
+    print('here')
     qq = TestQuote(front_quote, broker, investor, pwd)
 
     #qq.daily_worker()

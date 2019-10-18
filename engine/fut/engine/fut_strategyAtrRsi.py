@@ -259,7 +259,7 @@ class Fut_AtrRsiSignal(Signal):
 
 #----------------------------------------------------------------------
     def save_var(self):
-        r = [ [self.portfolio.currentDt,self.vtSymbol, self.unit, self.cost, self.intraTradeHigh, self.intraTradeLow, self.stop] ]
+        r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost','intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)

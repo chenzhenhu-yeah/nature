@@ -85,7 +85,7 @@ class Quote:
     def CreateApi(self):
         self.api = self.h.CreateApi()
         return self.api
-        
+
     def CreateSpi(self):
         self.spi = self.h.CreateSpi()
         return self.spi
@@ -240,7 +240,7 @@ class Quote:
         self.OnRspError(copy.deepcopy(POINTER(CThostFtdcRspInfoField).from_param(pRspInfo).contents), nRequestID, bIsLast)
 
     def __OnRspSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
-        self.OnRspSubMarketData(copy.deepcopy(POINTER(CThostFtdcSpecificInstrumentField).from_param(pSpecificInstrument).contents), copy.deepcopy(POINTER(CThostFtdcRspInfoField).from_param(pRspInfo).contents), nRequestID, bIsLast)
+        self.OnRspSubMarketData(copy.deepcopy(POINTER(CThostFtdcSpecificInstrumentField).from_param(pSpecificInstrument).contents), copy.deepcopy(POINTER(CThostFtdcRspInfoField).from_param(pRspInfo).contents), nRequestID, bIsLast)        
 
     def __OnRspUnSubMarketData(self, pSpecificInstrument, pRspInfo, nRequestID, bIsLast):
         self.OnRspUnSubMarketData(copy.deepcopy(POINTER(CThostFtdcSpecificInstrumentField).from_param(pSpecificInstrument).contents), copy.deepcopy(POINTER(CThostFtdcRspInfoField).from_param(pRspInfo).contents), nRequestID, bIsLast)
