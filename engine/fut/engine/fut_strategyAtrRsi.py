@@ -80,7 +80,7 @@ class TurtleResult(object):
         self.pnl = self.unit * (self.exit - self.entry)
 
         r = [ [self.signal.portfolio.result.date, '', '平',  \
-               self.unit, price, self.pnl, \
+               abs(self.unit), price, self.pnl, \
                self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
                self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
                self.signal.stop] ]
@@ -102,7 +102,7 @@ class Fut_AtrRsiSignal(Signal):
         self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
-        self.trailingPercent = 0.3   # 百分比移动止损
+        self.trailingPercent = 0.1   # 百分比移动止损
         self.victoryPercent = 0.8
         self.initBars = 90           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
@@ -192,6 +192,7 @@ class Fut_AtrRsiSignal(Signal):
                     self.buy(bar.close, self.fixedSize)
                     self.cost = bar.close
                     self.stop = 0
+                    self.intraTradeHigh = bar.close
 
                     # print(bar.datetime, '开多')
                     # print('rsi: ', self.rsiValue)
@@ -201,6 +202,7 @@ class Fut_AtrRsiSignal(Signal):
                     self.short(bar.close, self.fixedSize)
                     self.cost = bar.close
                     self.stop = 100E4
+                    self.intraTradeLow = bar.close
 
                     # print(bar.datetime, '开空')
                     # print('rsi: ', self.rsiValue)
@@ -430,7 +432,7 @@ class Fut_AtrRsiPortfolio(object):
         print(n)
         for i in range(n-1):
             result = self.resultList[i]
-            
+
             print(result.date)
             print(result.posDict)
             print(result.closeDict)

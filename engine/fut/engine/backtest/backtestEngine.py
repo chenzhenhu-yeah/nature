@@ -350,13 +350,13 @@ if __name__ == '__main__':
         # end_date   = '20191001 00:00:00'
         #symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
 
-        vtSymbol = 'c1805'
-        start_date = '20180101 00:00:00'
-        end_date   = '20181231 00:00:00'
-
-        # vtSymbol = 'c1901'
-        # start_date = '20180515 00:00:00'
+        # vtSymbol = 'c1805'
+        # start_date = '20180101 00:00:00'
         # end_date   = '20181231 00:00:00'
+
+        vtSymbol = 'c1901'
+        start_date = '20180515 00:00:00'
+        end_date   = '20181231 00:00:00'
 
         symbol_list = [vtSymbol]
         r = []
@@ -373,5 +373,6 @@ if __name__ == '__main__':
         # df = pd.DataFrame(r, columns=['atrMaLength','rsiLength','trailingPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
         # df.to_csv('a1.csv', index=False)
 
-        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':10, 'trailingPercent':0.8}}
+        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':10, 'trailingPercent':0.1}}
+        signal_param = {}
         run_once(vtSymbol,start_date,end_date,signal_param,filename)

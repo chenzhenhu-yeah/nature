@@ -231,24 +231,25 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def worker_close(self):
         """盘后保存及展示数据"""
-        to_log('in FutEngine.worker_close')
+        print('begin worker_close')
 
         self.gateway = None                # 路由
+
+        self.vtSymbol_list = []
 
         # 保存信号参数
         for p in self.portfolio_list:
             p.daily_close()
-
         self.portfolio_list = []           # 组合
 
-        print('begin worker_close')
+        to_log('in FutEngine.worker_close')
 
 #----------------------------------------------------------------------
 def start():
 
     engine5 = FutEngine()
-    schedule.every().day.at("20:56").do(engine5.worker_open)
-    schedule.every().day.at("21:12").do(engine5.worker_close)
+    schedule.every().day.at("21:36").do(engine5.worker_open)
+    schedule.every().day.at("21:46").do(engine5.worker_close)
 
     print(u'期货交易引擎开始运行')
     while True:
