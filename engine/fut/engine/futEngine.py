@@ -248,7 +248,7 @@ def start():
 
     engine5 = FutEngine()
     schedule.every().day.at("20:56").do(engine5.worker_open)
-    schedule.every().day.at("15:02").do(engine5.worker_close)
+    schedule.every().day.at("21:12").do(engine5.worker_close)
 
     print(u'期货交易引擎开始运行')
     while True:

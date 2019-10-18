@@ -427,8 +427,14 @@ class Fut_AtrRsiPortfolio(object):
         tr = []
         totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
         n = len(self.resultList)
+        print(n)
         for i in range(n-1):
             result = self.resultList[i]
+            
+            print(result.date)
+            print(result.posDict)
+            print(result.closeDict)
+
             result.calculatePnl()
             totalTradeCount += result.tradeCount
             totalTradingPnl += result.tradingPnl
