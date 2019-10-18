@@ -62,7 +62,7 @@ class TurtleResult(object):
         self.unit += change              # 加上新仓位的数量
         self.entry = cost / self.unit    # 计算新的平均开仓成本
 
-        r = [ [self.signal.portfolio.currentDt, '多' if change>0 else '空', '开',  \
+        r = [ [self.signal.portfolio.result.date, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
                self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
                self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
@@ -79,7 +79,7 @@ class TurtleResult(object):
         self.exit = price
         self.pnl = self.unit * (self.exit - self.entry)
 
-        r = [ [self.signal.portfolio.currentDt, '', '平',  \
+        r = [ [self.signal.portfolio.result.date, '', '平',  \
                self.unit, price, self.pnl, \
                self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
                self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
@@ -320,7 +320,7 @@ class Fut_AtrRsiPortfolio(object):
         self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}                    # 真实持仓量字典,code为键,pos为值
-    
+
         self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
 

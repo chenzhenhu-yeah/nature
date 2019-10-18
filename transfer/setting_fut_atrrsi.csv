@@ -1,6 +1,0 @@
-pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID
-CF,25,5,0.00006,0,5,CZCE
-SR,10,1,0.00006,0,1,CZCE
-c,10,1,0.00006,0,1,DCE
-rb,10,1,0.00006,0,1,SHFE
-ag,15,1,0.00006,0,1,SHFE
