@@ -247,7 +247,7 @@ class FutEngine(object):
 def start():
 
     engine5 = FutEngine()
-    schedule.every().day.at("08:52").do(engine5.worker_open)
+    schedule.every().day.at("08:56").do(engine5.worker_open)
     schedule.every().day.at("15:02").do(engine5.worker_close)
 
     print(u'期货交易引擎开始运行')
