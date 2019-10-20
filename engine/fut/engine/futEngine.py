@@ -159,10 +159,10 @@ class FutEngine(object):
                         if bar_min5 is not None:
                             g5.save_bar(bar_min5)
                             for p in self.portfolio_list:
-                                p.onBar(bar_min5)
+                                p.onBar(bar_min5, 'min5')
 
-                        # for p in self.portfolio_list:
-                        #     p.onBar(bar)
+                        for p in self.portfolio_list:
+                            p.onBar(bar, 'min1')
 
                 except Exception as e:
                     print('-'*30)
@@ -214,7 +214,7 @@ class FutEngine(object):
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
-        fn = 'fut/check/engine_deal.csv'
+        fn = 'fut/deal/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         if self.gateway is not None:
@@ -248,8 +248,8 @@ class FutEngine(object):
 def start():
 
     engine5 = FutEngine()
-    schedule.every().day.at("21:36").do(engine5.worker_open)
-    schedule.every().day.at("21:46").do(engine5.worker_close)
+    schedule.every().day.at("20:56").do(engine5.worker_open)
+    schedule.every().day.at("15:02").do(engine5.worker_close)
 
     print(u'期货交易引擎开始运行')
     while True:

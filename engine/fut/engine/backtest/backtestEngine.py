@@ -18,7 +18,7 @@ class BacktestingEngine(object):
     """组合类CTA策略回测引擎"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self,symbol_list):
         """Constructor"""
         self.dss = get_dss()
 
@@ -26,14 +26,15 @@ class BacktestingEngine(object):
         self.startDt = None
         self.endDt = None
         self.backtest_dt_list = []
-        self.barDict = OrderedDict()
+        self.dataDict = OrderedDict()
+        self.symbol_list = symbol_list
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass, symbol_list, signal_param):
+    def loadPortfolio(self, PortfolioClass, signal_param):
         """每日重新加载投资组合"""
         print('\n')
 
-        p = PortfolioClass(self, symbol_list, signal_param)
+        p = PortfolioClass(self, self.symbol_list, signal_param)
         p.init()
         self.portfolio = p
 
@@ -44,68 +45,74 @@ class BacktestingEngine(object):
         self.endDt = endDt
 
     #----------------------------------------------------------------------
-    def loadData(self, vtSymbol, filename):
+    def loadData(self):
         """加载数据"""
+        for vtSymbol in self.symbol_list:
+            filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
 
-        df = pd.read_csv(filename)
-        for i, d in df.iterrows():
-            #print(d)
+            df = pd.read_csv(filename)
+            for i, d in df.iterrows():
+                #print(d)
 
-            bar = VtBarData()
-            bar.vtSymbol = vtSymbol
-            bar.symbol = vtSymbol
-            bar.open = float(d['open'])
-            bar.high = float(d['high'])
-            bar.low = float(d['low'])
-            bar.close = float(d['close'])
-            bar.volume = d['volume']
+                bar = VtBarData()
+                bar.vtSymbol = vtSymbol
+                bar.symbol = vtSymbol
+                bar.open = float(d['open'])
+                bar.high = float(d['high'])
+                bar.low = float(d['low'])
+                bar.close = float(d['close'])
+                bar.volume = d['volume']
 
-            date = str(d['date'])
-            bar.date = date
-            bar.time = str(d['time'])
-            if '-' in date:
-                bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
-            else:
-                bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+                date = str(d['date'])
+                bar.date = date
+                bar.time = str(d['time'])
+                if '-' in date:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                else:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
 
-            #bar.time = '00:00:00'
-            #bar.datetime = bar.date + ' ' + bar.time
-            bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
+                #bar.time = '00:00:00'
+                #bar.datetime = bar.date + ' ' + bar.time
+                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
 
-            self.barDict[bar.datetime] = bar
-            # print(bar.__dict__)
-            # break
+                barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
+                barDict[bar.vtSymbol] = bar
+                # break
 
         self.output(u'全部数据加载完成')
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
+        assert minx == 'min5'
 
-        dt_list = self.barDict.keys()
-        dt_list = [x for x in dt_list if x>=self.startDt and x<=self.endDt]
+        dt_list = self.dataDict.keys()
+        #print(dt_list)
+        dt_list = [x for x in dt_list if x<self.startDt]
         dt_list = sorted(dt_list)
-
-        init_dt_list = dt_list[:initBars]
-        self.backtest_dt_list = dt_list[initBars:]
+        init_dt_list = dt_list[-initBars:]
+        #print(init_dt_list, initBars)
 
         r = []
         for dt in init_dt_list:
-            bar = self.barDict[dt]
-            r.append(bar)
+            bar_dict = self.dataDict[dt]
+            if vtSymbol in bar_dict:
+                bar = bar_dict[vtSymbol]
+                r.append(bar)
 
         return r
 
     #----------------------------------------------------------------------
-    def runBacktesting(self, barType='min1'):
+    def runBacktesting(self):
         """运行回测"""
-        #self.output(u'开始回放K线数据  '+ barType)
 
-        # 初始化回测结果
+        for dt, barDict in self.dataDict.items():
+            #print(dt)
+            if dt <= self.startDt or dt >=  self.endDt:
+                continue
 
-        for dt in self.backtest_dt_list:
-            bar = self.barDict[dt]
-            self.portfolio.onBar(bar)
+            for bar in barDict.values():
+                self.portfolio.onBar(bar)
 
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
@@ -117,6 +124,7 @@ class BacktestingEngine(object):
 
         resultList = self.portfolio.resultList
         dateList = [result.date for result in resultList]
+        #print(dateList)
 
         startDate = dateList[0]
         endDate = dateList[-1]
@@ -328,51 +336,87 @@ def formatNumber(n):
     return format(rn, ',')  # 加上千分符
 
 
-def run_once(symbol,start_date,end_date,signal_param,filename):
+def run_once(symbol,start_date,end_date,signal_param):
     # 创建回测引擎对象
-        e = BacktestingEngine()
+        e = BacktestingEngine([symbol])
         e.setPeriod(start_date, end_date)
-        e.loadData(symbol,filename)
-        e.loadPortfolio(Fut_AtrRsiPortfolio, [symbol], signal_param)
+        e.loadData()
+        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
 
         e.runBacktesting()
 
-        #return e.calc_btKey()
+        return e.calc_btKey()
 
-        e.calc_btKey()
         #e.showResult()
         #e.portfolio.daily_close()
 
+def run_batch():
+    pass
+    start_date = '20190926 21:05:00'
+    end_date   = '20190927 15:00:00'
+    symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
 
-if __name__ == '__main__':
 
-        # start_date = '20190923 00:00:00'
-        # end_date   = '20191001 00:00:00'
-        #symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
+def test_param():
+        # vtSymbol = 'ag1912'
+        # start_date = '20191015 21:00:00'
+        # end_date   = '20191018 15:00:00'
 
-        # vtSymbol = 'c1805'
-        # start_date = '20180101 00:00:00'
+        # vtSymbol = 'CF805'
+        # start_date = '20180111 00:00:00'
         # end_date   = '20181231 00:00:00'
 
-        vtSymbol = 'c1901'
-        start_date = '20180515 00:00:00'
+        vtSymbol = 'CF901'
+        start_date = '20180106 00:00:00'
+        end_date   = '20180331 00:00:00'
+
+        vtSymbol = 'CF901'
+        start_date = '20180401 00:00:00'
+        end_date   = '20180631 00:00:00'
+
+        vtSymbol = 'CF901'
+        start_date = '20180701 00:00:00'
+        end_date   = '20180931 00:00:00'
+
+        vtSymbol = 'CF901'
+        start_date = '20181001 00:00:00'
         end_date   = '20181231 00:00:00'
 
-        symbol_list = [vtSymbol]
         r = []
-        #filename = self.dss+'fut/bar/min5_'+vtSymbol+'.csv'
-        filename = 'data/min5_'+vtSymbol+'.csv'
-        # for symbol in symbol_list:
-        #     for atrMaLength in [14]:
-        #         for rsiLength in [5,10,15]:
-        #             for trailingPercent in [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-        #                 signal_param = {symbol:{'atrMaLength':atrMaLength, 'rsiLength':rsiLength, 'trailingPercent':trailingPercent}}
-        #                 result = run_once(symbol,start_date,end_date,signal_param,filename)
-        #                 r.append([ atrMaLength,rsiLength,trailingPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
-        #
-        # df = pd.DataFrame(r, columns=['atrMaLength','rsiLength','trailingPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
-        # df.to_csv('a1.csv', index=False)
+        symbol_list = [vtSymbol]
 
-        signal_param = {vtSymbol:{'atrMaLength':14, 'rsiLength':10, 'trailingPercent':0.1}}
-        signal_param = {}
-        run_once(vtSymbol,start_date,end_date,signal_param,filename)
+        for symbol in symbol_list:
+            for trailingPercent in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+                for rsiLength in [5]:
+                    for victoryPercent in [0.1,0.2,0.3,0.4,0.5]:
+                        signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
+                        result = run_once(symbol,start_date,end_date,signal_param)
+                        r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
+
+        df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
+        df.to_csv('q4.csv', index=False)
+
+
+def test_one():
+    vtSymbol = 'CF001'
+    start_date = '20191014 21:00:00'
+    end_date   = '20191018 15:00:00'
+
+
+    # vtSymbol = 'rb1901'
+    # start_date = '20180515 00:00:00'
+    # end_date   = '20181231 00:00:00'
+    #
+    # vtSymbol = 'CF901'
+    # start_date = '20180111 00:00:00'
+    # end_date   = '20181231 00:00:00'
+
+    #signal_param = {}
+    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.2}}
+    run_once(vtSymbol,start_date,end_date,signal_param)
+
+
+if __name__ == '__main__':
+    test_one()
+
+    #test_param()
