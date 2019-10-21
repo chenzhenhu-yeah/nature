@@ -24,7 +24,7 @@ from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio
-from nature import Gateway_Simnow_CTP
+from nature import Gateway_Ht_CTP
 #from ipdb import set_trace
 
 
@@ -117,7 +117,8 @@ class FutEngine(object):
         self.loadPortfolio(Fut_AtrRsiPortfolio)
 
         # 初始化路由
-        # gateway = Gateway_Simnow_CTP()
+        self.gateway = Gateway_Ht_CTP()
+        self.gateway.run()
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass):
@@ -165,10 +166,10 @@ class FutEngine(object):
                             p.onBar(bar, 'min1')
 
                 except Exception as e:
-                    print('-'*30)
-                    #traceback.print_exc()
-                    s = traceback.format_exc()
-                    print(s)
+                    # print('-'*30)
+                    # #traceback.print_exc()
+                    # s = traceback.format_exc()
+                    # print(s)
 
                     # 对文件并发访问，存着读空文件的可能！！！
                     print('file error ')
@@ -179,6 +180,7 @@ class FutEngine(object):
         r = []
         try:
             today = time.strftime('%Y%m%d',time.localtime())
+            # 直接读取signal对应minx相关的文件。
             fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
             #print(fname)
             df = pd.read_csv(fname)
@@ -233,6 +235,7 @@ class FutEngine(object):
         """盘后保存及展示数据"""
         print('begin worker_close')
 
+        self.gateway.release()
         self.gateway = None                # 路由
 
         self.vtSymbol_list = []
@@ -248,8 +251,10 @@ class FutEngine(object):
 def start():
 
     engine5 = FutEngine()
-    schedule.every().day.at("09:19").do(engine5.worker_open)
-    schedule.every().day.at("15:02").do(engine5.worker_close)
+    schedule.every().day.at("08:56").do(engine5.worker_open)
+    schedule.every().day.at("15:03").do(engine5.worker_close)
+    schedule.every().day.at("20:56").do(engine5.worker_open)
+    schedule.every().day.at("02:33").do(engine5.worker_close)
 
     print(u'期货交易引擎开始运行')
     while True:

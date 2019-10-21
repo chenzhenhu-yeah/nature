@@ -1,13 +1,23 @@
 
-import time
+
+import pandas as pd
+import smtplib
+from email.mime.text import MIMEText
 import schedule
+import time
+from datetime import datetime
 import threading
 import traceback
+import json
+from csv import DictReader
+from datetime import datetime
+from collections import OrderedDict, defaultdict
 
 from nature import CtpTrade
 from nature import CtpQuote
 from nature import DirectType, OffsetType
 from nature.strategy import DIRECTION_LONG, DIRECTION_SHORT, OFFSET_OPEN, OFFSET_CLOSE
+from nature import get_dss, send_email
 
 
 class Contract(object):
@@ -26,7 +36,7 @@ filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
 with open(filename_setting_fut,encoding='utf-8') as f:
     r = DictReader(f)
     for d in r:
-        contract_dict[ d['pz'] ] = Contract(d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage'],d['exchangeID']))
+        contract_dict[ d['pz'] ] = Contract(d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'])
 
 def get_contract(symbol):
     pz = symbol[:2]
@@ -42,7 +52,7 @@ def get_contract(symbol):
         assert False
 
 def get_exchangeID(symbol):
-    c = get_contract(symbol)    
+    c = get_contract(symbol)
     return c.exchangeID
 
 class Gateway_Ht_CTP(object):
@@ -70,7 +80,7 @@ class Gateway_Ht_CTP(object):
         self.t.OnTrade = lambda obj, o: None
         self.t.OnInstrumentStatus = lambda obj, inst, stat: None
 
-        threading.Thread(target=self.start, args=()).start()
+        # threading.Thread(target=self.start, args=()).start()
 
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
@@ -94,14 +104,23 @@ class Gateway_Ht_CTP(object):
             if exchangeID == '':
                 return 'error'
 
+            # 当前还处于测试阶段，只开1仓，降低价格不成交
+            volume = 1
+
             if direction == DIRECTION_LONG and offset == '开仓':
+                price = price*0.97
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '开仓':
+                price = price*1.03
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
-            if direction == DIRECTION_LONG and offset == '平仓':
-                self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
-            if direction == DIRECTION_SHORT and offset == '平仓':
-                self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
+
+            # if direction == DIRECTION_LONG and offset == '平仓':
+            #     self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
+            # if direction == DIRECTION_SHORT and offset == '平仓':
+            #     self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
+
+            send_email(get_dss(), '开仓', '')
+
         except Exception as e:
             now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
             print(now)
@@ -111,16 +130,15 @@ class Gateway_Ht_CTP(object):
             # s = traceback.format_exc()
             # to_log(s)
 
-
-    #----------------------------------------------------------------------
-    def start(self):
-        schedule.every().day.at("20:56").do(self.run)
-        schedule.every().day.at("15:06").do(self.release)
-
-        print(u'gateway_ht_ctp 路由期货交易接口开始运行')
-        while True:
-            schedule.run_pending()
-            time.sleep(10)
+    # #----------------------------------------------------------------------
+    # def start(self):
+    #     schedule.every().day.at("20:56").do(self.run)
+    #     schedule.every().day.at("15:06").do(self.release)
+    #
+    #     print(u'gateway_ht_ctp 路由期货交易接口开始运行')
+    #     while True:
+    #         schedule.run_pending()
+    #         time.sleep(10)
 
 
 if __name__ == "__main__":

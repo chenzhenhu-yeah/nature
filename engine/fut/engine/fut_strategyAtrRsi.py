@@ -102,8 +102,8 @@ class Fut_AtrRsiSignal(Signal):
         self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
-        self.trailingPercent = 0.1   # 百分比移动止损
-        self.victoryPercent = 0.5
+        self.trailingPercent = 0.7   # 百分比移动止损
+        self.victoryPercent = 0.3
         self.initBars = 60           # 初始化数据所用的天数
         self.fixedSize = 1           # 每次交易的数量
         self.ratio_atrMa = 0.8
