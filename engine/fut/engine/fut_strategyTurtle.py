@@ -9,6 +9,7 @@ from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import Signal
 
+
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
         """Constructor"""
@@ -67,7 +68,7 @@ class SignalResult(object):
         self.pnl = self.unit * (self.exit - self.entry)
 
 ########################################################################
-class Fut_AtrRsiSignal(object):
+class Fut_TurtleSignal(object):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
@@ -77,31 +78,34 @@ class Fut_AtrRsiSignal(object):
         self.bar = None                 # 最新K线
 
         # 策略参数
-        self.atrLength = 22           # 计算ATR指标的窗口数
-        self.atrMaLength = 10       # 计算ATR均线的窗口数
-        self.rsiLength = 5           # 计算RSI的窗口数
-        self.rsiEntry = 16           # RSI的开仓信号
-        self.victoryPercent = 0.8   # 百分比移动止损
-        self.initBars = 90           # 初始化数据所用的天数
-        self.fixedSize = 1           # 每次交易的数量
-        self.minx = 'min5'
-
-        # 初始化RSI入场阈值
-        self.rsiBuy = 50 + self.rsiEntry
-        self.rsiSell = 50 - self.rsiEntry
+        self.initBars = 60              # 初始化数据所用的天数
+        self.entryWindow = 20           # 入场通道周期数
+        self.exitWindow = 50            # 出场通道周期数
+        self.atrWindow = 5              # 计算ATR周期数
+        self.profitCheck = True         # 是否检查上一笔盈利
+        self.minx = 'day'
 
         # 策略临时变量
-        self.atrValue = 0                        # 最新的ATR指标数值
-        self.atrMa = 0                           # ATR移动平均的数值
-        self.rsiValue = 0                        # RSI指标的数值
+        self.atrVolatility = 0          # ATR波动率
+        self.entryUp = 0                # 入场通道
+        self.entryDown = 0
+        self.exitUp = 0                 # 出场通道
+        self.exitDown = 0
 
+        self.longEntry1 = 0             # 多头入场位
+        self.longEntry2 = 0
+        self.longEntry3 = 0
+        self.longEntry4 = 0
+        self.longStop = 0               # 多头止损位
+
+        self.shortEntry1 = 0            # 空头入场位
+        self.shortEntry2 = 0
+        self.shortEntry3 = 0
+        self.shortEntry4 = 0
+        self.shortStop = 0              # 空头止损位
 
         # 需要持久化保存的变量
         self.unit = 0
-        self.cost = 0
-        self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
-        self.intraTradeLow = 0                   # 持仓期内的最低点
-        self.stop = 0                            # 多头止损
 
         self.result = None              # 当前的交易
         self.resultList = []            # 交易列表
@@ -112,86 +116,149 @@ class Fut_AtrRsiSignal(object):
             self.bar = bar
             self.am.updateBar(bar)
 
+
+    #----------------------------------------------------------------------
+    def load_param(self):
+        filename = get_dss() +  'fut/cfg/signal_turtle_param.csv'
+        if os.path.exists(filename):
+            df = pd.read_csv(filename)
+            df = df[ df.pz == get_contract(self.vtSymbol).pz ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                self.rsiLength = rec.rsiLength
+                self.trailingPercent = rec.trailingPercent
+                self.victoryPercent = rec.victoryPercent
+
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'atrMaLength' in param_dict:
             self.atrMaLength = param_dict['atrMaLength']
         if 'rsiLength' in param_dict:
             self.rsiLength = param_dict['rsiLength']
+        if 'trailingPercent' in param_dict:
+            self.trailingPercent = param_dict['trailingPercent']
         if 'victoryPercent' in param_dict:
             self.victoryPercent = param_dict['victoryPercent']
 
     #----------------------------------------------------------------------
-    def onBar(self, bar):
+    def onBar(self, bar, minx='min1'):
         """新推送过来一个bar，进行处理"""
-        #print(bar.time, self.vtSymbol)
 
-        self.bar = bar
-        self.am.updateBar(bar)
-        if not self.am.inited:
-            return
+        if minx == 'min1':
+            self.on_bar_min1(bar)
 
-        #print('here')
-        self.calculateIndicator()     # 计算指标
-        self.generateSignal(bar)    # 触发信号，产生交易指令
+        if minx == 'day':
+            self.on_bar_day(bar)
 
-    #----------------------------------------------------------------------
-    def calculateIndicator(self):
-        """计算技术指标"""
-        atrArray = self.am.atr(self.atrLength, array=True)
-        # print(len(atrArray))
 
-        self.atrValue = atrArray[-1]
-        self.atrMa = atrArray[-self.atrMaLength:].mean()
-
-        self.rsiValue = self.am.rsi(self.rsiLength)
-
-    #----------------------------------------------------------------------
-    def generateSignal(self, bar):
-
-        # 当前无仓位
-        if self.unit == 0:
-            self.intraTradeHigh = bar.high
-            self.intraTradeLow = bar.low
-
-            # ATR数值上穿其移动平均线，说明行情短期内波动加大
-            # 即处于趋势的概率较大，适合CTA开仓
-            if self.atrValue > self.atrMa :
-                # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
-                if self.rsiValue > self.rsiBuy:
-                    # 这里为了保证成交，选择超价5个整指数点下单
-
-                    self.buy(bar.close, self.fixedSize)
-
-                elif self.rsiValue < self.rsiSell:
-
-                    self.short(bar.close, self.fixedSize)
-
+    def on_bar_min1(self, bar):
         # 持有多头仓位
-        elif self.unit > 0:
-            # 计算多头持有期内的最高价，以及重置最低价
-            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-
-            self.stop = self.intraTradeHigh * (1-self.victoryPercent/100)
-
+        if self.unit > 0:
             if bar.close <= self.stop:
                 # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
                 self.sell(bar.close, abs(self.unit))
 
         # 持有空头仓位
         elif self.unit < 0:
-            self.intraTradeLow = min(self.intraTradeLow, bar.low)
-
-            self.stop = self.intraTradeLow * (1+self.victoryPercent/100)
-
             if bar.close >= self.stop:
                 # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
                 self.cover(bar.close, abs(self.unit))
 
+    def on_bar_day(self, bar):
+        self.bar = bar
+        self.am.updateBar(bar)
+        if not self.am.inited:
+            return
 
-#----------------------------------------------------------------------
+        #print('here')
+        self.generateSignal(bar)    # 触发信号，产生交易指令
+        self.calculateIndicator()     # 计算指标
+
+    #----------------------------------------------------------------------
+    def generateSignal(self, bar):
+        """
+        判断交易信号
+        要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
+        """
+        # 如果指标尚未初始化，则忽略
+        if not self.longEntry1:
+            return
+
+        # 优先检查平仓
+        if self.unit > 0:
+            longExit = max(self.longStop, self.exitDown)
+
+            if bar.low <= longExit:
+                self.sell(longExit)
+                return
+        elif self.unit < 0:
+            shortExit = min(self.shortStop, self.exitUp)
+            if bar.high >= shortExit:
+                self.cover(shortExit)
+                return
+
+        # 没有仓位或者持有多头仓位的时候，可以做多（加仓）
+        if self.unit >= 0:
+            trade = False
+
+            if bar.high >= self.longEntry1 and self.unit < 1:
+                self.buy(self.longEntry1, 1)
+                trade = True
+
+            if bar.high >= self.longEntry2 and self.unit < 2:
+                self.buy(self.longEntry2, 1)
+                trade = True
+
+            if bar.high >= self.longEntry3 and self.unit < 3:
+                self.buy(self.longEntry3, 1)
+                trade = True
+
+            if bar.high >= self.longEntry4 and self.unit < 4:
+                self.buy(self.longEntry4, 1)
+                trade = True
+
+            if trade:
+                return
+
+        # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
+        if self.unit <= 0:
+            if bar.low <= self.shortEntry1 and self.unit > -1:
+                self.short(self.shortEntry1, 1)
+
+            if bar.low <= self.shortEntry2 and self.unit > -2:
+                self.short(self.shortEntry2, 1)
+
+            if bar.low <= self.shortEntry3 and self.unit > -3:
+                self.short(self.shortEntry3, 1)
+
+            if bar.low <= self.shortEntry4 and self.unit > -4:
+                self.short(self.shortEntry4, 1)
+
+    #----------------------------------------------------------------------
+    def calculateIndicator(self):
+        """计算技术指标"""
+        self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
+        self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
+
+        # 有持仓后，ATR波动率和入场位等都不再变化
+        if not self.unit:
+            self.atrVolatility = self.am.atr(self.atrWindow)
+
+            self.longEntry1 = self.entryUp
+            self.longEntry2 = self.entryUp + self.atrVolatility * 0.5
+            self.longEntry3 = self.entryUp + self.atrVolatility * 1
+            self.longEntry4 = self.entryUp + self.atrVolatility * 1.5
+            self.longStop = 0
+
+            self.shortEntry1 = self.entryDown
+            self.shortEntry2 = self.entryDown - self.atrVolatility * 0.5
+            self.shortEntry3 = self.entryDown - self.atrVolatility * 1
+            self.shortEntry4 = self.entryDown - self.atrVolatility * 1.5
+            self.shortStop = 0
+
+    #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
+        filename = get_dss() +  'fut/check/signal_turtle_var.csv'
         df = pd.read_csv(filename)
         df = df[df.vtSymbol == self.vtSymbol]
         if len(df) > 0:
@@ -222,18 +289,25 @@ class Fut_AtrRsiSignal(object):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
+        filename = get_dss() +  'fut/check/signal_turtle_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
 #----------------------------------------------------------------------
     def buy(self, price, volume):
         """买入开仓"""
+        price = self.calculateTradePrice(DIRECTION_LONG, price)
+
         self.open(price, volume)
         self.newSignal(DIRECTION_LONG, OFFSET_OPEN, price, volume)
 
+        # 以最后一次加仓价格，加上两倍N计算止损
+        self.longStop = price - self.atrVolatility * 2
+
     #----------------------------------------------------------------------
-    def sell(self, price, volume):
+    def sell(self, price):
         """卖出平仓"""
+        price = self.calculateTradePrice(DIRECTION_SHORT, price)
+
         volume = abs(self.unit)
 
         self.close(price)
@@ -242,12 +316,18 @@ class Fut_AtrRsiSignal(object):
     #----------------------------------------------------------------------
     def short(self, price, volume):
         """卖出开仓"""
+        price = self.calculateTradePrice(DIRECTION_SHORT, price)
+
         self.open(price, -volume)
         self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, price, volume)
 
+        # 以最后一次加仓价格，加上两倍N计算止损
+        self.shortStop = price + self.atrVolatility * 2
+
     #----------------------------------------------------------------------
-    def cover(self, price, volume):
+    def cover(self, price):
         """买入平仓"""
+        price = self.calculateTradePrice(DIRECTION_LONG, price)
         volume = abs(self.unit)
 
         self.close(price)
@@ -295,12 +375,35 @@ class Fut_AtrRsiSignal(object):
         self.result = None
 
 
-class Fut_AtrRsiPortfolio(object):
+    #----------------------------------------------------------------------
+    def getLastPnl(self):
+        """获取上一笔交易的盈亏"""
+        if not self.resultList:
+            return 0
+
+        result = self.resultList[-1]
+        return result.pnl
+
+    #----------------------------------------------------------------------
+    def calculateTradePrice(self, direction, price):
+        """计算成交价格"""
+        # 买入时，停止单成交的最优价格不能低于当前K线开盘价
+        if direction == DIRECTION_LONG:
+            tradePrice = max(self.bar.open, price)
+        # 卖出时，停止单成交的最优价格不能高于当前K线开盘价
+        else:
+            tradePrice = min(self.bar.open, price)
+
+        return tradePrice
+
+
+########################################################################
+class Fut_TurtlePortfolio(object):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.engine = engine                 # 所属引擎
-        self.name = 'atrrsi'
+        self.name = 'turtle'
 
         self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
@@ -315,7 +418,8 @@ class Fut_AtrRsiPortfolio(object):
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
             # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
-            signal1 = Fut_AtrRsiSignal(self, vtSymbol)
+            signal1 = Fut_TurtleSignal(self, vtSymbol)
+            signal1.load_param()
 
             if vtSymbol in signal_param:
                 param_dict = signal_param[vtSymbol]
@@ -332,21 +436,22 @@ class Fut_AtrRsiPortfolio(object):
         pass
 
     #----------------------------------------------------------------------
-    def onBar(self, bar):
+    def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
 
-        if self.result.date != bar.date + ' ' + bar.time:
-            previousResult = self.result
-            self.result = DailyResult(bar.date + ' ' + bar.time)
-            self.result.updatePos(self.posDict)
-            self.resultList.append(self.result)
-            if previousResult:
-                self.result.updateClose(previousResult.closeDict)
+        if minx != 'min1':
+            if self.result.date != bar.date + ' ' + bar.time:
+                previousResult = self.result
+                self.result = DailyResult(bar.date + ' ' + bar.time)
+                self.result.updatePos(self.posDict)
+                self.resultList.append(self.result)
+                if previousResult:
+                    self.result.updateClose(previousResult.closeDict)
 
-        self.result.updateBar(bar)
+            self.result.updateBar(bar)
 
         for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar)
+            signal.onBar(bar, minx)
             #self.portfolioValue += self.result.calculatePnl()
 
         #print('come here')
@@ -357,6 +462,12 @@ class Fut_AtrRsiPortfolio(object):
         对交易信号进行过滤，符合条件的才发单执行。
         计算真实交易价格和数量。
         """
+
+
+
+
+
+
         multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
         multiplier = int(round(multiplier, 0))
         #print(multiplier)
@@ -384,7 +495,7 @@ class Fut_AtrRsiPortfolio(object):
     #----------------------------------------------------------------------
     def daily_open(self):
         # 从文件中读取posDict、portfolioValue
-        filename = self.engine.dss + 'fut/check/portfolio_atrrsi_var.csv'
+        filename = self.engine.dss + 'fut/check/portfolio_turtle_var.csv'
         df = pd.read_csv(filename, sep='$')
         #df = df.sort_values(by='datetime',ascending=False)
         if len(df) > 0:
@@ -405,20 +516,20 @@ class Fut_AtrRsiPortfolio(object):
         dt = self.result.date
         r = [ [dt, self.portfolioValue, str(self.posDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','posDict'])
-        filename = self.engine.dss + 'fut/check/portfolio_atrrsi_var.csv'
+        filename = self.engine.dss + 'fut/check/portfolio_turtle_var.csv'
         df.to_csv(filename,index=False,sep='$',mode='a',header=False)
 
         # 保存组合市值
         tr = []
         totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
         n = len(self.resultList)
-        print(n)
+        #print(n)
         for i in range(n-1):
             result = self.resultList[i]
 
-            print(result.date)
-            print(result.posDict)
-            print(result.closeDict)
+            # print(result.date)
+            # print(result.posDict)
+            # print(result.closeDict)
 
             result.calculatePnl()
             totalTradeCount += result.tradeCount
@@ -432,12 +543,12 @@ class Fut_AtrRsiPortfolio(object):
 
         r = [ [dt, totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl] ]
         df = pd.DataFrame(r, columns=['datetime','tradeCount','tradingPnl','holdingPnl','netPnl'])
-        filename = self.engine.dss + 'fut/check/portfolio_atrrsi_value.csv'
+        filename = self.engine.dss + 'fut/check/portfolio_turtle_value.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
 
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/check/portfolio_atrrsi_deal.csv'
+        filename = self.engine.dss + 'fut/deal/portfolio_turtle_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
 
         # 保存Signal变量到文件

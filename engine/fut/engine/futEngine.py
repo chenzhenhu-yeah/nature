@@ -108,24 +108,26 @@ class FutEngine(object):
         # 加载品种
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
-        symbols = setting['symbols']
+        symbols = setting['symbols_trade']
         self.vtSymbol_list = symbols.split(',')
-
 
         # 初始化组合
         self.portfolio_list = []
-        self.loadPortfolio(Fut_AtrRsiPortfolio)
+
+        symbols = setting['symbols_atrrsi']
+        atrrsi_symbol_list = symbols.split(',')
+        self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
         self.gateway.run()
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass):
+    def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
         to_log('in FutEngine.loadPortfolio')
 
-        p = PortfolioClass(self, self.vtSymbol_list, {})
+        p = PortfolioClass(self, symbol_list, {})
         p.init()
         p.daily_open()
         self.portfolio_list.append(p)
@@ -178,30 +180,25 @@ class FutEngine(object):
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
         r = []
-        try:
-            today = time.strftime('%Y%m%d',time.localtime())
-            # 直接读取signal对应minx相关的文件。
-            fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
-            #print(fname)
-            df = pd.read_csv(fname)
-            df = df.sort_values(by=['date','time'])
-            df = df.iloc[-initBars:]
-            #print(df)
 
-            for i, row in df.iterrows():
-                d = dict(row)
-                # print(d)
-                # print(type(d))
-                bar = VtBarData()
-                bar.__dict__ = d
-                r.append(bar)
-        except Exception as e:
-            print('error ')
-            print(e)
-            print('-'*30)
-            #traceback.print_exc()
-            s = traceback.format_exc()
-            print(s)
+        today = time.strftime('%Y%m%d',time.localtime())
+        # 直接读取signal对应minx相关的文件。
+        fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        #print(fname)
+        df = pd.read_csv(fname)
+        assert len(df) >= initBars
+
+        df = df.sort_values(by=['date','time'])
+        df = df.iloc[-initBars:]
+        #print(df)
+
+        for i, row in df.iterrows():
+            d = dict(row)
+            # print(d)
+            # print(type(d))
+            bar = VtBarData()
+            bar.__dict__ = d
+            r.append(bar)
 
         return r
 

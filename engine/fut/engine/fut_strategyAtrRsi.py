@@ -21,7 +21,7 @@ class Contract(object):
         self.exchangeID = exchangeID
 
 contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
+filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
 with open(filename_setting_fut,encoding='utf-8') as f:
     r = DictReader(f)
     for d in r:
@@ -41,18 +41,16 @@ def get_contract(symbol):
         assert False
 
 ########################################################################
-class TurtleResult(object):
+class SignalResult(object):
     """一次完整的开平交易"""
 
     #----------------------------------------------------------------------
-    def __init__(self, signal):
+    def __init__(self):
         """Constructor"""
         self.unit = 0
         self.entry = 0                  # 开仓均价
         self.exit = 0                   # 平仓均价
         self.pnl = 0                    # 盈亏
-
-        self.signal = signal
 
     #----------------------------------------------------------------------
     def open(self, price, change):
@@ -62,40 +60,21 @@ class TurtleResult(object):
         self.unit += change              # 加上新仓位的数量
         self.entry = cost / self.unit    # 计算新的平均开仓成本
 
-        r = [ [self.signal.portfolio.result.date, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0, \
-               self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
-               self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
-               self.signal.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.signal.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
     #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
         self.exit = price
         self.pnl = self.unit * (self.exit - self.entry)
 
-        r = [ [self.signal.portfolio.result.date, '', '平',  \
-               abs(self.unit), price, self.pnl, \
-               self.signal.atrValue, self.signal.atrMa, self.signal.rsiValue, \
-               self.signal.iswave, self.signal.intraTradeHigh, self.signal.intraTradeLow, \
-               self.signal.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.signal.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
 ########################################################################
-class Fut_AtrRsiSignal(Signal):
+class Fut_AtrRsiSignal(object):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
-        Signal.__init__(self, portfolio, vtSymbol)
+        self.portfolio = portfolio      # 投资组合
+        self.vtSymbol = vtSymbol        # 合约代码
+        self.am = ArrayManager()        # K线容器
+        self.bar = None                 # 最新K线
 
         # 策略参数
         self.atrLength =1           # 计算ATR指标的窗口数
@@ -279,7 +258,7 @@ class Fut_AtrRsiSignal(Signal):
             self.intraTradeLow = rec.intraTradeLow
             self.stop = rec.stop
             if rec.has_result == 1:
-                self.result = TurtleResult(self)
+                self.result = SignalResult()
                 self.result.unit = rec.result_unit
                 self.result.entry = rec.result_entry
                 self.result.exit = rec.result_exit
@@ -302,7 +281,13 @@ class Fut_AtrRsiSignal(Signal):
         filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
-#----------------------------------------------------------------------
+
+    #----------------------------------------------------------------------
+    def newSignal(self, direction, offset, price, volume):
+        """调用组合中的接口，传递下单指令"""
+        self.portfolio._bc_newSignal(self, direction, offset, price, volume)
+
+    #----------------------------------------------------------------------
     def buy(self, price, volume):
         """买入开仓"""
         self.open(price, volume)
@@ -336,18 +321,38 @@ class Fut_AtrRsiSignal(Signal):
         self.unit += change
 
         if not self.result:
-            self.result = TurtleResult(self)
+            self.result = SignalResult()
         self.result.open(price, change)
+
+        r = [ [self.portfolio.result.date, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0, \
+               self.atrValue, self.atrMa, self.rsiValue, \
+               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
+               self.stop] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
+                                      'intraTradeHigh','intraTradeLow','stop'])
+        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
+
 
     #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
         self.unit = 0
-
-        # print(self.vtSymbol, len(self.resultList))
-        # print(self.portfolio.result.date)
-
         self.result.close(price)
+
+        r = [ [self.portfolio.result.date, '', '平',  \
+               0, price, self.result.pnl, \
+               self.atrValue, self.atrMa, self.rsiValue, \
+               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
+               self.stop] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
+                                      'intraTradeHigh','intraTradeLow','stop'])
+        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
+
         self.resultList.append(self.result)
         self.result = None
 

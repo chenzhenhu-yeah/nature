@@ -32,7 +32,7 @@ class Contract(object):
         self.exchangeID = exchangeID
 
 contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
+filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
 with open(filename_setting_fut,encoding='utf-8') as f:
     r = DictReader(f)
     for d in r:
@@ -96,6 +96,9 @@ class Gateway_Ht_CTP(object):
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
         try:
+            # 流控
+            time.sleep(1)
+
             if self.t.logined == False:
                 print('ctp trade not login')
                 return ''
@@ -109,9 +112,18 @@ class Gateway_Ht_CTP(object):
 
             if direction == DIRECTION_LONG and offset == '开仓':
                 price = price*0.97
+
+                # 对价格四舍五入
+                priceTick = get_contract(code).price_tick
+                price = int(round(price/priceTick, 0)) * priceTick
+
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '开仓':
                 price = price*1.03
+                # 对价格四舍五入
+                priceTick = get_contract(code).price_tick
+                price = int(round(price/priceTick, 0)) * priceTick
+
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
 
             # if direction == DIRECTION_LONG and offset == '平仓':
@@ -119,7 +131,7 @@ class Gateway_Ht_CTP(object):
             # if direction == DIRECTION_SHORT and offset == '平仓':
             #     self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
 
-            send_email(get_dss(), '开仓', '')
+            send_email(get_dss(), direction+' '+offset+' '+str(price), '')
 
         except Exception as e:
             now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())

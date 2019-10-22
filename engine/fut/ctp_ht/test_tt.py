@@ -1,9 +1,10 @@
 
+import json
 import time
 
 from nature import CtpTrade
 from nature import CtpQuote
-from nature import DirectType, OffsetType
+from nature import DirectType, OffsetType, get_dss
 
 
 class TestTrade(object):
@@ -60,7 +61,10 @@ if __name__ == "__main__":
 
     # simnow 发单测试成功(2019-09-19), 上期-SHFE, 中金-CFFEX, 大商-DCE, 能源所-INE、郑商所-CZCE
     # 修改了 trade.py 中的 ReqOrderInsert，添加 ExchangeID 字段
-    tt.t.ReqOrderInsert('c2001', DirectType.Buy, OffsetType.Open, 1811, 1, 'DCE')
+    #tt.t.ReqOrderInsert('ag1912', DirectType.Buy, OffsetType.Open, 1811, 1, 'SHFE')
+    #tt.t.ReqOrderInsert('ag1912', DirectType.Sell, OffsetType.Open, 4433.0, 1, 'SHFE')
+    #tt.t.ReqOrderInsert('rb2001', DirectType.Sell, OffsetType.Open, 4297.0, 1, 'SHFE')
+    tt.t.ReqOrderInsert('CF001', DirectType.Sell, OffsetType.Open, 13000.0, 1, 'CZCE')
 
 
     input()

@@ -84,11 +84,13 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
-        assert minx == 'min5'
+        assert minx != 'min1'
 
         dt_list = self.dataDict.keys()
         #print(dt_list)
         dt_list = [x for x in dt_list if x<self.startDt]
+        assert len(dt_list) >= initBars
+
         dt_list = sorted(dt_list)
         init_dt_list = dt_list[-initBars:]
         #print(init_dt_list, initBars)
@@ -108,7 +110,7 @@ class BacktestingEngine(object):
 
         for dt, barDict in self.dataDict.items():
             #print(dt)
-            if dt <= self.startDt or dt >=  self.endDt:
+            if dt < self.startDt or dt >  self.endDt:
                 continue
 
             for bar in barDict.values():

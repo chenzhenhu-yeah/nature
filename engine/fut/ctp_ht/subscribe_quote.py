@@ -36,7 +36,7 @@ class Contract(object):
         self.exchangeID = exchangeID
 
 contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_fut_AtrRsi.csv'
+filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
 with open(filename_setting_fut,encoding='utf-8') as f:
     r = DictReader(f)
     for d in r:
@@ -66,7 +66,7 @@ class HuQuote(CtpQuote):
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
-        symbols = setting['symbols']
+        symbols = setting['symbols_quote']
         self.id_list = symbols.split(',')
 
         self.dss = get_dss()

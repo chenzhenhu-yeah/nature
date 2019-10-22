@@ -24,7 +24,6 @@ from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio
-from nature import Gateway_Simnow_CTP
 #from ipdb import set_trace
 
 
@@ -104,7 +103,7 @@ class FutEngine(object):
         # 加载品种
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
-        symbols = setting['symbols']
+        symbols = setting['symbols_trade']
         self.vtSymbol_list = symbols.split(',')
 
     #----------------------------------------------------------------------
@@ -119,14 +118,19 @@ class FutEngine(object):
 
         # 初始化组合
         self.portfolio_list = []
-        self.loadPortfolio(Fut_AtrRsiPortfolio)
+
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols_atrrsi']
+        atrrsi_symbol_list = symbols.split(',')
+        self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
     #----------------------------------------------------------------------
-    def loadPortfolio(self, PortfolioClass):
+    def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
         to_log('in FutEngine.loadPortfolio')
 
-        p = PortfolioClass(self, self.vtSymbol_list, {})
+        p = PortfolioClass(self, symbol_list, {})
         p.init()
         p.daily_open()
         self.portfolio_list.append(p)
@@ -193,26 +197,36 @@ class FutEngine(object):
                 # 对文件并发访问，存着读空文件的可能！！！
                 print('file error ')
 
+
+        print('回放结束。')
+
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
 
-        assert minx == 'min5'
-
-        dt_list = self.dataDict.keys()
-        #print(dt_list)
-        dt_list = [x for x in dt_list if x<self.startDt]
-        dt_list = sorted(dt_list)
-        init_dt_list = dt_list[-initBars:]
-        # print(initBars)
+        assert minx != 'min1'
 
         r = []
-        for dt in init_dt_list:
-            bar_dict = self.dataDict[dt]
-            if vtSymbol in bar_dict:
-                bar = bar_dict[vtSymbol]
-                r.append(bar)
 
+        # 直接读取signal对应minx相关的文件。
+        fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        #print(fname)
+        df = pd.read_csv(fname)
+        df['datetime'] = df['date'] + ' ' + df['time']
+        df = df[df.datetime < self.startDt]
+        assert len(df) >= initBars
+
+        df = df.sort_values(by=['date','time'])
+        df = df.iloc[-initBars:]
+        #print(df)
+
+        for i, row in df.iterrows():
+            d = dict(row)
+            # print(d)
+            # print(type(d))
+            bar = VtBarData()
+            bar.__dict__ = d
+            r.append(bar)
 
         return r
 
@@ -257,8 +271,8 @@ def start():
 
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191017 21:00:00'
-    end_date   = '20191018 15:00:00'
+    start_date = '20191008 21:00:00'
+    end_date   = '20191009 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)
