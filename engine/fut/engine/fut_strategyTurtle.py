@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+import os
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
@@ -9,6 +10,8 @@ from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import Signal
 
+MAX_PRODUCT_POS = 4         # 单品种最大持仓
+MAX_DIRECTION_POS = 10      # 单方向最大持仓
 
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
@@ -141,16 +144,15 @@ class Fut_TurtleSignal(object):
             self.victoryPercent = param_dict['victoryPercent']
 
     #----------------------------------------------------------------------
-    def onBar(self, bar, minx='min1'):
+    def onBar(self, bar, minx='day'):
         """新推送过来一个bar，进行处理"""
+        if minx != 'min1':
+            self.on_bar_day(bar)
 
         if minx == 'min1':
             self.on_bar_min1(bar)
 
-        if minx == 'day':
-            self.on_bar_day(bar)
-
-
+    #----------------------------------------------------------------------
     def on_bar_min1(self, bar):
         # 持有多头仓位
         if self.unit > 0:
@@ -164,13 +166,13 @@ class Fut_TurtleSignal(object):
                 # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
                 self.cover(bar.close, abs(self.unit))
 
+    #----------------------------------------------------------------------
     def on_bar_day(self, bar):
         self.bar = bar
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
-        #print('here')
         self.generateSignal(bar)    # 触发信号，产生交易指令
         self.calculateIndicator()     # 计算指标
 
@@ -181,7 +183,7 @@ class Fut_TurtleSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # 如果指标尚未初始化，则忽略
-        if not self.longEntry1:
+        if self.longEntry1 == 0:
             return
 
         # 优先检查平仓
@@ -241,7 +243,7 @@ class Fut_TurtleSignal(object):
         self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
 
         # 有持仓后，ATR波动率和入场位等都不再变化
-        if not self.unit:
+        if self.unit == 0:
             self.atrVolatility = self.am.atr(self.atrWindow)
 
             self.longEntry1 = self.entryUp
@@ -291,6 +293,12 @@ class Fut_TurtleSignal(object):
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/check/signal_turtle_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
+
+
+    #----------------------------------------------------------------------
+    def newSignal(self, direction, offset, price, volume):
+        """调用组合中的接口，传递下单指令"""
+        self.portfolio._bc_newSignal(self, direction, offset, price, volume)
 
 #----------------------------------------------------------------------
     def buy(self, price, volume):
@@ -344,12 +352,9 @@ class Fut_TurtleSignal(object):
 
         r = [ [self.portfolio.result.date, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.unit] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
+                                      'unit'])
         filename = get_dss() +  'fut/deal/signal_turtle_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
@@ -362,12 +367,9 @@ class Fut_TurtleSignal(object):
 
         r = [ [self.portfolio.result.date, '', '平',  \
                0, price, self.result.pnl, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.unit] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
+                                      'unit'])
         filename = get_dss() +  'fut/deal/signal_turtle_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
@@ -409,6 +411,10 @@ class Fut_TurtlePortfolio(object):
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}                    # 真实持仓量字典,code为键,pos为值
 
+        self.multiplierDict = {}             # 按照波动幅度计算的委托量单位字典
+        self.totalLong = 0          # 总的多头持仓
+        self.totalShort = 0         # 总的空头持仓
+
         self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
 
@@ -424,7 +430,6 @@ class Fut_TurtlePortfolio(object):
             if vtSymbol in signal_param:
                 param_dict = signal_param[vtSymbol]
                 signal1.set_param(param_dict)
-                #print('here')
 
             l = self.signalDict[vtSymbol]
             l.append(signal1)
@@ -436,7 +441,7 @@ class Fut_TurtlePortfolio(object):
         pass
 
     #----------------------------------------------------------------------
-    def onBar(self, bar, minx='min1'):
+    def onBar(self, bar, minx='day'):
         """引擎新推送过来bar，传递给每个signal"""
 
         if minx != 'min1':
@@ -454,30 +459,78 @@ class Fut_TurtlePortfolio(object):
             signal.onBar(bar, minx)
             #self.portfolioValue += self.result.calculatePnl()
 
-        #print('come here')
-
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
         """
         对交易信号进行过滤，符合条件的才发单执行。
         计算真实交易价格和数量。
         """
+        pos = self.posDict.get(signal.vtSymbol, 0)
 
-
-
-
-
-
-        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
-        multiplier = int(round(multiplier, 0))
-        #print(multiplier)
-        # multiplier = 1
-
-        # 计算合约持仓
-        if direction == DIRECTION_LONG:
-            self.posDict[signal.vtSymbol] += volume*multiplier
+        # 如果当前无仓位，则重新根据波动幅度计算委托量单位
+        if pos == 0:
+            size = get_contract(signal.vtSymbol).size
+            riskValue = self.portfolioValue * 0.01
+            multiplier = riskValue / (signal.atrVolatility * size)
+            multiplier = int(round(multiplier, 0))
+            self.multiplierDict[signal.vtSymbol] = multiplier
         else:
-            self.posDict[signal.vtSymbol] -= volume*multiplier
+            multiplier = self.multiplierDict[signal.vtSymbol]
+
+        # 开仓
+        if offset == OFFSET_OPEN:
+            # 检查上一次是否为盈利
+            if signal.profitCheck:
+                pnl = signal.getLastPnl()
+                if pnl > 0:
+                    return
+
+            # 买入
+            if direction == DIRECTION_LONG:
+                # 组合持仓不能超过上限
+                if self.totalLong >= MAX_DIRECTION_POS:
+                    return
+
+                # 单品种持仓不能超过上限
+                if signal.unit >= MAX_PRODUCT_POS:
+                    return
+            # 卖出
+            else:
+                if self.totalShort <= -MAX_DIRECTION_POS:
+                    return
+
+                if signal.unit <= -MAX_PRODUCT_POS:
+                    return
+        # 平仓
+        else:
+            if direction == DIRECTION_LONG:
+                # 必须有空头持仓
+                if signal.unit >= 0:
+                    return
+
+                # 平仓数量不能超过空头持仓
+                volume = min(volume, abs(signal.unit))
+            else:
+                if signal.unit <= 0:
+                    return
+
+                volume = min(volume, abs(signal.unit))
+
+        # 更新总持仓
+        if direction == DIRECTION_LONG and offset == OFFSET_OPEN:
+            self.totalLong += 1
+        if direction == DIRECTION_SHORT and offset == OFFSET_OPEN:
+            self.totalShort += 1
+        if direction == DIRECTION_LONG and offset != OFFSET_OPEN:
+            self.totalShort -= 1
+        if direction == DIRECTION_SHORT and offset != OFFSET_OPEN:
+            self.totalLong -= 1
+
+        # 更新合约持仓
+        if direction == DIRECTION_LONG:
+            self.posDict[signal.vtSymbol] += volume * multiplier
+        else:
+            self.posDict[signal.vtSymbol] -= volume * multiplier
 
         # 对价格四舍五入
         priceTick = get_contract(signal.vtSymbol).price_tick

@@ -39,6 +39,7 @@ from nature.engine.stk.stkEngine import StkEngine
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyBoll import Fut_BollPortfolio
+from nature.engine.fut.engine.fut_strategyTurtle import Fut_TurtlePortfolio
 
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote

@@ -14,11 +14,10 @@ from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 import json
 import tushare as ts
 
-price = 19
-priceTick = 5
-#price = int(round(price/priceTick, 0)) * priceTick
-price = round(price/priceTick, 0) * priceTick
-print(price)
+if not 0:
+    print(1)
+else:
+    print(2)
 
 #
 # filename = get_dss() + 'fut/cfg/portfolio_var_' + 'atrrsi' + '.csv'
