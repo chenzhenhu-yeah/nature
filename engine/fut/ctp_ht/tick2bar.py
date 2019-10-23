@@ -210,7 +210,7 @@ def tick2bar(tradeDay):
     # 加载配置，目前盯市哪些业务品种
     config = open(get_dss()+'fut/cfg/config.json')
     setting = json.load(config)
-    symbols = setting['symbols']
+    symbols = setting['symbols_quote']
     symbol_list = symbols.split(',')
 
     #symbol_list = ['ag1912']
@@ -301,5 +301,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tradeDay = '20191014'
+    tradeDay = '20191015'
     tick2bar(tradeDay)

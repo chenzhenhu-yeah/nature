@@ -44,8 +44,7 @@ def mail_1515():
             send_email(dss, 'show ins ', '\n'.join(r))
 
     except Exception as e:
-        print('error')
-        print(e)
+        traceback.print_exc()
 
 def mail_1815():
     try:
@@ -63,8 +62,7 @@ def mail_1815():
             r = stk_report(dss)
             send_email(dss, 'show stk_report', '\n'.join(r))
     except Exception as e:
-        print('error')
-        print(e)
+        traceback.print_exc()
 
 def down_data_0100():
 
@@ -85,8 +83,7 @@ def mail_0200():
             #print(type(r))
             send_email(dss, str(len(r))+' setting items ', '')
     except Exception as e:
-        print('error')
-        print(e)
+        traceback.print_exc()
 
 def run_price_signal():
     try:
@@ -103,8 +100,7 @@ def run_price_signal():
             send_email(dss, 'price_signal', '\n'.join(r))
 
     except Exception as e:
-        print('error')
-        print(e)
+        traceback.print_exc()
 
 def run_tick2bar():
     try:
@@ -116,8 +112,7 @@ def run_tick2bar():
             tick2bar(today)
 
     except Exception as e:
-        print('error')
-        print(e)
+        traceback.print_exc()
 
 if __name__ == '__main__':
     try:
