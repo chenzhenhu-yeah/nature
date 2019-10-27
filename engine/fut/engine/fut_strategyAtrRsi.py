@@ -9,6 +9,7 @@ from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import Signal
 
+
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
         """Constructor"""
@@ -397,22 +398,24 @@ class Fut_AtrRsiPortfolio(object):
     def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
 
+        # 不处理不相关的品种
+        if bar.vtSymbol not in self.vtSymbolList:
+            return
+
+        # 将bar推送给signal
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar, minx)
+
         if minx != 'min1':
             if self.result.date != bar.date + ' ' + bar.time:
                 previousResult = self.result
                 self.result = DailyResult(bar.date + ' ' + bar.time)
-                self.result.updatePos(self.posDict)
                 self.resultList.append(self.result)
                 if previousResult:
                     self.result.updateClose(previousResult.closeDict)
 
             self.result.updateBar(bar)
-
-        for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar, minx)
-            #self.portfolioValue += self.result.calculatePnl()
-
-        #print('come here')
+            self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -423,13 +426,16 @@ class Fut_AtrRsiPortfolio(object):
         multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
         multiplier = int(round(multiplier, 0))
         #print(multiplier)
-        # multiplier = 1
+        multiplier = 1
 
+        #print(self.posDict)
         # 计算合约持仓
         if direction == DIRECTION_LONG:
             self.posDict[signal.vtSymbol] += volume*multiplier
         else:
             self.posDict[signal.vtSymbol] -= volume*multiplier
+
+        #print(self.posDict)
 
         # 对价格四舍五入
         priceTick = get_contract(signal.vtSymbol).price_tick
@@ -454,7 +460,11 @@ class Fut_AtrRsiPortfolio(object):
             rec = df.iloc[-1,:]
             self.portfolioValue = rec.portfolioValue
             d = eval(rec.posDict)
-            self.posDict.update(d)
+
+            #self.posDict.update(d)
+            for vtSymbol in self.vtSymbolList:
+                if vtSymbol in d:
+                    self.posDict[vtSymbol] = d[vtSymbol]
 
         # 所有Signal读取保存到文件的变量
         for code in self.vtSymbolList:
@@ -464,6 +474,11 @@ class Fut_AtrRsiPortfolio(object):
 
     #----------------------------------------------------------------------
     def daily_close(self):
+        # 保存Signal变量到文件
+        for code in self.vtSymbolList:
+            for signal in self.signalDict[code]:
+                signal.save_var()
+
         # 保存posDict、portfolioValue到文件
         dt = self.result.date
         r = [ [dt, self.portfolioValue, str(self.posDict)] ]
@@ -476,12 +491,12 @@ class Fut_AtrRsiPortfolio(object):
         totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
         n = len(self.resultList)
         #print(n)
-        for i in range(n-1):
+        for i in range(n):
             result = self.resultList[i]
 
-            # print(result.date)
-            # print(result.posDict)
-            # print(result.closeDict)
+            print(result.date)
+            print(result.posDict)
+            print(result.closeDict)
 
             result.calculatePnl()
             totalTradeCount += result.tradeCount
@@ -502,11 +517,6 @@ class Fut_AtrRsiPortfolio(object):
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
         filename = self.engine.dss + 'fut/deal/portfolio_atrrsi_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
-
-        # 保存Signal变量到文件
-        for code in self.vtSymbolList:
-            for signal in self.signalDict[code]:
-                signal.save_var()
 
 ########################################################################
 class TradeData(object):

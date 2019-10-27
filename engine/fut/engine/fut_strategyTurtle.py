@@ -441,23 +441,27 @@ class Fut_TurtlePortfolio(object):
         pass
 
     #----------------------------------------------------------------------
-    def onBar(self, bar, minx='day'):
+    def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
+
+        # 不处理不相关的品种
+        if bar.vtSymbol not in self.vtSymbolList:
+            return
+
+        # 将bar推送给signal
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar, minx)
 
         if minx != 'min1':
             if self.result.date != bar.date + ' ' + bar.time:
                 previousResult = self.result
                 self.result = DailyResult(bar.date + ' ' + bar.time)
-                self.result.updatePos(self.posDict)
                 self.resultList.append(self.result)
                 if previousResult:
                     self.result.updateClose(previousResult.closeDict)
 
             self.result.updateBar(bar)
-
-        for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar, minx)
-            #self.portfolioValue += self.result.calculatePnl()
+            self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -555,7 +559,11 @@ class Fut_TurtlePortfolio(object):
             rec = df.iloc[-1,:]
             self.portfolioValue = rec.portfolioValue
             d = eval(rec.posDict)
-            self.posDict.update(d)
+
+            #self.posDict.update(d)
+            for vtSymbol in self.vtSymbolList:
+                if vtSymbol in d:
+                    self.posDict[vtSymbol] = d[vtSymbol]
 
         # 所有Signal读取保存到文件的变量
         for code in self.vtSymbolList:
@@ -565,6 +573,11 @@ class Fut_TurtlePortfolio(object):
 
     #----------------------------------------------------------------------
     def daily_close(self):
+        # 保存Signal变量到文件
+        for code in self.vtSymbolList:
+            for signal in self.signalDict[code]:
+                signal.save_var()
+
         # 保存posDict、portfolioValue到文件
         dt = self.result.date
         r = [ [dt, self.portfolioValue, str(self.posDict)] ]
@@ -603,11 +616,6 @@ class Fut_TurtlePortfolio(object):
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
         filename = self.engine.dss + 'fut/deal/portfolio_turtle_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
-
-        # 保存Signal变量到文件
-        for code in self.vtSymbolList:
-            for signal in self.signalDict[code]:
-                signal.save_var()
 
 ########################################################################
 class TradeData(object):
