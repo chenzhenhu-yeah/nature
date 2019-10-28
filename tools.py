@@ -10,6 +10,8 @@ from email.mime.text import MIMEText
 from nature import to_log
 
 def send_email(dss, subject, content):
+    return
+    
     # # 第三方 SMTP 服务
     # mail_host = 'smtp.yeah.net'              # 设置服务器
     # mail_username = 'chenzhenhu@yeah.net'   # 用户名
