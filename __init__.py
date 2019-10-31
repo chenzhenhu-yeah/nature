@@ -31,7 +31,7 @@ from nature.strategy import VtBarData, ArrayManager, GatewayPingan
 from nature.strategy import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_OPEN, OFFSET_CLOSE,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
-from nature.strategy import Signal, Portfolio
+from nature.strategy import Signal, Portfolio, TradeData, SignalResult
 
 from nature.engine.stk.nearboll.stk_nearBollStrategy import stk_NearBollPortfolio
 from nature.engine.stk.stkEngine import StkEngine

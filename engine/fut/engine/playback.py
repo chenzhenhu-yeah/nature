@@ -131,7 +131,6 @@ class FutEngine(object):
         to_log('in FutEngine.loadPortfolio')
 
         p = PortfolioClass(self, symbol_list, {})
-        p.init()
         p.daily_open()
         self.portfolio_list.append(p)
 

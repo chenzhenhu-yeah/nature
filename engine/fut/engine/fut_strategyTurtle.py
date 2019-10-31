@@ -6,9 +6,8 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 
 from nature import to_log, get_dss
-from nature import ArrayManager
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
-from nature import Signal
+from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_DIRECTION_POS = 10      # 单方向最大持仓
@@ -45,47 +44,18 @@ def get_contract(symbol):
         assert False
 
 ########################################################################
-class SignalResult(object):
-    """一次完整的开平交易"""
-
-    #----------------------------------------------------------------------
-    def __init__(self):
-        """Constructor"""
-        self.unit = 0
-        self.entry = 0                  # 开仓均价
-        self.exit = 0                   # 平仓均价
-        self.pnl = 0                    # 盈亏
-
-    #----------------------------------------------------------------------
-    def open(self, price, change):
-        """开仓或者加仓"""
-        cost = self.unit * self.entry    # 计算之前的开仓成本
-        cost += change * price          # 加上新仓位的成本
-        self.unit += change              # 加上新仓位的数量
-        self.entry = cost / self.unit    # 计算新的平均开仓成本
-
-    #----------------------------------------------------------------------
-    def close(self, price):
-        """平仓"""
-        self.exit = price
-        self.pnl = self.unit * (self.exit - self.entry)
-
-########################################################################
-class Fut_TurtleSignal(object):
+class Fut_TurtleSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
-        self.portfolio = portfolio      # 投资组合
-        self.vtSymbol = vtSymbol        # 合约代码
-        self.am = ArrayManager()        # K线容器
-        self.bar = None                 # 最新K线
 
         # 策略参数
-        self.initBars = 60              # 初始化数据所用的天数
         self.entryWindow = 20           # 入场通道周期数
         self.exitWindow = 50            # 出场通道周期数
         self.atrWindow = 5              # 计算ATR周期数
         self.profitCheck = True         # 是否检查上一笔盈利
+
+        self.initBars = 60              # 初始化数据所用的天数
         self.minx = 'day'
 
         # 策略临时变量
@@ -108,17 +78,8 @@ class Fut_TurtleSignal(object):
         self.shortStop = 0              # 空头止损位
 
         # 需要持久化保存的变量
-        self.unit = 0
 
-        self.result = None              # 当前的交易
-        self.resultList = []            # 交易列表
-
-        # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)
-        for bar in initData:
-            self.bar = bar
-            self.am.updateBar(bar)
-
+        Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
     def load_param(self):
@@ -144,37 +105,25 @@ class Fut_TurtleSignal(object):
             self.victoryPercent = param_dict['victoryPercent']
 
     #----------------------------------------------------------------------
-    def onBar(self, bar, minx='day'):
+    def onBar(self, bar, minx='min15'):
         """新推送过来一个bar，进行处理"""
-        if minx != 'min1':
-            self.on_bar_day(bar)
-
         if minx == 'min1':
             self.on_bar_min1(bar)
+        else:
+            self.on_bar_minx(bar)
 
     #----------------------------------------------------------------------
     def on_bar_min1(self, bar):
-        # 持有多头仓位
-        if self.unit > 0:
-            if bar.close <= self.stop:
-                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
-                self.sell(bar.close, abs(self.unit))
-
-        # 持有空头仓位
-        elif self.unit < 0:
-            if bar.close >= self.stop:
-                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
-                self.cover(bar.close, abs(self.unit))
+        self.generateSignal(bar)    # 在min1周期上，触发信号，产生交易指令
 
     #----------------------------------------------------------------------
-    def on_bar_day(self, bar):
+    def on_bar_minx(self, bar):
         self.bar = bar
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
-        self.generateSignal(bar)    # 触发信号，产生交易指令
-        self.calculateIndicator()     # 计算指标
+        self.calculateIndicator()     # 在minx周期上，计算指标
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -189,14 +138,13 @@ class Fut_TurtleSignal(object):
         # 优先检查平仓
         if self.unit > 0:
             longExit = max(self.longStop, self.exitDown)
-
             if bar.low <= longExit:
-                self.sell(longExit)
+                self.sell( self.calculateTradePrice(DIRECTION_SHORT, bar.low), abs(self.unit) )
                 return
         elif self.unit < 0:
             shortExit = min(self.shortStop, self.exitUp)
             if bar.high >= shortExit:
-                self.cover(shortExit)
+                self.cover( self.calculateTradePrice(DIRECTION_LONG, bar.high), abs(self.unit) )
                 return
 
         # 没有仓位或者持有多头仓位的时候，可以做多（加仓）
@@ -204,19 +152,23 @@ class Fut_TurtleSignal(object):
             trade = False
 
             if bar.high >= self.longEntry1 and self.unit < 1:
-                self.buy(self.longEntry1, 1)
+                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry1), 1)
+                self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry2 and self.unit < 2:
-                self.buy(self.longEntry2, 1)
+                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry2), 1)
+                self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry3 and self.unit < 3:
-                self.buy(self.longEntry3, 1)
+                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry3), 1)
+                self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry4 and self.unit < 4:
-                self.buy(self.longEntry4, 1)
+                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry4), 1)
+                self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if trade:
@@ -225,16 +177,20 @@ class Fut_TurtleSignal(object):
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
         if self.unit <= 0:
             if bar.low <= self.shortEntry1 and self.unit > -1:
-                self.short(self.shortEntry1, 1)
+                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry1), 1 )
+                self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry2 and self.unit > -2:
-                self.short(self.shortEntry2, 1)
+                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry2), 1 )
+                self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry3 and self.unit > -3:
-                self.short(self.shortEntry3, 1)
+                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry3), 1 )
+                self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry4 and self.unit > -4:
-                self.short(self.shortEntry4, 1)
+                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry4), 1 )
+                self.shortStop = price + self.atrVolatility * 2
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -294,89 +250,6 @@ class Fut_TurtleSignal(object):
         filename = get_dss() +  'fut/check/signal_turtle_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
-
-    #----------------------------------------------------------------------
-    def newSignal(self, direction, offset, price, volume):
-        """调用组合中的接口，传递下单指令"""
-        self.portfolio._bc_newSignal(self, direction, offset, price, volume)
-
-#----------------------------------------------------------------------
-    def buy(self, price, volume):
-        """买入开仓"""
-        price = self.calculateTradePrice(DIRECTION_LONG, price)
-
-        self.open(price, volume)
-        self.newSignal(DIRECTION_LONG, OFFSET_OPEN, price, volume)
-
-        # 以最后一次加仓价格，加上两倍N计算止损
-        self.longStop = price - self.atrVolatility * 2
-
-    #----------------------------------------------------------------------
-    def sell(self, price):
-        """卖出平仓"""
-        price = self.calculateTradePrice(DIRECTION_SHORT, price)
-
-        volume = abs(self.unit)
-
-        self.close(price)
-        self.newSignal(DIRECTION_SHORT, OFFSET_CLOSE, price, volume)
-
-    #----------------------------------------------------------------------
-    def short(self, price, volume):
-        """卖出开仓"""
-        price = self.calculateTradePrice(DIRECTION_SHORT, price)
-
-        self.open(price, -volume)
-        self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, price, volume)
-
-        # 以最后一次加仓价格，加上两倍N计算止损
-        self.shortStop = price + self.atrVolatility * 2
-
-    #----------------------------------------------------------------------
-    def cover(self, price):
-        """买入平仓"""
-        price = self.calculateTradePrice(DIRECTION_LONG, price)
-        volume = abs(self.unit)
-
-        self.close(price)
-        self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
-
-    #----------------------------------------------------------------------
-    def open(self, price, change):
-        """开仓"""
-        self.unit += change
-
-        if not self.result:
-            self.result = SignalResult()
-        self.result.open(price, change)
-
-        r = [ [self.portfolio.result.date, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0, \
-               self.unit] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'unit'])
-        filename = get_dss() +  'fut/deal/signal_turtle_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
-
-    #----------------------------------------------------------------------
-    def close(self, price):
-        """平仓"""
-        self.unit = 0
-        self.result.close(price)
-
-        r = [ [self.portfolio.result.date, '', '平',  \
-               0, price, self.result.pnl, \
-               self.unit] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'unit'])
-        filename = get_dss() +  'fut/deal/signal_turtle_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
-        self.resultList.append(self.result)
-        self.result = None
-
-
     #----------------------------------------------------------------------
     def getLastPnl(self):
         """获取上一笔交易的盈亏"""
@@ -400,68 +273,16 @@ class Fut_TurtleSignal(object):
 
 
 ########################################################################
-class Fut_TurtlePortfolio(object):
+class Fut_TurtlePortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.engine = engine                 # 所属引擎
+        Portfolio.__init__(self, Fut_TurtleSignal, engine, symbol_list, signal_param)
         self.name = 'turtle'
-
-        self.portfolioValue = 100E4          # 组合市值
-        self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
-        self.posDict = {}                    # 真实持仓量字典,code为键,pos为值
 
         self.multiplierDict = {}             # 按照波动幅度计算的委托量单位字典
         self.totalLong = 0          # 总的多头持仓
         self.totalShort = 0         # 总的空头持仓
-
-        self.result = DailyResult('00-00-00 00:00:00')
-        self.resultList = []
-
-        self.vtSymbolList = symbol_list
-
-        # 初始化信号字典、持仓字典
-        for vtSymbol in self.vtSymbolList:
-            self.posDict[vtSymbol] = 0
-            # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
-            signal1 = Fut_TurtleSignal(self, vtSymbol)
-            signal1.load_param()
-
-            if vtSymbol in signal_param:
-                param_dict = signal_param[vtSymbol]
-                signal1.set_param(param_dict)
-
-            l = self.signalDict[vtSymbol]
-            l.append(signal1)
-
-        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
-
-    #----------------------------------------------------------------------
-    def init(self):
-        pass
-
-    #----------------------------------------------------------------------
-    def onBar(self, bar, minx='min1'):
-        """引擎新推送过来bar，传递给每个signal"""
-
-        # 不处理不相关的品种
-        if bar.vtSymbol not in self.vtSymbolList:
-            return
-
-        # 将bar推送给signal
-        for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar, minx)
-
-        if minx != 'min1':
-            if self.result.date != bar.date + ' ' + bar.time:
-                previousResult = self.result
-                self.result = DailyResult(bar.date + ' ' + bar.time)
-                self.resultList.append(self.result)
-                if previousResult:
-                    self.result.updateClose(previousResult.closeDict)
-
-            self.result.updateBar(bar)
-            self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -522,13 +343,13 @@ class Fut_TurtlePortfolio(object):
 
         # 更新总持仓
         if direction == DIRECTION_LONG and offset == OFFSET_OPEN:
-            self.totalLong += 1
-        if direction == DIRECTION_SHORT and offset == OFFSET_OPEN:
-            self.totalShort += 1
-        if direction == DIRECTION_LONG and offset != OFFSET_OPEN:
-            self.totalShort -= 1
+            self.totalLong += 1                                      #多开
         if direction == DIRECTION_SHORT and offset != OFFSET_OPEN:
-            self.totalLong -= 1
+            self.totalLong -= 1                                      #空平
+        if direction == DIRECTION_SHORT and offset == OFFSET_OPEN:
+            self.totalShort += 1                                     #空开
+        if direction == DIRECTION_LONG and offset != OFFSET_OPEN:
+            self.totalShort -= 1                                     #多平
 
         # 更新合约持仓
         if direction == DIRECTION_LONG:
@@ -548,183 +369,3 @@ class Fut_TurtlePortfolio(object):
         # l.append(trade)
 
         self.result.updateTrade(trade)
-
-    #----------------------------------------------------------------------
-    def daily_open(self):
-        # 从文件中读取posDict、portfolioValue
-        filename = self.engine.dss + 'fut/check/portfolio_turtle_var.csv'
-        df = pd.read_csv(filename, sep='$')
-        #df = df.sort_values(by='datetime',ascending=False)
-        if len(df) > 0:
-            rec = df.iloc[-1,:]
-            self.portfolioValue = rec.portfolioValue
-            d = eval(rec.posDict)
-
-            #self.posDict.update(d)
-            for vtSymbol in self.vtSymbolList:
-                if vtSymbol in d:
-                    self.posDict[vtSymbol] = d[vtSymbol]
-
-        # 所有Signal读取保存到文件的变量
-        for code in self.vtSymbolList:
-            for signal in self.signalDict[code]:
-                signal.load_var()
-
-
-    #----------------------------------------------------------------------
-    def daily_close(self):
-        # 保存Signal变量到文件
-        for code in self.vtSymbolList:
-            for signal in self.signalDict[code]:
-                signal.save_var()
-
-        # 保存posDict、portfolioValue到文件
-        dt = self.result.date
-        r = [ [dt, self.portfolioValue, str(self.posDict)] ]
-        df = pd.DataFrame(r, columns=['datetime','portfolioValue','posDict'])
-        filename = self.engine.dss + 'fut/check/portfolio_turtle_var.csv'
-        df.to_csv(filename,index=False,sep='$',mode='a',header=False)
-
-        # 保存组合市值
-        tr = []
-        totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
-        n = len(self.resultList)
-        #print(n)
-        for i in range(n-1):
-            result = self.resultList[i]
-
-            # print(result.date)
-            # print(result.posDict)
-            # print(result.closeDict)
-
-            result.calculatePnl()
-            totalTradeCount += result.tradeCount
-            totalTradingPnl += result.tradingPnl
-            totalHoldingPnl += result.holdingPnl
-            totalNetPnl += result.netPnl
-
-            for vtSymbol, l in result.tradeDict.items():
-                for trade in l:
-                    tr.append( [trade.vtSymbol,trade.dt,trade.direction,trade.offset,trade.price,trade.volume] )
-
-        r = [ [dt, totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl] ]
-        df = pd.DataFrame(r, columns=['datetime','tradeCount','tradingPnl','holdingPnl','netPnl'])
-        filename = self.engine.dss + 'fut/check/portfolio_turtle_value.csv'
-        df.to_csv(filename,index=False,mode='a',header=False)
-
-        # 保存组合交易记录
-        df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/deal/portfolio_turtle_deal.csv'
-        df.to_csv(filename,index=False,mode='a',header=False)
-
-########################################################################
-class TradeData(object):
-    """"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, dt, vtSymbol, direction, offset, price, volume):
-        """Constructor"""
-        self.dt = dt
-        self.vtSymbol = vtSymbol
-        self.direction = direction
-        self.offset = offset
-        self.price = price
-        self.volume = volume
-
-
-########################################################################
-class DailyResult(object):
-    """每日的成交记录"""
-
-    #----------------------------------------------------------------------
-    def __init__(self, date):
-        """Constructor"""
-        self.date = date
-
-        self.closeDict = {}                     # 收盘价字典
-        self.previousCloseDict = {}             # 昨收盘字典
-
-        self.tradeDict = defaultdict(list)      # 成交字典
-        self.posDict = {}                       # 持仓字典（开盘时）
-
-        self.tradingPnl = 0                     # 交易盈亏
-        self.holdingPnl = 0                     # 持仓盈亏
-        self.totalPnl = 0                       # 总盈亏
-        self.commission = 0                     # 佣金
-        self.slippage = 0                       # 滑点
-        self.netPnl = 0                         # 净盈亏
-        self.tradeCount = 0                     # 成交笔数
-
-    #----------------------------------------------------------------------
-    def updateTrade(self, trade):
-        """更新交易"""
-        l = self.tradeDict[trade.vtSymbol]
-        l.append(trade)
-        self.tradeCount += 1
-
-    #----------------------------------------------------------------------
-    def updatePos(self, d):
-        """更新昨持仓"""
-        self.posDict.update(d)
-
-    #----------------------------------------------------------------------
-    def updateBar(self, bar):
-        """更新K线"""
-        self.closeDict[bar.vtSymbol] = bar.close
-
-    #----------------------------------------------------------------------
-    def updateClose(self, d):
-        """更新昨收盘"""
-        self.previousCloseDict.update(d)
-        self.closeDict.update(d)
-
-    #----------------------------------------------------------------------
-    def calculateTradingPnl(self):
-        """计算当日交易盈亏"""
-        for vtSymbol, l in self.tradeDict.items():
-            close = self.closeDict[vtSymbol]
-            ct = get_contract(vtSymbol)
-            size = ct.size
-            slippage = ct.slippage
-            variableCommission = ct.variable_commission
-            fixedCommission = ct.fixed_commission
-
-            for trade in l:
-                if trade.direction == DIRECTION_LONG:
-                    side = 1
-                else:
-                    side = -1
-
-                commissionCost = (trade.volume * fixedCommission +
-                                  trade.volume * trade.price * variableCommission)
-                slippageCost = trade.volume * slippage
-                pnl = (close - trade.price) * trade.volume * side * size
-
-                self.commission += commissionCost
-                self.slippage += slippageCost
-                self.tradingPnl += pnl
-
-    #----------------------------------------------------------------------
-    def calculateHoldingPnl(self):
-        """计算当日持仓盈亏"""
-        for vtSymbol, pos in self.posDict.items():
-            #print(vtSymbol, pos)
-
-            previousClose = self.previousCloseDict.get(vtSymbol, 0)
-            close = self.closeDict[vtSymbol]
-            ct = get_contract(vtSymbol)
-            size = ct.size
-
-
-            pnl = (close - previousClose) * pos * size
-            self.holdingPnl += pnl
-
-    #----------------------------------------------------------------------
-    def calculatePnl(self):
-        """计算总盈亏"""
-        self.calculateHoldingPnl()
-        self.calculateTradingPnl()
-        self.totalPnl = self.holdingPnl + self.tradingPnl
-        self.netPnl = self.totalPnl - self.commission - self.slippage
-
-        return self.netPnl

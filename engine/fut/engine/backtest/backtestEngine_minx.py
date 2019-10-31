@@ -35,7 +35,6 @@ class BacktestingEngine(object):
         print('\n')
 
         p = PortfolioClass(self, self.symbol_list, signal_param)
-        p.init()
         self.portfolio = p
 
     #----------------------------------------------------------------------
@@ -48,8 +47,8 @@ class BacktestingEngine(object):
     def loadData(self):
         """加载数据"""
         for vtSymbol in self.symbol_list:
-            #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
-            filename = get_dss( )+ 'fut/bar/' + vtSymbol + '.csv'
+            filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
+            #filename = get_dss( )+ 'fut/bar/' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
@@ -108,15 +107,13 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
-
         for dt, barDict in self.dataDict.items():
-
             if dt < self.startDt or dt >  self.endDt:
                 continue
 
-            # print(dt)
+            #print(dt)
             for bar in barDict.values():
-                self.portfolio.onBar(bar)
+                self.portfolio.onBar(bar, 'min5')
 
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
@@ -345,8 +342,8 @@ def run_once(symbol,start_date,end_date,signal_param):
         e = BacktestingEngine([symbol])
         e.setPeriod(start_date, end_date)
         e.loadData()
-        #e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
-        e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
+        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
+        #e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
 
         e.runBacktesting()
 
@@ -403,13 +400,13 @@ def test_param():
 
 
 def test_one():
-    vtSymbol = 'IF99'
-    start_date = '20151014 21:00:00'
-    end_date   = '20161018 15:00:00'
+    # vtSymbol = 'IF99'
+    # start_date = '20151014 21:00:00'
+    # end_date   = '20161018 15:00:00'
 
-    # vtSymbol = 'CF001'
-    # start_date = '20191014 21:00:00'
-    # end_date   = '20191018 15:00:00'
+    vtSymbol = 'CF001'
+    start_date = '20191014 21:00:00'
+    end_date   = '20191018 15:00:00'
 
     # vtSymbol = 'rb1901'
     # start_date = '20180515 00:00:00'

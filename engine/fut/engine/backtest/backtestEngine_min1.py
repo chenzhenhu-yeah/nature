@@ -88,7 +88,6 @@ class BacktestingEngine(object):
         print('\n')
 
         p = PortfolioClass(self, self.symbol_list, signal_param)
-        p.init()
         self.portfolio = p
 
     #----------------------------------------------------------------------
@@ -393,8 +392,6 @@ class BacktestingEngine(object):
 
         return tradeList
 
-
-
 #----------------------------------------------------------------------
 def formatNumber(n):
     """格式化数字到字符串"""
@@ -465,8 +462,8 @@ def test_param():
 
 def test_one():
     vtSymbol = 'CF001'
-    start_date = '20190901 21:00:00'
-    end_date   = '20191011 15:00:00'
+    start_date = '20191014 21:00:00'
+    end_date   = '20191018 15:00:00'
 
 
     # vtSymbol = 'rb1901'
