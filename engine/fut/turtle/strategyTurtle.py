@@ -264,12 +264,16 @@ class Fut_TurtleSignal(Signal):
 
 
 ########################################################################
-class Fut_TurtlePortfolio(Portfolio):
+class Test_TurtlePortfolio(Portfolio):
     """海龟组合"""
 
     #----------------------------------------------------------------------
     def __init__(self, engine, name):
-        Portfolio.__init__(self, engine)
+
+        self.engine = engine                 # 所属引擎
+        self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
+        self.posDict = {}           # 真实持仓量字典,code为键,pos为值
+        self.portfolioValue = 100E4     # 组合市值
 
         self.name = name
         self.vtSymbolList = []
@@ -291,13 +295,13 @@ class Fut_TurtlePortfolio(Portfolio):
     #----------------------------------------------------------------------
     def init(self):
         """初始化信号字典、持仓字典"""
-        filename = self.engine.dss + 'fut/cfg/setting_fut_' + self.name + '.csv'
+        filename = self.engine.dss + 'fut/cfg/setting_pz.csv'
 
         with open(filename,encoding='utf-8') as f:
             r = DictReader(f)
             for d in r:
                 # 当前可做的品种必须是引擎中有数据的品种
-                if d['vtSymbol'] in self.engine.vtSymbol_list:
+                if d['pz'] in self.engine.vtSymbol_list:
                     self.vtSymbolList.append(d['vtSymbol'])
                     self.SIZE_DICT[d['vtSymbol']] = int(d['size'])
                     self.PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])

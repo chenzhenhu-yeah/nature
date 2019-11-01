@@ -25,7 +25,7 @@ from nature import Book, a_file
 from nature import get_dss
 #from ipdb import set_trace
 
-from fut_strategyTurtle import Fut_TurtlePortfolio
+from strategyTurtle import Test_TurtlePortfolio
 
 SIZE_DICT = {}
 PRICETICK_DICT = {}
@@ -48,7 +48,8 @@ class BacktestingEngine(object):
         self.portfolio = None
         self.vtSymbol_dict = {}
         self.portfolioValue = 100E4
-        self.vtSymbol_list = ['IF99','RB99','TA99']
+        #self.vtSymbol_list = ['IF99','RB99','TA99']
+        self.vtSymbol_list = ['IF99']
 
         self.startDt = None
         self.endDt = None

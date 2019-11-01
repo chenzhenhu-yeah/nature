@@ -79,7 +79,7 @@ class BacktestingEngine(object):
                 barDict[bar.vtSymbol] = bar
                 # break
 
-        self.output(u'全部数据加载完成')
+            self.output(vtSymbol + '全部数据加载完成，数据量：' + str(len(df)) )
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
@@ -93,7 +93,7 @@ class BacktestingEngine(object):
 
         dt_list = sorted(dt_list)
         init_dt_list = dt_list[-initBars:]
-        #print(init_dt_list, initBars)
+        print( '初始化导入记录数量：', len(init_dt_list) )
 
         r = []
         for dt in init_dt_list:
@@ -111,8 +111,8 @@ class BacktestingEngine(object):
             if dt < self.startDt or dt >  self.endDt:
                 continue
 
-            #print(dt)
             for bar in barDict.values():
+                #print(dt, bar.close)
                 self.portfolio.onBar(bar, 'min5')
 
     #----------------------------------------------------------------------
@@ -342,8 +342,8 @@ def run_once(symbol,start_date,end_date,signal_param):
         e = BacktestingEngine([symbol])
         e.setPeriod(start_date, end_date)
         e.loadData()
-        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
-        #e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
+        #e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
+        e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
 
         e.runBacktesting()
 
@@ -400,20 +400,20 @@ def test_param():
 
 
 def test_one():
-    # vtSymbol = 'IF99'
-    # start_date = '20151014 21:00:00'
-    # end_date   = '20161018 15:00:00'
+    vtSymbol = 'IF99'
+    start_date = '20160101 21:00:00'
+    end_date   = '20181230 15:00:00'
 
-    vtSymbol = 'CF001'
-    start_date = '20191014 21:00:00'
-    end_date   = '20191018 15:00:00'
+    # vtSymbol = 'CF001'
+    # start_date = '20191014 21:00:00'
+    # end_date   = '20191018 15:00:00'
 
     # vtSymbol = 'rb1901'
     # start_date = '20180515 00:00:00'
     # end_date   = '20181231 00:00:00'
-    #
+
     # vtSymbol = 'CF901'
-    # start_date = '20180111 00:00:00'
+    # start_date = '20180119 00:00:00'
     # end_date   = '20181231 00:00:00'
 
     #signal_param = {}

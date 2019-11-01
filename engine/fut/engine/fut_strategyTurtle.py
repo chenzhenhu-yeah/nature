@@ -77,8 +77,6 @@ class Fut_TurtleSignal(Signal):
         self.shortEntry4 = 0
         self.shortStop = 0              # 空头止损位
 
-        # 需要持久化保存的变量
-
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
@@ -89,20 +87,15 @@ class Fut_TurtleSignal(Signal):
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
-                self.rsiLength = rec.rsiLength
-                self.trailingPercent = rec.trailingPercent
-                self.victoryPercent = rec.victoryPercent
+                self.entryWindow = rec.entryWindow
+                self.exitWindow = rec.exitWindow
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
-        if 'atrMaLength' in param_dict:
-            self.atrMaLength = param_dict['atrMaLength']
-        if 'rsiLength' in param_dict:
-            self.rsiLength = param_dict['rsiLength']
-        if 'trailingPercent' in param_dict:
-            self.trailingPercent = param_dict['trailingPercent']
-        if 'victoryPercent' in param_dict:
-            self.victoryPercent = param_dict['victoryPercent']
+        if 'entryWindow' in param_dict:
+            self.entryWindow = param_dict['entryWindow']
+        if 'exitWindow' in param_dict:
+            self.exitWindow = param_dict['exitWindow']
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min15'):
@@ -123,6 +116,7 @@ class Fut_TurtleSignal(Signal):
         if not self.am.inited:
             return
 
+        self.generateSignal(bar)      # 在minx周期上，触发信号，产生交易指令
         self.calculateIndicator()     # 在minx周期上，计算指标
 
     #----------------------------------------------------------------------
@@ -152,22 +146,26 @@ class Fut_TurtleSignal(Signal):
             trade = False
 
             if bar.high >= self.longEntry1 and self.unit < 1:
-                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry1), 1)
+                price = self.calculateTradePrice(DIRECTION_LONG, self.longEntry1)
+                self.buy(price, 1)
                 self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry2 and self.unit < 2:
-                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry2), 1)
+                price = self.calculateTradePrice(DIRECTION_LONG, self.longEntry2)
+                self.buy(price, 1)
                 self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry3 and self.unit < 3:
-                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry3), 1)
+                price = self.calculateTradePrice(DIRECTION_LONG, self.longEntry3)
+                self.buy(price, 1)
                 self.longStop = price - self.atrVolatility * 2
                 trade = True
 
             if bar.high >= self.longEntry4 and self.unit < 4:
-                self.buy(self.calculateTradePrice(DIRECTION_LONG, self.longEntry4), 1)
+                price = self.calculateTradePrice(DIRECTION_LONG, self.longEntry4)
+                self.buy(price, 1)
                 self.longStop = price - self.atrVolatility * 2
                 trade = True
 
@@ -177,19 +175,23 @@ class Fut_TurtleSignal(Signal):
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
         if self.unit <= 0:
             if bar.low <= self.shortEntry1 and self.unit > -1:
-                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry1), 1 )
+                price = self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry1)
+                self.short( price, 1 )
                 self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry2 and self.unit > -2:
-                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry2), 1 )
+                price = self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry2)
+                self.short( price, 1 )
                 self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry3 and self.unit > -3:
-                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry3), 1 )
+                price = self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry3)
+                self.short( price, 1 )
                 self.shortStop = price + self.atrVolatility * 2
 
             if bar.low <= self.shortEntry4 and self.unit > -4:
-                self.short( self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry4), 1 )
+                price = self.calculateTradePrice(DIRECTION_SHORT, self.shortEntry4)
+                self.short( price, 1 )
                 self.shortStop = price + self.atrVolatility * 2
 
     #----------------------------------------------------------------------
@@ -222,10 +224,23 @@ class Fut_TurtleSignal(Signal):
         if len(df) > 0:
             rec = df.iloc[-1,:]            # 取最近日期的记录
             self.unit = rec.unit
-            self.cost = rec.cost
-            self.intraTradeHigh = rec.intraTradeHigh
-            self.intraTradeLow = rec.intraTradeLow
-            self.stop = rec.stop
+
+            self.atrVolatility = rec.atrVolatility
+            self.entryUp = rec.entryUp
+            self.entryDown = rec.entryDown
+            self.exitUp = rec.exitUp
+            self.exitDown = rec.exitDown
+            self.longEntry1 = rec.longEntry1
+            self.longEntry2 = rec.longEntry2
+            self.longEntry3 = rec.longEntry3
+            self.longEntry4 = rec.longEntry4
+            self.longStop = rec.longStop
+            self.shortEntry1 = rec.shortEntry1
+            self.shortEntry2 = rec.shortEntry2
+            self.shortEntry3 = rec.shortEntry3
+            self.shortEntry4 = rec.shortEntry4
+            self.shortStop = rec.shortStop
+
             if rec.has_result == 1:
                 self.result = SignalResult()
                 self.result.unit = rec.result_unit
@@ -237,18 +252,33 @@ class Fut_TurtleSignal(Signal):
     def save_var(self):
         r = []
         if self.result is None:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
-                   0, 0, 0, 0, 0 ] ]
+            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, \
+                   0, 0, 0, 0, 0, \
+                   self.atrVolatility,self.entryUp,self.entryDown,self.exitUp,self.exitDown, \
+                   self.longEntry1,self.longEntry2,self.longEntry3,self.longEntry4,self.longStop, \
+                   self.shortEntry1,self.shortEntry2,self.shortEntry3,self.shortEntry4,self.shortStop
+                  ]
+                ]
         else:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
-                   1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl ] ]
-        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
-                                      'intraTradeHigh','intraTradeLow','stop', \
-                                      'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
+            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, \
+                   1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl, \
+                   self.atrVolatility,self.entryUp,self.entryDown,self.exitUp,self.exitDown, \
+                   self.longEntry1,self.longEntry2,self.longEntry3,self.longEntry4,self.longStop, \
+                   self.shortEntry1,self.shortEntry2,self.shortEntry3,self.shortEntry4,self.shortStop
+                  ]
+                ]
+
+        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
+                                      'has_result','result_unit','result_entry','result_exit', 'result_pnl', \
+                                      'atrVolatility','entryUp','entryDown','exitUp','exitDown', \
+                                      'longEntry1','longEntry2','longEntry3','longEntry4','longStop', \
+                                      'shortEntry1','shortEntry2','shortEntry3','shortEntry4','shortStop'
+                                     ])
         filename = get_dss() +  'fut/check/signal_turtle_var.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def getLastPnl(self):
