@@ -6,7 +6,7 @@ from multiprocessing.connection import Client
 import time
 import tushare as ts
 
-from nature import read_log_today, a_file
+from nature import read_log_today, a_file, get_dss
 
 app = Flask(__name__)
 # app = Flask(__name__,template_folder='tpl') # 指定一个参数使用自己的模板目录
