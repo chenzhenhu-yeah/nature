@@ -94,7 +94,7 @@ class Signal(object):
         self.vtSymbol = vtSymbol        # 合约代码
         self.am = ArrayManager()        # K线容器
         self.bar = None                 # 最新K线
-        self.result = None              # 当前的交易        
+        self.result = None              # 当前的交易
         self.unit = 0
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
@@ -264,7 +264,7 @@ class Portfolio(object):
 
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_deal.csv'
+        filename = self.engine.dss + 'fut/deal/portfolio_' + self.name + '_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
 
 ########################################################################
