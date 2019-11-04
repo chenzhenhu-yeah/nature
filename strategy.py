@@ -94,8 +94,7 @@ class Signal(object):
         self.vtSymbol = vtSymbol        # 合约代码
         self.am = ArrayManager()        # K线容器
         self.bar = None                 # 最新K线
-        self.result = None              # 当前的交易
-        self.resultList = []            # 交易列表
+        self.result = None              # 当前的交易        
         self.unit = 0
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
@@ -140,34 +139,6 @@ class Signal(object):
 
         self.close(price)
         self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
-
-    #----------------------------------------------------------------------
-    def open(self, price, change):
-        """开仓"""
-        self.unit += change
-
-        if not self.result:
-            self.result = SignalResult()
-        self.result.open(price, change)
-
-        r = [ [self.portfolio.result.date, '多' if change>0 else '空', '开', abs(change), price, 0] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/deal/signal_' + self.portfolio.name + '_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
-    #----------------------------------------------------------------------
-    def close(self, price):
-        """平仓"""
-        self.unit = 0
-        self.result.close(price)
-
-        r = [ [self.portfolio.result.date, '', '平', 0, price, self.result.pnl] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/deal/signal_' + self.portfolio.name + '_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
-
-        self.resultList.append(self.result)
-        self.result = None
 
 ########################################################################
 class Portfolio(object):

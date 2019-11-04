@@ -1,0 +1,26 @@
+<head>
+    <title>{{title}}</title>
+
+    <style type="text/css">
+    table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+    }
+    .description {
+      text-align: center;
+    }
+    </style>
+</head>
+
+<body>
+<table>
+{% for row in rows %}
+<tr>
+  {% for d in row %}
+  <td class="description">{{ d }}</td>
+  {% endfor %}
+<tr>
+{% endfor %}
+</table>
+</body>

@@ -53,17 +53,40 @@
   <body>
     <nav>
     <ul>
-      <li><a href="fut.html">服务器状态</a></li>
-      <li><a href="fut_csv.html">查看csv文件</a></li>
+      <li><a href="fut">服务器状态</a></li>
     </ul>
     </nav>
+
     <section>
 
        <header>
        <h1>查看csv文件</h1>
        </header>
 
+       <p>
+       </p>
+       <ul>
+         <li>fut/cfg/setting_pz.csv</li>
+         <li>fut/cfg/trade_time.csv</li>
+         <li>fut/deal/signal_atrrsi_CF001.csv</li>
+         <li>fut/deal/portfolio_atrrsi_deal.csv</li>
+         <li>fut/deal/engine_deal.csv</li>
+         <li>fut/check/signal_atrrsi_var.csv</li>
+         <li>fut/check/portfolio_atrrsi_var.csv</li>
+         <li>fut/check/portfolio_atrrsi_value.csv</li>
+         <li>fut/check/portfolio_atrrsi_var.csv</li>
+       </ul>
 
+      <form method="post" action="show_fut_csv">
+      <fieldset>
+      <p>
+        filename:<input type="text" name="filename"  required/>
+      </p>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
 
     </section>
   </body>

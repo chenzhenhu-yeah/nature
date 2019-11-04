@@ -15,6 +15,49 @@ app = Flask(__name__)
 def index():
  return 'log file ins'
 
+@app.route('/fut')
+def fut():
+    filename = get_dss() + 'fut/put/min1_ag1912.csv'
+    df = pd.read_csv(filename, dtype='str')
+    r_q = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r_q.append( list(row) )
+
+    filename = get_dss() + 'fut/put/rec/min5_ag1912.csv'
+    df = pd.read_csv(filename, dtype='str')
+    r_t = [ list(df.columns) ]
+    row = df.iloc[-1,:]
+    r_t.append( list(row) )
+
+    return render_template("fut.html",title="fut",rows_q=r_q,rows_t=r_t)
+
+@app.route('/fut_csv')
+def fut_csv():
+    return render_template("fut_csv.html",title="fut_csv")
+
+@app.route('/show_fut_csv', methods=['post'])
+def show_fut_csv():
+    filename = get_dss() + request.form.get('filename')
+    #df = pd.read_csv(filename,sep=' ',header=None,encoding='gbk')
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("show_fut_csv.html",title="Show Log",rows=r)
+
+@app.route('/fut_config')
+def fut_config():
+    return render_template("fut_config.html",title="fut_config")
+
+@app.route('/fut_setting_pz')
+def fut_setting_pz():
+    return render_template("fut_setting_pz.html",title="fut_setting_pz")
+
+@app.route('/fut_trade_time')
+def fut_trade_time():
+    return render_template("fut_trade_time.html",title="fut_trade_time")
+
 @app.route('/log')
 def show_log():
     items = read_log_today()
