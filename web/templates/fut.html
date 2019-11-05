@@ -47,6 +47,29 @@
          background-color: #c6a648;
          color: #000000;
       }
+      nav ul ul {
+         margin: 0px;
+         padding: 0px;
+      }
+      nav ul ul li {
+         border-bottom: none;
+      }
+      nav ul ul li a:link, nav ul ul li a:visited {
+         font-size: 8pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 18px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav ul ul li a:hover, nav ul ul li a:active {
+         font-size: 8pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 18px;
+         background-color: #c6a648;
+         color: #000000;
+      }
       table, tr, th, td {
        border: 1px solid black;
        border-collapse: collapse;
@@ -57,15 +80,19 @@
       }
       </style>
   </head>
-    
+
   <body>
     <nav>
     <ul>
       <li><a href="fut">服务器状态</a></li>
       <li><a href="fut_csv">查看csv文件</a></li>
-	    <li><a href="fut_setting_pz">setting_pz</a></li>
-      <li><a href="fut_trade_time">trade_time</a></li>
-      <li><a href="fut_config">config</a></li>
+      <li><a href="#">设置参数</a>
+        <ul>
+  	    <li><a href="fut_setting_pz">&raquo; setting_pz</a></li>
+        <li><a href="fut_trade_time">&raquo; trade_time</a></li>
+        <li><a href="fut_config">&raquo; config</a></li>
+        </ul>
+      </li>
     </ul>
     </nav>
     <section>

@@ -59,11 +59,13 @@ class BarGenerator(object):
         if self.minx == 'min5' and new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
             # 将 bar的分钟改为整点，推送并保存bar
             bar.time = new_bar.time[:-2] + '00'
-            return self.bar_minx_dict.pop(id)
+            self.bar_minx_dict.pop(id)
+            return bar
         elif self.minx == 'min15' and new_bar.time[3:5] in ['15','30','45','00']:
             # 将 bar的分钟改为整点，推送并保存bar
             bar.time = new_bar.time[:-2] + '00'
-            return self.bar_minx_dict.pop(id)
+            self.bar_minx_dict.pop(id)
+            return bar
         else:
             self.bar_minx_dict[id] = bar
 
@@ -167,8 +169,8 @@ class FutEngine(object):
                             p.onBar(bar, 'min1')
 
                 except Exception as e:
-                    # print('-'*30)
-                    # #traceback.print_exc()
+                    print('-'*30)
+                    traceback.print_exc()
                     # s = traceback.format_exc()
                     # print(s)
 

@@ -58,11 +58,13 @@ class BarGenerator(object):
         if self.minx == 'min5' and new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
             # 将 bar的分钟改为整点，推送并保存bar
             bar.time = new_bar.time[:-2] + '00'
-            return self.bar_minx_dict.pop(id)
+            self.bar_minx_dict.pop(id)
+            return bar
         elif self.minx == 'min15' and new_bar.time[3:5] in ['15','30','45','00']:
             # 将 bar的分钟改为整点，推送并保存bar
             bar.time = new_bar.time[:-2] + '00'
-            return self.bar_minx_dict.pop(id)
+            self.bar_minx_dict.pop(id)
+            return bar
         else:
             self.bar_minx_dict[id] = bar
 
@@ -269,8 +271,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191101 21:00:00'
-    end_date   = '20191104 15:00:00'
+    start_date = '20191104 21:00:00'
+    end_date   = '20191105 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)
