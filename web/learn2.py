@@ -5,6 +5,7 @@ from datetime import datetime
 from multiprocessing.connection import Client
 import time
 import tushare as ts
+import json
 
 from nature import read_log_today, a_file, get_dss
 
@@ -46,9 +47,30 @@ def show_fut_csv():
 
     return render_template("show_fut_csv.html",title="Show Log",rows=r)
 
-@app.route('/fut_config')
+@app.route('/fut_config', methods=['get','post'])
 def fut_config():
-    return render_template("fut_config.html",title="fut_config")
+    filename = get_dss() + 'fut/cfg/config.json'
+    if request.method == "POST":
+        key = request.form.get('key')
+        value = request.form.get('value')
+        with open(filename,'r') as f:
+            load_dict = json.load(f)
+
+        kind = request.form.get('kind')
+        if kind in ['add', 'alter']:
+            load_dict[key] = value
+        if kind == 'del':
+            load_dict.pop(key)
+        with open(filename,"w") as f:
+            json.dump(load_dict,f)            
+
+    r = [ ['key', 'value'] ]
+    with open(filename,'r') as f:
+        load_dict = json.load(f)
+        for (key,value) in load_dict.items():
+            r.append( [key,value] )
+
+    return render_template("fut_config.html",title="fut_config",rows=r)
 
 @app.route('/fut_setting_pz', methods=['get','post'])
 def fut_setting_pz():
@@ -77,7 +99,6 @@ def fut_setting_pz():
             df = pd.read_csv(filename, dtype='str')
             df = df[df.pz != pz ]
             df.to_csv(filename, index=False)
-
             # 增
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
@@ -89,16 +110,37 @@ def fut_setting_pz():
 
     return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r)
 
-@app.route('/fut_trade_time')
+@app.route('/fut_trade_time', methods=['get','post'])
 def fut_trade_time():
     filename = get_dss() + 'fut/cfg/trade_time.csv'
     if request.method == "POST":
-        pz = request.form.get('pz')
-        kind = request.form.get('kind')
+        symbol = request.form.get('symbol')
+        name = request.form.get('name')
+        seq_list = request.form.getlist('seq')
+        #return str(seq_list)
+        r =[]
+        for seq in seq_list:
+            begin = request.form.get('begin'+'_'+seq)
+            end = request.form.get('end'+'_'+seq)
+            num = request.form.get('num'+'_'+seq)
+            r.append( [name,symbol,seq,begin,end,num] )
+        #return str(r)
 
-        r = [['name	symbol	seq	begin	end	num']]
-        cols = ['name	symbol	seq	begin	end	num']
+        cols = ['name','symbol','seq','begin','end','num']
+        kind = request.form.get('kind')
         if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+            # 增
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
 

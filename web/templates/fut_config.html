@@ -15,6 +15,7 @@
       section {
          width:550px;
          float:left;
+         margin-bottom:36px;
       }
       nav a {
          text-decoration: none;
@@ -47,6 +48,14 @@
          background-color: #c6a648;
          color: #000000;
       }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
     </style>
   </head>
 
@@ -56,10 +65,42 @@
 	    <li><a href="fut">服务器状态</a></li>
     </ul>
     </nav>
+
     <section>
        <header>
        <h1>config.json</h1>
        </header>
+
+      <form method="post" action="fut_config">
+      <fieldset>
+
+      <p>
+        key:<input type="text" name="key"  required/>
+        value:<input type="text" name="value" />
+      </p>
+
+      <p>
+        <pre>
+        add<input type="radio" name="kind" value="add" />     del<input type="radio" name="kind" value="del" />     alter<input type="radio" name="kind" value="alter" />
+        </pre>
+      </p>
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+
+       <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
 
     </section>
   </body>
