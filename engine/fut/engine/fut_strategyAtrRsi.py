@@ -262,7 +262,7 @@ class Fut_AtrRsiSignal(Signal):
             self.result = SignalResult()
         self.result.open(price, change)
 
-        r = [ [self.bar.datetime, '多' if change>0 else '空', '开',  \
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
                self.atrValue, self.atrMa, self.rsiValue, \
                self.iswave, self.intraTradeHigh, self.intraTradeLow, \
@@ -280,7 +280,7 @@ class Fut_AtrRsiSignal(Signal):
         self.unit = 0
         self.result.close(price)
 
-        r = [ [self.bar.datetime, '', '平',  \
+        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
                self.atrValue, self.atrMa, self.rsiValue, \
                self.iswave, self.intraTradeHigh, self.intraTradeLow, \

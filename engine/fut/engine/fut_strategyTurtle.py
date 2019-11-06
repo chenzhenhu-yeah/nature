@@ -289,7 +289,7 @@ class Fut_TurtleSignal(Signal):
             self.result = SignalResult()
         self.result.open(price, change)
 
-        r = [ [self.bar.datetime, '多' if change>0 else '空', '开', abs(change), price, 0] ]
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开', abs(change), price, 0] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
         filename = get_dss() +  'fut/deal/signal_' + self.portfolio.name + '_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
@@ -300,11 +300,11 @@ class Fut_TurtleSignal(Signal):
         self.unit = 0
         self.result.close(price)
 
-        r = [ [self.bar.datetime, '', '平', 0, price, self.result.pnl] ]
+        r = [ [self.bar.date+' '+self.bar.time, '', '平', 0, price, self.result.pnl] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
         filename = get_dss() +  'fut/deal/signal_' + self.portfolio.name + '_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
-        
+
         self.result = None
 
     #----------------------------------------------------------------------
