@@ -15,6 +15,7 @@
       section {
          width:550px;
          float:left;
+         margin-bottom:36px;
       }
       nav a {
          text-decoration: none;
@@ -47,6 +48,14 @@
          background-color: #c6a648;
          color: #000000;
       }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
     </style>
   </head>
 
@@ -56,10 +65,64 @@
 	    <li><a href="fut">服务器状态</a></li>
     </ul>
     </nav>
+
     <section>
        <header>
        <h1>trade_time</h1>
        </header>
+
+      <form method="post" action="fut_setting_pz">
+      <fieldset>
+
+      <p> symbol:<input type="text" name="symbol"  required/> </p>
+      <p> name:<input type="text" name="name" /> </p>
+      <p>
+        <input type="checkbox" name="seq" value="one"/>1
+        begin:<input type="text" name="begin" size="8" />
+        end:<input type="text" name="end" size="8" />
+        num:<input type="text" name="num" size="3" />
+      </p>
+      <p>
+        <input type="checkbox" name="seq" value="one"/>2
+        begin:<input type="text" name="begin" size="8" />
+        end:<input type="text" name="end" size="8" />
+        num:<input type="text" name="num" size="3" />
+      </p>
+      <p>
+        <input type="checkbox" name="seq" value="one"/>3
+        begin:<input type="text" name="begin" size="8" />
+        end:<input type="text" name="end" size="8" />
+        num:<input type="text" name="num" size="3" />
+      </p>
+      <p>
+        <input type="checkbox" name="seq" value="one"/>4
+        begin:<input type="text" name="begin" size="8" />
+        end:<input type="text" name="end" size="8" />
+        num:<input type="text" name="num" size="3" />
+      </p>
+
+      <p>
+        add<input type="radio" name="kind" value="add" />
+        del<input type="radio" name="kind" value="del" />
+        alter<input type="radio" name="kind" value="alter" />
+      </p>
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+
+       <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
 
     </section>
   </body>

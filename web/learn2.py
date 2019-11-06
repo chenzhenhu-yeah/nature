@@ -50,13 +50,64 @@ def show_fut_csv():
 def fut_config():
     return render_template("fut_config.html",title="fut_config")
 
-@app.route('/fut_setting_pz')
+@app.route('/fut_setting_pz', methods=['get','post'])
 def fut_setting_pz():
-    return render_template("fut_setting_pz.html",title="fut_setting_pz")
+    filename = get_dss() + 'fut/cfg/setting_pz.csv'
+    if request.method == "POST":
+        pz = request.form.get('pz')
+        size = request.form.get('size')
+        priceTick = request.form.get('priceTick')
+        variableCommission = request.form.get('variableCommission')
+        fixedCommission = request.form.get('fixedCommission')
+        slippage = request.form.get('slippage')
+        exchangeID = request.form.get('exchangeID')
+        kind = request.form.get('kind')
+
+        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID]]
+        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r)
 
 @app.route('/fut_trade_time')
 def fut_trade_time():
-    return render_template("fut_trade_time.html",title="fut_trade_time")
+    filename = get_dss() + 'fut/cfg/trade_time.csv'
+    if request.method == "POST":
+        pz = request.form.get('pz')
+        kind = request.form.get('kind')
+
+        r = [['name	symbol	seq	begin	end	num']]
+        cols = ['name	symbol	seq	begin	end	num']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("fut_trade_time.html",title="fut_trade_time",rows=r)
 
 @app.route('/log')
 def show_log():
