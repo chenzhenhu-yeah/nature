@@ -107,9 +107,9 @@ def proc_segment(df1,begin,end,num):
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    # if num == 60:
-    #     print(r)
-    #     print(len(r), num)
+    if num == 120:
+        print(r)
+        print(len(r), num)
 
     # 如果有数据缺失，补全。
     tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
@@ -146,11 +146,11 @@ def proc_segment(df1,begin,end,num):
         next = next + oneminute
         i += 1
 
-    # if num == 60:
-    #      print(r)
-    #      print(len(r), num)
+    if num == 120:
+         print(r)
+         print(len(r), num)
 
-    # print(len(r), num)
+    #print(len(r), num)
     assert len(r) == num
     return r
 
@@ -238,6 +238,12 @@ def tick2bar(tradeDay):
             for i,row in df2.iterrows():
                 if row.end > row.begin:
                     df1 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<=row.end)]
+                    # 处理tick异常数据
+                    if len(df1) > 0:
+                        df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
+                        df1 = df1.reset_index()
+                        dt = df1.at[0,'UpdateDate']
+                        df1 = df1[df1.UpdateDate == dt]
                 else:
                     # 夜盘跨零点交易品种，作特殊处理
                     df11 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<='23:59:59')]
@@ -251,6 +257,8 @@ def tick2bar(tradeDay):
                     # print(i,len(df1))
                     # print(df1.head(9))
                     r1 += proc_segment(df1, row.begin, row.end, row.num)
+                else:
+                    to_log( 'tick数据有缺失：'+ tradeDay + ' ' + str(i) + ' ' + symbol )
 
 
             df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
@@ -301,5 +309,5 @@ def tick2bar(tradeDay):
                 df_symbol.to_csv(fname, index=False, mode='a')
 
 if __name__ == "__main__":
-    tradeDay = '20191015'
+    tradeDay = '20191107'
     tick2bar(tradeDay)

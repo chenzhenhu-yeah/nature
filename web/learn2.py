@@ -41,9 +41,12 @@ def show_fut_csv():
     filename = get_dss() + request.form.get('filename')
     #df = pd.read_csv(filename,sep=' ',header=None,encoding='gbk')
     df = pd.read_csv(filename, dtype='str')
-    r = [ list(df.columns) ]
+
+    r = []
     for i, row in df.iterrows():
         r.append( list(row) )
+    r.append( list(df.columns) )
+    r = reversed(r)
 
     return render_template("show_fut_csv.html",title="Show Log",rows=r)
 
@@ -62,7 +65,7 @@ def fut_config():
         if kind == 'del':
             load_dict.pop(key)
         with open(filename,"w") as f:
-            json.dump(load_dict,f)            
+            json.dump(load_dict,f)
 
     r = [ ['key', 'value'] ]
     with open(filename,'r') as f:

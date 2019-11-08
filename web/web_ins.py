@@ -5,6 +5,7 @@ from datetime import datetime
 from multiprocessing.connection import Client
 import time
 import tushare as ts
+import json
 
 from nature import read_log_today, a_file, get_dss
 
@@ -40,23 +41,118 @@ def show_fut_csv():
     filename = get_dss() + request.form.get('filename')
     #df = pd.read_csv(filename,sep=' ',header=None,encoding='gbk')
     df = pd.read_csv(filename, dtype='str')
+
+    r = []
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    r.append( list(df.columns) )
+    r = reversed(r)
+
+    return render_template("show_fut_csv.html",title="Show Log",rows=r)
+
+@app.route('/fut_config', methods=['get','post'])
+def fut_config():
+    filename = get_dss() + 'fut/cfg/config.json'
+    if request.method == "POST":
+        key = request.form.get('key')
+        value = request.form.get('value')
+        with open(filename,'r') as f:
+            load_dict = json.load(f)
+
+        kind = request.form.get('kind')
+        if kind in ['add', 'alter']:
+            load_dict[key] = value
+        if kind == 'del':
+            load_dict.pop(key)
+        with open(filename,"w") as f:
+            json.dump(load_dict,f)
+
+    r = [ ['key', 'value'] ]
+    with open(filename,'r') as f:
+        load_dict = json.load(f)
+        for (key,value) in load_dict.items():
+            r.append( [key,value] )
+
+    return render_template("fut_config.html",title="fut_config",rows=r)
+
+@app.route('/fut_setting_pz', methods=['get','post'])
+def fut_setting_pz():
+    filename = get_dss() + 'fut/cfg/setting_pz.csv'
+    if request.method == "POST":
+        pz = request.form.get('pz')
+        size = request.form.get('size')
+        priceTick = request.form.get('priceTick')
+        variableCommission = request.form.get('variableCommission')
+        fixedCommission = request.form.get('fixedCommission')
+        slippage = request.form.get('slippage')
+        exchangeID = request.form.get('exchangeID')
+        kind = request.form.get('kind')
+
+        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID]]
+        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
 
-    return render_template("show_fut_csv.html",title="Show Log",rows=r)
+    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r)
 
-@app.route('/fut_config')
-def fut_config():
-    return render_template("fut_config.html",title="fut_config")
-
-@app.route('/fut_setting_pz')
-def fut_setting_pz():
-    return render_template("fut_setting_pz.html",title="fut_setting_pz")
-
-@app.route('/fut_trade_time')
+@app.route('/fut_trade_time', methods=['get','post'])
 def fut_trade_time():
-    return render_template("fut_trade_time.html",title="fut_trade_time")
+    filename = get_dss() + 'fut/cfg/trade_time.csv'
+    if request.method == "POST":
+        symbol = request.form.get('symbol')
+        name = request.form.get('name')
+        seq_list = request.form.getlist('seq')
+        #return str(seq_list)
+        r =[]
+        for seq in seq_list:
+            begin = request.form.get('begin'+'_'+seq)
+            end = request.form.get('end'+'_'+seq)
+            num = request.form.get('num'+'_'+seq)
+            r.append( [name,symbol,seq,begin,end,num] )
+        #return str(r)
+
+        cols = ['name','symbol','seq','begin','end','num']
+        kind = request.form.get('kind')
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("fut_trade_time.html",title="fut_trade_time",rows=r)
 
 @app.route('/log')
 def show_log():

@@ -271,8 +271,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191104 21:00:00'
-    end_date   = '20191105 15:00:00'
+    start_date = '20191106 21:00:00'
+    end_date   = '20191107 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

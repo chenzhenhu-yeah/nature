@@ -6,6 +6,7 @@ import talib
 import tushare as ts
 from csv import DictReader
 from collections import OrderedDict, defaultdict
+import traceback
 
 from nature import send_instruction, get_dss
 
@@ -357,17 +358,22 @@ class DailyResult(object):
     #----------------------------------------------------------------------
     def calculateHoldingPnl(self):
         """计算当日持仓盈亏"""
-        for vtSymbol, pos in self.posDict.items():
-            #print(vtSymbol, pos)
+        try:
+            for vtSymbol, pos in self.posDict.items():
+                previousClose = self.previousCloseDict.get(vtSymbol, 0)
+                close = self.closeDict[vtSymbol]
+                ct = get_contract(vtSymbol)
+                size = ct.size
 
-            previousClose = self.previousCloseDict.get(vtSymbol, 0)
-            close = self.closeDict[vtSymbol]
-            ct = get_contract(vtSymbol)
-            size = ct.size
+                pnl = (close - previousClose) * pos * size
+                self.holdingPnl += pnl
+        except Exception as e:
+            traceback.print_exc()
+            print('-'*30)
+            print(vtSymbol, pos)
+            print(self.__dict__)
+            assert False
 
-
-            pnl = (close - previousClose) * pos * size
-            self.holdingPnl += pnl
 
     #----------------------------------------------------------------------
     def calculatePnl(self):
