@@ -98,6 +98,11 @@ class Gateway_Ht_CTP(object):
         try:
             # 流控
             time.sleep(1)
+            pz = get_contract(code).pz
+            if pz not in  ['CF']:
+                return
+            else:
+                print('CF send order here!')
 
             if self.t.logined == False:
                 print('ctp trade not login')
@@ -109,29 +114,23 @@ class Gateway_Ht_CTP(object):
 
             # 当前还处于测试阶段，只开1仓，降低价格不成交
             volume = 1
+            # 对价格四舍五入
+            priceTick = get_contract(code).price_tick
+            price = int(round(price/priceTick, 0)) * priceTick
+
 
             if direction == DIRECTION_LONG and offset == '开仓':
-                price = price*0.97
-
-                # 对价格四舍五入
-                priceTick = get_contract(code).price_tick
-                price = int(round(price/priceTick, 0)) * priceTick
-
+                #price = price*0.97
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '开仓':
-                price = price*1.03
-                # 对价格四舍五入
-                priceTick = get_contract(code).price_tick
-                price = int(round(price/priceTick, 0)) * priceTick
-
+                #price = price*1.03
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
+            if direction == DIRECTION_LONG and offset == '平仓':
+                self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
+            if direction == DIRECTION_SHORT and offset == '平仓':
+                self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
 
-            # if direction == DIRECTION_LONG and offset == '平仓':
-            #     self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
-            # if direction == DIRECTION_SHORT and offset == '平仓':
-            #     self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
-
-            send_email(get_dss(), direction+' '+offset+' '+str(price), '')
+            #send_email(get_dss(), direction+' '+offset+' '+str(price), '')
 
         except Exception as e:
             now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())

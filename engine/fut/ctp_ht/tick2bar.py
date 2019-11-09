@@ -107,9 +107,9 @@ def proc_segment(df1,begin,end,num):
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    if num == 120:
-        print(r)
-        print(len(r), num)
+    # if num == 120:
+    #     print(r)
+    #     print(len(r), num)
 
     # 如果有数据缺失，补全。
     tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
@@ -146,9 +146,9 @@ def proc_segment(df1,begin,end,num):
         next = next + oneminute
         i += 1
 
-    if num == 120:
-         print(r)
-         print(len(r), num)
+    # if num == 120:
+    #      print(r)
+    #      print(len(r), num)
 
     #print(len(r), num)
     assert len(r) == num

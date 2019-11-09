@@ -104,7 +104,8 @@ class BacktestingEngine(object):
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
-                #print(d)
+                # print(d)
+                # print('here')
 
                 bar = VtBarData()
                 bar.vtSymbol = vtSymbol
@@ -115,17 +116,25 @@ class BacktestingEngine(object):
                 bar.close = float(d['close'])
                 bar.volume = d['volume']
 
-                date = str(d['date'])
-                bar.date = date
-                bar.time = str(d['time'])
-                if '-' in date:
-                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
-                else:
-                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+                dt = d['datetime']
 
-                #bar.time = '00:00:00'
-                #bar.datetime = bar.date + ' ' + bar.time
-                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
+                bar.date =  dt[:4] + dt[5:7] + dt[8:10]
+                bar.time =  dt[11:19]
+                bar.datetime = bar.date + ' ' + bar.time
+                # print(bar.datetime, bar.date, bar.time)
+                # return
+
+                # date = str(d['date'])
+                # bar.date = date
+                # bar.time = str(d['time'])
+                # if '-' in date:
+                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                # else:
+                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+                #
+                # #bar.time = '00:00:00'
+                # #bar.datetime = bar.date + ' ' + bar.time
+                # bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
 
                 barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.vtSymbol] = bar
@@ -167,11 +176,14 @@ class BacktestingEngine(object):
         """运行回测"""
         g5 = BarGenerator('min5')
 
+        print(len(self.dataDict))
+
         for dt, barDict in self.dataDict.items():
             if dt < self.startDt or dt >  self.endDt:
+                print(dt)
                 continue
 
-            print(dt)
+            print('here')
             for bar in barDict.values():
                 bar_min5 = g5.update_bar(bar)
                 if bar_min5 is not None:
@@ -461,21 +473,21 @@ def test_param():
 
 
 def test_one():
-    vtSymbol = 'CF001'
-    start_date = '20191014 21:00:00'
-    end_date   = '20191018 15:00:00'
+    # vtSymbol = 'CF001'
+    # start_date = '20191014 21:00:00'
+    # end_date   = '20191018 15:00:00'
 
 
     # vtSymbol = 'rb1901'
     # start_date = '20180515 00:00:00'
     # end_date   = '20181231 00:00:00'
     #
-    # vtSymbol = 'CF901'
-    # start_date = '20180111 00:00:00'
-    # end_date   = '20181231 00:00:00'
+    vtSymbol = 'CF901'
+    start_date = '20180121 00:00:00'
+    end_date   = '20181231 00:00:00'
 
     #signal_param = {}
-    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.2}}
+    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     run_once(vtSymbol,start_date,end_date,signal_param)
 
 

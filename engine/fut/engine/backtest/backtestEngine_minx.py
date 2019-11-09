@@ -342,8 +342,8 @@ def run_once(symbol,start_date,end_date,signal_param):
         e = BacktestingEngine([symbol])
         e.setPeriod(start_date, end_date)
         e.loadData()
-        #e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
-        e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
+        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
+        #e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
 
         e.runBacktesting()
 
@@ -400,9 +400,9 @@ def test_param():
 
 
 def test_one():
-    vtSymbol = 'IF99'
-    start_date = '20160101 21:00:00'
-    end_date   = '20181230 15:00:00'
+    # vtSymbol = 'IF99'
+    # start_date = '20160101 21:00:00'
+    # end_date   = '20181230 15:00:00'
 
     # vtSymbol = 'CF001'
     # start_date = '20191014 21:00:00'
@@ -412,12 +412,12 @@ def test_one():
     # start_date = '20180515 00:00:00'
     # end_date   = '20181231 00:00:00'
 
-    # vtSymbol = 'CF901'
-    # start_date = '20180119 00:00:00'
-    # end_date   = '20181231 00:00:00'
+    vtSymbol = 'CF901'
+    start_date = '20180119 00:00:00'
+    end_date   = '20181231 00:00:00'
 
     #signal_param = {}
-    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.2}}
+    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     run_once(vtSymbol,start_date,end_date,signal_param)
 
 
