@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+import os
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
@@ -84,14 +85,15 @@ class Fut_AtrRsiSignal(Signal):
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/cfg/signal_atrrsi_param.csv'
-        df = pd.read_csv(filename)
-        df = df[ df.pz == get_contract(self.vtSymbol).pz ]
-        if len(df) > 0:
-            rec = df.iloc[0,:]
-            self.rsiLength = rec.rsiLength
-            self.trailingPercent = rec.trailingPercent
-            self.victoryPercent = rec.victoryPercent
-            print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
+        if os.path.exists(filename):        
+            df = pd.read_csv(filename)
+            df = df[ df.pz == get_contract(self.vtSymbol).pz ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                self.rsiLength = rec.rsiLength
+                self.trailingPercent = rec.trailingPercent
+                self.victoryPercent = rec.victoryPercent
+                print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
@@ -233,6 +235,8 @@ class Fut_AtrRsiSignal(Signal):
         filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
         df = pd.read_csv(filename)
         df = df[df.vtSymbol == self.vtSymbol]
+        df = df.sort_values(by='datetime')
+        df = df.reset_index()
         if len(df) > 0:
             rec = df.iloc[-1,:]            # 取最近日期的记录
             self.unit = rec.unit

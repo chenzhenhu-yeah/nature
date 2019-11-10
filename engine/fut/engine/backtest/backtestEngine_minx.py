@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_BollPortfolio, Fut_TurtlePortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_AberrationPortfolio, Fut_TurtlePortfolio
 
 
 ########################################################################
@@ -183,6 +183,11 @@ class BacktestingEngine(object):
         else:
             sharpeRatio = 0
 
+        # r = [[item] for item in balanceList]
+        # #r = [[item] for item in netPnlList]
+        # df = pd.DataFrame(r)
+        # df.to_csv('a.csv',index=False)
+
         # 返回结果
         result = {
             'startDate': startDate,
@@ -275,7 +280,7 @@ class BacktestingEngine(object):
         pKDE.set_title('Daily Pnl Distribution')
         plt.hist(timeseries['netPnl'], bins=50)
 
-        plt.show()
+        # plt.show()
 
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
@@ -289,7 +294,7 @@ class BacktestingEngine(object):
         print(content)
 
     #----------------------------------------------------------------------
-    def calc_btKey(self):
+    def show_result_key(self):
         """返回回测信息"""
         timeseries, result = self.calculateResult()
 
@@ -337,91 +342,81 @@ def formatNumber(n):
     return format(rn, ',')  # 加上千分符
 
 
-def run_once(symbol,start_date,end_date,signal_param):
+def run_once(PortfolioClass,symbol,start_date,end_date,signal_param):
     # 创建回测引擎对象
-        e = BacktestingEngine([symbol])
-        e.setPeriod(start_date, end_date)
-        e.loadData()
-        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
-        #e.loadPortfolio(Fut_TurtlePortfolio, signal_param)
+    e = BacktestingEngine([symbol])
+    e.setPeriod(start_date, end_date)
+    e.loadData()
+    e.loadPortfolio(PortfolioClass, signal_param)
+    e.runBacktesting()
+    return e.show_result_key()
 
-        e.runBacktesting()
+    #e.showResult()
 
-        return e.calc_btKey()
-
-        #e.showResult()
-        #e.portfolio.daily_close()
-
-def run_batch():
-    pass
-    start_date = '20190926 21:05:00'
-    end_date   = '20190927 15:00:00'
-    symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
-
-
-def test_param():
-        # vtSymbol = 'ag1912'
-        # start_date = '20191015 21:00:00'
-        # end_date   = '20191018 15:00:00'
-
-        # vtSymbol = 'CF805'
-        # start_date = '20180111 00:00:00'
-        # end_date   = '20181231 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180106 00:00:00'
-        end_date   = '20180331 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180401 00:00:00'
-        end_date   = '20180631 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180701 00:00:00'
-        end_date   = '20180931 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20181001 00:00:00'
-        end_date   = '20181231 00:00:00'
-
-        r = []
-        symbol_list = [vtSymbol]
-
-        for symbol in symbol_list:
-            for trailingPercent in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-                for rsiLength in [5]:
-                    for victoryPercent in [0.1,0.2,0.3,0.4,0.5]:
-                        signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
-                        result = run_once(symbol,start_date,end_date,signal_param)
-                        r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
-
-        df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
-        df.to_csv('q4.csv', index=False)
-
-
-def test_one():
-    # vtSymbol = 'IF99'
-    # start_date = '20160101 21:00:00'
-    # end_date   = '20181230 15:00:00'
-
-    # vtSymbol = 'CF001'
-    # start_date = '20191014 21:00:00'
+def test_atrrsi_param(PortfolioClass):
+    # vtSymbol = 'ag1912'
+    # start_date = '20191015 21:00:00'
     # end_date   = '20191018 15:00:00'
-
-    # vtSymbol = 'rb1901'
-    # start_date = '20180515 00:00:00'
-    # end_date   = '20181231 00:00:00'
 
     vtSymbol = 'CF901'
     start_date = '20180119 00:00:00'
     end_date   = '20181231 00:00:00'
 
+    # vtSymbol = 'CF901'
+    # start_date = '20180106 00:00:00'
+    # end_date   = '20180331 00:00:00'
+    #
+    # vtSymbol = 'CF901'
+    # start_date = '20180401 00:00:00'
+    # end_date   = '20180631 00:00:00'
+    #
+    # vtSymbol = 'CF901'
+    # start_date = '20180701 00:00:00'
+    # end_date   = '20180931 00:00:00'
+    #
+    # vtSymbol = 'CF901'
+    # start_date = '20181001 00:00:00'
+    # end_date   = '20181231 00:00:00'
+
+    r = []
+    symbol_list = [vtSymbol]
+
+    for symbol in symbol_list:
+        for trailingPercent in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+            for rsiLength in [5]:
+                for victoryPercent in [0.1,0.2,0.3,0.4,0.5]:
+                    signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
+                    result = run_once(PortfolioClass,symbol,start_date,end_date,signal_param)
+                    r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
+
+    df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
+    df.to_csv('q1.csv', index=False)
+
+
+def test_one(PortfolioClass):
+    # vtSymbol = 'IF99'
+    # start_date = '20160101 21:00:00'
+    # end_date   = '20181230 15:00:00'
+
+    vtSymbol = 'CF001'
+    start_date = '20191014 21:00:00'
+    end_date   = '20191108 15:00:00'
+
+    # vtSymbol = 'ag1901'
+    # #vtSymbol = 'rb1901'
+    # # vtSymbol = 'CF901'
+    # start_date = '20180119 00:00:00'
+    # end_date   = '20181231 00:00:00'
+
     #signal_param = {}
     signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
-    run_once(vtSymbol,start_date,end_date,signal_param)
+    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param)
 
 
 if __name__ == '__main__':
-    test_one()
+    PortfolioClass = Fut_AtrRsiPortfolio
+    # PortfolioClass = Fut_TurtlePortfolio
+    # PortfolioClass = Fut_AberrationPortfolio
 
-    #test_param()
+    #test_one(PortfolioClass)
+    test_atrrsi_param(PortfolioClass)

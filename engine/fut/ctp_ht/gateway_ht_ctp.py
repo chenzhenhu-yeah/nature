@@ -99,10 +99,11 @@ class Gateway_Ht_CTP(object):
             # 流控
             time.sleep(1)
             pz = get_contract(code).pz
-            if pz not in  ['CF']:
-                return
+            if pz in  ['']:
+                print(pz, ' send order here!')
             else:
-                print('CF send order here!')
+                print(pz, ' just test order here!')
+                return
 
             if self.t.logined == False:
                 print('ctp trade not login')

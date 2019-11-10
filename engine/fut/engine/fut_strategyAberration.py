@@ -1,5 +1,6 @@
-Aberration# encoding: UTF-8
+# encoding: UTF-8
 
+import os
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
@@ -66,13 +67,14 @@ class Fut_AberrationSignal(Signal):
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/cfg/signal_aberration_param.csv'
-        df = pd.read_csv(filename)
-        df = df[ df.pz == get_contract(self.vtSymbol).pz ]
-        if len(df) > 0:
-            rec = df.iloc[0,:]
-            self.bollWindow = rec.bollWindow
-            self.bollDev = rec.bollDev
-            print('成功加载策略参数', self.bollWindow, self.bollDev)
+        if os.path.exists(filename):
+            df = pd.read_csv(filename)
+            df = df[ df.pz == get_contract(self.vtSymbol).pz ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                self.bollWindow = rec.bollWindow
+                self.bollDev = rec.bollDev
+                print('成功加载策略参数', self.bollWindow, self.bollDev)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
@@ -113,110 +115,57 @@ class Fut_AberrationSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        atrArray = self.am.atr(self.atrLength, array=True)
-        # print(len(atrArray))
-
-        self.atrValue = atrArray[-1]
-        self.atrMa = atrArray[-self.atrMaLength:].mean()
-
-        atrMa10 = atrArray[-10:].mean()
-        atrMa50 = atrArray[-50:].mean()
-
-        #self.iswave = False if atrMa10 < self.ratio_atrMa * atrMa50  else True
-        self.iswave = False if self.atrMa < self.ratio_atrMa * atrMa50  else True
-
-        self.rsiValue = self.am.rsi(self.rsiLength)
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        self.stop = (self.bollUp + self.bollDown)/2
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
 
         # 当前无仓位
         if self.unit == 0:
-            self.intraTradeHigh = bar.high
-            self.intraTradeLow = bar.low
 
-            # ATR数值上穿其移动平均线，说明行情短期内波动加大
-            # 即处于趋势的概率较大，适合CTA开仓
-            if self.atrValue > self.atrMa and self.iswave == False:
-                # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
-                if self.rsiValue > self.rsiBuy:
-                    # 这里为了保证成交，选择超价5个整指数点下单
-                    self.cost = bar.close
-                    self.stop = 0
-                    self.intraTradeHigh = bar.close
+            if bar.close > self.bollUp:
+                self.buy(bar.close, self.fixedSize)
 
-                    self.buy(bar.close, self.fixedSize)
-
-                elif self.rsiValue < self.rsiSell:
-                    self.cost = bar.close
-                    self.stop = 100E4
-                    self.intraTradeLow = bar.close
-
-                    self.short(bar.close, self.fixedSize)
+            if  bar.close < self.bollDown:
+                self.short(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif self.unit > 0:
-            # 计算多头持有期内的最高价，以及重置最低价
-            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-
-            #self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
-            if self.stop < self.cost:
-                self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
-            else:
-                self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
-
-            if bar.close <= self.stop:
-                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+            if bar.close < self.stop:
                 self.sell(bar.close, abs(self.unit))
 
         # 持有空头仓位
         elif self.unit < 0:
-            self.intraTradeLow = min(self.intraTradeLow, bar.low)
-
-            #self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
-            if self.stop > self.cost:
-                self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
-            else:
-                self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
-
-            #print(self.stop)
-
-            if bar.close >= self.stop:
-                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+            if bar.close > self.stop:
                 self.cover(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
     def load_var(self):
         filename = get_dss() +  'fut/check/signal_aberration_var.csv'
-        df = pd.read_csv(filename)
-        df = df[df.vtSymbol == self.vtSymbol]
-        if len(df) > 0:
-            rec = df.iloc[-1,:]            # 取最近日期的记录
-            self.unit = rec.unit
-            self.cost = rec.cost
-            self.intraTradeHigh = rec.intraTradeHigh
-            self.intraTradeLow = rec.intraTradeLow
-            self.stop = rec.stop
-            if rec.has_result == 1:
-                self.result = SignalResult()
-                self.result.unit = rec.result_unit
-                self.result.entry = rec.result_entry
-                self.result.exit = rec.result_exit
-                self.result.pnl = rec.result_pnl
+        if os.path.exists(filename):
+            df = pd.read_csv(filename)
+            df = df[df.vtSymbol == self.vtSymbol]
+            if len(df) > 0:
+                rec = df.iloc[-1,:]            # 取最近日期的记录
+                self.unit = rec.unit
+                if rec.has_result == 1:
+                    self.result = SignalResult()
+                    self.result.unit = rec.result_unit
+                    self.result.entry = rec.result_entry
+                    self.result.exit = rec.result_exit
+                    self.result.pnl = rec.result_pnl
 
     #----------------------------------------------------------------------
     def save_var(self):
         r = []
         if self.result is None:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit,  \
                    0, 0, 0, 0, 0 ] ]
         else:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit,  \
                    1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl ] ]
-        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
-                                      'intraTradeHigh','intraTradeLow','stop', \
+        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/check/signal_aberration_var.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
@@ -231,13 +180,8 @@ class Fut_AberrationSignal(Signal):
         self.result.open(price, change)
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
+               abs(change), price, 0 ] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl' ])
         filename = get_dss() +  'fut/deal/signal_aberration_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
@@ -249,13 +193,8 @@ class Fut_AberrationSignal(Signal):
         self.result.close(price)
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
-               0, price, self.result.pnl, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
+               0, price, self.result.pnl ] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl' ])
         filename = get_dss() +  'fut/deal/signal_aberration_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 

@@ -8,7 +8,7 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 import traceback
 
-from nature import send_instruction, get_dss, to_log
+from nature import send_instruction, get_dss
 
 DIRECTION_LONG = u'多'
 DIRECTION_SHORT = u'空'
@@ -207,26 +207,16 @@ class Portfolio(object):
         filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
         df = pd.read_csv(filename, sep='$')
         df = df.sort_values(by='datetime')
-        df = df.reset_index()
+        df = df.reset_index()    
         if len(df) > 0:
             rec = df.iloc[-1,:]
             self.portfolioValue = rec.portfolioValue
             d = eval(rec.posDict)
-            c = eval(rec.closeDict)
-            cnow = {}
 
             #self.posDict.update(d)
             for vtSymbol in self.vtSymbolList:
                 if vtSymbol in d:
                     self.posDict[vtSymbol] = d[vtSymbol]
-                if vtSymbol in c:
-                    cnow[vtSymbol] = c[vtSymbol]
-                else:
-                    cnow[vtSymbol] = 0
-
-            # 初始化DailyResult
-            self.result.updatePos(self.posDict)
-            self.result.updateClose(cnow)
 
         # 所有Signal读取保存到文件的变量
         for code in self.vtSymbolList:
@@ -240,34 +230,44 @@ class Portfolio(object):
             for signal in self.signalDict[code]:
                 signal.save_var()
 
-        # 计算result
+        # 保存posDict、portfolioValue到文件
+        dt = self.result.date
+        r = [ [dt, self.portfolioValue, str(self.posDict)] ]
+        df = pd.DataFrame(r, columns=['datetime','portfolioValue','posDict'])
+        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
+        df.to_csv(filename,index=False,sep='$',mode='a',header=False)
+
+        # 保存组合市值
         tr = []
-        totalNetPnl = 0
-        totalCommission = 0
+        totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl = 0, 0, 0, 0
         n = len(self.resultList)
         #print(n)
         for i in range(n):
             result = self.resultList[i]
+
+            # print(result.date)
+            # print(result.posDict)
+            # print(result.closeDict)
+
             result.calculatePnl()
+            totalTradeCount += result.tradeCount
+            totalTradingPnl += result.tradingPnl
+            totalHoldingPnl += result.holdingPnl
             totalNetPnl += result.netPnl
-            totalCommission += result.commission
 
             for vtSymbol, l in result.tradeDict.items():
                 for trade in l:
                     tr.append( [trade.vtSymbol,trade.dt,trade.direction,trade.offset,trade.price,trade.volume] )
 
+        r = [ [dt, totalTradeCount,totalTradingPnl,totalHoldingPnl,totalNetPnl] ]
+        df = pd.DataFrame(r, columns=['datetime','tradeCount','tradingPnl','holdingPnl','netPnl'])
+        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_value.csv'
+        df.to_csv(filename,index=False,mode='a',header=False)
+
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
         filename = self.engine.dss + 'fut/deal/portfolio_' + self.name + '_deal.csv'
         df.to_csv(filename,index=False,mode='a',header=False)
-
-        # 保存portfolioValue,posDict,closeDict到文件
-        dt = self.result.date
-        r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), round(totalCommission,2), str(self.posDict), str(self.result.closeDict)] ]
-        df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalCommission','posDict','closeDict'])
-        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
-        df.to_csv(filename,index=False,sep='$',mode='a',header=False)
-
 
 ########################################################################
 class TradeData(object):
@@ -362,18 +362,12 @@ class DailyResult(object):
         try:
             for vtSymbol, pos in self.posDict.items():
                 previousClose = self.previousCloseDict.get(vtSymbol, 0)
-                #close = self.closeDict[vtSymbol]
-                #防止出错
-                close = self.closeDict.get(vtSymbol, 0)
+                close = self.closeDict[vtSymbol]
+                ct = get_contract(vtSymbol)
+                size = ct.size
 
-                if close != 0 and previousClose != 0:
-                    ct = get_contract(vtSymbol)
-                    size = ct.size
-                    pnl = (close - previousClose) * pos * size
-                    self.holdingPnl += pnl
-                else:
-                    to_log(vtSymbol + ' close value not in result')
-
+                pnl = (close - previousClose) * pos * size
+                self.holdingPnl += pnl
         except Exception as e:
             traceback.print_exc()
             print('-'*30)
