@@ -48,7 +48,7 @@ class Fut_AtrRsiSignal(Signal):
     def __init__(self, portfolio, vtSymbol):
 
         # 策略参数
-        self.atrLength =1           # 计算ATR指标的窗口数
+        self.atrLength = 1           # 计算ATR指标的窗口数
         self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
@@ -85,7 +85,7 @@ class Fut_AtrRsiSignal(Signal):
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/cfg/signal_atrrsi_param.csv'
-        if os.path.exists(filename):        
+        if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
             if len(df) > 0:
@@ -152,25 +152,22 @@ class Fut_AtrRsiSignal(Signal):
         """计算技术指标"""
         atrArray = self.am.atr(self.atrLength, array=True)
         # print(len(atrArray))
-
-        atrArray20 = self.am.atr(20, array=True)
-        self.can_buy = False
-        if atrArray20[-1]>50 and atrArray20[-2]>50 and atrArray20[-3]>50:
-            self.can_buy = True
-        self.can_short = False
-        if atrArray20[-1]<50 and atrArray20[-2]<50 and atrArray20[-3]<50:
-            self.can_short = True
-
         self.atrValue = atrArray[-1]
         self.atrMa = atrArray[-self.atrMaLength:].mean()
-
         atrMa10 = atrArray[-10:].mean()
         atrMa50 = atrArray[-50:].mean()
-
         #self.iswave = False if atrMa10 < self.ratio_atrMa * atrMa50  else True
         self.iswave = False if self.atrMa < self.ratio_atrMa * atrMa50  else True
 
         self.rsiValue = self.am.rsi(self.rsiLength)
+        rsiArray20 = self.am.rsi(20, array=True)
+        self.can_buy = False
+        if rsiArray20[-1]>50 and rsiArray20[-2]>50 and rsiArray20[-3]>50:
+            self.can_buy = True
+        self.can_short = False
+        if rsiArray20[-1]<50 and rsiArray20[-2]<50 and rsiArray20[-3]<50:
+            self.can_short = True
+
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -184,7 +181,8 @@ class Fut_AtrRsiSignal(Signal):
             # 即处于趋势的概率较大，适合CTA开仓
             if self.atrValue > self.atrMa and self.iswave == False:
                 # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
-                if self.rsiValue > self.rsiBuy and self.can_buy == True:
+                #if self.rsiValue > self.rsiBuy and self.can_buy == True:
+                if self.rsiValue > self.rsiBuy:
                     # 这里为了保证成交，选择超价5个整指数点下单
                     self.cost = bar.close
                     self.stop = 0
@@ -192,7 +190,8 @@ class Fut_AtrRsiSignal(Signal):
 
                     self.buy(bar.close, self.fixedSize)
 
-                elif self.rsiValue < self.rsiSell and self.can_short == True:
+                #elif self.rsiValue < self.rsiSell and self.can_short == True:
+                elif self.rsiValue < self.rsiSell:
                     self.cost = bar.close
                     self.stop = 100E4
                     self.intraTradeLow = bar.close
@@ -286,7 +285,10 @@ class Fut_AtrRsiSignal(Signal):
                                       'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
 
     #----------------------------------------------------------------------
@@ -304,7 +306,10 @@ class Fut_AtrRsiSignal(Signal):
                                       'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
         self.result = None
 

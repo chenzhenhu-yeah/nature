@@ -23,14 +23,14 @@ def gen_kline(df1):
                                          opts.DataZoomOpts(is_show=False,type_="inside",xaxis_index=[0,1,2],range_start=98,range_end=100,), ],
                           legend_opts=opts.LegendOpts(is_show=False),
                           yaxis_opts=opts.AxisOpts(is_scale=True,splitarea_opts=opts.SplitAreaOpts(is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)) ),
-                          tooltip_opts=opts.TooltipOpts(
-                                                        trigger="axis",
-                                                        axis_pointer_type="cross",
-                                                        background_color="rgba(245, 245, 245, 0.8)",
-                                                        border_width=1,
-                                                        border_color="#ccc",
-                                                        textstyle_opts=opts.TextStyleOpts(color="#000"),
-                                                        ),
+                          # tooltip_opts=opts.TooltipOpts(
+                          #                               trigger="axis",
+                          #                               axis_pointer_type="cross",
+                          #                               background_color="rgba(245, 245, 245, 0.8)",
+                          #                               border_width=1,
+                          #                               border_color="#ccc",
+                          #                               textstyle_opts=opts.TextStyleOpts(color="#000"),
+                          #                               ),
                           # visualmap_opts=opts.VisualMapOpts(
                           #                                   is_show=False,
                           #                                   dimension=2,
@@ -40,11 +40,11 @@ def gen_kline(df1):
                           #                                       {"value": 1, "color": "#ec0000"},
                           #                                       {"value": -1, "color": "#00da3c"}, ],
                           #                                  ),
-                          axispointer_opts=opts.AxisPointerOpts(
-                                                                is_show=True,
-                                                                link=[{"xAxisIndex": "all"}],
-                                                                label=opts.LabelOpts(background_color="#777"),
-                                                               ),
+                          # axispointer_opts=opts.AxisPointerOpts(
+                          #                                       is_show=True,
+                          #                                       link=[{"xAxisIndex": "all"}],
+                          #                                       label=opts.LabelOpts(background_color="#777"),
+                          #                                      ),
                           # brush_opts=opts.BrushOpts(
                           #                             x_axis_index="all",
                           #                             brush_link="all",
@@ -61,7 +61,7 @@ def gen_rsi(df1):
     close_list = np.array(close_list)
 
     rsi_5 = talib.RSI(close_list, 5)
-    rsi_10 = talib.RSI(close_list, 10)
+    rsi_20 = talib.RSI(close_list, 20)
 
     line = Line()
     line.add_xaxis( xaxis_data=list(df1['datetime']) )
@@ -71,8 +71,8 @@ def gen_rsi(df1):
                     yaxis_index=1,
                     label_opts=opts.LabelOpts(is_show=False),
                   )
-    line.add_yaxis( 'rsi_10',
-                    y_axis=rsi_10,
+    line.add_yaxis( 'rsi_20',
+                    y_axis=rsi_20,
                     xaxis_index=1,
                     yaxis_index=1,
                     label_opts=opts.LabelOpts(is_show=False),
@@ -107,12 +107,12 @@ def gen_atr(df1):
 
     line = Line()
     line.add_xaxis( xaxis_data=list(df1['datetime']) )
-    line.add_yaxis( 'atr_1',
-                    y_axis=atr_1,
-                    xaxis_index=2,
-                    yaxis_index=2,
-                    label_opts=opts.LabelOpts(is_show=False),
-                  )
+    # line.add_yaxis( 'atr_1',
+    #                 y_axis=atr_1,
+    #                 xaxis_index=2,
+    #                 yaxis_index=2,
+    #                 label_opts=opts.LabelOpts(is_show=False),
+    #               )
     # line.add_yaxis( 'atr_10',
     #                 y_axis=atr_10,
     #                 xaxis_index=2,
@@ -185,15 +185,15 @@ def gen_poit_three(df2):
 
 def draw_charts():
 
-    vtSymbol = 'c2001'
+    vtSymbol = 'CF001'
 
     fn = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
     df1 = pd.read_csv(fn)
-    df1 = df1[df1.date >= '2019-10-15']
+    df1 = df1[df1.date >= '2019-10-12']
     df1['datetime'] = df1['date'] + ' ' + df1['time']
     # print(df1.head())
 
-    fn  = get_dss( )+ 'fut/check/signal_atrrsi_' + vtSymbol + '.csv'
+    fn  = get_dss( )+ 'fut/deal/signal_atrrsi_' + vtSymbol + '.csv'
     df2 = pd.read_csv(fn)
 
     kline = gen_kline(df1)

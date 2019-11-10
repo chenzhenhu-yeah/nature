@@ -382,9 +382,9 @@ def test_atrrsi_param(PortfolioClass):
     symbol_list = [vtSymbol]
 
     for symbol in symbol_list:
-        for trailingPercent in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+        for trailingPercent in [0.5,0.6, 0.7,0.8,0.9]:
             for rsiLength in [5]:
-                for victoryPercent in [0.1,0.2,0.3,0.4,0.5]:
+                for victoryPercent in [0.1,0.2,0.3,0.4]:
                     signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
                     result = run_once(PortfolioClass,symbol,start_date,end_date,signal_param)
                     r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
@@ -412,11 +412,10 @@ def test_one(PortfolioClass):
     signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param)
 
-
 if __name__ == '__main__':
     PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
 
-    #test_one(PortfolioClass)
-    test_atrrsi_param(PortfolioClass)
+    test_one(PortfolioClass)
+    #test_atrrsi_param(PortfolioClass)
