@@ -4,14 +4,46 @@ import pandas as pd
 import time
 from datetime import datetime
 import json
+from csv import DictReader
 import smtplib
 from email.mime.text import MIMEText
 
 from nature import to_log
 
+
+class Contract(object):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
+        """Constructor"""
+        self.pz = pz
+        self.size = size
+        self.price_tick = price_tick
+        self.variable_commission = variable_commission
+        self.fixed_commission = fixed_commission
+        self.slippage = slippage
+        self.exchangeID = exchangeID
+
+def get_contract(symbol):
+    pz = symbol[:2]
+    if pz.isalpha():
+        pass
+    else:
+        pz = symbol[:1]
+
+    contract_dict = {}
+    filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+    with open(filename_setting_fut,encoding='utf-8') as f:
+        r = DictReader(f)
+        for d in r:
+            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
+
+    if pz in contract_dict:
+        return contract_dict[pz]
+    else:
+        return None
+        #assert False
+
 def send_email(dss, subject, content):
-    return
-    
+
     # # 第三方 SMTP 服务
     # mail_host = 'smtp.yeah.net'              # 设置服务器
     # mail_username = 'chenzhenhu@yeah.net'   # 用户名
@@ -25,8 +57,13 @@ def send_email(dss, subject, content):
     mail_auth_password = setting['mail_auth_password']     # 授权密码
     # print(mail_host, mail_username, mail_auth_password)
 
+    # # 第三方 SMTP 服务
+    # mail_host = 'smtp.qq.com'              # 设置服务器
+    # mail_username = '395772397@qq.com'   # 用户名
+    # mail_auth_password = "pwqgqmexjvhbbhjd"       # 授权密码
+
     sender = setting['sender']
-    receivers = setting['receivers']         # 一个收件人
+    receivers = setting['receivers']
     #receivers = '270114497@qq.com, zhenghaishu@126.com' # 多个收件人
 
     try:
@@ -108,5 +145,7 @@ def get_ts_code(code):
     return code
 
 if __name__ == '__main__':
-    get_dss()
+    dss = get_dss()
+    send_email(dss, 'subject', 'content')
+
     pass

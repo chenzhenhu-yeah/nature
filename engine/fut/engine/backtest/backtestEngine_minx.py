@@ -398,24 +398,24 @@ def test_one(PortfolioClass):
     # start_date = '20160101 21:00:00'
     # end_date   = '20181230 15:00:00'
 
-    vtSymbol = 'CF001'
-    start_date = '20191014 21:00:00'
-    end_date   = '20191108 15:00:00'
+    # vtSymbol = 'CF001'
+    # start_date = '20191014 21:00:00'
+    # end_date   = '20191108 15:00:00'
 
     # vtSymbol = 'ag1901'
     # #vtSymbol = 'rb1901'
-    # # vtSymbol = 'CF901'
-    # start_date = '20180119 00:00:00'
-    # end_date   = '20181231 00:00:00'
+    vtSymbol = 'CF901'
+    start_date = '20180119 00:00:00'
+    end_date   = '20181231 00:00:00'
 
     #signal_param = {}
     signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param)
 
 if __name__ == '__main__':
-    PortfolioClass = Fut_AtrRsiPortfolio
+    #PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
-    # PortfolioClass = Fut_AberrationPortfolio
+    PortfolioClass = Fut_AberrationPortfolio
 
     test_one(PortfolioClass)
     #test_atrrsi_param(PortfolioClass)

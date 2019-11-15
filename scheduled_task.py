@@ -10,11 +10,14 @@ import traceback
 
 from nature import to_log
 from nature import get_trading_dates, send_email
-from nature.down_k.down_data import down_data
+
 from nature.engine.stk.nearboll.use_ma import use_ma
 from nature import has_factor, stk_report
 from nature.hu_signal.price_signal import price_signal
+
+from nature.down_k.down_data import down_data
 from nature.engine.fut.ctp_ht.tick2bar import tick2bar
+from nature.engine.fut.examine import examine
 
 dss = r'../data/'
 
@@ -64,13 +67,6 @@ def mail_1815():
     except Exception as e:
         traceback.print_exc()
 
-def down_data_0100():
-
-    now = datetime.now()
-    weekday = int(now.strftime('%w'))
-    if 2 <= weekday <= 6:
-        print('\n' + str(now) + " down_data begin...")
-        down_data(dss)
 
 def mail_0200():
     try:
@@ -110,9 +106,18 @@ def run_tick2bar():
         print(today,weekday)
         if 1 <= weekday <= 5:
             tick2bar(today)
-
     except Exception as e:
         traceback.print_exc()
+
+def run_down_data():
+    now = datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 2 <= weekday <= 6:
+        print('\n' + str(now) + " down_data begin...")
+        down_data(dss)
+
+def run_examine():
+    pass
 
 if __name__ == '__main__':
     try:
@@ -122,13 +127,14 @@ if __name__ == '__main__':
 
         # 盘中
         schedule.every().day.at("15:10").do(run_tick2bar)
-        schedule.every().day.at("15:15").do(mail_1515)
+        #schedule.every().day.at("15:15").do(mail_1515)
 
         #盘后
         #schedule.every().day.at("00:15").do(mail_1815)
-        schedule.every().day.at("01:00").do(down_data_0100)
         #schedule.every().day.at("02:00").do(mail_0200)
-        schedule.every().day.at("02:30").do(run_price_signal)
+        #schedule.every().day.at("02:30").do(run_price_signal)
+        schedule.every().day.at("03:00").do(run_down_data)
+        schedule.every().day.at("03:30").do(run_examine)
 
         print('schedule begin...')
         while True:

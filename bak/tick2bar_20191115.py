@@ -13,7 +13,7 @@ from nature import CtpTrade
 from nature import CtpQuote
 from nature import Tick
 
-from nature import VtBarData, to_log, BarGenerator
+from nature import VtBarData, to_log
 from nature import SOCKET_BAR, get_dss
 
 
@@ -154,6 +154,52 @@ def proc_segment(df1,begin,end,num):
     assert len(r) == num
     return r
 
+def Generate_Bar_Min5(new_bar, temp_bar, r):
+    """生成、推送、保存Bar"""
+    if temp_bar != []:
+        bar = temp_bar.pop()
+    else:
+        bar = new_bar
+        temp_bar.append(bar)
+        return
+
+    if bar.high < new_bar.high:
+            bar.high = new_bar.high
+    if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+    bar.close = new_bar.close
+
+    if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
+        # 将 bar的分钟改为整点，推送并保存bar
+        bar.date = new_bar.date
+        bar.time = new_bar.time[:-2] + '00'
+        r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
+    else:
+        temp_bar.append(bar)
+
+#----------------------------------------------------------------------
+def Generate_Bar_Min15(new_bar, temp_bar, r):
+    """生成、推送、保存Bar"""
+    if temp_bar != []:
+        bar = temp_bar.pop()
+    else:
+        bar = new_bar
+        temp_bar.append(bar)
+        return
+
+    if bar.high < new_bar.high:
+            bar.high = new_bar.high
+    if bar.low > new_bar.low:
+            bar.low =  new_bar.low
+    bar.close = new_bar.close
+
+    if new_bar.time[3:5] in ['15','30','45','00']:
+        # 将 bar的分钟改为整点，推送并保存bar
+        bar.date = new_bar.date
+        bar.time = new_bar.time[:-2] + '00'
+        r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
+    else:
+        temp_bar.append(bar)
 
 def tick2bar(tradeDay):
 
@@ -167,14 +213,14 @@ def tick2bar(tradeDay):
     symbols = setting['symbols_quote']
     symbol_list = symbols.split(',')
 
-    # symbol_list = ['ag1912']
+    #symbol_list = ['ag1912']
 
     # 逐一处理每个业务品种
     for symbol in symbol_list:
         # 读取品种的tick文件
         fn = get_dss() + 'fut/tick/tick_' + tradeDay + '_' + symbol + '.csv'
+        print(fn)
         if os.path.exists(fn):
-            print(fn+' begin ... ')
             df = pd.read_csv(fn)
             # print(df.head(3))
 
@@ -222,27 +268,19 @@ def tick2bar(tradeDay):
             else:
                 df_symbol.to_csv(fname, index=False, mode='a')
 
-            # 生成minx
-            g5 = BarGenerator('min5')
-            g15 = BarGenerator('min15')
-            g30 = BarGenerator('min30')
-            g_day = BarGenerator('day')
+            # 生成min5
+            r5 = []
+            temp_bar = []
             for row in r1:
                 new_bar = VtBarData()
-                new_bar.vtSymbol = symbol
                 new_bar.date = row[0]
                 new_bar.time = row[1]
                 new_bar.open = row[2]
                 new_bar.high = row[3]
                 new_bar.low =  row[4]
                 new_bar.close = row[5]
-                g5.update_bar(new_bar)
-                g15.update_bar(new_bar)
-                g30.update_bar(new_bar)
-                g_day.update_bar(new_bar)
+                Generate_Bar_Min5(new_bar, temp_bar, r5)
 
-            # 保存min5
-            r5 = g5.r_dict[symbol]
             df_symbol = pd.DataFrame(r5, columns=['date','time','open','high','low','close','volume'])
             fname = get_dss() + 'fut/bar/min5_' + symbol + '.csv'
             if os.path.exists(fname):
@@ -250,8 +288,19 @@ def tick2bar(tradeDay):
             else:
                 df_symbol.to_csv(fname, index=False, mode='a')
 
-            # 保存min15
-            r15 = g15.r_dict[symbol]
+            # 生成min15
+            r15 = []
+            temp_bar = []
+            for row in r1:
+                new_bar = VtBarData()
+                new_bar.date = row[0]
+                new_bar.time = row[1]
+                new_bar.open = row[2]
+                new_bar.high = row[3]
+                new_bar.low =  row[4]
+                new_bar.close = row[5]
+                Generate_Bar_Min15(new_bar, temp_bar, r15)
+
             df_symbol = pd.DataFrame(r15, columns=['date','time','open','high','low','close','volume'])
             fname = get_dss() + 'fut/bar/min15_' + symbol + '.csv'
             if os.path.exists(fname):
@@ -259,26 +308,6 @@ def tick2bar(tradeDay):
             else:
                 df_symbol.to_csv(fname, index=False, mode='a')
 
-            # 保存min30
-            r30 = g30.r_dict[symbol]
-            df_symbol = pd.DataFrame(r30, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/min30_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-
-            # 保存day
-            r_day = g_day.r_dict[symbol]
-            df_symbol = pd.DataFrame(r_day, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/day_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-        else:
-            print(fn+' not exists')
-
 if __name__ == "__main__":
-    tradeDay = '20191021'
+    tradeDay = '20191107'
     tick2bar(tradeDay)

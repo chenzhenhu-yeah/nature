@@ -8,7 +8,7 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 import traceback
 
-from nature import send_instruction, get_dss, to_log, get_contract
+from nature import send_instruction, get_dss, to_log
 
 DIRECTION_LONG = u'多'
 DIRECTION_SHORT = u'空'
@@ -24,6 +24,37 @@ EMPTY_UNICODE = u''
 EMPTY_INT = 0
 EMPTY_FLOAT = 0.0
 
+
+class Contract(object):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
+        """Constructor"""
+        self.pz = pz
+        self.size = size
+        self.price_tick = price_tick
+        self.variable_commission = variable_commission
+        self.fixed_commission = fixed_commission
+        self.slippage = slippage
+        self.exchangeID = exchangeID
+
+contract_dict = {}
+filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+with open(filename_setting_fut,encoding='utf-8') as f:
+    r = DictReader(f)
+    for d in r:
+        contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
+
+def get_contract(symbol):
+    pz = symbol[:2]
+    if pz.isalpha():
+        pass
+    else:
+        pz = symbol[:1]
+
+    if pz in contract_dict:
+        return contract_dict[pz]
+    else:
+        #return None
+        assert False
 
 ########################################################################
 class SignalResult(object):
@@ -119,7 +150,7 @@ class Portfolio(object):
     """
 
     #----------------------------------------------------------------------
-    def __init__(self, SignalClass1, engine, symbol_list, signal1_param={}, SignalClass2=None, signal2_param={}):
+    def __init__(self, SignalClass, engine, symbol_list, signal_param={}):
         """Constructor"""
         self.engine = engine                 # 所属引擎
         self.portfolioValue = 100E4          # 组合市值
@@ -133,29 +164,17 @@ class Portfolio(object):
         # 初始化信号字典、持仓字典
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
-            # 每个portfolio可以管理多种类型signal,暂只管理同两种类型的signal
-            signal1 = SignalClass1(self, vtSymbol)
+            # 每个portfolio可以管理多种类型signal,暂只管理同一种类型的signal
+            signal1 = SignalClass(self, vtSymbol)
             signal1.load_param()
 
-            if vtSymbol in signal1_param:
-                param_dict = signal1_param[vtSymbol]
+            if vtSymbol in signal_param:
+                param_dict = signal_param[vtSymbol]
                 signal1.set_param(param_dict)
                 #print('here')
 
             l = self.signalDict[vtSymbol]
             l.append(signal1)
-
-            if SignalClass2 is not None:
-                signal2 = SignalClass2(self, vtSymbol)
-                signal2.load_param()
-
-                if vtSymbol in signal2_param:
-                    param_dict = signal2_param[vtSymbol]
-                    signal2.set_param(param_dict)
-                    #print('here')
-
-                l.append(signal2)
-
 
         print(u'投资组合的合约代码%s' %(self.vtSymbolList))
 
@@ -440,92 +459,6 @@ class VtBarData(VtBaseData):
         print(self.high)
         print(self.low)
         print(self.close)
-
-
-
-
-########################################################################
-class BarGenerator(object):
-
-    #----------------------------------------------------------------------
-    def __init__(self, minx):
-        """Constructor"""
-        self.minx = minx
-        self.bar_dict = {}
-        self.r_dict = {}
-
-    #----------------------------------------------------------------------
-    def update_bar(self, new_bar):
-        symbol = new_bar.vtSymbol
-
-        if symbol in self.r_dict:
-            r = self.r_dict[symbol]
-        else:
-            r = []
-            self.r_dict[symbol] = r
-
-        if symbol in self.bar_dict:
-            bar = self.bar_dict[symbol]
-        else:
-            bar = new_bar
-            self.bar_dict[symbol] = bar
-            return None
-
-        # 更新数据
-        if bar.high < new_bar.high:
-            bar.high = new_bar.high
-        if bar.low > new_bar.low:
-            bar.low =  new_bar.low
-        bar.close = new_bar.close
-
-        if self.minx == 'min5':
-            if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
-                # 将 bar的秒钟改为整点，推送并保存bar
-                bar.time = new_bar.time[:-2] + '00'
-                self.bar_dict.pop(symbol)
-                r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-                return bar
-
-        elif self.minx == 'min15':
-            if new_bar.time[3:5] in ['15','30','45','00']:
-                bar.time = new_bar.time[:-2] + '00'
-                self.bar_dict.pop(symbol)
-                r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-                return bar
-
-        elif self.minx == 'min30':
-            min30_list = ['09:30','10:00','10:45','11:15',
-                          '13:45','14:15','14:45','15:00', \
-                          '21:30','22:00','22:30','23:00', \
-                          '23:30','00:00','00:30','01:00', \
-                          '01:30','02:00','02:30']
-            if new_bar.time[:5] in min30_list:
-                bar.time = new_bar.time[:-2] + '00'
-                self.bar_dict.pop(symbol)
-                r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-                return bar
-
-        elif self.minx == 'day':
-            if new_bar.time[:5] in ['15:00']:
-                bar.time = new_bar.time[:-2] + '00'
-                self.bar_dict.pop(symbol)
-                r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
-                return bar
-
-        self.bar_dict[symbol] = bar
-        return None
-
-    #----------------------------------------------------------------------
-    def save_bar(self, bar):
-        df = pd.DataFrame([bar.__dict__])
-        cols = ['date','time','open','high','low','close','volume']
-        df = df[cols]
-
-        fname = get_dss() + 'fut/put/rec/' + self.minx + '_' + bar.vtSymbol + '.csv'
-        if os.path.exists(fname):
-            df.to_csv(fname, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fname, index=False, mode='a')
 
 
 ########################################################################
