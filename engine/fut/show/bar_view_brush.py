@@ -84,7 +84,8 @@ def gen_rsi(df1):
     line.set_series_opts(
                         label_opts=opts.LabelOpts(is_show=False),
                         markline_opts=opts.MarkLineOpts(
-                            data=[opts.MarkLineItem(y=66),opts.MarkLineItem(y=33),],
+                            #data=[opts.MarkLineItem(y=66),opts.MarkLineItem(y=33),],
+                            data=[opts.MarkLineItem(y=50)],
                             )
                         )
 
@@ -102,8 +103,8 @@ def gen_atr(df1):
 
     atr_1 = talib.ATR(high_list, low_list, close_list, 1)
     atr_10 =  talib.SMA(atr_1, 10)
-    atr_14 =  talib.SMA(atr_1, 14)
-    atr_50 = talib.SMA(atr_1, 50) * 0.8
+    atr_20 =  talib.SMA(atr_1, 20)
+    atr_50 = talib.SMA(atr_1, 50)
 
     line = Line()
     line.add_xaxis( xaxis_data=list(df1['datetime']) )
@@ -119,13 +120,13 @@ def gen_atr(df1):
     #                 yaxis_index=2,
     #                 label_opts=opts.LabelOpts(is_show=False),
     #               )
-    line.add_yaxis( 'atr14',
-                    y_axis=atr_14,
+    line.add_yaxis( 'atr_20',
+                    y_axis=atr_20,
                     xaxis_index=2,
                     yaxis_index=2,
                     label_opts=opts.LabelOpts(is_show=False),
                   )
-    line.add_yaxis( 'atr50',
+    line.add_yaxis( 'atr_50',
                     y_axis=atr_50,
                     xaxis_index=2,
                     yaxis_index=2,

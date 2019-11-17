@@ -1,4 +1,5 @@
 
+
 import pandas as pd
 from flask import Flask, render_template, request, redirect
 from datetime import datetime
@@ -39,8 +40,11 @@ def fut_csv():
 @app.route('/show_fut_csv', methods=['post'])
 def show_fut_csv():
     filename = get_dss() + request.form.get('filename')
-    #df = pd.read_csv(filename,sep=' ',header=None,encoding='gbk')
-    df = pd.read_csv(filename, dtype='str')
+    if 'var' in filename:
+        df = pd.read_csv(filename, sep='$', dtype='str')
+    else:
+        #df = pd.read_csv(filename, sep=',', dtype='str')
+        df = pd.read_csv(filename, dtype='str')
 
     r = []
     for i, row in df.iterrows():
@@ -154,6 +158,76 @@ def fut_trade_time():
 
     return render_template("fut_trade_time.html",title="fut_trade_time",rows=r)
 
+@app.route('/fut_signal_pause', methods=['get','post'])
+def fut_signal_pause():
+    filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
+    if request.method == "POST":
+        signal = request.form.get('signal')
+        symbols = request.form.get('symbols')
+        kind = request.form.get('kind')
+
+        r = [[signal,symbols]]
+        cols = ['signal','symbols']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, sep='$',  mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, sep='$',  dtype='str')
+            df = df[df.signal != signal ]
+            df.to_csv(filename, sep='$',  index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, sep='$',  dtype='str')
+            df = df[df.signal != signal ]
+            df.to_csv(filename, sep='$',  index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, sep='$', mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, sep='$', dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("fut_signal_pause.html",title="fut_signal_pause",rows=r)
+
+@app.route('/fut_signal_atrrsi', methods=['get','post'])
+def fut_signal_atrrsi():
+    filename = get_dss() + 'fut/cfg/signal_atrrsi_param.csv'
+    if request.method == "POST":
+        pz = request.form.get('pz')
+        rsiLength = request.form.get('rsiLength')
+        trailingPercent = request.form.get('trailingPercent')
+        victoryPercent = request.form.get('victoryPercent')
+
+        kind = request.form.get('kind')
+
+        r = [[pz,rsiLength,trailingPercent,victoryPercent]]
+        cols = ['pz','rsiLength','trailingPercent','victoryPercent']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename,  index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename,  dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    #return str(r)
+    return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
+
 @app.route('/log')
 def show_log():
     items = read_log_today()
@@ -194,4 +268,5 @@ def confirm_ins():
 
 if __name__ == '__main__':
     #app.run(debug=True)
+
     app.run(host='0.0.0.0')

@@ -31,9 +31,6 @@ class Fut_AberrationSignal_Duo(Signal):
 
         # 需要持久化保存的变量
         self.stop = 0                            # 多头止损
-        self.intraTradeHigh = 0
-        self.trailingPercent = 0.8
-
 
         Signal.__init__(self, portfolio, vtSymbol)
 
@@ -97,24 +94,18 @@ class Fut_AberrationSignal_Duo(Signal):
         # 当前无仓位
         if self.unit == 0:
             if bar.close > self.bollUp:
-                self.intraTradeHigh = bar.close
                 self.buy(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif self.unit > 0:
-            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-
-            self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
-            #self.stop = self.intraTradeHigh * (1-self.trailingPercent/100)
-
             if bar.close < self.stop:
                 self.sell(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
     def load_var(self):
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
-        if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+        if os.path.exists(filename, sep='$'):
+            df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
             if len(df) > 0:
                 rec = df.iloc[-1,:]            # 取最近日期的记录
@@ -328,8 +319,8 @@ class Fut_AberrationPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         #Portfolio.__init__(self, Fut_AberrationSignal_Duo, engine, symbol_list, signal_param, Fut_AberrationSignal_Kong, signal_param)
-        Portfolio.__init__(self, Fut_AberrationSignal_Duo, engine, symbol_list, signal_param, None, None)
-        #Portfolio.__init__(self, Fut_AberrationSignal_Kong, engine, symbol_list, signal_param, None, None)
+        #Portfolio.__init__(self, Fut_AberrationSignal_Duo, engine, symbol_list, signal_param, None, None)
+        Portfolio.__init__(self, Fut_AberrationSignal_Kong, engine, symbol_list, signal_param, None, None)
         self.name = 'aberration'
 
     #----------------------------------------------------------------------
