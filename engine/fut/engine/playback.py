@@ -23,7 +23,7 @@ from nature import to_log, is_trade_day, send_email, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio
 #from ipdb import set_trace
 
 
@@ -123,9 +123,15 @@ class FutEngine(object):
 
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
+
         symbols = setting['symbols_atrrsi']
         atrrsi_symbol_list = symbols.split(',')
         self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+
+        symbols = setting['symbols_rsiboll']
+        rsiboll_symbol_list = symbols.split(',')
+        self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
+
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):

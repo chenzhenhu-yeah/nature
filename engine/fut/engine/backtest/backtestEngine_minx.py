@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_AberrationPortfolio, Fut_TurtlePortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio, Fut_TurtlePortfolio
 
 
 ########################################################################
@@ -398,9 +398,9 @@ def test_one(PortfolioClass):
     # start_date = '20160101 21:00:00'
     # end_date   = '20181230 15:00:00'
 
-    # vtSymbol = 'CF001'
-    # start_date = '20191014 21:00:00'
-    # end_date   = '20191108 15:00:00'
+    vtSymbol = 'CF001'
+    start_date = '20191014 21:00:00'
+    end_date   = '20191108 15:00:00'
 
     #vtSymbol = 'ag1901'
     #vtSymbol = 'rb1901'
@@ -415,7 +415,8 @@ def test_one(PortfolioClass):
 if __name__ == '__main__':
     PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
-    #PortfolioClass = Fut_AberrationPortfolio
+    # PortfolioClass = Fut_AberrationPortfolio
+    #PortfolioClass = Fut_RsiBollPortfolio
 
     test_one(PortfolioClass)
     #test_atrrsi_param(PortfolioClass)

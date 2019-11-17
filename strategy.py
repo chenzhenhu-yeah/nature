@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+import os
 import pandas as pd
 import numpy as np
 import talib
@@ -198,28 +199,29 @@ class Portfolio(object):
     def daily_open(self):
         # 从文件中读取posDict、portfolioValue
         filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
-        df = pd.read_csv(filename, sep='$')
-        df = df.sort_values(by='datetime')
-        df = df.reset_index()
-        if len(df) > 0:
-            rec = df.iloc[-1,:]
-            self.portfolioValue = rec.portfolioValue
-            d = eval(rec.posDict)
-            c = eval(rec.closeDict)
-            cnow = {}
+        if os.path.exists(filename):
+            df = pd.read_csv(filename, sep='$')
+            df = df.sort_values(by='datetime')
+            df = df.reset_index()
+            if len(df) > 0:
+                rec = df.iloc[-1,:]
+                self.portfolioValue = rec.portfolioValue
+                d = eval(rec.posDict)
+                c = eval(rec.closeDict)
+                cnow = {}
 
-            #self.posDict.update(d)
-            for vtSymbol in self.vtSymbolList:
-                if vtSymbol in d:
-                    self.posDict[vtSymbol] = d[vtSymbol]
-                if vtSymbol in c:
-                    cnow[vtSymbol] = c[vtSymbol]
-                else:
-                    cnow[vtSymbol] = 0
+                #self.posDict.update(d)
+                for vtSymbol in self.vtSymbolList:
+                    if vtSymbol in d:
+                        self.posDict[vtSymbol] = d[vtSymbol]
+                    if vtSymbol in c:
+                        cnow[vtSymbol] = c[vtSymbol]
+                    else:
+                        cnow[vtSymbol] = 0
 
-            # 初始化DailyResult
-            self.result.updatePos(self.posDict)
-            self.result.updateClose(cnow)
+                # 初始化DailyResult
+                self.result.updatePos(self.posDict)
+                self.result.updateClose(cnow)
 
         # 所有Signal读取保存到文件的变量
         for code in self.vtSymbolList:
@@ -252,14 +254,20 @@ class Portfolio(object):
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
         filename = self.engine.dss + 'fut/deal/portfolio_' + self.name + '_deal.csv'
-        df.to_csv(filename,index=False,mode='a',header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename,index=False,mode='a',header=False)
+        else:
+            df.to_csv(filename,index=False)
 
         # 保存portfolioValue,posDict,closeDict到文件
         dt = self.result.date
         r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), round(totalCommission,2), str(self.posDict), str(self.result.closeDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalCommission','posDict','closeDict'])
         filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
-        df.to_csv(filename,index=False,sep='$',mode='a',header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename,index=False,sep='$',mode='a',header=False)
+        else:
+            df.to_csv(filename,index=False,sep='$')
 
 
 ########################################################################

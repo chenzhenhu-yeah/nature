@@ -37,6 +37,7 @@ from nature.engine.stk.nearboll.stk_nearBollStrategy import stk_NearBollPortfoli
 from nature.engine.stk.stkEngine import StkEngine
 
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
+from nature.engine.fut.engine.fut_strategyRsiBoll import Fut_RsiBollPortfolio
 from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyAberration import Fut_AberrationPortfolio
 from nature.engine.fut.engine.fut_strategyTurtle import Fut_TurtlePortfolio

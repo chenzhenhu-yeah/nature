@@ -11,36 +11,36 @@ from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 
 ########################################################################
-class Fut_AtrRsiSignal_Duo(Signal):
+class Fut_RsiBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'duo'
 
         # 策略参数
-        self.atrLength = 1           # 计算ATR指标的窗口数
-        self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
         self.trailingPercent = 0.7   # 百分比移动止损
         self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
-        self.ratio_atrMa = 0.8
 
-        self.initBars = 60           # 初始化数据所用的天数
+        self.initBars = 90           # 初始化数据所用的天数
         self.minx = 'min5'
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
         self.rsiSell = 50 - self.rsiEntry
 
         # 策略临时变量
-        self.atrValue = 0                        # 最新的ATR指标数值
-        self.atrMa = 0                           # ATR移动平均的数值
-        self.rsiValue = 0                        # RSI指标的数值
-        self.iswave = True
+        self.atr_short = 0
+        self.atr_mid = 0
+        self.atr_long = 0
 
+        self.rsiValue = 0                        # RSI指标的数值
         self.can_buy = False
         self.can_short = False
+
+        self.bollUp = 0
+        self.bollDown = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -52,7 +52,7 @@ class Fut_AtrRsiSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_atrrsi_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_rsiboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -118,23 +118,24 @@ class Fut_AtrRsiSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        atrArray = self.am.atr(self.atrLength, array=True)
-        # print(len(atrArray))
-        self.atrValue = atrArray[-1]
-        self.atrMa = atrArray[-self.atrMaLength:].mean()
-        atrMa10 = atrArray[-10:].mean()
-        atrMa50 = atrArray[-50:].mean()
-        self.iswave = False if self.atrMa < self.ratio_atrMa * atrMa50  else True
-        atr_condition = True if self.atrValue > self.atrMa and self.iswave == False else False
+        atrArray = self.am.atr(1, array=True)  # 长度为100，有效数据为initBars        # print(len(atrArray));  print(atrArray);  assert False
+        self.atr_short = atrArray[-3:].mean()
+        self.atr_mid = atrArray[-20:].mean()
+        self.atr_long = atrArray[-50:].mean()
+        atr_condition = True if self.atr_short > self.atr_mid else False
+
+        self.bollUp, self.bollDown = self.am.boll(80, 2)
+        boll_condition = True if self.bar.close > self.bollUp else False
 
         self.rsiValue = self.am.rsi(self.rsiLength)
-        rsi_condition  = True if self.rsiValue > self.rsiBuy else False
+        rsiArray20 = self.am.rsi(50, array=True)
+        rsi_condition  = True if self.rsiValue > self.rsiBuy and rsiArray20[-1] <= 60 else False
 
         self.can_buy = False
-        if rsi_condition and atr_condition:
+        if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
 
-    #----------------------------------------------------------------------
+    # #----------------------------------------------------------------------
     def generateSignal(self, bar):
 
         # 当前无仓位
@@ -166,7 +167,7 @@ class Fut_AtrRsiSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_atrrsi_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -200,7 +201,7 @@ class Fut_AtrRsiSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_atrrsi_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -217,13 +218,10 @@ class Fut_AtrRsiSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -238,13 +236,10 @@ class Fut_AtrRsiSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -254,36 +249,36 @@ class Fut_AtrRsiSignal_Duo(Signal):
 
 
 ########################################################################
-class Fut_AtrRsiSignal_Kong(Signal):
+class Fut_RsiBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'kong'
 
         # 策略参数
-        self.atrLength = 1           # 计算ATR指标的窗口数
-        self.atrMaLength = 14       # 计算ATR均线的窗口数
         self.rsiLength = 5           # 计算RSI的窗口数
         self.rsiEntry = 16           # RSI的开仓信号
         self.trailingPercent = 0.7   # 百分比移动止损
         self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
-        self.ratio_atrMa = 0.8
 
-        self.initBars = 60           # 初始化数据所用的天数
+        self.initBars = 90           # 初始化数据所用的天数
         self.minx = 'min5'
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
         self.rsiSell = 50 - self.rsiEntry
 
         # 策略临时变量
-        self.atrValue = 0                        # 最新的ATR指标数值
-        self.atrMa = 0                           # ATR移动平均的数值
-        self.rsiValue = 0                        # RSI指标的数值
-        self.iswave = True
+        self.atr_short = 0
+        self.atr_mid = 0
+        self.atr_long = 0
 
+        self.rsiValue = 0                        # RSI指标的数值
         self.can_buy = False
         self.can_short = False
+
+        self.bollUp = 0
+        self.bollDown = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -295,7 +290,7 @@ class Fut_AtrRsiSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_atrrsi_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_rsiboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -361,20 +356,21 @@ class Fut_AtrRsiSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        atrArray = self.am.atr(self.atrLength, array=True)
-        # print(len(atrArray))
-        self.atrValue = atrArray[-1]
-        self.atrMa = atrArray[-self.atrMaLength:].mean()
-        atrMa10 = atrArray[-10:].mean()
-        atrMa50 = atrArray[-50:].mean()
-        self.iswave = False if self.atrMa < self.ratio_atrMa * atrMa50  else True
-        atr_condition = True if self.atrValue > self.atrMa and self.iswave == False else False
+        atrArray = self.am.atr(1, array=True)  # 长度为100，有效数据为initBars        # print(len(atrArray));  print(atrArray);  assert False
+        self.atr_short = atrArray[-3:].mean()
+        self.atr_mid = atrArray[-20:].mean()
+        self.atr_long = atrArray[-50:].mean()
+        atr_condition = True if self.atr_short > self.atr_mid else False
+
+        self.bollUp, self.bollDown = self.am.boll(80, 2)
+        boll_condition = True if self.bar.close < self.bollDown else False
 
         self.rsiValue = self.am.rsi(self.rsiLength)
-        rsi_condition  = True if self.rsiValue < self.rsiSell else False
+        rsiArray20 = self.am.rsi(50, array=True)
+        rsi_condition  = True if self.rsiValue < self.rsiSell and rsiArray20[-1] >= 40 else False
 
         self.can_short = False
-        if rsi_condition and atr_condition:
+        if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
 
     #----------------------------------------------------------------------
@@ -410,7 +406,7 @@ class Fut_AtrRsiSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_atrrsi_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -444,7 +440,7 @@ class Fut_AtrRsiSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_atrrsi_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -461,13 +457,10 @@ class Fut_AtrRsiSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -482,13 +475,10 @@ class Fut_AtrRsiSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
-               self.atrValue, self.atrMa, self.rsiValue, \
-               self.iswave, self.intraTradeHigh, self.intraTradeLow, \
-               self.stop] ]
+               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -496,17 +486,17 @@ class Fut_AtrRsiSignal_Kong(Signal):
 
         self.result = None
 
-
 ########################################################################
-class Fut_AtrRsiPortfolio(Portfolio):
+class Fut_RsiBollPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.name = 'atrrsi'
+        self.name = 'rsiboll'
+        Portfolio.__init__(self, Fut_RsiBollSignal_Duo, engine, symbol_list, signal_param, Fut_RsiBollSignal_Kong, signal_param)
+        #Portfolio.__init__(self, Fut_RsiBollSignal_Duo, engine, symbol_list, signal_param, None, None)
+        #Portfolio.__init__(self, Fut_RsiBollSignal_Kong, engine, symbol_list, signal_param, None, None)
 
-        Portfolio.__init__(self, Fut_AtrRsiSignal_Duo, engine, symbol_list, signal_param, Fut_AtrRsiSignal_Kong, signal_param)
-        #Portfolio.__init__(self, Fut_AtrRsiSignal_Duo, engine, symbol_list, signal_param, None, None)
-        #Portfolio.__init__(self, Fut_AtrRsiSignal_Kong, engine, symbol_list, signal_param, None, None)
+
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):

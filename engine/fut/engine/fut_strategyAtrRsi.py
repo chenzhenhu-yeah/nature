@@ -235,7 +235,10 @@ class Fut_AtrRsiSignal(Signal):
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
-        df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False, sep='$')
 
     #----------------------------------------------------------------------
     def open(self, price, change):

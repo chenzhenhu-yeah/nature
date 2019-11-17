@@ -104,8 +104,8 @@ class Fut_AberrationSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def load_var(self):
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
-        if os.path.exists(filename, sep='$'):
-            df = pd.read_csv(filename)
+        if os.path.exists(filename):
+            df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
             if len(df) > 0:
                 rec = df.iloc[-1,:]            # 取最近日期的记录
