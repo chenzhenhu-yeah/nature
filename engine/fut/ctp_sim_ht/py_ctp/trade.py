@@ -72,7 +72,7 @@ class CtpTrade():
     #     pass
 
     def _OnRspAuthenticate(self, pRspAuthenticateField: CThostFtdcRspAuthenticateField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
-        # to_log('in _OnRspAuthenticate')
+
         if pRspInfo.getErrorID() == 0:
             if pRspAuthenticateField.getAppType() == TThostFtdcAppTypeType.THOST_FTDC_APP_TYPE_InvestorRelay:
                 self.t.RegisterUserSystemInfo(self.broker, self.investor, 0, '', self.pub_ip, self.port, time.strftime('%H:%M:%S', time.localtime()))
@@ -87,7 +87,7 @@ class CtpTrade():
 
     def _OnRspUserLogin(self, pRspUserLogin: CThostFtdcRspUserLoginField(), pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        # # to_log('in _OnRspUserLogin')
+
         if pRspInfo.getErrorID() == 0:
             self.session = pRspUserLogin.getSessionID()
             self.tradingday = pRspUserLogin.getTradingDay()
@@ -117,14 +117,14 @@ class CtpTrade():
             bIsLast: bool):
         if not self.logined:
             time.sleep(0.5)
-            # # to_log('in _OnRspSettlementInfoConfirm ')
+
 
             """查询合约/持仓/权益"""
             threading.Thread(target=self._qry).start()  # 开启查询
 
     def _qry(self):
         """查询帐号相关信息"""
-        # # to_log('in _qry ')
+
 
         # restart 模式, 待rtnorder 处理完毕后再进行查询,否则会造成position混乱
         ord_cnt = 0
@@ -175,7 +175,6 @@ class CtpTrade():
 
     def _OnRspQryInstrument(self, pInstrument: CThostFtdcInstrumentField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        # to_log('in _OnRspQryInstrument')
 
         inst = InstrumentField()
         inst.InstrumentID = pInstrument.getInstrumentID()
@@ -191,7 +190,7 @@ class CtpTrade():
     def _OnRspQryPosition(self, pInvestorPosition: CThostFtdcInvestorPositionField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
         # 此段程序的数据结构较复杂，需要逐步解构！
-        # to_log('in _OnRspQryPosition')
+
         if pInvestorPosition.getInstrumentID() != '':  # 偶尔出现NULL的数据导致数据转换错误
             self._posi.append(pInvestorPosition)  # Struct(**f.__dict__)) #dict -> object
 
@@ -233,7 +232,6 @@ class CtpTrade():
 
     def _OnRspQryPositionDetail(self, pInvestorPositionDetail: CThostFtdcInvestorPositionDetailField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """持仓明细"""
-        # to_log('in _OnRspQryPositionDetail')
 
         if pInvestorPositionDetail.getInstrumentID() == '':
             return
@@ -251,7 +249,7 @@ class CtpTrade():
 
     def _OnRspQryAccount(self, pTradingAccount: CThostFtdcTradingAccountField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-        # to_log('in _OnRspQryAccount')
+
         if not self.account:
             self.account = TradingAccount()
         self.account.Available = pTradingAccount.getAvailable()
@@ -442,7 +440,6 @@ class CtpTrade():
 
         :param front:
         """
-        # to_log('in ReqConnect')
 
         self.t.CreateApi()
         spi = self.t.CreateSpi()
@@ -484,7 +481,7 @@ class CtpTrade():
         :param pwd:
         :param broker:
         """
-        # to_log('in ReqUserLogin')
+        
 
         self.broker = broker
         self.investor = user

@@ -24,7 +24,7 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        #to_log('in BollEngine.__init__')
+        
         CtpQuote.__init__(self)
         self.id_list = ['c1909','c2001']
 

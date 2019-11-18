@@ -71,14 +71,15 @@ class Signal(object):
 
         # 读取配置文件，看是否已暂停
         filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
-        df = pd.read_csv(filename, sep='$')
-        df = df[df.signal == self.portfolio.name]
-        if len(df) > 0:
-            symbols = df.iat[0,1]
-            symbol_list = symbols.split(',')
-            if self.vtSymbol in symbol_list:
-                self.paused = True
-                print(self.vtSymbol + ' paused in ' + self.portfolio.name)
+        if os.path.exists(filename):
+            df = pd.read_csv(filename, sep='$')
+            df = df[df.signal == self.portfolio.name]
+            if len(df) > 0:
+                symbols = df.iat[0,1]
+                symbol_list = symbols.split(',')
+                if self.vtSymbol in symbol_list:
+                    self.paused = True
+                    print(self.vtSymbol + ' paused in ' + self.portfolio.name)
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)

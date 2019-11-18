@@ -28,7 +28,7 @@ class CtpQuote(object):
 
         :param pAddress:
         """
-        # # to_log('in CtpQuote.ReqConnect')
+
         self.q.CreateApi()
         spi = self.q.CreateSpi()
         self.q.RegisterSpi(spi)
@@ -51,7 +51,7 @@ class CtpQuote(object):
         :param pwd:
         :param broker:
         """
-        # to_log('in CtpQuote.ReqUserLogin')
+
         self.q.ReqUserLogin(BrokerID=broker, UserID=user, Password=pwd)
 
     def ReqSubscribeMarketData(self, pInstrument: str):
@@ -59,12 +59,12 @@ class CtpQuote(object):
 
         :param pInstrument:
         """
-        # to_log('in CtpQuote.ReqSubscribeMarketData')
+
         self.q.SubscribeMarketData(pInstrument)
 
     def ReqUserLogout(self):
         """退出接口(正常退出,不会触发OnFrontDisconnected)"""
-        # to_log('in CtpQuote.ReqUserLogout')
+
 
         self.q.ReqUserLogout()
         self.q.RegisterSpi(None)
@@ -84,7 +84,7 @@ class CtpQuote(object):
 
     def _OnFrontDisConnected(self, reason: int):
         """"""
-        # to_log('in CtpQuote._OnFrontDisConnected')
+        
         # 确保隔夜或重新登录时的第1个tick不被发送到客户端
         self.inst_tick.clear()
         self.logined = False
@@ -144,7 +144,7 @@ class CtpQuote(object):
 
     def OnDisConnected(self, obj, error: int):
         """"""
-        # to_log('in CtpQuote.OndisConnected')
+
         now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         print(now)
         print('-'*60)

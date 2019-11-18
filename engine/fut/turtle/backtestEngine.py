@@ -91,28 +91,7 @@ class BacktestingEngine(object):
     def _bc_loadInitBar(self, vtSymbol, initBars):
         """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
         r = []
-        # try:
-        #     #today = time.strftime('%Y%m%d',time.localtime())
-        #     #fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
-        #     fname = vtSymbol + '.csv'
-        #     #print(fname)
-        #     df = pd.read_csv(fname)
-        #     df = df.sort_values(by=['date','time'])
-        #     df = df.iloc[:initBars]
-        #     #print(df)
-        #
-        #     for i, row in df.iterrows():
-        #         d = dict(row)
-        #         #print(d)
-        #         #print(type(d))
-        #         bar = VtBarData()
-        #         bar.__dict__ = d
-        #         #print(bar.datetime)
-        #         r.append(bar)
-        # except Exception as e:
-        #     print('error ')
-        #     print(e)
-
+        
         return r
 
     #----------------------------------------------------------------------

@@ -61,7 +61,9 @@ def log_service():
         with Listener(address, authkey=b'secret password') as listener:
             with listener.accept() as conn:
                 #print('connection accepted from', listener.last_accepted)
-                s = conn.recv();
+                s = conn.recv()
+                s = s.replace('\n', '')
+                s = s.replace('\r', '')
                 logger = logging.getLogger('autotrade')
                 logger.info(s)
 

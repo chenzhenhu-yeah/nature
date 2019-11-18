@@ -20,67 +20,12 @@ import traceback
 
 from nature import SOCKET_BAR
 from nature import to_log, is_trade_day, send_email, get_dss
-from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
+from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio
 #from ipdb import set_trace
 
-
-
-########################################################################
-class BarGenerator(object):
-
-    #----------------------------------------------------------------------
-    def __init__(self, minx):
-        """Constructor"""
-        self.minx = minx
-        self.bar_minx_dict = {}
-
-    #----------------------------------------------------------------------
-    def update_bar(self, new_bar):
-
-        id = new_bar.vtSymbol
-        if id in self.bar_minx_dict:
-            bar = self.bar_minx_dict[id]
-        else:
-            bar = new_bar
-            self.bar_minx_dict[id] = bar
-            return None
-
-        # 更新数据
-        if bar.high < new_bar.high:
-            bar.high = new_bar.high
-        if bar.low > new_bar.low:
-            bar.low =  new_bar.low
-        bar.close = new_bar.close
-
-        if self.minx == 'min5' and new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
-            # 将 bar的分钟改为整点，推送并保存bar
-            bar.time = new_bar.time[:-2] + '00'
-            self.bar_minx_dict.pop(id)
-            return bar
-        elif self.minx == 'min15' and new_bar.time[3:5] in ['15','30','45','00']:
-            # 将 bar的分钟改为整点，推送并保存bar
-            bar.time = new_bar.time[:-2] + '00'
-            self.bar_minx_dict.pop(id)
-            return bar
-        else:
-            self.bar_minx_dict[id] = bar
-
-        return None
-
-    #----------------------------------------------------------------------
-    def save_bar(self, bar):
-        df = pd.DataFrame([bar.__dict__])
-        cols = ['date','time','open','high','low','close','volume']
-        df = df[cols]
-
-        fname = get_dss() + 'fut/put/rec/' + self.minx + '_' + bar.vtSymbol + '.csv'
-        if os.path.exists(fname):
-            df.to_csv(fname, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fname, index=False, mode='a')
 
 ########################################################################
 class FutEngine(object):
@@ -136,7 +81,6 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
-        to_log('in FutEngine.loadPortfolio')
 
         p = PortfolioClass(self, symbol_list, {})
         p.daily_open()

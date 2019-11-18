@@ -22,7 +22,7 @@ from nature import CtpQuote
 from nature import Tick
 
 from nature import VtBarData
-from nature import SOCKET_BAR, get_dss
+from nature import SOCKET_BAR, get_dss, to_log
 
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
@@ -59,8 +59,7 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
 
     def __init__(self):
-        """Constructor"""
-        #to_log('in BollEngine.__init__')
+        """Constructor"""        
         CtpQuote.__init__(self)
 
         # 加载配置
@@ -284,10 +283,8 @@ if __name__ == "__main__":
         # input()
 
     except Exception as e:
-        now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        print(now)
-        print('-'*60)
-        traceback.print_exc()
+        s = traceback.format_exc()
+        to_log(s)
 
         qq.run()
         input()

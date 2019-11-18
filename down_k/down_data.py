@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import tushare as ts
 import io
+import traceback
 
 from nature import to_log
 from nature.down_k.down_inx import down_inx_all
@@ -17,31 +18,27 @@ from nature.down_k.down_fut import down_fut_all
 def down_data(dss):
     try:
         down_inx_all(dss)
-        to_log('down_inx_all done')
     except Exception as e:
-        print('error')
-        print(e)
+        s = traceback.format_exc()
+        to_log(s)
 
     try:
         down_stk_hfq_all(dss)
-        to_log('down_stk_hfq_all done')
     except Exception as e:
-        print('error')
-        print(e)
+        s = traceback.format_exc()
+        to_log(s)
 
     try:
         down_stk_bfq_all(dss)
-        to_log('down_stk_bfq_all done')
     except Exception as e:
-        print('error')
-        print(e)
+        s = traceback.format_exc()
+        to_log(s)
 
     try:
         down_daily_run(dss)
-        to_log('down_daily_run done')
     except Exception as e:
-        print('error')
-        print(e)
+        s = traceback.format_exc()
+        to_log(s)
 
     # try:
     #     down_fut_all(dss)

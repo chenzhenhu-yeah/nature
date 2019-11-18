@@ -28,7 +28,7 @@ def kq_buy(code,price,num):
     """买开仓"""
     r = True
     try:
-        to_log('in kq_buy')
+
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)    #合约
@@ -62,7 +62,7 @@ def kq_sell(code,price,num):
     """卖平仓"""
     r = True
     try:
-        to_log('in kq_sell')
+        
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)    #合约
@@ -97,7 +97,7 @@ def kq_short(code,price,num):
     """卖开仓"""
     r = True
     try:
-        to_log('in kqgj_short')
+
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)    #合约
@@ -131,7 +131,7 @@ def kq_cover(code,price,num):
     """买平仓"""
     r = True
     try:
-        to_log('in kqgj_cover')
+
         time.sleep(0.1)
 
         dlg_spec.Edit1.set_text(code)      #合约

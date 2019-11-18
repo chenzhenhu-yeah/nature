@@ -17,7 +17,7 @@ from nature import CtpTrade
 from nature import CtpQuote
 from nature import DirectType, OffsetType
 from nature.strategy import DIRECTION_LONG, DIRECTION_SHORT, OFFSET_OPEN, OFFSET_CLOSE
-from nature import get_dss, send_email
+from nature import get_dss, send_email, to_log 
 
 
 class Contract(object):
@@ -134,24 +134,8 @@ class Gateway_Ht_CTP(object):
             #send_email(get_dss(), direction+' '+offset+' '+str(price), '')
 
         except Exception as e:
-            now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-            print(now)
-            print('-'*60)
-            traceback.print_exc()
-
-            # s = traceback.format_exc()
-            # to_log(s)
-
-    # #----------------------------------------------------------------------
-    # def start(self):
-    #     schedule.every().day.at("20:56").do(self.run)
-    #     schedule.every().day.at("15:06").do(self.release)
-    #
-    #     print(u'gateway_ht_ctp 路由期货交易接口开始运行')
-    #     while True:
-    #         schedule.run_pending()
-    #         time.sleep(10)
-
+            s = traceback.format_exc()
+            to_log(s)
 
 if __name__ == "__main__":
     pass

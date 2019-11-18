@@ -4,7 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 import schedule
 import time
-import datetime
+from datetime import datetime
 from multiprocessing.connection import Client
 import traceback
 
@@ -21,34 +21,37 @@ from nature.engine.fut.examine import examine
 
 dss = r'../data/'
 
-def mail_log():
+def mail__log():
     try:
-        now = datetime.datetime.now()
-        preday = now - datetime.timedelta(days=1)
-        preday = preday.strftime('%Y-%m-%d %H:%M:%S')
+        now = datetime.now()
+        today = now.strftime('%Y-%m-%d')
         weekday = int(now.strftime('%w'))
-
-        r = []
-        logfile= dss + 'log/autotrade.log'
-        #df = pd.read_csv(logfile,sep='$',header=None,encoding='ansi')
-        df = pd.read_csv(logfile,sep='$',header=None,encoding='utf-8')
-        df['datetime'] = df[0] + ' ' + df[1]
-        df = df[df['datetime']>=preday]
-        if len(df) > 0:
-            df = df.sort_values('datetime', ascending=False)
-            del df['datetime']
+        if 1 <= weekday <= 5:
+            r = []
+            logfile= dss + 'log/autotrade.log'
+            df = pd.read_csv(logfile,sep=' ',header=None,encoding='ansi')
+            df = df[df[0]==today]
             for i, row in df.iterrows():
-                s = str( list(row)[:7] )
-                r.append(s)
+                r.append(str(list(row)[:7]))
             send_email(dss, 'show log', '\n'.join(r))
 
+            r = []
+            txtfile = dss + 'csv/ins.txt'
+            with open(txtfile, 'r', encoding='utf-8') as f:
+                line = f.readline()
+                while line:
+                    if line[0] == '{':
+                        #line_dict = eval(line)
+                        r.append(line)
+                    line = f.readline()
+            send_email(dss, 'show ins ', '\n'.join(r))
+
     except Exception as e:
-        print(now, '-'*30)
         traceback.print_exc()
 
 def mail_1815():
     try:
-        now = datetime.datetime.now()
+        now = datetime.now()
         weekday = int(now.strftime('%w'))
         if 1 <= weekday <= 5:
             print('\n' + str(now) + " mail_factor begin...")
@@ -62,12 +65,12 @@ def mail_1815():
             r = stk_report(dss)
             send_email(dss, 'show stk_report', '\n'.join(r))
     except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
+        traceback.print_exc()
+
 
 def mail_0200():
     try:
-        now = datetime.datetime.now()
+        now = datetime.now()
         weekday = int(now.strftime('%w'))
         if 2 <= weekday <= 6:
             print('\n' + str(now) + " mail_ma begin...")
@@ -76,12 +79,11 @@ def mail_0200():
             #print(type(r))
             send_email(dss, str(len(r))+' setting items ', '')
     except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
+        traceback.print_exc()
 
 def run_price_signal():
     try:
-        now = datetime.datetime.now()
+        now = datetime.now()
         weekday = int(now.strftime('%w'))
         if 2 <= weekday <= 6:
             dates = get_trading_dates(dss)
@@ -94,23 +96,21 @@ def run_price_signal():
             send_email(dss, 'price_signal', '\n'.join(r))
 
     except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
+        traceback.print_exc()
 
 def run_tick2bar():
     try:
-        now = datetime.datetime.now()
+        now = datetime.now()
         today = now.strftime('%Y%m%d')
         weekday = int(now.strftime('%w'))
         print(today,weekday)
         if 1 <= weekday <= 5:
             tick2bar(today)
     except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
+        traceback.print_exc()
 
 def run_down_data():
-    now = datetime.datetime.now()
+    now = datetime.now()
     weekday = int(now.strftime('%w'))
     if 2 <= weekday <= 6:
         print('\n' + str(now) + " down_data begin...")
@@ -127,9 +127,12 @@ if __name__ == '__main__':
 
         # 盘中
         schedule.every().day.at("15:10").do(run_tick2bar)
-        schedule.every().day.at("15:15").do(mail_log)
+        schedule.every().day.at("15:30").do(mail_log)
 
         #盘后
+        #schedule.every().day.at("00:15").do(mail_1815)
+        #schedule.every().day.at("02:00").do(mail_0200)
+        #schedule.every().day.at("02:30").do(run_price_signal)
         schedule.every().day.at("03:00").do(run_down_data)
         schedule.every().day.at("03:30").do(run_examine)
 
@@ -138,9 +141,10 @@ if __name__ == '__main__':
             schedule.run_pending()
             time.sleep(10)
     except Exception as e:
-        # now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        # print(now)
-        # print('-'*60)
-        # traceback.print_exc()
+        now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        print(now)
+        print('-'*60)
+        traceback.print_exc()
+
         s = traceback.format_exc()
         to_log(s)
