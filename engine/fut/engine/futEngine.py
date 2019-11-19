@@ -158,7 +158,8 @@ class FutEngine(object):
         order_id = str(int(time.time()))
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
-        print('send order: ', r)
+        #print('send order: ', r)
+        to_log( str(r)[2:-2] )
         fn = 'fut/deal/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 

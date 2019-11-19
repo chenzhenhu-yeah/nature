@@ -11,26 +11,31 @@ from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 
 ########################################################################
-class Fut_DonchianSignal_Duo(Signal):
+class Fut_CciBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'duo'
 
         # 策略参数
-        self.trailingPercent = 0.3   # 百分比移动止损
-        self.victoryPercent = 0.3
-        self.fixedSize = 1           # 每次交易的数量
+        self.bollWindow = 20                     # 布林通道窗口数
+        self.bollDev = 3.3                       # 布林通道的偏差
+        self.cciWindow = 10                      # CCI窗口数
+        self.atrWindow = 30                      # ATR窗口数
+        self.slMultiplier = 5.6                  # 计算止损距离的乘数
 
-        self.initBars = 90           # 初始化数据所用的天数
-        self.minx = 'min5'
+        self.fixedSize = 1           # 每次交易的数量
+        self.initBars = 10           # 初始化数据所用的天数
+        self.minx = 'min15'
 
         # 策略临时变量
+        self.cciValue = 0                        # CCI指标数值
+        self.atrValue = 0                        # ATR指标数值
+        self.bollUp = 0
+        self.bollDown = 0
+
         self.can_buy = False
         self.can_short = False
-
-        self.channel_up = 0
-        self.channel_down = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -42,7 +47,7 @@ class Fut_DonchianSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_donchian_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_cciboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -55,18 +60,15 @@ class Fut_DonchianSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
-        if 'atrMaLength' in param_dict:
-            self.atrMaLength = param_dict['atrMaLength']
-            print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
-        if 'rsiLength' in param_dict:
-            self.rsiLength = param_dict['rsiLength']
-            print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
-        if 'trailingPercent' in param_dict:
-            self.trailingPercent = param_dict['trailingPercent']
-            print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
-        if 'victoryPercent' in param_dict:
-            self.victoryPercent = param_dict['victoryPercent']
-            print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
+        if 'bollWindow' in param_dict:
+            self.bollWindow = param_dict['bollWindow']
+            print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
+        if 'bollDev' in param_dict:
+            self.bollDev = param_dict['bollDev']
+            print('成功设置策略参数 self.bollDev: ',self.bollDev)
+        if 'slMultiplier' in param_dict:
+            self.slMultiplier = param_dict['slMultiplier']
+            print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -108,11 +110,16 @@ class Fut_DonchianSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        self.channel_up, self.channel_down = self.am.donchian(60, array=True)
-        donchian_condition = True if self.bar.close > self.channel_up[-2] else False
+        self.atrValue = self.am.atr(self.atrWindow)
+
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev, array=True)
+        boll_condition = True if self.bar.close > self.bollUp[-2] else False
+
+        self.cciValue = self.am.cci(self.cciWindow)
+        cci_condition  = True if self.cciValue > 0 else False
 
         self.can_buy = False
-        if donchian_condition:
+        if cci_condition and boll_condition:
             self.can_buy = True
 
     # #----------------------------------------------------------------------
@@ -132,22 +139,15 @@ class Fut_DonchianSignal_Duo(Signal):
 
         # 持有多头仓位
         elif self.unit > 0:
-            # 计算多头持有期内的最高价，以及重置最低价
-            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
-
-            #self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
-            if self.stop < self.cost:
-                self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
-            else:
-                self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
-
             if bar.close <= self.stop:
-                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
                 self.sell(bar.close, abs(self.unit))
+
+            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
+            self.stop = self.intraTradeHigh - self.atrValue * self.slMultiplier
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_donchian_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -181,7 +181,7 @@ class Fut_DonchianSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_donchian_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -201,7 +201,7 @@ class Fut_DonchianSignal_Duo(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_donchian_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -219,7 +219,7 @@ class Fut_DonchianSignal_Duo(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_donchian_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -229,26 +229,31 @@ class Fut_DonchianSignal_Duo(Signal):
 
 
 ########################################################################
-class Fut_DonchianSignal_Kong(Signal):
+class Fut_CciBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'kong'
 
         # 策略参数
-        self.trailingPercent = 0.3   # 百分比移动止损
-        self.victoryPercent = 0.3
-        self.fixedSize = 1           # 每次交易的数量
+        self.bollWindow = 18                     # 布林通道窗口数
+        self.bollDev = 3.4                       # 布林通道的偏差
+        self.cciWindow = 10                      # CCI窗口数
+        self.atrWindow = 30                      # ATR窗口数
+        self.slMultiplier = 5.2                  # 计算止损距离的乘数
 
-        self.initBars = 90           # 初始化数据所用的天数
-        self.minx = 'min5'
+        self.fixedSize = 1           # 每次交易的数量
+        self.initBars = 10           # 初始化数据所用的天数
+        self.minx = 'min15'
 
         # 策略临时变量
+        self.cciValue = 0                        # CCI指标数值
+        self.atrValue = 0                        # ATR指标数值
+        self.bollUp = 0
+        self.bollDown = 0
+
         self.can_buy = False
         self.can_short = False
-
-        self.channel_up = 0
-        self.channel_down = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -260,7 +265,7 @@ class Fut_DonchianSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_donchian_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_cciboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -273,18 +278,15 @@ class Fut_DonchianSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
-        if 'atrMaLength' in param_dict:
-            self.atrMaLength = param_dict['atrMaLength']
-            print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
-        if 'rsiLength' in param_dict:
-            self.rsiLength = param_dict['rsiLength']
-            print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
-        if 'trailingPercent' in param_dict:
-            self.trailingPercent = param_dict['trailingPercent']
-            print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
-        if 'victoryPercent' in param_dict:
-            self.victoryPercent = param_dict['victoryPercent']
-            print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
+        if 'bollWindow' in param_dict:
+            self.bollWindow = param_dict['bollWindow']
+            print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
+        if 'bollDev' in param_dict:
+            self.bollDev = param_dict['bollDev']
+            print('成功设置策略参数 self.bollDev: ',self.bollDev)
+        if 'slMultiplier' in param_dict:
+            self.slMultiplier = param_dict['slMultiplier']
+            print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -326,11 +328,16 @@ class Fut_DonchianSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        self.channel_up, self.channel_down = self.am.donchian(60, array=True)
-        donchian_condition = True if self.bar.close < self.channel_down[-2] else False
+        self.atrValue = self.am.atr(self.atrWindow)
+
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev, array=True)
+        boll_condition = True if self.bar.close < self.bollDown[-2] else False
+
+        self.cciValue = self.am.cci(self.cciWindow)
+        cci_condition  = True if self.cciValue < 0 else False
 
         self.can_short = False
-        if donchian_condition:
+        if cci_condition and boll_condition:
             self.can_short = True
 
     #----------------------------------------------------------------------
@@ -350,23 +357,15 @@ class Fut_DonchianSignal_Kong(Signal):
 
         # 持有空头仓位
         elif self.unit < 0:
-            self.intraTradeLow = min(self.intraTradeLow, bar.low)
-
-            #self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
-            if self.stop > self.cost:
-                self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
-            else:
-                self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
-
-            #print(self.stop)
-
             if bar.close >= self.stop:
-                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
                 self.cover(bar.close, abs(self.unit))
+
+            self.intraTradeLow = min(self.intraTradeLow, bar.low)
+            self.stop = self.intraTradeLow + self.atrValue * self.slMultiplier
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_donchian_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -400,7 +399,7 @@ class Fut_DonchianSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_donchian_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -420,7 +419,7 @@ class Fut_DonchianSignal_Kong(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_donchian_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -438,7 +437,7 @@ class Fut_DonchianSignal_Kong(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_donchian_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -447,14 +446,14 @@ class Fut_DonchianSignal_Kong(Signal):
         self.result = None
 
 ########################################################################
-class Fut_DonchianPortfolio(Portfolio):
+class Fut_CciBollPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.name = 'donchian'
-        Portfolio.__init__(self, Fut_DonchianSignal_Duo, engine, symbol_list, signal_param, Fut_DonchianSignal_Kong, signal_param)
-        #Portfolio.__init__(self, Fut_DonchianSignal_Duo, engine, symbol_list, signal_param, None, None)
-        #Portfolio.__init__(self, Fut_DonchianSignal_Kong, engine, symbol_list, signal_param, None, None)
+        self.name = 'cciboll'
+        Portfolio.__init__(self, Fut_CciBollSignal_Duo, engine, symbol_list, signal_param, Fut_CciBollSignal_Kong, signal_param)
+        #Portfolio.__init__(self, Fut_CciBollSignal_Duo, engine, symbol_list, signal_param, None, None)
+        #Portfolio.__init__(self, Fut_CciBollSignal_Kong, engine, symbol_list, signal_param, None, None)
 
 
 

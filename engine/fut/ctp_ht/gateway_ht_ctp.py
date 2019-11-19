@@ -17,39 +17,7 @@ from nature import CtpTrade
 from nature import CtpQuote
 from nature import DirectType, OffsetType
 from nature.strategy import DIRECTION_LONG, DIRECTION_SHORT, OFFSET_OPEN, OFFSET_CLOSE
-from nature import get_dss, send_email, to_log 
-
-
-class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
-        """Constructor"""
-        self.pz = pz
-        self.size = size
-        self.price_tick = price_tick
-        self.variable_commission = variable_commission
-        self.fixed_commission = fixed_commission
-        self.slippage = slippage
-        self.exchangeID = exchangeID
-
-contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-with open(filename_setting_fut,encoding='utf-8') as f:
-    r = DictReader(f)
-    for d in r:
-        contract_dict[ d['pz'] ] = Contract(d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'])
-
-def get_contract(symbol):
-    pz = symbol[:2]
-    if pz.isalpha():
-        pass
-    else:
-        pz = symbol[:1]
-
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        #return None
-        assert False
+from nature import get_dss, send_email, to_log, get_contract
 
 def get_exchangeID(symbol):
     c = get_contract(symbol)
@@ -99,7 +67,7 @@ class Gateway_Ht_CTP(object):
             # 流控
             time.sleep(1)
             pz = get_contract(code).pz
-            if pz in  ['']:
+            if pz in  ['CF']:
                 print(pz, ' send order here!')
             else:
                 print(pz, ' just test order here!')
@@ -119,19 +87,14 @@ class Gateway_Ht_CTP(object):
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick
 
-
             if direction == DIRECTION_LONG and offset == '开仓':
-                #price = price*0.97
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '开仓':
-                #price = price*1.03
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_LONG and offset == '平仓':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '平仓':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
-
-            #send_email(get_dss(), direction+' '+offset+' '+str(price), '')
 
         except Exception as e:
             s = traceback.format_exc()

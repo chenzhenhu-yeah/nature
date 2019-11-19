@@ -10,15 +10,15 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio, Fut_TurtlePortfolio
-
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
+from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
     """组合类CTA策略回测引擎"""
 
     #----------------------------------------------------------------------
-    def __init__(self,symbol_list):
+    def __init__(self,symbol_list,minx='min5'):
         """Constructor"""
         self.dss = get_dss()
 
@@ -28,6 +28,7 @@ class BacktestingEngine(object):
         self.backtest_dt_list = []
         self.dataDict = OrderedDict()
         self.symbol_list = symbol_list
+        self.minx = minx
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, signal_param):
@@ -47,8 +48,8 @@ class BacktestingEngine(object):
     def loadData(self):
         """加载数据"""
         for vtSymbol in self.symbol_list:
-            filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
-            #filename = get_dss( )+ 'fut/bar/' + vtSymbol + '.csv'
+            #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
+            filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
@@ -342,9 +343,9 @@ def formatNumber(n):
     return format(rn, ',')  # 加上千分符
 
 
-def run_once(PortfolioClass,symbol,start_date,end_date,signal_param):
+def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
     # 创建回测引擎对象
-    e = BacktestingEngine([symbol])
+    e = BacktestingEngine([symbol], minx)
     e.setPeriod(start_date, end_date)
     e.loadData()
     e.loadPortfolio(PortfolioClass, signal_param)
@@ -393,30 +394,56 @@ def test_atrrsi_param(PortfolioClass):
     df.to_csv('q1.csv', index=False)
 
 
+def test_cciboll_param(PortfolioClass):
+    minx = 'min15'
+    vtSymbol = 'rb1901'
+    start_date = '20180119 00:00:00'
+    end_date   = '20181231 00:00:00'
+
+    r = []
+    symbol_list = [vtSymbol]
+
+    for symbol in symbol_list:
+        for bollWindow in [10, 15, 20, 25, 30]:
+            for bollDev in [2, 2.5, 3, 3.5, 4, 4.5]:
+                for slMultiplier in [3.5, 4, 4.5, 5, 5.5, 6]:
+                    signal_param = { symbol:{'bollWindow':bollWindow, 'bollDev':bollDev, 'slMultiplier':slMultiplier} }
+                    result = run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx)
+                    r.append([ bollWindow,bollDev,slMultiplier,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
+
+    df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
+    df.to_csv('q1.csv', index=False)
+
 def test_one(PortfolioClass):
     # vtSymbol = 'IF99'
     # start_date = '20160101 21:00:00'
     # end_date   = '20181230 15:00:00'
 
     vtSymbol = 'CF001'
+    vtSymbol = 'ag1912'
     start_date = '20191014 21:00:00'
     end_date   = '20191108 15:00:00'
 
-    #vtSymbol = 'ag1901'
+    vtSymbol = 'rb1901'
     #vtSymbol = 'rb1901'
     # vtSymbol = 'CF901'
-    # start_date = '20180119 00:00:00'
-    # end_date   = '20181231 00:00:00'
+    start_date = '20180119 00:00:00'
+    end_date   = '20181231 00:00:00'
 
-    #signal_param = {}
     signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
-    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param)
+    signal_param = {}
+    minx = 'min15'
+    #minx = 'min5'
+    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
 if __name__ == '__main__':
-    #PortfolioClass = Fut_AtrRsiPortfolio
+    # PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
-    PortfolioClass = Fut_RsiBollPortfolio
+    # PortfolioClass = Fut_RsiBollPortfolio
+    # PortfolioClass = Fut_DonchianPortfolio
+    PortfolioClass = Fut_CciBollPortfolio
 
     test_one(PortfolioClass)
     #test_atrrsi_param(PortfolioClass)
+    #test_cciboll_param(PortfolioClass)

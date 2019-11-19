@@ -377,12 +377,8 @@ class DailyResult(object):
                     to_log(vtSymbol + ' close value not in result')
 
         except Exception as e:
-            traceback.print_exc()
-            print('-'*30)
-            print(vtSymbol, pos)
-            print(self.__dict__)
-            assert False
-
+            s = traceback.format_exc()
+            to_log(s)
 
     #----------------------------------------------------------------------
     def calculatePnl(self):

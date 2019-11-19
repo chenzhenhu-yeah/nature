@@ -41,6 +41,8 @@ from nature.engine.fut.engine.fut_strategyRsiBoll import Fut_RsiBollPortfolio
 from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyAberration import Fut_AberrationPortfolio
 from nature.engine.fut.engine.fut_strategyTurtle import Fut_TurtlePortfolio
+from nature.engine.fut.engine.fut_strategyDonchian import Fut_DonchianPortfolio
+from nature.engine.fut.engine.fut_strategyCciBoll import Fut_CciBollPortfolio
 
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
