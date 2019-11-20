@@ -11,7 +11,7 @@ from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 
 ########################################################################
-class Fut_CciBollSignal_Duo(Signal):
+class Fut_KkSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
@@ -31,8 +31,8 @@ class Fut_CciBollSignal_Duo(Signal):
         # 策略临时变量
         self.cciValue = 0                        # CCI指标数值
         self.atrValue = 0                        # ATR指标数值
-        self.bollUp = [100E4]
-        self.bollDown = [0]
+        self.bollUp = 0
+        self.bollDown = 0
 
         self.can_buy = False
         self.can_short = False
@@ -47,7 +47,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_cciboll_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_kk_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -86,12 +86,17 @@ class Fut_CciBollSignal_Duo(Signal):
 
 
     def on_bar_min1(self, bar):
-        pass
-        # 效果提升不明显。不能加开仓逻辑，大幅降低效果
+        # 持有多头仓位
+        if self.unit > 0:
+            if bar.close <= self.stop:
+                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
 
-        # if self.unit > 0:
-        #     if bar.close <= self.stop:
-        #         self.sell(bar.close, abs(self.unit))
+        # 持有空头仓位
+        elif self.unit < 0:
+            if bar.close >= self.stop:
+                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
@@ -142,7 +147,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_kk_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -176,7 +181,7 @@ class Fut_CciBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_kk_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -196,7 +201,7 @@ class Fut_CciBollSignal_Duo(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_kk_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -214,7 +219,7 @@ class Fut_CciBollSignal_Duo(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_kk_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -224,7 +229,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
 
 ########################################################################
-class Fut_CciBollSignal_Kong(Signal):
+class Fut_KkSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
@@ -244,8 +249,8 @@ class Fut_CciBollSignal_Kong(Signal):
         # 策略临时变量
         self.cciValue = 0                        # CCI指标数值
         self.atrValue = 0                        # ATR指标数值
-        self.bollUp = [100E4]
-        self.bollDown = [0]
+        self.bollUp = 0
+        self.bollDown = 0
 
         self.can_buy = False
         self.can_short = False
@@ -260,7 +265,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/cfg/signal_cciboll_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_kk_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -299,13 +304,17 @@ class Fut_CciBollSignal_Kong(Signal):
 
 
     def on_bar_min1(self, bar):
-        pass 
-        # 效果提升不明显。不能加开仓逻辑，大幅降低效果
+        # 持有多头仓位
+        if self.unit > 0:
+            if bar.close <= self.stop:
+                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
 
-        # if self.unit < 0:
-        #     if bar.close >= self.stop:
-        #         self.cover(bar.close, abs(self.unit))
-
+        # 持有空头仓位
+        elif self.unit < 0:
+            if bar.close >= self.stop:
+                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
@@ -356,7 +365,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_kk_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -390,7 +399,7 @@ class Fut_CciBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/check/signal_kk_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -410,7 +419,7 @@ class Fut_CciBollSignal_Kong(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_kk_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -428,7 +437,7 @@ class Fut_CciBollSignal_Kong(Signal):
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/deal/signal_kk_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -437,14 +446,14 @@ class Fut_CciBollSignal_Kong(Signal):
         self.result = None
 
 ########################################################################
-class Fut_CciBollPortfolio(Portfolio):
+class Fut_KkPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.name = 'cciboll'
-        Portfolio.__init__(self, Fut_CciBollSignal_Duo, engine, symbol_list, signal_param, Fut_CciBollSignal_Kong, signal_param)
-        #Portfolio.__init__(self, Fut_CciBollSignal_Duo, engine, symbol_list, signal_param, None, None)
-        #Portfolio.__init__(self, Fut_CciBollSignal_Kong, engine, symbol_list, signal_param, None, None)
+        self.name = 'kk'
+        Portfolio.__init__(self, Fut_KkSignal_Duo, engine, symbol_list, signal_param, Fut_KkSignal_Kong, signal_param)
+        #Portfolio.__init__(self, Fut_KkSignal_Duo, engine, symbol_list, signal_param, None, None)
+        #Portfolio.__init__(self, Fut_KkSignal_Kong, engine, symbol_list, signal_param, None, None)
 
 
 

@@ -28,6 +28,7 @@ class Gateway_Ht_CTP(object):
             # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
+
         self.front = setting['front_trade']
         self.broker = setting['broker']
         self.investor = setting['investor']
@@ -48,7 +49,10 @@ class Gateway_Ht_CTP(object):
         self.t.OnTrade = lambda obj, o: None
         self.t.OnInstrumentStatus = lambda obj, inst, stat: None
 
-        # threading.Thread(target=self.start, args=()).start()
+        pz= setting['gateway_pz']
+        self.pz_list = pz.split(',')
+        pf = setting['gateway_pf']
+        self.pf_list = pf.split(',')
 
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
@@ -67,8 +71,8 @@ class Gateway_Ht_CTP(object):
             # 流控
             time.sleep(1)
             pz = get_contract(code).pz
-            if pz in  ['CF']:
-                print(pz, ' send order here!')
+            if pz in self.pz_list and portfolio in self.pf_list:
+                print(pz, portfolio, ' send order here!')
             else:
                 print(pz, ' just test order here!')
                 return

@@ -32,30 +32,46 @@ def examine():
 
     for pz in setting_pz_list:
         if pz not in tm_pz_set:
-            to_log('examine: ' + pz + ' not in trade_time.csv')
+            to_log('examine: ' + pz + 'of setting_pz.csv not in trade_time.csv')
 
-    # 加载配置，目前盯市哪些业务品种
     config = open(dss + 'fut/cfg/config.json')
     setting = json.load(config)
+    # 加载配置，目前盯市的品种已在setting_pz中维护
     symbols = setting['symbols_quote']
-    symbol_list = symbols.split(',')
+    symbols_quote_list = symbols.split(',')
     #print(symbol_list)
-    for symbol in symbol_list:
+    for symbol in symbols_quote_list:
         c = get_contract(symbol)
         #print( c.pz )
         if c is None:
-            to_log('examine: ' + symbol + ' not in setting_pz.csv')
-
-
-
-
-
-
-    # symbols_quote中的品种已在setting_pz中维护
-
+            to_log('examine: ' + symbol + 'of config.json not in setting_pz.csv')
 
     # symbols_quote涵盖symbols_trade
-    # symbols_trade涵盖其他symbols
+    symbols = setting['symbols_trade']
+    symbols_trade_list = symbols.split(',')
+    for symbol in symbols_trade_list:
+        if symbol not in symbols_quote_list:
+            to_log('examine: ' + symbol + 'of symbols_trade not in symbols_quote')
+
+    # symbols_trade涵盖其他symbols，如symbols_rsiboll,symbols_atrrsi,symbols_cciboll
+    symbols = setting['symbols_rsiboll']
+    symbols_rsiboll_list = symbols.split(',')
+    for symbol in symbols_rsiboll_list:
+        if symbol not in symbols_trade_list:
+            to_log('examine: ' + symbol + 'of symbols_rsiboll not in symbols_trade')
+
+    symbols = setting['symbols_atrrsi']
+    symbols_atrrsi_list = symbols.split(',')
+    for symbol in symbols_atrrsi_list:
+        if symbol not in symbols_trade_list:
+            to_log('examine: ' + symbol + 'of symbols_atrrsi not in symbols_trade')
+
+    # symbols = setting['symbols_cciboll']
+    # symbols_cciboll_list = symbols.split(',')
+    # for symbol in symbols_cciboll_list:
+    #     if symbol not in symbols_trade_list:
+    #         to_log('examine: ' + symbol + 'of symbols_cciboll not in symbols_trade')
+
 
     #
 

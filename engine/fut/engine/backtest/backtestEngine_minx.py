@@ -354,7 +354,7 @@ def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
 
     #e.showResult()
 
-def test_atrrsi_param(PortfolioClass):
+def test_atrrsi_param(PortfolioClass, minx):
     # vtSymbol = 'ag1912'
     # start_date = '20191015 21:00:00'
     # end_date   = '20191018 15:00:00'
@@ -387,15 +387,15 @@ def test_atrrsi_param(PortfolioClass):
             for rsiLength in [5]:
                 for victoryPercent in [0.1,0.2,0.3,0.4]:
                     signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
-                    result = run_once(PortfolioClass,symbol,start_date,end_date,signal_param)
+                    result = run_once(PortfolioClass,symbol,start_date,end_date,signal_param, minx)
                     r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
 
     df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
     df.to_csv('q1.csv', index=False)
 
 
-def test_cciboll_param(PortfolioClass):
-    minx = 'min15'
+def test_cciboll_param(PortfolioClass, minx):
+
     vtSymbol = 'rb1901'
     start_date = '20180119 00:00:00'
     end_date   = '20181231 00:00:00'
@@ -414,7 +414,7 @@ def test_cciboll_param(PortfolioClass):
     df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
     df.to_csv('q1.csv', index=False)
 
-def test_one(PortfolioClass):
+def test_one(PortfolioClass, minx):
     # vtSymbol = 'IF99'
     # start_date = '20160101 21:00:00'
     # end_date   = '20181230 15:00:00'
@@ -425,15 +425,15 @@ def test_one(PortfolioClass):
     end_date   = '20191108 15:00:00'
 
     vtSymbol = 'rb1901'
-    #vtSymbol = 'rb1901'
-    # vtSymbol = 'CF901'
+    #vtSymbol = 'ag1901'
+    #vtSymbol = 'c1901'
+    #vtSymbol = 'CF901'
     start_date = '20180119 00:00:00'
     end_date   = '20181231 00:00:00'
 
     signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
     signal_param = {}
-    minx = 'min15'
-    #minx = 'min5'
+
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
 if __name__ == '__main__':
@@ -444,6 +444,9 @@ if __name__ == '__main__':
     # PortfolioClass = Fut_DonchianPortfolio
     PortfolioClass = Fut_CciBollPortfolio
 
-    test_one(PortfolioClass)
-    #test_atrrsi_param(PortfolioClass)
-    #test_cciboll_param(PortfolioClass)
+    minx = 'min15'
+    #minx = 'min5'
+
+    test_one(PortfolioClass, minx)
+    #test_atrrsi_param(PortfolioClass, minx)
+    #test_cciboll_param(PortfolioClass, minx)

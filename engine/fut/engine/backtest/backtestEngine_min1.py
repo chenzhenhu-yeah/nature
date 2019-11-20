@@ -10,14 +10,15 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
-from nature import Fut_AtrRsiPortfolio, Fut_CciPortfolio, Fut_BollPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
+from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
     """组合类CTA策略回测引擎"""
 
     #----------------------------------------------------------------------
-    def __init__(self,symbol_list):
+    def __init__(self,symbol_list,minx='min5'):
         """Constructor"""
         self.dss = get_dss()
 
@@ -27,6 +28,7 @@ class BacktestingEngine(object):
         self.backtest_dt_list = []
         self.dataDict = OrderedDict()
         self.symbol_list = symbol_list
+        self.minx = minx
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, signal_param):
@@ -96,7 +98,7 @@ class BacktestingEngine(object):
         r = []
 
         # 直接读取signal对应minx相关的文件。
-        fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
         #print(fname)
         df = pd.read_csv(fname)
         df['datetime'] = df['date'] + ' ' + df['time']
@@ -120,20 +122,21 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
-        g5 = BarGenerator('min5')
 
-        print(len(self.dataDict))
+        g = BarGenerator(self.minx)
+
+        #print(len(self.dataDict))
 
         for dt, barDict in self.dataDict.items():
             if dt < self.startDt or dt >  self.endDt:
-                print(dt)
+                #print(dt)
                 continue
 
-            print('here')
+            # print('here')
             for bar in barDict.values():
-                bar_min5 = g5.update_bar(bar)
-                if bar_min5 is not None:
-                    self.portfolio.onBar(bar_min5, 'min5')
+                bar_minx = g.update_bar(bar)
+                if bar_minx is not None:
+                    self.portfolio.onBar(bar_minx, self.minx)
 
                 self.portfolio.onBar(bar, 'min1')
 
@@ -311,7 +314,7 @@ class BacktestingEngine(object):
         print(content)
 
     #----------------------------------------------------------------------
-    def calc_btKey(self):
+    def show_result_key(self):
         """返回回测信息"""
         timeseries, result = self.calculateResult()
 
@@ -356,88 +359,42 @@ def formatNumber(n):
     rn = round(n, 2)        # 保留两位小数
     return format(rn, ',')  # 加上千分符
 
-
-def run_once(symbol,start_date,end_date,signal_param):
+def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
     # 创建回测引擎对象
-        e = BacktestingEngine([symbol])
-        e.setPeriod(start_date, end_date)
-        e.loadData()
-        e.loadPortfolio(Fut_AtrRsiPortfolio, signal_param)
+    e = BacktestingEngine([symbol], minx)
+    e.setPeriod(start_date, end_date)
+    e.loadData()
+    e.loadPortfolio(PortfolioClass, signal_param)
+    e.runBacktesting()
+    return e.show_result_key()
 
-        e.runBacktesting()
-
-        return e.calc_btKey()
-
-        #e.showResult()
-        #e.portfolio.daily_close()
-
-def run_batch():
-    pass
-    start_date = '20190926 21:05:00'
-    end_date   = '20190927 15:00:00'
-    symbol_list = ['c2001','ag1912','CF001','SR001','rb2001']
-
-
-def test_param():
-        # vtSymbol = 'ag1912'
-        # start_date = '20191015 21:00:00'
-        # end_date   = '20191018 15:00:00'
-
-        # vtSymbol = 'CF805'
-        # start_date = '20180111 00:00:00'
-        # end_date   = '20181231 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180106 00:00:00'
-        end_date   = '20180331 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180401 00:00:00'
-        end_date   = '20180631 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20180701 00:00:00'
-        end_date   = '20180931 00:00:00'
-
-        vtSymbol = 'CF901'
-        start_date = '20181001 00:00:00'
-        end_date   = '20181231 00:00:00'
-
-        r = []
-        symbol_list = [vtSymbol]
-
-        for symbol in symbol_list:
-            for trailingPercent in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-                for rsiLength in [5]:
-                    for victoryPercent in [0.1,0.2,0.3,0.4,0.5]:
-                        signal_param = {symbol:{'rsiLength':rsiLength, 'trailingPercent':trailingPercent, 'victoryPercent':victoryPercent}}
-                        result = run_once(symbol,start_date,end_date,signal_param)
-                        r.append([ rsiLength,trailingPercent,victoryPercent,result['totalReturn'],result['maxDdPercent'],result['totalTradeCount'],result['sharpeRatio'] ])
-
-        df = pd.DataFrame(r, columns=['rsiLength','trailingPercent','victoryPercent','totalReturn','maxDdPercent','totalTradeCount','sharpeRatio'])
-        df.to_csv('q4.csv', index=False)
-
-
-def test_one():
+def test_one(PortfolioClass, minx):
     # vtSymbol = 'CF001'
     # start_date = '20191014 21:00:00'
     # end_date   = '20191018 15:00:00'
 
-
     # vtSymbol = 'rb1901'
     # start_date = '20180515 00:00:00'
     # end_date   = '20181231 00:00:00'
-    #
+
     vtSymbol = 'CF901'
-    start_date = '20180121 00:00:00'
+    vtSymbol = 'rb1901'
+    start_date = '20180119 00:00:00'
     end_date   = '20181231 00:00:00'
 
-    #signal_param = {}
-    signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
-    run_once(vtSymbol,start_date,end_date,signal_param)
-
+    #signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
+    signal_param = {}
+    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
 if __name__ == '__main__':
-    test_one()
+    # PortfolioClass = Fut_AtrRsiPortfolio
+    # PortfolioClass = Fut_TurtlePortfolio
+    # PortfolioClass = Fut_AberrationPortfolio
+    # PortfolioClass = Fut_RsiBollPortfolio
+    # PortfolioClass = Fut_DonchianPortfolio
+    PortfolioClass = Fut_CciBollPortfolio
 
-    #test_param()
+    minx = 'min15'
+    #minx = 'min5'
+
+    test_one(PortfolioClass, minx)
