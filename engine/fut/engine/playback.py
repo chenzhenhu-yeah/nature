@@ -23,7 +23,7 @@ from nature import to_log, is_trade_day, send_email, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 #from ipdb import set_trace
 
 
@@ -77,6 +77,9 @@ class FutEngine(object):
         rsiboll_symbol_list = symbols.split(',')
         self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
+        symbols = setting['symbols_cciboll']
+        cciboll_symbol_list = symbols.split(',')
+        self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -221,7 +224,7 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191105 21:00:00'
+    start_date = '20191025 21:00:00'
     end_date   = '20191108 15:00:00'
 
     e = FutEngine()

@@ -5,43 +5,13 @@ import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 
-from nature import to_log, get_dss
+from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_DIRECTION_POS = 10      # 单方向最大持仓
 
-class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
-        """Constructor"""
-        self.pz = pz
-        self.size = size
-        self.price_tick = price_tick
-        self.variable_commission = variable_commission
-        self.fixed_commission = fixed_commission
-        self.slippage = slippage
-        self.exchangeID = exchangeID
-
-contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-with open(filename_setting_fut,encoding='utf-8') as f:
-    r = DictReader(f)
-    for d in r:
-        contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
-
-def get_contract(symbol):
-    pz = symbol[:2]
-    if pz.isalpha():
-        pass
-    else:
-        pz = symbol[:1]
-
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        #return None
-        assert False
 
 ########################################################################
 class Fut_TurtleSignal(Signal):

@@ -22,44 +22,14 @@ from nature import CtpQuote
 from nature import Tick
 
 from nature import VtBarData
-from nature import SOCKET_BAR, get_dss, to_log
+from nature import SOCKET_BAR, get_dss, to_log, get_contract
 
-class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
-        """Constructor"""
-        self.pz = pz
-        self.size = size
-        self.price_tick = price_tick
-        self.variable_commission = variable_commission
-        self.fixed_commission = fixed_commission
-        self.slippage = slippage
-        self.exchangeID = exchangeID
-
-contract_dict = {}
-filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-with open(filename_setting_fut,encoding='utf-8') as f:
-    r = DictReader(f)
-    for d in r:
-        contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
-
-def get_contract(symbol):
-    pz = symbol[:2]
-    if pz.isalpha():
-        pass
-    else:
-        pz = symbol[:1]
-
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        #return None
-        assert False
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
 
     def __init__(self):
-        """Constructor"""        
+        """Constructor"""
         CtpQuote.__init__(self)
 
         # 加载配置
