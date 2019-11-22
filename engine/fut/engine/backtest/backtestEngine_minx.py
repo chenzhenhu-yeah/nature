@@ -424,10 +424,10 @@ def test_one(PortfolioClass, minx):
     start_date = '20191014 21:00:00'
     end_date   = '20191108 15:00:00'
 
-    vtSymbol = 'rb1901'
+    #vtSymbol = 'rb1901'
     #vtSymbol = 'ag1901'
     #vtSymbol = 'c1901'
-    #vtSymbol = 'CF901'
+    vtSymbol = 'CF901'
     start_date = '20180119 00:00:00'
     end_date   = '20181231 00:00:00'
 
@@ -437,15 +437,15 @@ def test_one(PortfolioClass, minx):
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
 if __name__ == '__main__':
-    # PortfolioClass = Fut_AtrRsiPortfolio
+    #PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
-    # PortfolioClass = Fut_RsiBollPortfolio
+    PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    PortfolioClass = Fut_CciBollPortfolio
+    #PortfolioClass = Fut_CciBollPortfolio
 
-    minx = 'min15'
-    #minx = 'min5'
+    #minx = 'min15'
+    minx = 'min5'
 
     test_one(PortfolioClass, minx)
     #test_atrrsi_param(PortfolioClass, minx)

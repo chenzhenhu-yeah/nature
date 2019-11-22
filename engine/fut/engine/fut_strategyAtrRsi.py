@@ -88,10 +88,10 @@ class Fut_AtrRsiSignal(Signal):
         else:
             self.on_bar_minx(bar)
 
-        r = [[minx,bar.date,bar.time,bar.open,bar.close]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/check/bar_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/check/bar_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
 
 
     def on_bar_min1(self, bar):
