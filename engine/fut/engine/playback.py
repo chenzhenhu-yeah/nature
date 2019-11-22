@@ -126,6 +126,7 @@ class FutEngine(object):
     # -----------------------------------------------------------
     def run_playback(self):
         g5 = BarGenerator('min5')
+        g15 = BarGenerator('min15')
 
         for dt, barDict in self.dataDict.items():
             if dt < self.startDt or dt > self.endDt:
@@ -133,9 +134,15 @@ class FutEngine(object):
             #print(dt)
             try:
                 for bar in barDict.values():
+                    bar_min15 = g15.update_bar(bar)
+                    if bar_min15 is not None:
+                        #g15.save_bar(bar_min5)
+                        for p in self.portfolio_list:
+                            p.onBar(bar_min15, 'min15')
+
                     bar_min5 = g5.update_bar(bar)
                     if bar_min5 is not None:
-                        g5.save_bar(bar_min5)
+                        #g5.save_bar(bar_min5)
                         for p in self.portfolio_list:
                             p.onBar(bar_min5, 'min5')
 
@@ -224,8 +231,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191025 21:00:00'
-    end_date   = '20191108 15:00:00'
+    start_date = '20191120 21:00:00'
+    end_date   = '20191122 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

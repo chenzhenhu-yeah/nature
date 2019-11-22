@@ -85,7 +85,8 @@ class Fut_AtrRsiSignal(Signal):
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
-        else:
+
+        if minx == self.minx:
             self.on_bar_minx(bar)
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]

@@ -76,7 +76,8 @@ class Fut_CciBollSignal_Duo(Signal):
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
-        else:
+
+        if minx == self.minx:
             self.on_bar_minx(bar)
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
@@ -289,7 +290,8 @@ class Fut_CciBollSignal_Kong(Signal):
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
-        else:
+
+        if minx == self.minx:
             self.on_bar_minx(bar)
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
@@ -299,7 +301,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
 
     def on_bar_min1(self, bar):
-        pass 
+        pass
         # 效果提升不明显。不能加开仓逻辑，大幅降低效果
 
         # if self.unit < 0:

@@ -84,7 +84,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
-        else:
+
+        if minx == self.minx:
             self.on_bar_minx(bar)
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
@@ -134,6 +135,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.can_buy = False
         if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
+
+        #print(self.bar.time, self.can_buy, rsi_condition, boll_condition, atr_condition)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -322,7 +325,8 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
-        else:
+
+        if minx == self.minx:
             self.on_bar_minx(bar)
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
@@ -372,6 +376,8 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.can_short = False
         if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
+
+        #print(self.bar.time, self.can_buy, rsi_condition, boll_condition, atr_condition)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):

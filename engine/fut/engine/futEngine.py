@@ -89,6 +89,7 @@ class FutEngine(object):
         print('in put_svervice')
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
+        g15 = BarGenerator('min15')
 
         while True:
             time.sleep(1)
@@ -109,6 +110,12 @@ class FutEngine(object):
                         vtSymbol_dict[id] = bar
                     elif vtSymbol_dict[id].time != bar.time:
                         vtSymbol_dict[id] = bar
+
+                        bar_min15 = g15.update_bar(bar)
+                        if bar_min15 is not None:
+                            g15.save_bar(bar_min5)
+                            for p in self.portfolio_list:
+                                p.onBar(bar_min15, 'min15')
 
                         bar_min5 = g5.update_bar(bar)
                         if bar_min5 is not None:
