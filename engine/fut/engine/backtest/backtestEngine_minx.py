@@ -109,12 +109,14 @@ class BacktestingEngine(object):
     def runBacktesting(self):
         """运行回测"""
         for dt, barDict in self.dataDict.items():
+            #print(dt)
             if dt < self.startDt or dt >  self.endDt:
                 continue
 
+            #print(dt)
             for bar in barDict.values():
                 #print(dt, bar.close)
-                self.portfolio.onBar(bar, 'min5')
+                self.portfolio.onBar(bar, self.minx)
 
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
@@ -424,11 +426,12 @@ def test_one(PortfolioClass, minx):
     start_date = '20191014 21:00:00'
     end_date   = '20191108 15:00:00'
 
-    #vtSymbol = 'rb1901'
+    vtSymbol = 'rb1901'
     #vtSymbol = 'ag1901'
     #vtSymbol = 'c1901'
-    vtSymbol = 'CF901'
+    #vtSymbol = 'CF901'
     start_date = '20180119 00:00:00'
+    #start_date = '20180219 00:00:00'
     end_date   = '20181231 00:00:00'
 
     signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
@@ -440,12 +443,12 @@ if __name__ == '__main__':
     #PortfolioClass = Fut_AtrRsiPortfolio
     # PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
-    PortfolioClass = Fut_RsiBollPortfolio
+    #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    #PortfolioClass = Fut_CciBollPortfolio
+    PortfolioClass = Fut_CciBollPortfolio
 
-    #minx = 'min15'
-    minx = 'min5'
+    minx = 'min15'
+    #minx = 'min5'
 
     test_one(PortfolioClass, minx)
     #test_atrrsi_param(PortfolioClass, minx)

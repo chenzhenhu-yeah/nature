@@ -35,7 +35,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.atr_mid = 0
         self.atr_long = 0
 
-        self.rsiValue = 0                        # RSI指标的数值
+        self.rsi_value = 0                        # RSI指标的数值
+        self.rsi_ma = 0
         self.can_buy = False
         self.can_short = False
 
@@ -81,6 +82,7 @@ class Fut_RsiBollSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
         """新推送过来一个bar，进行处理"""
+
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
@@ -128,15 +130,14 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.bollUp, self.bollDown = self.am.boll(80, 2)
         boll_condition = True if self.bar.close > self.bollUp else False
 
-        self.rsiValue = self.am.rsi(self.rsiLength)
-        rsiArray20 = self.am.rsi(50, array=True)
-        rsi_condition  = True if self.rsiValue > self.rsiBuy and rsiArray20[-1] <= 60 else False
+        rsiArray = self.am.rsi(self.rsiLength, array=True)
+        self.rsi_value = rsiArray[-1]
+        self.rsi_ma= rsiArray[-35:].mean()
+        rsi_condition  = True if self.rsi_value > self.rsiBuy and self.rsi_ma < 60 else False
 
         self.can_buy = False
         if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
-
-        #print(self.bar.time, self.can_buy, rsi_condition, boll_condition, atr_condition)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -221,15 +222,16 @@ class Fut_RsiBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
+               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
             df.to_csv(filename, index=False)
-
 
     #----------------------------------------------------------------------
     def close(self, price):
@@ -239,8 +241,10 @@ class Fut_RsiBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
+               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -276,7 +280,8 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.atr_mid = 0
         self.atr_long = 0
 
-        self.rsiValue = 0                        # RSI指标的数值
+        self.rsi_value = 0                        # RSI指标的数值
+        self.rsi_ma = 0
         self.can_buy = False
         self.can_short = False
 
@@ -322,6 +327,7 @@ class Fut_RsiBollSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
         """新推送过来一个bar，进行处理"""
+
         self.bar = bar
         if minx == 'min1':
             self.on_bar_min1(bar)
@@ -369,15 +375,20 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.bollUp, self.bollDown = self.am.boll(80, 2)
         boll_condition = True if self.bar.close < self.bollDown else False
 
-        self.rsiValue = self.am.rsi(self.rsiLength)
-        rsiArray20 = self.am.rsi(50, array=True)
-        rsi_condition  = True if self.rsiValue < self.rsiSell and rsiArray20[-1] >= 40 else False
+        rsiArray = self.am.rsi(self.rsiLength, array=True)
+        self.rsi_value = rsiArray[-1]
+        self.rsi_ma= rsiArray[-35:].mean()
+        rsi_condition  = True if self.rsi_value < self.rsiSell and self.rsi_ma > 40 else False
 
         self.can_short = False
         if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
 
-        #print(self.bar.time, self.can_buy, rsi_condition, boll_condition, atr_condition)
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/check/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
+
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -463,8 +474,10 @@ class Fut_RsiBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
+               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -481,8 +494,10 @@ class Fut_RsiBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
+               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):

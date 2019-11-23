@@ -280,5 +280,5 @@ def tick2bar(tradeDay):
             print(fn+' not exists')
 
 if __name__ == "__main__":
-    tradeDay = '20191021'
+    tradeDay = '20191125'
     tick2bar(tradeDay)

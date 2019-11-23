@@ -80,12 +80,6 @@ class Fut_CciBollSignal_Duo(Signal):
         if minx == self.minx:
             self.on_bar_minx(bar)
 
-        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
-        # df = pd.DataFrame(r)
-        # filename = get_dss() +  'fut/check/bar_' + self.vtSymbol + '.csv'
-        # df.to_csv(filename, index=False, mode='a', header=False)
-
-
     def on_bar_min1(self, bar):
         pass
         # 效果提升不明显。不能加开仓逻辑，大幅降低效果
@@ -112,10 +106,11 @@ class Fut_CciBollSignal_Duo(Signal):
         boll_condition = True if self.bar.close > self.bollUp[-2] else False
 
         self.cciValue = self.am.cci(self.cciWindow)
-        cci_condition  = True if self.cciValue > 0 else False
+        cci_condition  = True if self.cciValue > 100 else False
 
         self.can_buy = False
         if cci_condition and boll_condition:
+        #if boll_condition:
             self.can_buy = True
 
     # #----------------------------------------------------------------------
@@ -194,15 +189,16 @@ class Fut_CciBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
+               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp', 'bollDown', 'cciValue', 'atrValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
             df.to_csv(filename, index=False)
-
 
     #----------------------------------------------------------------------
     def close(self, price):
@@ -212,8 +208,10 @@ class Fut_CciBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
+               self.bollUp[-2], self.bollDown[-2], self.cciValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp', 'bollDown', 'cciValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -223,7 +221,6 @@ class Fut_CciBollSignal_Duo(Signal):
 
         self.result = None
 
-
 ########################################################################
 class Fut_CciBollSignal_Kong(Signal):
 
@@ -232,8 +229,8 @@ class Fut_CciBollSignal_Kong(Signal):
         self.type = 'kong'
 
         # 策略参数
-        self.bollWindow = 18                     # 布林通道窗口数
-        self.bollDev = 3.4                       # 布林通道的偏差
+        self.bollWindow = 20                     # 布林通道窗口数
+        self.bollDev = 3.3                       # 布林通道的偏差
         self.cciWindow = 10                      # CCI窗口数
         self.atrWindow = 30                      # ATR窗口数
         self.slMultiplier = 5.2                  # 计算止损距离的乘数
@@ -294,12 +291,6 @@ class Fut_CciBollSignal_Kong(Signal):
         if minx == self.minx:
             self.on_bar_minx(bar)
 
-        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
-        # df = pd.DataFrame(r)
-        # filename = get_dss() +  'fut/check/bar_' + self.vtSymbol + '.csv'
-        # df.to_csv(filename, index=False, mode='a', header=False)
-
-
     def on_bar_min1(self, bar):
         pass
         # 效果提升不明显。不能加开仓逻辑，大幅降低效果
@@ -327,11 +318,18 @@ class Fut_CciBollSignal_Kong(Signal):
         boll_condition = True if self.bar.close < self.bollDown[-2] else False
 
         self.cciValue = self.am.cci(self.cciWindow)
-        cci_condition  = True if self.cciValue < 0 else False
+        cci_condition  = True if self.cciValue < -100 else False
 
         self.can_short = False
         if cci_condition and boll_condition:
+        #if boll_condition:
             self.can_short = True
+
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown[-2],self.cciValue,self.atrValue,boll_condition, cci_condition]]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/check/bar_cciboll_kong_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
+
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -409,8 +407,10 @@ class Fut_CciBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
+               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue,\
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp', 'bollDown', 'cciValue', 'atrValue',\
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -427,8 +427,10 @@ class Fut_CciBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
+               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
+                                      'bollUp', 'bollDown', 'cciValue', 'atrValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
         filename = get_dss() +  'fut/deal/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):

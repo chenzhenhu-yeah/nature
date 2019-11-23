@@ -75,7 +75,7 @@ class Signal(object):
             df = pd.read_csv(filename, sep='$')
             df = df[df.signal == self.portfolio.name]
             if len(df) > 0:
-                symbols = df.iat[0,1]
+                symbols = str( df.iat[0,1] )
                 symbol_list = symbols.split(',')
                 if self.vtSymbol in symbol_list:
                     self.paused = True

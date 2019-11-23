@@ -116,7 +116,7 @@ class FutEngine(object):
                 else:
                     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
 
-                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
+                bar.datetime = datetime.strftime(bar.datetime, '%Y-%m-%d %H:%M:%S')
 
                 barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.vtSymbol] = bar
@@ -129,6 +129,7 @@ class FutEngine(object):
         g15 = BarGenerator('min15')
 
         for dt, barDict in self.dataDict.items():
+            #print(dt)
             if dt < self.startDt or dt > self.endDt:
                 continue
             #print(dt)
@@ -183,12 +184,14 @@ class FutEngine(object):
 
         for i, row in df.iterrows():
             d = dict(row)
-            # print(d)
+            #print(d)
             # print(type(d))
             bar = VtBarData()
             bar.__dict__ = d
+            #print(bar.__dict__)
             r.append(bar)
 
+        #print(r)
         return r
 
     #----------------------------------------------------------------------
@@ -231,8 +234,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '20191120 21:00:00'
-    end_date   = '20191122 15:00:00'
+    start_date = '2019-11-10 21:00:00'
+    end_date   = '2019-11-22 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)
