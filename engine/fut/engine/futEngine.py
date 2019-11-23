@@ -113,7 +113,7 @@ class FutEngine(object):
 
                         bar_min15 = g15.update_bar(bar)
                         if bar_min15 is not None:
-                            g15.save_bar(bar_min5)
+                            g15.save_bar(bar_min15)
                             for p in self.portfolio_list:
                                 p.onBar(bar_min15, 'min15')
 

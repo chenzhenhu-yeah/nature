@@ -542,7 +542,7 @@ class BarGenerator(object):
         if os.path.exists(fname):
             df.to_csv(fname, index=False, mode='a', header=False)
         else:
-            df.to_csv(fname, index=False, mode='a')
+            df.to_csv(fname, index=False)
 
 
 ########################################################################
