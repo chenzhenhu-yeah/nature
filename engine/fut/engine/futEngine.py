@@ -208,7 +208,7 @@ class FutEngine(object):
 def start():
 
     engine5 = FutEngine()
-    schedule.every().day.at("12:56").do(engine5.worker_open)
+    schedule.every().day.at("08:56").do(engine5.worker_open)
     schedule.every().day.at("15:03").do(engine5.worker_close)
     schedule.every().day.at("20:56").do(engine5.worker_open)
     schedule.every().day.at("02:33").do(engine5.worker_close)

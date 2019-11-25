@@ -25,7 +25,9 @@ def get_exchangeID(symbol):
 
 class Gateway_Ht_CTP(object):
     def __init__(self):
-            # 加载配置
+        self.state = 'CLOSE'
+
+        # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
 
@@ -56,12 +58,15 @@ class Gateway_Ht_CTP(object):
 
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
+        self.state = 'OPEN'
 
     def run(self):
+        self.state = 'CLOSE'
         self.t.ReqConnect(self.front)
 
     def release(self):
-        self.t.ReqUserLogout()
+        if self.state == 'OPEN':
+            self.t.ReqUserLogout()
 
     #----------------------------------------------------------------------
     #停止单需要盯min1,肯定要单启一个线程，线程中循环遍历队列（内部变量），无需同步，用List的pop(0)和append来实现。
