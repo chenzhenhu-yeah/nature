@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
-from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
+from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
@@ -44,7 +44,7 @@ class BacktestingEngine(object):
         self.startDt = startDt
         self.endDt = endDt
 
-    #----------------------------------------------------------------------
+    # 日期字段为 date, time-------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
         for vtSymbol in self.symbol_list:
@@ -82,6 +82,39 @@ class BacktestingEngine(object):
 
             self.output(vtSymbol + '全部数据加载完成，数据量：' + str(len(df)) )
 
+    # 日期字段为 datetime ----------------------------------------------------------------
+    # def loadData(self):
+    #     """加载数据"""
+    #     for vtSymbol in self.symbol_list:
+    #         #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
+    #         filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+    #
+    #         df = pd.read_csv(filename)
+    #         for i, d in df.iterrows():
+    #             #print(d)
+    #
+    #             bar = VtBarData()
+    #             bar.vtSymbol = vtSymbol
+    #             bar.symbol = vtSymbol
+    #             bar.open = float(d['open'])
+    #             bar.high = float(d['high'])
+    #             bar.low = float(d['low'])
+    #             bar.close = float(d['close'])
+    #             bar.volume = d['volume']
+    #
+    #             bar.datetime = d['datetime']
+    #             bar.date = bar.datetime[:10]
+    #             bar.time = bar.datetime[11:]
+    #             bar.date = bar.date.replace('-','')
+    #             bar.datetime = bar.date + ' ' + bar.time
+    #             #print(bar.datetime); raise False
+    #
+    #             barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
+    #             barDict[bar.vtSymbol] = bar
+    #             # break
+    #
+    #         self.output(vtSymbol + '全部数据加载完成，数据量：' + str(len(df)) )
+
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
@@ -107,7 +140,7 @@ class BacktestingEngine(object):
 
     #----------------------------------------------------------------------
     def runBacktesting(self):
-        """运行回测"""
+        print('开始回测')
         for dt, barDict in self.dataDict.items():
             #print(dt)
             if dt < self.startDt or dt >  self.endDt:
@@ -352,6 +385,7 @@ def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
     e.loadData()
     e.loadPortfolio(PortfolioClass, signal_param)
     e.runBacktesting()
+    e.portfolio.daily_close()
     return e.show_result_key()
 
     #e.showResult()
@@ -421,11 +455,12 @@ def test_one(PortfolioClass, minx):
     # start_date = '20160101 21:00:00'
     # end_date   = '20181230 15:00:00'
 
-    vtSymbol = 'CF001'
-    vtSymbol = 'ag1912'
-    start_date = '20191014 21:00:00'
-    end_date   = '20191108 15:00:00'
+    # vtSymbol = 'CF001'
+    # vtSymbol = 'ag1912'
+    # start_date = '20191014 21:00:00'
+    # end_date   = '20191108 15:00:00'
 
+    #vtSymbol = 'm1901'
     vtSymbol = 'rb1901'
     #vtSymbol = 'ag1901'
     #vtSymbol = 'c1901'
@@ -433,8 +468,9 @@ def test_one(PortfolioClass, minx):
     start_date = '20180119 00:00:00'
     #start_date = '20180219 00:00:00'
     end_date   = '20181231 00:00:00'
+    #end_date   = '20180531 00:00:00'
 
-    signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
+    #signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
     signal_param = {}
 
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
@@ -446,6 +482,7 @@ if __name__ == '__main__':
     #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
     PortfolioClass = Fut_CciBollPortfolio
+    #PortfolioClass = Fut_DaLiPortfolio
 
     minx = 'min15'
     #minx = 'min5'

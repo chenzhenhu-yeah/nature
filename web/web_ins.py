@@ -19,19 +19,32 @@ def index():
 
 @app.route('/fut')
 def fut():
-    filename = get_dss() + 'fut/put/min1_ag1912.csv'
+    symbol = 'ag1912'
+    filename = get_dss() + 'fut/put/min1_' + symbol + '.csv'
     df = pd.read_csv(filename, dtype='str')
     r_q = [ list(df.columns) ]
     for i, row in df.iterrows():
         r_q.append( list(row) )
 
-    filename = get_dss() + 'fut/put/rec/min5_ag1912.csv'
+    filename = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
     df = pd.read_csv(filename, dtype='str')
     r_t = [ list(df.columns) ]
     row = df.iloc[-1,:]
     r_t.append( list(row) )
 
-    return render_template("fut.html",title="fut",rows_q=r_q,rows_t=r_t)
+    filename = get_dss() + 'fut/deal/engine_deal.csv'
+    if 'var' in filename:
+        df = pd.read_csv(filename, sep='$', dtype='str')
+    else:
+        df = pd.read_csv(filename, dtype='str')
+    r = []
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    r.append( list(df.columns) )
+    r = list( reversed(r) )
+    r = r[:9]
+
+    return render_template("fut.html",title=symbol,rows_q=r_q,rows_t=r_t,rows=r)
 
 @app.route('/fut_csv')
 def fut_csv():

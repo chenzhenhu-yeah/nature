@@ -19,20 +19,20 @@ class Fut_CciBollSignal_Duo(Signal):
 
         # 策略参数
         self.bollWindow = 20                     # 布林通道窗口数
-        self.bollDev = 3.3                       # 布林通道的偏差
+        self.bollDev = 3.1                         # 布林通道的偏差
         self.cciWindow = 10                      # CCI窗口数
         self.atrWindow = 30                      # ATR窗口数
         self.slMultiplier = 5.6                  # 计算止损距离的乘数
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 10           # 初始化数据所用的天数
+        self.initBars = 30           # 初始化数据所用的天数
         self.minx = 'min15'
 
         # 策略临时变量
         self.cciValue = 0                        # CCI指标数值
         self.atrValue = 0                        # ATR指标数值
-        self.bollUp = [100E4]
-        self.bollDown = [0]
+        self.bollUp = 0
+        self.bollDown = 0
 
         self.can_buy = False
         self.can_short = False
@@ -102,8 +102,8 @@ class Fut_CciBollSignal_Duo(Signal):
         """计算技术指标"""
         self.atrValue = self.am.atr(self.atrWindow)
 
-        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev, array=True)
-        boll_condition = True if self.bar.close > self.bollUp[-2] else False
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        boll_condition = True if self.bar.close > self.bollUp else False
 
         self.cciValue = self.am.cci(self.cciWindow)
         cci_condition  = True if self.cciValue > 100 else False
@@ -189,7 +189,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
-               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue, \
+               self.bollUp, self.bollDown, self.cciValue, self.atrValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue', \
@@ -208,7 +208,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
-               self.bollUp[-2], self.bollDown[-2], self.cciValue, \
+               self.bollUp, self.bollDown, self.cciValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', \
@@ -230,20 +230,20 @@ class Fut_CciBollSignal_Kong(Signal):
 
         # 策略参数
         self.bollWindow = 20                     # 布林通道窗口数
-        self.bollDev = 3.3                       # 布林通道的偏差
+        self.bollDev = 3.1                       # 布林通道的偏差
         self.cciWindow = 10                      # CCI窗口数
         self.atrWindow = 30                      # ATR窗口数
         self.slMultiplier = 5.2                  # 计算止损距离的乘数
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 10           # 初始化数据所用的天数
+        self.initBars = 30           # 初始化数据所用的天数
         self.minx = 'min15'
 
         # 策略临时变量
         self.cciValue = 0                        # CCI指标数值
         self.atrValue = 0                        # ATR指标数值
-        self.bollUp = [100E4]
-        self.bollDown = [0]
+        self.bollUp = 0
+        self.bollDown = 0
 
         self.can_buy = False
         self.can_short = False
@@ -314,8 +314,8 @@ class Fut_CciBollSignal_Kong(Signal):
         """计算技术指标"""
         self.atrValue = self.am.atr(self.atrWindow)
 
-        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev, array=True)
-        boll_condition = True if self.bar.close < self.bollDown[-2] else False
+        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        boll_condition = True if self.bar.close < self.bollDown else False
 
         self.cciValue = self.am.cci(self.cciWindow)
         cci_condition  = True if self.cciValue < -100 else False
@@ -325,7 +325,7 @@ class Fut_CciBollSignal_Kong(Signal):
         #if boll_condition:
             self.can_short = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown[-2],self.cciValue,self.atrValue,boll_condition, cci_condition]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/check/bar_cciboll_kong_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
@@ -407,7 +407,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0, \
-               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue,\
+               self.bollUp, self.bollDown, self.cciValue, self.atrValue,\
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue',\
@@ -427,7 +427,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
-               self.bollUp[-2], self.bollDown[-2], self.cciValue, self.atrValue, \
+               self.bollUp, self.bollDown, self.cciValue, self.atrValue, \
                self.intraTradeHigh, self.intraTradeLow, self.stop] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue', \

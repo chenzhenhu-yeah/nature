@@ -23,8 +23,9 @@ from nature import to_log, is_trade_day, send_email, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio
 #from ipdb import set_trace
+
 
 
 ########################################################################
@@ -81,6 +82,10 @@ class FutEngine(object):
         cciboll_symbol_list = symbols.split(',')
         self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
+        symbols = setting['symbols_dali']
+        dali_symbol_list = symbols.split(',')
+        self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
@@ -132,7 +137,7 @@ class FutEngine(object):
             #print(dt)
             if dt < self.startDt or dt > self.endDt:
                 continue
-            #print(dt)
+            # print(dt)
             try:
                 for bar in barDict.values():
                     bar_min15 = g15.update_bar(bar)
@@ -180,7 +185,7 @@ class FutEngine(object):
 
         df = df.sort_values(by=['date','time'])
         df = df.iloc[-initBars:]
-        #print(df)
+        print(df)
 
         for i, row in df.iterrows():
             d = dict(row)
@@ -234,8 +239,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '2019-11-10 21:00:00'
-    end_date   = '2019-11-22 15:00:00'
+    start_date = '2019-11-25 21:00:00'
+    end_date   = '2019-11-29 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

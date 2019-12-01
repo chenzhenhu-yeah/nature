@@ -125,6 +125,17 @@
         {% endfor %}
       </table>
 
+       <p>成交:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+      </table>
+
 
     </section>
   </body>

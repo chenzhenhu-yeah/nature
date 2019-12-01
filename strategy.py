@@ -105,8 +105,6 @@ class Signal(object):
     #----------------------------------------------------------------------
     def sell(self, price, volume):
         """卖出平仓"""
-        volume = abs(self.unit)
-
         self.close(price)
         self.newSignal(DIRECTION_SHORT, OFFSET_CLOSE, price, volume)
 
@@ -119,8 +117,6 @@ class Signal(object):
     #----------------------------------------------------------------------
     def cover(self, price, volume):
         """买入平仓"""
-        volume = abs(self.unit)
-
         self.close(price)
         self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
 
