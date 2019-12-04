@@ -177,10 +177,6 @@ class Portfolio(object):
         if bar.vtSymbol not in self.vtSymbolList:
             return
 
-        # 将bar推送给signal
-        for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar, minx)
-
         if minx != 'min1':
             if self.result.date != bar.date + ' ' + bar.time:
                 previousResult = self.result
@@ -189,13 +185,18 @@ class Portfolio(object):
                 if previousResult:
                     self.result.updateClose(previousResult.closeDict)
 
+        # 将bar推送给signal
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar, minx)
+
+        if minx != 'min1':
             self.result.updateBar(bar)
             self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
     def daily_open(self):
         # 从文件中读取posDict、portfolioValue
-        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df.sort_values(by='datetime')
@@ -243,6 +244,7 @@ class Portfolio(object):
             result.calculatePnl()
             totalNetPnl += result.netPnl
             totalCommission += result.commission
+            #print(result.date, result.tradeCount)
 
             for vtSymbol, l in result.tradeDict.items():
                 for trade in l:
@@ -250,7 +252,7 @@ class Portfolio(object):
 
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/deal/portfolio_' + self.name + '_deal.csv'
+        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_deal.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,mode='a',header=False)
         else:
@@ -260,7 +262,7 @@ class Portfolio(object):
         dt = self.result.date
         r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), round(totalCommission,2), str(self.posDict), str(self.result.closeDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalCommission','posDict','closeDict'])
-        filename = self.engine.dss + 'fut/check/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,sep='$',mode='a',header=False)
         else:
@@ -311,6 +313,8 @@ class DailyResult(object):
         l = self.tradeDict[trade.vtSymbol]
         l.append(trade)
         self.tradeCount += 1
+
+        #print(self.date, trade.vtSymbol, self.tradeCount)
 
     #----------------------------------------------------------------------
     def updatePos(self, d):

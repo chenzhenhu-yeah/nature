@@ -25,7 +25,7 @@ class Fut_CciBollSignal_Duo(Signal):
         self.slMultiplier = 5.6                  # 计算止损距离的乘数
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 30           # 初始化数据所用的天数
+        self.initBars = 90           # 初始化数据所用的天数
         self.minx = 'min15'
 
         # 策略临时变量
