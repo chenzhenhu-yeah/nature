@@ -91,7 +91,7 @@ class Fut_AtrRsiSignal(Signal):
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
         # df = pd.DataFrame(r)
-        # filename = get_dss() +  'fut/check/bar_' + self.vtSymbol + '.csv'
+        # filename = get_dss() +  'fut/atrrsi/bar_' + self.vtSymbol + '.csv'
         # df.to_csv(filename, index=False, mode='a', header=False)
 
 
@@ -201,7 +201,7 @@ class Fut_AtrRsiSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
+        filename = get_dss() +  'fut/atrrsi/signal_atrrsi_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -235,7 +235,7 @@ class Fut_AtrRsiSignal(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/check/signal_atrrsi_var.csv'
+        filename = get_dss() +  'fut/atrrsi/signal_atrrsi_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -258,7 +258,7 @@ class Fut_AtrRsiSignal(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/atrrsi/signal_atrrsi_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -279,7 +279,7 @@ class Fut_AtrRsiSignal(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'atrValue', 'atrMa', 'rsiValue', 'iswave', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/deal/signal_atrrsi_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/atrrsi/signal_atrrsi_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:

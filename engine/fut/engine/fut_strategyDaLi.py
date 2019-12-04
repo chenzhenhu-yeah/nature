@@ -102,27 +102,26 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
         if len(self.price_duo_list) == 0 or len(self.price_kong_list) == 0 :
-            self.buy(bar.close, self.fixedSize)
+            self.buy(bar.close+3, self.fixedSize)
             self.unit_buy(bar.close)
-            self.short(bar.close, self.fixedSize)
+            self.short(bar.close-3, self.fixedSize)
             self.unit_short(bar.close)
 
         # 平空仓、开多仓
         if self.can_buy == True:
             if len(self.price_kong_list) == 1:
-                self.buy(bar.close, 2*self.fixedSize)
-                #self.buy(bar.close, self.fixedSize)
-                self.unit_buy(bar.close)
-                self.unit_buy(bar.close)
-
-                self.short(bar.close, self.fixedSize)
-                self.cover(bar.close, self.fixedSize)
+                self.short(bar.close-3, self.fixedSize)
+                self.cover(bar.close+3, self.fixedSize)
                 self.unit_cover()
                 self.unit_short(bar.close)
+
+                self.buy(bar.close+3, 2*self.fixedSize)
+                self.unit_buy(bar.close)
+                self.unit_buy(bar.close)
             else:
-                self.cover(bar.close, self.fixedSize)
+                self.cover(bar.close+3, self.fixedSize)
                 self.unit_cover()
-                self.buy(bar.close, self.fixedSize)
+                self.buy(bar.close+3, self.fixedSize)
                 self.unit_buy(bar.close)
 
             if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
@@ -131,19 +130,18 @@ class Fut_DaLiSignal(Signal):
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
-                self.short(bar.close, 2*self.fixedSize)
-                #self.short(bar.close, self.fixedSize)
-                self.unit_short(bar.close)
-                self.unit_short(bar.close)
-
-                self.buy(bar.close, self.fixedSize)
-                self.sell(bar.close, self.fixedSize)
+                self.buy(bar.close+3, self.fixedSize)
+                self.sell(bar.close-3, self.fixedSize)
                 self.unit_sell()
                 self.unit_buy(bar.close)
+
+                self.short(bar.close-3, 2*self.fixedSize)
+                self.unit_short(bar.close)
+                self.unit_short(bar.close)
             else:
-                self.sell(bar.close, self.fixedSize)
+                self.sell(bar.close-3, self.fixedSize)
                 self.unit_sell()
-                self.short(bar.close, self.fixedSize)
+                self.short(bar.close-3, self.fixedSize)
                 self.unit_short(bar.close)
 
             if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
