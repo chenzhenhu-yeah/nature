@@ -82,6 +82,11 @@ class FutEngine(object):
         while self.gateway.t.account is None:
             time.sleep(1)
         time.sleep(1)
+        risk = float( self.gateway.t.account.Risk )
+        if risk > 0.75:
+            print('have risk')
+        else:
+            print('Risk: ', risk)
         print('Risk: ', self.gateway.t.account.Risk)
 
 
