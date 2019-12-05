@@ -175,6 +175,12 @@ class HuQuote(CtpQuote):
                 bar.time = '23:30:00'
                 self.put_bar(bar, 'min1')
 
+        if c.exchangeID == 'DCE':
+            if c.pz in ['m'] and tick.UpdateTime in ['22:59:57','22:59:58','22:59:59']:
+                bar.time = '23:00:00'
+                self.put_bar(bar, 'min1')
+
+
 class TestQuote(object):
     """TestQuote"""
 

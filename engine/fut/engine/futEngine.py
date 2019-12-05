@@ -79,6 +79,11 @@ class FutEngine(object):
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
         self.gateway.run()
+        while self.gateway.t.account is None:
+            time.sleep(1)
+        time.sleep(1)
+        print('Risk: ', self.gateway.t.account.Risk)
+
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):

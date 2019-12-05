@@ -239,6 +239,10 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.unit = 0
         self.result.close(price)
 
+        # 本次盈利超200点，暂停策略至收盘
+        if self.result.pnl > 200:
+            self.paused = True
+
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
                self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
@@ -491,6 +495,10 @@ class Fut_RsiBollSignal_Kong(Signal):
         """平仓"""
         self.unit = 0
         self.result.close(price)
+
+        # 本次盈利超200点，暂停策略至收盘
+        if self.result.pnl > 200:
+            self.paused = True
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
                0, price, self.result.pnl, \
