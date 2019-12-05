@@ -196,7 +196,7 @@ class Portfolio(object):
     #----------------------------------------------------------------------
     def daily_open(self):
         # 从文件中读取posDict、portfolioValue
-        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df.sort_values(by='datetime')
@@ -252,7 +252,7 @@ class Portfolio(object):
 
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_deal.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_deal.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,mode='a',header=False)
         else:
@@ -262,7 +262,7 @@ class Portfolio(object):
         dt = self.result.date
         r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), round(totalCommission,2), str(self.posDict), str(self.result.closeDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalCommission','posDict','closeDict'])
-        filename = self.engine.dss + 'fut/' + self.name +'/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,sep='$',mode='a',header=False)
         else:

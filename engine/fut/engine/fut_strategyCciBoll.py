@@ -138,7 +138,7 @@ class Fut_CciBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -172,7 +172,7 @@ class Fut_CciBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -194,7 +194,7 @@ class Fut_CciBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -213,7 +213,7 @@ class Fut_CciBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -327,7 +327,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
         r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
         df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/cciboll/bar_cciboll_kong_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/cciboll/bar_cciboll_kong_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
 
 
@@ -356,7 +356,7 @@ class Fut_CciBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -390,7 +390,7 @@ class Fut_CciBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -412,7 +412,7 @@ class Fut_CciBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue',\
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -432,7 +432,7 @@ class Fut_CciBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp', 'bollDown', 'cciValue', 'atrValue', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:

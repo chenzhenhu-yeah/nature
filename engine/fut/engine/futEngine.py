@@ -175,7 +175,7 @@ class FutEngine(object):
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         #print('send order: ', r)
         to_log( str(r)[3:-2] )
-        fn = 'fut/deal/engine_deal.csv'
+        fn = 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         if self.gateway is not None:

@@ -32,7 +32,7 @@ def fut():
     row = df.iloc[-1,:]
     r_t.append( list(row) )
 
-    filename = get_dss() + 'fut/deal/engine_deal.csv'
+    filename = get_dss() + 'fut/engine/engine_deal.csv'
     if 'var' in filename:
         df = pd.read_csv(filename, sep='$', dtype='str')
     else:

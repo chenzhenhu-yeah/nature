@@ -210,7 +210,7 @@ class FutEngine(object):
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
-        fn = 'fut/deal/engine_deal.csv'
+        fn = 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         if self.gateway is not None:
@@ -240,7 +240,7 @@ def start():
     print(u'期货交易引擎开始回放')
 
     start_date = '2019-11-26 21:00:00'
-    end_date   = '2019-11-27 15:00:00'
+    end_date   = '2019-12-03 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

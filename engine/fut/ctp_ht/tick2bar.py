@@ -55,7 +55,7 @@ def _Generate_Bar_MinOne(tick, temp_bar, r, today):
 
     temp_bar.append(bar)
 
-def proc_segment(df1,begin,end,num):
+def proc_segment(df1,begin,end,num,symbol):
     """
     df1:该时段内的tick明细
     begin:该时段起始时间
@@ -140,7 +140,7 @@ def proc_segment(df1,begin,end,num):
             pass
         else:
             # 缺少bar，补齐
-            to_log( '当tick2bar时数据有缺失：'+ date + ' ' + tm + ' ' + str(row[2]) )
+            to_log( '当tick2bar时数据有缺失：'+ date + ' ' + tm + ' ' + symbol + ' ' + str(row[2]) )
             bar1 = [ date, tm, row[2], row[3], row[4], row[5], 0 ]
             r.insert(i,bar1)
         next = next + oneminute
@@ -210,7 +210,7 @@ def tick2bar(tradeDay):
                     df1 = df1.reset_index()
                     # print(i,len(df1))
                     # print(df1.head(9))
-                    r1 += proc_segment(df1, row.begin, row.end, row.num)
+                    r1 += proc_segment(df1, row.begin, row.end, row.num, symbol)
                 else:
                     to_log( 'tick数据有缺失：'+ tradeDay + ' ' + str(i) + ' ' + symbol )
 

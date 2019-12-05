@@ -39,7 +39,7 @@ class Fut_DaLiSignal(Signal):
         Signal.__init__(self, portfolio, vtSymbol)
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/engine/dali/signal_dali_param.csv'
+        filename = get_dss() +  'fut/dali/signal_dali_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
@@ -63,7 +63,7 @@ class Fut_DaLiSignal(Signal):
 
         # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
         # df = pd.DataFrame(r)
-        # filename = get_dss() +  'fut/engine/dali/bar_' + self.vtSymbol + '.csv'
+        # filename = get_dss() +  'fut/dali/bar_' + self.vtSymbol + '.csv'
         # df.to_csv(filename, index=False, mode='a', header=False)
 
 
@@ -85,10 +85,9 @@ class Fut_DaLiSignal(Signal):
         if self.bar.close < 2600 or self.bar.close > 3100:
             return
 
-        #self.atrValue = self.am.atr(self.atrWindow)
+        self.atrValue = self.am.atr(self.atrWindow)
         #print(self.atrValue)
-        #self.gap = max(8*self.atrValue, 15)
-        self.gap = 20
+        self.gap = max(12*self.atrValue, 15)
 
         if self.bar.close <= self.get_price_kong() - self.get_gap_minus() :
         #if self.bar.close <= self.get_price_kong() - self.gap:
@@ -128,11 +127,6 @@ class Fut_DaLiSignal(Signal):
             if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
                 print( len(self.price_duo_list), len(self.price_kong_list) )
 
-            # to_log( '买开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
-            # to_log( str(self.price_duo_list) )
-            # to_log( str(self.price_kong_list) )
-
-
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
@@ -153,67 +147,29 @@ class Fut_DaLiSignal(Signal):
             if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
                 print( len(self.price_duo_list), len(self.price_kong_list) )
 
-            # to_log( '卖开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
-            # to_log( str(self.price_duo_list) )
-            # to_log( str(self.price_kong_list) )
-
     #----------------------------------------------------------------------
     def get_gap_plus(self):
         # 当为上涨趋势时，空头持仓增加，要控制。
-        g = self.gap
-
         cc = len(self.price_duo_list) - len(self.price_kong_list)
-        # if  cc >= 11:
-        #     g -= 20
-        # elif cc >= 9:
-        #     g -= 10
-        # elif cc >= 7:
-        #     g -= 5
+        if  cc >= 11:
+            self.gap -= 20
+        elif cc >= 9:
+            self.gap -= 10
+        elif cc >= 7:
+            self.gap -= 5
 
-        #if self.pnl > 40 and cc >= 1:
-        if cc >= 2:
-            g = 15
-
-        if cc <= -12:
-            g += 20
-        elif cc <= -10:
-            g += 15
-        elif cc <= -8:
-            g += 10
-        elif cc <= -6:
-            g += 5
-
-        g = max(g, 15)
-        g = min(g, 60)
-        return g
+        return max(self.gap, 20)
     #----------------------------------------------------------------------
     def get_gap_minus(self):
-        g = self.gap
-
         cc = len(self.price_kong_list) - len(self.price_duo_list)
-        # if  cc >= 11:
-        #     g -= 20
-        # elif cc >= 9:
-        #     g -= 10
-        # elif cc >= 7:
-        #     g -= 5
+        if  cc >= 11:
+            self.gap -= 20
+        elif cc >= 9:
+            self.gap -= 10
+        elif cc >= 7:
+            self.gap -= 5
 
-        #if self.pnl < -40 and cc >= 1:
-        if cc >= 2:
-            g = 15
-
-        if cc <= -12:
-            g += 20
-        elif cc <= -10:
-            g += 15
-        elif cc <= -8:
-            g += 10
-        elif cc <= -6:
-            g += 5
-
-        g = max(g, 15)
-        g = min(g, 60)
-        return g
+        return max(self.gap, 20)
 
     #----------------------------------------------------------------------
     def get_price_duo(self):
@@ -251,7 +207,7 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/dali/signal_dali_var.csv'
+        filename = get_dss() +  'fut/dali/signal_dali_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -270,7 +226,7 @@ class Fut_DaLiSignal(Signal):
 
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'price_duo_list','price_kong_list'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_var.csv'
+        filename = get_dss() +  'fut/dali/signal_dali_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -284,7 +240,7 @@ class Fut_DaLiSignal(Signal):
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/dali/signal_dali_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -301,7 +257,7 @@ class Fut_DaLiSignal(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/dali/signal_dali_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
