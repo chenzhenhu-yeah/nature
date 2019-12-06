@@ -388,6 +388,8 @@ class DailyResult(object):
         self.totalPnl = self.holdingPnl + self.tradingPnl
         self.netPnl = self.totalPnl - self.commission - self.slippage
 
+        #print(self.date, self.netPnl, self.holdingPnl, self.tradingPnl, self.commission, self.slippage)
+
         return self.netPnl
 
 ########################################################################

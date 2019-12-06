@@ -58,7 +58,22 @@ class Gateway_Ht_CTP(object):
 
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
-        self.state = 'OPEN'
+
+        i = 0
+        while self.t.account is None and i < 3600:
+            time.sleep(1)
+            i += 1
+        time.sleep(2)
+
+        if i < 3600:
+            self.state = 'OPEN'
+            risk = float( self.t.account.Risk )
+            #if risk > 0.75:
+            if risk > 0.05:
+                send_email(get_dss(), 'Risk: '+str(risk), '')
+            print('gateway connected.')
+        else:
+            print('gateway not connected.')
 
     def run(self):
         self.state = 'CLOSE'
@@ -90,8 +105,6 @@ class Gateway_Ht_CTP(object):
             if exchangeID == '':
                 return 'error'
 
-            # 当前还处于测试阶段，只开1仓，降低价格不成交
-            volume = 1
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick

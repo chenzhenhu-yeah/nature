@@ -79,17 +79,7 @@ class FutEngine(object):
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
         self.gateway.run()
-        while self.gateway.t.account is None:
-            time.sleep(1)
-        time.sleep(1)
-        risk = float( self.gateway.t.account.Risk )
-        if risk > 0.75:
-            print('have risk')
-        else:
-            print('Risk: ', risk)
-        print('Risk: ', self.gateway.t.account.Risk)
-
-
+        
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""

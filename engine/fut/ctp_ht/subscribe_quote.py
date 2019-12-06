@@ -165,18 +165,24 @@ class HuQuote(CtpQuote):
 
         self.bar_min1_dict[id] = bar
 
+        # 收盘前，确保委托单能够成功发出！
+        if tick.UpdateTime in ['14:58:57','14:58:58','14:58:59']:
+            bar.time = '15:00:00'
+            self.put_bar(bar, 'min1')
+
         c = get_contract(bar.vtSymbol)
         if c.exchangeID == 'CZCE':
-            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['14:59:57','14:59:58','14:59:59']:
-                bar.time = '15:00:00'
-                self.put_bar(bar, 'min1')
-
-            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['23:29:57','23:29:58','23:29:59']:
+            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['23:28:57','23:28:58','23:28:59']:
                 bar.time = '23:30:00'
                 self.put_bar(bar, 'min1')
 
         if c.exchangeID == 'DCE':
-            if c.pz in ['m'] and tick.UpdateTime in ['22:59:57','22:59:58','22:59:59']:
+            if c.pz in ['m'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
+                bar.time = '23:00:00'
+                self.put_bar(bar, 'min1')
+
+        if c.exchangeID == 'SHFE':
+            if c.pz in ['rb'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
                 bar.time = '23:00:00'
                 self.put_bar(bar, 'min1')
 
