@@ -220,9 +220,11 @@ class BacktestingEngine(object):
             sharpeRatio = 0
 
         # r = [[item] for item in balanceList]
-        # #r = [[item] for item in netPnlList]
-        # df = pd.DataFrame(r)
-        # df.to_csv('a.csv',index=False)
+        # r = [[item] for item in netPnlList]
+        # print(self.date, self.netPnl, self.holdingPnl, self.tradingPnl, self.commission, self.slippage)
+        r = [[item.date, item.netPnl, item.holdingPnl, item.tradingPnl, item.commission, item.slippage] for item in resultList ]
+        df = pd.DataFrame(r)
+        df.to_csv('a.csv',index=False)
 
         # 返回结果
         result = {

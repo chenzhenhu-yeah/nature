@@ -27,6 +27,10 @@ class Gateway_Ht_CTP(object):
     def __init__(self):
         self.state = 'CLOSE'
 
+        filename = get_dss() +  'gateway_closed.csv'
+        if os.path.exists(filename):
+            return
+
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
@@ -56,6 +60,9 @@ class Gateway_Ht_CTP(object):
         pf = setting['gateway_pf']
         self.pf_list = pf.split(',')
 
+        self.state = 'INITED'
+
+    #----------------------------------------------------------------------
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
 
@@ -67,7 +74,7 @@ class Gateway_Ht_CTP(object):
 
         if i < 3600:
             self.state = 'OPEN'
-            risk = float( self.t.account.Risk )
+            risk = round( float( self.t.account.Risk ), 2 )
             #if risk > 0.75:
             if risk > 0.05:
                 send_email(get_dss(), 'Risk: '+str(risk), '')
@@ -76,8 +83,8 @@ class Gateway_Ht_CTP(object):
             print('gateway not connected.')
 
     def run(self):
-        self.state = 'CLOSE'
-        self.t.ReqConnect(self.front)
+        if self.state == 'INITED':
+            self.t.ReqConnect(self.front)
 
     def release(self):
         if self.state == 'OPEN':
@@ -88,6 +95,10 @@ class Gateway_Ht_CTP(object):
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
         try:
+            if self.state == 'CLOSE':
+                print('gateway closed')
+                return
+
             # 流控
             time.sleep(1)
             pz = get_contract(code).pz
@@ -96,10 +107,6 @@ class Gateway_Ht_CTP(object):
             else:
                 print(pz, ' just test order here!')
                 return
-
-            if self.t.logined == False:
-                print('ctp trade not login')
-                return ''
 
             exchangeID = get_exchangeID(code)
             if exchangeID == '':

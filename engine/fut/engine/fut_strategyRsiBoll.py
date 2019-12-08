@@ -239,8 +239,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.unit = 0
         self.result.close(price)
 
-        # 本次盈利超170点，暂停策略至收盘
-        if self.result.pnl > 170:
+        # 本次盈利超150点，暂停策略至收盘
+        if self.result.pnl >= 150:
             self.paused = True
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
@@ -496,8 +496,8 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.unit = 0
         self.result.close(price)
 
-        # 本次盈利超170点，暂停策略至收盘
-        if self.result.pnl > 170:
+        # 本次盈利超150点，暂停策略至收盘
+        if self.result.pnl >= 150:
             self.paused = True
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \

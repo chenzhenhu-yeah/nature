@@ -15,10 +15,9 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
-        self.type = 'one'
 
         # 策略参数
-        self.fixedSize = 1            # 每次交易的数量
+        self.fixedSize = 1           # 每次交易的数量
         self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min5'
 
@@ -53,11 +52,6 @@ class Fut_DaLiSignal(Signal):
         if 'gap' in param_dict:
             self.gap = param_dict['gap']
             print('成功设置策略参数 self.gap: ',self.gap)
-        if 'fixedSize' in param_dict:
-            self.fixedSize = param_dict['fixedSize']
-            if self.fixedSize > 1:
-                self.type = 'multi'
-            print('成功设置策略参数 self.fixedSize: ',self.fixedSize)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -66,21 +60,18 @@ class Fut_DaLiSignal(Signal):
         if minx == 'min5':
             self.on_bar_minx(bar)
 
+        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/dali/bar_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
+
+
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
         #print('here')
-        if self.fixedSize == 1:
-            if self.bar.close <= 2600 or self.bar.close >= 3100:
-                return
-            if self.bar.close >= 2730 and self.bar.close <= 3000:
-                return
-        else:
-            if self.bar.close < 2730 or self.bar.close > 3000:
-                return
-
         self.calculateIndicator()     # 计算指标
         self.generateSignal(bar)    # 触发信号，产生交易指令
 
@@ -90,33 +81,30 @@ class Fut_DaLiSignal(Signal):
         self.can_buy = False
         self.can_short = False
 
-        self.atrValue = self.am.atr(self.atrWindow)
-        # print(self.atrValue)
-        self.gap = max(8*self.atrValue, 15)
-        self.gap = min(self.gap, 40)
-        #self.gap = 20
+        if self.bar.close < 2600 or self.bar.close > 3100:
+            return
+
+        #self.atrValue = self.am.atr(self.atrWindow)
+        #print(self.atrValue)
+        #self.gap = max(8*self.atrValue, 15)
+        self.gap = 20
 
         if self.bar.close <= self.get_price_kong() - self.get_gap_minus() :
         #if self.bar.close <= self.get_price_kong() - self.gap:
             self.can_buy = True
-            self.pnl = (self.get_price_kong() - self.bar.close)*self.fixedSize
+            self.pnl = self.get_price_kong() - self.bar.close
 
         if self.bar.close >= self.get_price_duo() + self.get_gap_plus() :
         #if self.bar.close >= self.get_price_duo() + self.gap:
             self.can_short = True
-            self.pnl = (self.get_price_duo() - self.bar.close)*self.fixedSize
-
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+            self.pnl = self.get_price_duo() - self.bar.close
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
         if len(self.price_duo_list) == 0 or len(self.price_kong_list) == 0 :
             self.buy(bar.close, self.fixedSize)
-            self.short(bar.close, self.fixedSize)
             self.unit_buy(bar.close)
+            self.short(bar.close, self.fixedSize)
             self.unit_short(bar.close)
 
         # 平空仓、开多仓
@@ -124,45 +112,44 @@ class Fut_DaLiSignal(Signal):
             if len(self.price_kong_list) == 1:
                 self.short(bar.close, self.fixedSize)
                 self.cover(bar.close, self.fixedSize)
-                self.buy(bar.close, self.fixedSize)
-
                 self.unit_cover()
                 self.unit_short(bar.close)
-                self.unit_buy(bar.close)
 
+                self.buy(bar.close, 2*self.fixedSize)
+                self.unit_buy(bar.close+5)
+                self.unit_buy(bar.close-5)
             else:
                 self.cover(bar.close, self.fixedSize)
-                self.buy(bar.close, self.fixedSize)
-
                 self.unit_cover()
+                self.buy(bar.close, self.fixedSize)
                 self.unit_buy(bar.close)
 
-            if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
+            if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
                 print( len(self.price_duo_list), len(self.price_kong_list) )
 
             # to_log( '买开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
             # to_log( str(self.price_duo_list) )
             # to_log( str(self.price_kong_list) )
 
+
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
                 self.buy(bar.close, self.fixedSize)
                 self.sell(bar.close, self.fixedSize)
-                self.short(bar.close, self.fixedSize)
-
                 self.unit_sell()
                 self.unit_buy(bar.close)
-                self.unit_short(bar.close)
+
+                self.short(bar.close, 2*self.fixedSize)
+                self.unit_short(bar.close+5)
+                self.unit_short(bar.close-5)
             else:
                 self.sell(bar.close, self.fixedSize)
-                self.short(bar.close, self.fixedSize)
-
                 self.unit_sell()
+                self.short(bar.close, self.fixedSize)
                 self.unit_short(bar.close)
 
-
-            if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
+            if len(self.price_duo_list) >= 15 or len(self.price_kong_list) >= 15:
                 print( len(self.price_duo_list), len(self.price_kong_list) )
 
             # to_log( '卖开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
@@ -263,7 +250,7 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_var.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -277,27 +264,12 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def save_var(self):
-        pnl_trade = 0
-        filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            pnl_trade = df.pnl.sum()
-
-        settle = self.bar.close
-        pnl_hold = 0
-        for item in self.price_duo_list:
-            pnl_hold += settle - item
-
-        for item in self.price_kong_list:
-            pnl_hold += item - settle
-        pnl_hold = pnl_hold*self.fixedSize
-
         r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \
-               pnl_trade+pnl_hold, pnl_trade, pnl_hold, str(self.price_duo_list), str(self.price_kong_list)] ]
+               str(self.price_duo_list), str(self.price_kong_list)] ]
 
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
-                                      'pnl_net','pnl_trade','pnl_hold','price_duo_list','price_kong_list'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var.csv'
+                                      'price_duo_list','price_kong_list'])
+        filename = get_dss() +  'fut/engine/dali/signal_dali_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -311,7 +283,7 @@ class Fut_DaLiSignal(Signal):
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -328,7 +300,7 @@ class Fut_DaLiSignal(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -340,12 +312,7 @@ class Fut_DaLiPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'dali'
-
-        s_param = {}
-        for symbol in symbol_list:
-            s_param[symbol] = {'fixedSize':2}
-        #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, s_param)
-        Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, s_param)
+        Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, signal_param)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):

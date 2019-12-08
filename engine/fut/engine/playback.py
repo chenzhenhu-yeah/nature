@@ -239,7 +239,7 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '2019-12-06 09:00:00'
+    start_date = '2019-11-26 09:00:00'
     end_date   = '2019-12-06 15:00:00'
 
     e = FutEngine()

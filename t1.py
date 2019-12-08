@@ -16,54 +16,20 @@ import tushare as ts
 from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 from nature import VtBarData, ArrayManager
 
-r = []
-startDt = '2019-11-21 21:00:00'
-minx = 'min1'
-vtSymbol = 'm1901'
-initBars = 90
+fname = get_dss() + 'fut/engine/dali/signal_dali_m1901.csv'
 
-# 直接读取signal对应minx相关的文件。
-fname = get_dss() + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
-#print(fname)
 df = pd.read_csv(fname)
-#df['datetime'] = df['date'] + ' ' + df['time']
-print(df.head(3))
-print( len(df) )
+p = df.pnl.sum()
+print(p)
 
-gap = 45
-price_deal = 2760
-r =[]
+duo_list = [2765.0, 2781.0, 2801.0, 2810.0, 2832.0, 2848.0, 2882.0, 2908.0, 3077.0, 3079.0, 3080.0, 3080.0, 3082.0, 3085.0, 3098.0]
+kong_list = [2735.0, 2739.0, 2752.0, 2753.0, 2815.0]
+settle = 2815
 
-for i, row in df.iterrows():
-    d = dict(row)
-    #print(d)
-    # print(type(d))
-    # bar = VtBarData()
-    # bar.__dict__ = d
-    # #print(bar.__dict__)
-    if d['close'] >= price_deal+gap :
-        price_deal = d['close']
-        r.append(1)
-    elif d['close'] <= price_deal-gap :
-        price_deal = d['close']
-        r.append(-1)
+pnl = 0
+for item in duo_list:
+    pnl += settle - item
 
-D=pd.Series(r)
-d = D.cumsum()
-#print(d)
-c = {'r':r, 'D':list(D), 'd':list(d)}
-df = pd.DataFrame(c)
-df.to_csv('a1.csv', index=False)
-
-#
-# am = ArrayManager(initBars)        # K线容器
-# for bar in r:
-#     am.updateBar(bar)
-#
-# rsiValue = am.rsi(5, array=True)
-# #rsiArray50 = am.rsi(10, array=True)
-# rsiMa  = rsiValue[-30:].mean()
-#
-# #print(am.close)
-# print(rsiValue)
-# print(rsiMa)
+for item in kong_list:
+    pnl += item - settle
+print(pnl)
