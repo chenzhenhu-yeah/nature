@@ -79,7 +79,7 @@ class FutEngine(object):
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
         self.gateway.run()
-        
+
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
@@ -195,7 +195,8 @@ class FutEngine(object):
     def worker_close(self):
         """盘后保存及展示数据"""
         try:
-            self.gateway.release()
+            if self.gateway is not None:
+                self.gateway.release()
             self.gateway = None                # 路由
             self.vtSymbol_list = []
 
