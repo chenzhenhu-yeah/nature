@@ -9,7 +9,7 @@ from datetime import datetime
 import threading
 import traceback
 import json
-import os 
+import os
 from csv import DictReader
 from datetime import datetime
 from collections import OrderedDict, defaultdict
@@ -76,8 +76,7 @@ class Gateway_Ht_CTP(object):
         if i < 3600:
             self.state = 'OPEN'
             risk = round( float( self.t.account.Risk ), 2 )
-            #if risk > 0.75:
-            if risk > 0.05:
+            if risk > 0.5:
                 send_email(get_dss(), 'Risk: '+str(risk), '')
             print('gateway connected.')
         else:

@@ -172,8 +172,8 @@ class HuQuote(CtpQuote):
 
         c = get_contract(bar.vtSymbol)
         if c.exchangeID == 'CZCE':
-            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['23:28:57','23:28:58','23:28:59']:
-                bar.time = '23:30:00'
+            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
+                bar.time = '23:00:00'
                 self.put_bar(bar, 'min1')
 
         if c.exchangeID == 'DCE':
