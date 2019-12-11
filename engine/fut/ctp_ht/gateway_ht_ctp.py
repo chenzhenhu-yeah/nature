@@ -45,6 +45,7 @@ class Gateway_Ht_CTP(object):
         self.proc = ''
 
         self.t = CtpTrade()
+        self.t.OnRspQryTradingAccount = self.on_qry_account
         self.t.OnConnected = self.on_connect
         self.t.OnUserLogin = lambda o, x: print('Trade logon:', x)
         self.t.OnDisConnected = lambda o, x: print(x)
@@ -64,6 +65,17 @@ class Gateway_Ht_CTP(object):
         self.state = 'INITED'
 
     #----------------------------------------------------------------------
+    def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
+        self.t._OnRspQryAccount(self, pTradingAccount, pRspInfo, nRequestID, bIsLast)
+        risk = round( float( self.t.account.Risk ), 2 )
+        if risk > 0.5:
+            send_email(get_dss(), 'Risk: '+str(risk), '')
+
+    #----------------------------------------------------------------------
+    def check_risk(self):
+        self.t.t.ReqQryTradingAccount(self.broker, self.investor)
+
+    #----------------------------------------------------------------------
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
 
@@ -75,14 +87,12 @@ class Gateway_Ht_CTP(object):
 
         if i < 3600:
             self.state = 'OPEN'
-            risk = round( float( self.t.account.Risk ), 2 )
-            if risk > 0.5:
-                send_email(get_dss(), 'Risk: '+str(risk), '')
             print('gateway connected.')
         else:
             print('gateway not connected.')
 
     def run(self):
+        print(self.state)
         if self.state == 'INITED':
             self.t.ReqConnect(self.front)
 
@@ -130,4 +140,9 @@ class Gateway_Ht_CTP(object):
             to_log(s)
 
 if __name__ == "__main__":
+    # g = Gateway_Ht_CTP()
+    # g.run()
+    # time.sleep(10)
+    # g.check_risk()
+    # input()
     pass

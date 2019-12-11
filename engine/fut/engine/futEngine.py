@@ -187,6 +187,10 @@ class FutEngine(object):
         try:
             self.init_daily()
 
+            time.sleep(600)
+            if self.gateway is not None:
+                self.gateway.check_risk()
+
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)

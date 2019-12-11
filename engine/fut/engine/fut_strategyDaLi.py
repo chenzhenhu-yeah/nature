@@ -24,8 +24,16 @@ class Fut_DaLiSignal(Signal):
 
         self.atrValue = 0
         self.atrWindow = 30
+        self.atr_x = 8
 
         self.gap = 30
+        self.gap_min = 15
+        self.gap_max = 40
+        self.price_min_1 = 2600
+        self.price_min_2 = 2730
+        self.price_max_2 = 3000
+        self.price_max_1 = 3100
+
         self.price_duo_list =  []
         self.price_kong_list = []
 
@@ -37,6 +45,7 @@ class Fut_DaLiSignal(Signal):
         # 需要持久化保存的变量
 
         Signal.__init__(self, portfolio, vtSymbol)
+
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/engine/dali/signal_dali_param.csv'
@@ -46,7 +55,15 @@ class Fut_DaLiSignal(Signal):
             if len(df) > 0:
                 rec = df.iloc[0,:]
                 self.gap = rec.gap
-                print('成功加载策略参数', self.gap)
+                self.gap_min = rec.gap_min
+                self.gap_max = rec.gap_max
+                self.atr_x = rec.atr_x
+                self.price_min_1 = rec.price_min_1
+                self.price_min_2 = rec.price_min_2
+                self.price_max_2 = rec.price_max_2
+                self.price_max_1 = rec.price_max_1
+                print('成功加载策略参数', self.gap,self.gap_min,self.gap_max,self.atr_x, \
+                      self.price_min_1,self.price_min_2,self.price_max_2,self.price_max_1)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
@@ -73,16 +90,16 @@ class Fut_DaLiSignal(Signal):
 
         #print('here')
         if self.fixedSize == 1:
-            if self.bar.close <= 2600 or self.bar.close >= 3100:
+            if self.bar.close <= self.price_min_1 or self.bar.close >= self.price_max_1:
                 return
-            if self.bar.close >= 2730 and self.bar.close <= 3000:
+            if self.bar.close >= self.price_min_2 and self.bar.close <= self.price_max_2:
                 return
         else:
-            if self.bar.close < 2730 or self.bar.close > 3000:
+            if self.bar.close < self.price_min_2 or self.bar.close > self.price_max_2:
                 return
 
         self.calculateIndicator()     # 计算指标
-        self.generateSignal(bar)    # 触发信号，产生交易指令
+        self.generateSignal(bar)      # 触发信号，产生交易指令
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -92,8 +109,9 @@ class Fut_DaLiSignal(Signal):
 
         self.atrValue = self.am.atr(self.atrWindow)
         # print(self.atrValue)
-        self.gap = max(8*self.atrValue, 15)
-        self.gap = min(self.gap, 40)
+        self.gap = self.atr_x * self.atrValue
+        self.gap = max(self.gap, self.gap_min)
+        self.gap = min(self.gap, self.gap_max)
         #self.gap = 20
 
         if self.bar.close <= self.get_price_kong() - self.get_gap_minus() :
@@ -184,7 +202,7 @@ class Fut_DaLiSignal(Signal):
 
         #if self.pnl > 40 and cc >= 1:
         if cc >= 2:
-            g = 15
+            g = self.gap_min
 
         if cc <= -12:
             g += 20
@@ -195,9 +213,10 @@ class Fut_DaLiSignal(Signal):
         elif cc <= -6:
             g += 5
 
-        g = max(g, 15)
-        g = min(g, 60)
+        g = max(g, self.gap_min)
+        g = min(g, self.gap_max+10)
         return g
+
     #----------------------------------------------------------------------
     def get_gap_minus(self):
         g = self.gap
@@ -212,7 +231,7 @@ class Fut_DaLiSignal(Signal):
 
         #if self.pnl < -40 and cc >= 1:
         if cc >= 2:
-            g = 15
+            g = self.gap_min
 
         if cc <= -12:
             g += 20
@@ -223,8 +242,8 @@ class Fut_DaLiSignal(Signal):
         elif cc <= -6:
             g += 5
 
-        g = max(g, 15)
-        g = min(g, 60)
+        g = max(g, self.gap_min)
+        g = min(g, self.gap_max+10)
         return g
 
     #----------------------------------------------------------------------

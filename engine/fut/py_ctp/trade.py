@@ -250,7 +250,6 @@ class CtpTrade():
 
     def _OnRspQryAccount(self, pTradingAccount: CThostFtdcTradingAccountField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
-
         if not self.account:
             self.account = TradingAccount()
         self.account.Available = pTradingAccount.getAvailable()
@@ -483,7 +482,7 @@ class CtpTrade():
         :param pwd:
         :param broker:
         """
-        
+
 
         self.broker = broker
         self.investor = user
