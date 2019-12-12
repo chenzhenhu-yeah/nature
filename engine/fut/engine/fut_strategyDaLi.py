@@ -51,7 +51,7 @@ class Fut_DaLiSignal(Signal):
         filename = get_dss() +  'fut/engine/dali/signal_dali_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
-            df = df[ df.pz == get_contract(self.vtSymbol).pz ]
+            df = df[ df.symbol == self.vtSymbol ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
                 self.gap = rec.gap
@@ -62,7 +62,7 @@ class Fut_DaLiSignal(Signal):
                 self.price_min_2 = rec.price_min_2
                 self.price_max_2 = rec.price_max_2
                 self.price_max_1 = rec.price_max_1
-                print('成功加载策略参数', self.gap,self.gap_min,self.gap_max,self.atr_x, \
+                print('成功加载策略参数', self.vtSymbol,self.gap,self.gap_min,self.gap_max,self.atr_x, \
                       self.price_min_1,self.price_min_2,self.price_max_2,self.price_max_1)
 
     #----------------------------------------------------------------------
@@ -282,7 +282,7 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -297,7 +297,7 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def save_var(self):
         pnl_trade = 0
-        filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             pnl_trade = df.pnl.sum()
@@ -316,7 +316,7 @@ class Fut_DaLiSignal(Signal):
 
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'pnl_net','pnl_trade','pnl_hold','price_duo_list','price_kong_list'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -330,7 +330,7 @@ class Fut_DaLiSignal(Signal):
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -347,7 +347,7 @@ class Fut_DaLiSignal(Signal):
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:

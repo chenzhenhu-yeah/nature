@@ -90,7 +90,7 @@ class FutEngine(object):
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
-        print('in put_svervice')
+        print('in put_service')
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
