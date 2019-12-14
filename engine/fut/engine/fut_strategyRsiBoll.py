@@ -127,7 +127,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.atr_long = atrArray[-50:].mean()
         atr_condition = True if self.atr_short > self.atr_mid else False
 
-        self.bollUp, self.bollDown = self.am.boll(80, 2)
+        self.bollUp, self.bollDown = self.am.boll(60, 3)
         boll_condition = True if self.bar.close > self.bollUp else False
 
         rsiArray = self.am.rsi(self.rsiLength, array=True)
@@ -376,7 +376,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.atr_long = atrArray[-50:].mean()
         atr_condition = True if self.atr_short > self.atr_mid else False
 
-        self.bollUp, self.bollDown = self.am.boll(80, 2)
+        self.bollUp, self.bollDown = self.am.boll(60, 3)
         boll_condition = True if self.bar.close < self.bollDown else False
 
         rsiArray = self.am.rsi(self.rsiLength, array=True)
