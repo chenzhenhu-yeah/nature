@@ -462,7 +462,7 @@ def test_one(PortfolioClass, minx):
     # start_date = '20191014 21:00:00'
     # end_date   = '20191108 15:00:00'
 
-    vtSymbol = 'm1901'
+    vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
     #vtSymbol = 'ag1901'
     #vtSymbol = 'c1901'

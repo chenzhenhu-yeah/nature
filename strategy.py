@@ -236,14 +236,20 @@ class Portfolio(object):
         # 计算result
         tr = []
         totalNetPnl = 0
+        totalTradingPnl = 0
+        totalholdingPnl = 0
         totalCommission = 0
+        totalSlippage = 0
         n = len(self.resultList)
         #print(n)
         for i in range(n):
             result = self.resultList[i]
             result.calculatePnl()
             totalNetPnl += result.netPnl
+            totalTradingPnl += result.tradingPnl
+            totalholdingPnl += result.holdingPnl
             totalCommission += result.commission
+            totalSlippage += result.slippage
             #print(result.date, result.tradeCount)
 
             for vtSymbol, l in result.tradeDict.items():
@@ -260,8 +266,8 @@ class Portfolio(object):
 
         # 保存portfolioValue,posDict,closeDict到文件
         dt = self.result.date
-        r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), round(totalCommission,2), str(self.posDict), str(self.result.closeDict)] ]
-        df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalCommission','posDict','closeDict'])
+        r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), int(totalTradingPnl), int(totalholdingPnl), round(totalCommission,2), int(totalSlippage), str(self.posDict), str(self.result.closeDict)] ]
+        df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalTradingPnl','totalholdingPnl','totalCommission','totalSlippage','posDict','closeDict'])
         filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_var.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,sep='$',mode='a',header=False)

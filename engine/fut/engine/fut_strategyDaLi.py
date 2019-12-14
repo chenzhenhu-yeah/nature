@@ -127,7 +127,10 @@ class Fut_DaLiSignal(Signal):
         r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -290,7 +293,6 @@ class Fut_DaLiSignal(Signal):
             df = df.reset_index()
             if len(df) > 0:
                 rec = df.iloc[-1,:]            # 取最近日期的记录
-                self.unit = rec.unit
                 self.price_duo_list = eval( rec.price_duo_list )
                 self.price_kong_list = eval( rec.price_kong_list )
 
@@ -311,6 +313,7 @@ class Fut_DaLiSignal(Signal):
             pnl_hold += item - settle
         pnl_hold = pnl_hold*self.fixedSize
 
+        self.unit = len(self.price_duo_list) - len(self.price_kong_list)
         r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \
                pnl_trade+pnl_hold, pnl_trade, pnl_hold, str(self.price_duo_list), str(self.price_kong_list)] ]
 
@@ -325,7 +328,6 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def open(self, price, change):
         """开仓"""
-        self.unit += change
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
                abs(change), price, 0] ]
@@ -340,10 +342,6 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
-        if self.pnl < 0:
-            self.unit -= 2*self.fixedSize
-        if self.pnl > 0:
-            self.unit += 2*self.fixedSize
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])

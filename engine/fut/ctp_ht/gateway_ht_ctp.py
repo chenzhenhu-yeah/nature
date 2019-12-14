@@ -138,6 +138,7 @@ class Gateway_Ht_CTP(object):
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
+            send_email(get_dss(), '交易路由出错', s)
 
 if __name__ == "__main__":
     # g = Gateway_Ht_CTP()

@@ -43,6 +43,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.bollUp = 0
         self.bollDown = 0
 
+        self.gap = 100
+
         # 需要持久化保存的变量
         self.cost = 0
         self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
@@ -97,6 +99,10 @@ class Fut_RsiBollSignal_Duo(Signal):
 
 
     def on_bar_min1(self, bar):
+        if bar.time in ['09:01:00','21:01:00']:
+            if abs( bar.open - self.am.closeArray[-1] ) > self.gap:
+                self.paused = True
+
         # 持有多头仓位
         if self.unit > 0:
             if bar.close <= self.stop:
@@ -240,7 +246,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.result.close(price)
 
         # 本次盈利超150点，暂停策略至收盘
-        if self.result.pnl >= 150:
+        if self.result.pnl >= 50+self.gap:
             self.paused = True
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
@@ -291,6 +297,7 @@ class Fut_RsiBollSignal_Kong(Signal):
 
         self.bollUp = 0
         self.bollDown = 0
+        self.gap = 100 
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -346,6 +353,11 @@ class Fut_RsiBollSignal_Kong(Signal):
 
 
     def on_bar_min1(self, bar):
+        # 开盘有大缺口，暂停开仓
+        if bar.time in ['09:01:00','21:01:00']:
+            if abs( bar.open - self.am.closeArray[-1] ) > self.gap:
+                self.paused = True
+
         # 持有多头仓位
         if self.unit > 0:
             if bar.close <= self.stop:
@@ -497,7 +509,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.result.close(price)
 
         # 本次盈利超150点，暂停策略至收盘
-        if self.result.pnl >= 150:
+        if self.result.pnl >= 50+self.gap:
             self.paused = True
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
