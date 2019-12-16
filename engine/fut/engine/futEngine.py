@@ -222,7 +222,7 @@ def start():
     # schedule.every().day.at("20:56").do(e.worker_open)
     # schedule.every().day.at("02:33").do(e.worker_close)
 
-    schedule.every().monday.at("08:56").do(e.worker_open)
+    schedule.every().monday.at("09:23").do(e.worker_open)
     schedule.every().monday.at("15:03").do(e.worker_close)
     schedule.every().monday.at("20:56").do(e.worker_open)
     schedule.every().tuesday.at("02:33").do(e.worker_close)
