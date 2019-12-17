@@ -37,8 +37,6 @@ class Fut_DaLiSignal(Signal):
         self.price_duo_list =  []
         self.price_kong_list = []
 
-        self.today_benefit = True
-
         # 策略临时变量
         self.can_buy = False
         self.can_short = False
@@ -64,9 +62,8 @@ class Fut_DaLiSignal(Signal):
                 self.price_min_2 = rec.price_min_2
                 self.price_max_2 = rec.price_max_2
                 self.price_max_1 = rec.price_max_1
-                self.today_benefit = rec.today_benefit
                 print('成功加载策略参数', self.vtSymbol,self.gap,self.gap_min,self.gap_max,self.atr_x, \
-                      self.price_min_1,self.price_min_2,self.price_max_2,self.price_max_1, self.today_benefit)
+                      self.price_min_1,self.price_min_2,self.price_max_2,self.price_max_1)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
@@ -146,14 +143,7 @@ class Fut_DaLiSignal(Signal):
         # 平空仓、开多仓
         if self.can_buy == True:
             if len(self.price_kong_list) == 1:
-                if self.today_benefit == True:
-                    self.short(bar.close, self.fixedSize)
-                    self.cover(bar.close, self.fixedSize)
-                    self.buy(bar.close, self.fixedSize)
-                else:
-                    self.cover(bar.close, self.fixedSize)
-                    self.buy(bar.close, self.fixedSize)
-                    self.short(bar.close, self.fixedSize)
+                self.buy(bar.close, self.fixedSize)
 
                 self.unit_cover()
                 self.unit_short(bar.close)
@@ -176,18 +166,12 @@ class Fut_DaLiSignal(Signal):
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
-                if self.today_benefit == True:
-                    self.buy(bar.close, self.fixedSize)
-                    self.sell(bar.close, self.fixedSize)
-                    self.short(bar.close, self.fixedSize)
-                else:
-                    self.sell(bar.close, self.fixedSize)
-                    self.short(bar.close, self.fixedSize)
-                    self.buy(bar.close, self.fixedSize)
+                self.short(bar.close, self.fixedSize)
 
                 self.unit_sell()
                 self.unit_buy(bar.close)
                 self.unit_short(bar.close)
+
             else:
                 self.sell(bar.close, self.fixedSize)
                 self.short(bar.close, self.fixedSize)
@@ -281,20 +265,26 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def unit_buy(self, price):
         self.price_duo_list.append(price)
+        self.unit_open(price, self.fixedSize)
 
     #----------------------------------------------------------------------
     def unit_sell(self):
         self.price_duo_list = sorted(self.price_duo_list)
         self.price_duo_list.pop(0)
 
+        self.unit_close(self.bar.close)
+
     #----------------------------------------------------------------------
     def unit_short(self, price):
         self.price_kong_list.append(price)
+        self.unit_open(price, self.fixedSize)
 
     #----------------------------------------------------------------------
     def unit_cover(self):
         self.price_kong_list = sorted(self.price_kong_list)
         self.price_kong_list.pop(-1)
+
+        self.unit_close(self.bar.close)
 
     #----------------------------------------------------------------------
     def load_var(self):
@@ -340,6 +330,10 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def open(self, price, change):
+        pass
+
+    #----------------------------------------------------------------------
+    def unit_open(self, price, change):
         """开仓"""
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
@@ -351,9 +345,12 @@ class Fut_DaLiSignal(Signal):
         else:
             df.to_csv(filename, index=False)
 
-
     #----------------------------------------------------------------------
     def close(self, price):
+        pass
+
+    #----------------------------------------------------------------------
+    def unit_close(self, price):
         """平仓"""
 
         r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
