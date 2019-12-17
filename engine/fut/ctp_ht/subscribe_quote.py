@@ -221,10 +221,35 @@ class TestQuote(object):
     #----------------------------------------------------------------------
     def daily_worker(self):
         """运行"""
-        schedule.every().day.at("08:48").do(self.run)
-        schedule.every().day.at("15:02").do(self.release)
-        schedule.every().day.at("20:48").do(self.run)
-        schedule.every().day.at("02:32").do(self.release)
+        # schedule.every().day.at("08:48").do(self.run)
+        # schedule.every().day.at("15:02").do(self.release)
+        # schedule.every().day.at("20:48").do(self.run)
+        # schedule.every().day.at("02:32").do(self.release)
+
+        schedule.every().monday.at("08:48").do(self.run)
+        schedule.every().monday.at("15:02").do(self.release)
+        schedule.every().monday.at("20:48").do(self.run)
+        schedule.every().tuesday.at("02:32").do(self.release)
+
+        schedule.every().tuesday.at("08:48").do(self.run)
+        schedule.every().tuesday.at("15:02").do(self.release)
+        schedule.every().tuesday.at("20:48").do(self.run)
+        schedule.every().wednesday.at("02:32").do(self.release)
+
+        schedule.every().wednesday.at("08:48").do(self.run)
+        schedule.every().wednesday.at("15:02").do(self.release)
+        schedule.every().wednesday.at("20:48").do(self.run)
+        schedule.every().thursday.at("02:32").do(self.release)
+
+        schedule.every().thursday.at("08:48").do(self.run)
+        schedule.every().thursday.at("15:02").do(self.release)
+        schedule.every().thursday.at("20:48").do(self.run)
+        schedule.every().friday.at("02:32").do(self.release)
+
+        schedule.every().friday.at("08:48").do(self.run)
+        schedule.every().friday.at("15:02").do(self.release)
+        schedule.every().friday.at("20:48").do(self.run)
+        schedule.every().saturday.at("02:32").do(self.release)
 
         print(u'行情接收器开始运行')
         while True:

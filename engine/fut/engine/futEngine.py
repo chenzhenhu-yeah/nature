@@ -19,7 +19,7 @@ from multiprocessing.connection import Client
 import traceback
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email, get_dss
+from nature import to_log, is_trade_day, send_email, get_dss, get_contract
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
@@ -60,21 +60,25 @@ class FutEngine(object):
         # 初始化组合
         self.portfolio_list = []
 
-        symbols = setting['symbols_atrrsi']
-        atrrsi_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        if 'symbols_atrrsi' in setting:
+            symbols = setting['symbols_atrrsi']
+            atrrsi_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
-        symbols = setting['symbols_rsiboll']
-        rsiboll_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
+        if 'symbols_rsiboll' in setting:
+            symbols = setting['symbols_rsiboll']
+            rsiboll_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
-        symbols = setting['symbols_cciboll']
-        cciboll_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
+        if 'symbols_cciboll' in setting:
+            symbols = setting['symbols_cciboll']
+            cciboll_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
-        symbols = setting['symbols_dali']
-        dali_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+        if 'symbols_dali' in setting:
+            symbols = setting['symbols_dali']
+            dali_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
@@ -178,8 +182,16 @@ class FutEngine(object):
         fn = 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
+        priceTick = get_contract(vtSymbol).price_tick
+        price = int(round(price/priceTick, 0)) * priceTick
+        price_deal = price
+        if direction == DIRECTION_LONG:
+            price_deal += 3*priceTick
+        if direction == DIRECTION_SHORT:
+            price_deal -= 3*priceTick
+
         if self.gateway is not None:
-            self.gateway._bc_sendOrder(vtSymbol, direction, offset, price, volume, pfName)
+            self.gateway._bc_sendOrder(vtSymbol, direction, offset, price_deal, volume, pfName)
 
     #----------------------------------------------------------------------
     def worker_open(self):
@@ -222,7 +234,7 @@ def start():
     # schedule.every().day.at("20:56").do(e.worker_open)
     # schedule.every().day.at("02:33").do(e.worker_close)
 
-    schedule.every().monday.at("09:29").do(e.worker_open)
+    schedule.every().monday.at("08:56").do(e.worker_open)
     schedule.every().monday.at("15:03").do(e.worker_close)
     schedule.every().monday.at("20:56").do(e.worker_open)
     schedule.every().tuesday.at("02:33").do(e.worker_close)

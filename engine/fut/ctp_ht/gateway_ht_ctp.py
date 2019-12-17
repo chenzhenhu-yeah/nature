@@ -28,10 +28,6 @@ class Gateway_Ht_CTP(object):
     def __init__(self):
         self.state = 'CLOSE'
 
-        filename = get_dss() +  'gateway_closed.csv'
-        if os.path.exists(filename):
-            return
-
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
@@ -54,7 +50,8 @@ class Gateway_Ht_CTP(object):
         self.t.OnErrRtnQuoteInsert = lambda obj, o: None
         self.t.OnOrder = lambda obj, o: None
         self.t.OnErrOrder = lambda obj, f, info: None
-        self.t.OnTrade = lambda obj, o: None
+        #self.t.OnTrade = lambda obj, o: None
+        self.t.OnTrade = self.on_trade
         self.t.OnInstrumentStatus = lambda obj, inst, stat: None
 
         pz= setting['gateway_pz']
@@ -63,6 +60,12 @@ class Gateway_Ht_CTP(object):
         self.pf_list = pf.split(',')
 
         self.state = 'INITED'
+
+
+    #----------------------------------------------------------------------
+    def on_trade(self, obj, f):
+        print('in on_trade \n{0}'.format(f.__dict__))
+        print(type(obj))
 
     #----------------------------------------------------------------------
     def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
@@ -105,12 +108,14 @@ class Gateway_Ht_CTP(object):
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
         try:
+            filename = get_dss() +  'gateway_closed.csv'
+            if os.path.exists(filename):
+                return
+
             if self.state == 'CLOSE':
                 print('gateway closed')
                 return
 
-            # 流控
-            time.sleep(1)
             pz = get_contract(code).pz
             if pz in self.pz_list and portfolio in self.pf_list:
                 print(pz, portfolio, ' send order here!')
@@ -139,6 +144,10 @@ class Gateway_Ht_CTP(object):
             s = traceback.format_exc()
             to_log(s)
             send_email(get_dss(), '交易路由出错', s)
+
+        # 流控
+        time.sleep(1)
+        print('流控')
 
 if __name__ == "__main__":
     # g = Gateway_Ht_CTP()
