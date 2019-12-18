@@ -148,7 +148,8 @@ class FutEngine(object):
 
         today = time.strftime('%Y%m%d',time.localtime())
         # 直接读取signal对应minx相关的文件。
-        fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        #fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        fname = self.dss + 'fut/put/rec/' + minx + '_' + vtSymbol + '.csv'
         #print(fname)
         df = pd.read_csv(fname)
         assert len(df) >= initBars
