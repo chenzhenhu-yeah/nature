@@ -65,14 +65,13 @@ class Gateway_Ht_CTP(object):
     #----------------------------------------------------------------------
     def on_trade(self, obj, f):
         print('in on_trade \n{0}'.format(f.__dict__))
-        print(type(obj))
+        #print(type(obj))
 
     #----------------------------------------------------------------------
     def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
         self.t._OnRspQryAccount(self, pTradingAccount, pRspInfo, nRequestID, bIsLast)
         risk = round( float( self.t.account.Risk ), 2 )
-        if risk > 0.5:
-            send_email(get_dss(), 'Risk: '+str(risk), '')
+        send_email(get_dss(), 'Risk: '+str(risk), '')
 
     #----------------------------------------------------------------------
     def check_risk(self):
