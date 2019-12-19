@@ -250,7 +250,7 @@ def start():
     schedule.every().wednesday.at("20:56").do(e.worker_open)
     schedule.every().thursday.at("02:33").do(e.worker_close)
 
-    schedule.every().thursday.at("08:56").do(e.worker_open)
+    schedule.every().thursday.at("11:48").do(e.worker_open)
     schedule.every().thursday.at("15:03").do(e.worker_close)
     schedule.every().thursday.at("20:56").do(e.worker_open)
     schedule.every().friday.at("02:33").do(e.worker_close)
