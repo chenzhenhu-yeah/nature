@@ -71,7 +71,9 @@ class Gateway_Ht_CTP(object):
     def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
         self.t._OnRspQryAccount(self, pTradingAccount, pRspInfo, nRequestID, bIsLast)
         risk = round( float( self.t.account.Risk ), 2 )
-        send_email(get_dss(), 'Risk: '+str(risk), '')
+        print('send mail begin')
+        send_email(get_dss(), 'Risk: '+str(risk), ' ')
+        print('send mail end')
 
     #----------------------------------------------------------------------
     def check_risk(self):

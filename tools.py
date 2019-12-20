@@ -7,6 +7,7 @@ import json
 from csv import DictReader
 import smtplib
 from email.mime.text import MIMEText
+import traceback
 
 from nature import to_log
 
@@ -43,30 +44,30 @@ def get_contract(symbol):
         #assert False
 
 def send_email(dss, subject, content):
-
-    # # 第三方 SMTP 服务
-    # mail_host = 'smtp.yeah.net'              # 设置服务器
-    # mail_username = 'chenzhenhu@yeah.net'   # 用户名
-    # mail_auth_password = "852299"       # 授权密码
-
-    # 加载配置
-    config = open(dss+'csv/config.json')
-    setting = json.load(config)
-    mail_host = setting['mail_host']              # 设置服务器
-    mail_username = setting['mail_username']          # 用户名
-    mail_auth_password = setting['mail_auth_password']     # 授权密码
-    # print(mail_host, mail_username, mail_auth_password)
-
-    # # 第三方 SMTP 服务
-    # mail_host = 'smtp.qq.com'              # 设置服务器
-    # mail_username = '395772397@qq.com'   # 用户名
-    # mail_auth_password = "pwqgqmexjvhbbhjd"       # 授权密码
-
-    sender = setting['sender']
-    receivers = setting['receivers']
-    #receivers = '270114497@qq.com, zhenghaishu@126.com' # 多个收件人
-
     try:
+
+        # # 第三方 SMTP 服务
+        # mail_host = 'smtp.yeah.net'              # 设置服务器
+        # mail_username = 'chenzhenhu@yeah.net'   # 用户名
+        # mail_auth_password = "852299"       # 授权密码
+
+        # 加载配置
+        config = open(dss+'csv/config.json')
+        setting = json.load(config)
+        mail_host = setting['mail_host']              # 设置服务器
+        mail_username = setting['mail_username']          # 用户名
+        mail_auth_password = setting['mail_auth_password']     # 授权密码
+        # print(mail_host, mail_username, mail_auth_password)
+
+        # # 第三方 SMTP 服务
+        # mail_host = 'smtp.qq.com'              # 设置服务器
+        # mail_username = '395772397@qq.com'   # 用户名
+        # mail_auth_password = "pwqgqmexjvhbbhjd"       # 授权密码
+
+        sender = setting['sender']
+        receivers = setting['receivers']
+        #receivers = '270114497@qq.com, zhenghaishu@126.com' # 多个收件人
+
         message = MIMEText(content, 'plain', 'utf-8')
         message['From'] = sender
         message['To'] =  receivers
@@ -80,6 +81,9 @@ def send_email(dss, subject, content):
     except smtplib.SMTPException as e:
         print ("Error: 无法发送邮件")
         print(e)
+        s = traceback.format_exc()
+        to_log(s)
+
 
 def is_trade_time():
     #to_log('in is_trade_time')
@@ -145,7 +149,7 @@ def get_ts_code(code):
     return code
 
 if __name__ == '__main__':
-    dss = get_dss()
-    send_email(dss, 'subject', 'content')
+    # dss = get_dss()
+    # send_email(dss, 'subject', 'content')
 
     pass
