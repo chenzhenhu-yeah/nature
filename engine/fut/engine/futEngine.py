@@ -23,7 +23,7 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio, Fut_TurtlePortfolio
 from nature import Gateway_Ht_CTP
 #from ipdb import set_trace
 
@@ -60,10 +60,6 @@ class FutEngine(object):
         # 初始化组合
         self.portfolio_list = []
 
-        if 'symbols_atrrsi' in setting:
-            symbols = setting['symbols_atrrsi']
-            atrrsi_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_rsiboll' in setting:
             symbols = setting['symbols_rsiboll']
@@ -79,6 +75,16 @@ class FutEngine(object):
             symbols = setting['symbols_dali']
             dali_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+
+        if 'symbols_atrrsi' in setting:
+            symbols = setting['symbols_atrrsi']
+            atrrsi_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+
+        if 'symbols_turtle' in setting:
+            symbols = setting['symbols_turtle']
+            turtle_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
@@ -192,7 +198,8 @@ class FutEngine(object):
             price_deal -= 3*priceTick
 
         if self.gateway is not None:
-            self.gateway._bc_sendOrder(vtSymbol, direction, offset, price_deal, volume, pfName)
+            # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
+            threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price_deal, volume, pfName) ).start()
 
     #----------------------------------------------------------------------
     def worker_open(self):

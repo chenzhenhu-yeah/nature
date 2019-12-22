@@ -342,7 +342,8 @@ class DailyResult(object):
     def calculateTradingPnl(self):
         """计算当日交易盈亏"""
         for vtSymbol, l in self.tradeDict.items():
-            close = self.closeDict[vtSymbol]
+            #close = self.closeDict[vtSymbol]
+            previousClose = self.previousCloseDict.get(vtSymbol, 0)
             ct = get_contract(vtSymbol)
             size = ct.size
             slippage = ct.slippage
@@ -358,7 +359,7 @@ class DailyResult(object):
                 commissionCost = (trade.volume * fixedCommission +
                                   trade.volume * trade.price * size * variableCommission)
                 slippageCost = trade.volume * size * slippage
-                pnl = side * (close - trade.price) * trade.volume * size
+                pnl = side * (previousClose - trade.price) * trade.volume * size
 
                 self.commission += commissionCost
                 self.slippage += slippageCost

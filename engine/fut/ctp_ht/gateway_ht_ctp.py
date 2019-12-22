@@ -27,6 +27,7 @@ def get_exchangeID(symbol):
 class Gateway_Ht_CTP(object):
     def __init__(self):
         self.state = 'CLOSE'
+        self.lock = threading.Lock()
 
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
@@ -41,7 +42,7 @@ class Gateway_Ht_CTP(object):
         self.proc = ''
 
         self.t = CtpTrade()
-        self.t.OnRspQryTradingAccount = self.on_qry_account
+        self.t._OnRspQryAccount = self.on_qry_account
         self.t.OnConnected = self.on_connect
         self.t.OnUserLogin = lambda o, x: print('Trade logon:', x)
         self.t.OnDisConnected = lambda o, x: print(x)
@@ -64,16 +65,21 @@ class Gateway_Ht_CTP(object):
 
     #----------------------------------------------------------------------
     def on_trade(self, obj, f):
-        print('in on_trade \n{0}'.format(f.__dict__))
-        #print(type(obj))
+        #print('in on_trade \n{0}'.format(f.__dict__))
+        r = [f.__dict__]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/engine/gateway_trade.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
 
     #----------------------------------------------------------------------
     def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
-        self.t._OnRspQryAccount(self, pTradingAccount, pRspInfo, nRequestID, bIsLast)
+        self.t.OnAccount(pTradingAccount, pRspInfo, nRequestID, bIsLast)
         risk = round( float( self.t.account.Risk ), 2 )
-        print('send mail begin')
         send_email(get_dss(), 'Risk: '+str(risk), ' ')
-        print('send mail end')
 
     #----------------------------------------------------------------------
     def check_risk(self):
@@ -107,7 +113,8 @@ class Gateway_Ht_CTP(object):
     #----------------------------------------------------------------------
     #停止单需要盯min1,肯定要单启一个线程，线程中循环遍历队列（内部变量），无需同步，用List的pop(0)和append来实现。
     #----------------------------------------------------------------------
-    def _bc_sendOrder(self, code, direction, offset, price, volume, portfolio):
+    def _bc_sendOrder(self, dt, code, direction, offset, price, volume, portfolio):
+        self.lock.acquire()
         try:
             filename = get_dss() +  'gateway_closed.csv'
             if os.path.exists(filename):
@@ -132,6 +139,16 @@ class Gateway_Ht_CTP(object):
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick
 
+            r = [[dt, code, direction, offset, price, volume]]
+            print( str(r) )
+            c = ['datetime', 'symbol', 'direction', 'offset', 'price', 'volume']
+            df = pd.DataFrame(r, columns=c)
+            filename = get_dss() +  'fut/engine/gateway_deal.csv'
+            if os.path.exists(filename):
+                df.to_csv(filename, index=False, mode='a', header=False)
+            else:
+                df.to_csv(filename, index=False)
+
             if direction == DIRECTION_LONG and offset == '开仓':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == '开仓':
@@ -149,6 +166,7 @@ class Gateway_Ht_CTP(object):
         # 流控
         time.sleep(1)
         print('流控')
+        self.lock.release()
 
 if __name__ == "__main__":
     # g = Gateway_Ht_CTP()

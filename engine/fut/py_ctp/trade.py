@@ -249,6 +249,9 @@ class CtpTrade():
         self.position_details[pInvestorPositionDetail.getTradeID()] = detail
 
     def _OnRspQryAccount(self, pTradingAccount: CThostFtdcTradingAccountField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
+        self.OnAccount(pTradingAccount, pRspInfo, nRequestID, bIsLast)
+
+    def OnAccount(self, pTradingAccount: CThostFtdcTradingAccountField, pRspInfo: CThostFtdcRspInfoField, nRequestID: int, bIsLast: bool):
         """"""
         if not self.account:
             self.account = TradingAccount()

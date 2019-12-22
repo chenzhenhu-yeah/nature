@@ -117,12 +117,12 @@ class Fut_DaLiSignal(Signal):
         if self.bar.close <= self.get_price_kong() - self.get_gap_minus() :
         #if self.bar.close <= self.get_price_kong() - self.gap:
             self.can_buy = True
-            self.pnl = (self.get_price_kong() - self.bar.close)*self.fixedSize
+            self.pnl = (self.get_price_kong() - self.bar.close) * self.fixedSize
 
         if self.bar.close >= self.get_price_duo() + self.get_gap_plus() :
         #if self.bar.close >= self.get_price_duo() + self.gap:
             self.can_short = True
-            self.pnl = (self.get_price_duo() - self.bar.close)*self.fixedSize
+            self.pnl = (self.get_price_duo() - self.bar.close) * self.fixedSize
 
         r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap]]
         df = pd.DataFrame(r)
@@ -302,10 +302,14 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def save_var(self):
         pnl_trade = 0
+        commission = 0
+        slippage = 0
         filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             pnl_trade = df.pnl.sum()
+            commission = df.commission.sum()
+            slippage = df.slippage.sum()
 
         settle = self.bar.close
         pnl_hold = 0
@@ -318,10 +322,12 @@ class Fut_DaLiSignal(Signal):
 
         self.unit = len(self.price_duo_list) - len(self.price_kong_list)
         r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \
-               pnl_trade+pnl_hold, pnl_trade, pnl_hold, str(self.price_duo_list), str(self.price_kong_list)] ]
+               pnl_trade+pnl_hold-commission-slippage, pnl_trade, pnl_hold, \
+               commission, slippage, str(self.price_duo_list), str(self.price_kong_list)] ]
 
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
-                                      'pnl_net','pnl_trade','pnl_hold','price_duo_list','price_kong_list'])
+                                      'pnl_net','pnl_trade','pnl_hold', \
+                                      'commission','slippage','price_duo_list','price_kong_list'])
         filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
@@ -335,10 +341,18 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def unit_open(self, price, change):
         """开仓"""
+        ct = get_contract(self.vtSymbol)
+        size = ct.size
+        slippage = ct.slippage
+        variableCommission = ct.variable_commission
+        fixedCommission = ct.fixed_commission
+
+        commissionCost = self.fixedSize * fixedCommission + self.fixedSize * price * size * variableCommission
+        slippageCost = self.fixedSize * size * slippage
 
         r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
+               abs(change), price, 0, commissionCost, slippageCost] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','commission', 'slippage'])
         filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
@@ -352,9 +366,18 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def unit_close(self, price):
         """平仓"""
+        ct = get_contract(self.vtSymbol)
+        size = ct.size
+        slippage = ct.slippage
+        variableCommission = ct.variable_commission
+        fixedCommission = ct.fixed_commission
 
-        r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, abs(self.pnl)] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl'])
+        commissionCost = self.fixedSize * fixedCommission + self.fixedSize * price * size * variableCommission
+        slippageCost = self.fixedSize * size * slippage
+        pnl = abs(self.pnl) * size
+
+        r = [ [self.bar.date+' '+self.bar.time, '', '平', self.fixedSize, price, pnl, commissionCost, slippageCost] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','commission', 'slippage'])
         filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
