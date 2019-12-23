@@ -313,12 +313,14 @@ class Fut_DaLiSignal(Signal):
 
         settle = self.bar.close
         pnl_hold = 0
+        ct = get_contract(self.vtSymbol)
+        size = ct.size
         for item in self.price_duo_list:
             pnl_hold += settle - item
 
         for item in self.price_kong_list:
             pnl_hold += item - settle
-        pnl_hold = pnl_hold*self.fixedSize
+        pnl_hold = size * pnl_hold * self.fixedSize 
 
         self.unit = len(self.price_duo_list) - len(self.price_kong_list)
         r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \

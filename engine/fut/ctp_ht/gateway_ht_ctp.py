@@ -79,7 +79,8 @@ class Gateway_Ht_CTP(object):
     def on_qry_account(self, pTradingAccount, pRspInfo, nRequestID, bIsLast):
         self.t.OnAccount(pTradingAccount, pRspInfo, nRequestID, bIsLast)
         risk = round( float( self.t.account.Risk ), 2 )
-        send_email(get_dss(), 'Risk: '+str(risk), ' ')
+        if self.state == 'OPEN':
+            send_email(get_dss(), 'Risk: '+str(risk), ' ')
 
     #----------------------------------------------------------------------
     def check_risk(self):
