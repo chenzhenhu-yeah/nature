@@ -91,7 +91,7 @@ class Gateway_Ht_CTP(object):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
 
         i = 0
-        while self.t.account is None and i < 3600:
+        while self.t.account is None and i < 7200:
             time.sleep(1)
             i += 1
         time.sleep(2)

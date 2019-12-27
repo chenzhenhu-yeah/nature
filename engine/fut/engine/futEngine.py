@@ -180,7 +180,7 @@ class FutEngine(object):
 
         # 记录成交数据
         dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        time.sleep(0.1)
+        time.sleep(0.01)
         order_id = str(int(time.time()))
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
