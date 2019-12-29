@@ -22,7 +22,7 @@ class Fut_CciBollSignal_Duo(Signal):
         self.bollDev = 3.1                         # 布林通道的偏差
         self.cciWindow = 10                      # CCI窗口数
         self.atrWindow = 30                      # ATR窗口数
-        self.slMultiplier = 5.6                  # 计算止损距离的乘数
+        self.slMultiplier = 3                  # 计算止损距离的乘数
 
         self.fixedSize = 1           # 每次交易的数量
         self.initBars = 100           # 初始化数据所用的天数
@@ -100,7 +100,9 @@ class Fut_CciBollSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        self.atrValue = self.am.atr(self.atrWindow)
+
+        atrArray = self.am.atr(1, array=True)
+        self.atrValue = atrArray[-self.atrWindow:].mean()
 
         self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
         boll_condition = True if self.bar.close > self.bollUp else False
@@ -112,6 +114,11 @@ class Fut_CciBollSignal_Duo(Signal):
         if cci_condition and boll_condition:
         #if boll_condition:
             self.can_buy = True
+
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/engine/cciboll/bar_cciboll_duo_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -233,10 +240,10 @@ class Fut_CciBollSignal_Kong(Signal):
         self.bollDev = 3.1                       # 布林通道的偏差
         self.cciWindow = 10                      # CCI窗口数
         self.atrWindow = 30                      # ATR窗口数
-        self.slMultiplier = 5.2                  # 计算止损距离的乘数
+        self.slMultiplier = 3                  # 计算止损距离的乘数
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 30           # 初始化数据所用的天数
+        self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min15'
 
         # 策略临时变量
@@ -312,7 +319,9 @@ class Fut_CciBollSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        self.atrValue = self.am.atr(self.atrWindow)
+        atrArray = self.am.atr(1, array=True)
+        self.atrValue = atrArray[-self.atrWindow:].mean()
+
 
         self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
         boll_condition = True if self.bar.close < self.bollDown else False
@@ -325,7 +334,7 @@ class Fut_CciBollSignal_Kong(Signal):
         #if boll_condition:
             self.can_short = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/cciboll/bar_cciboll_kong_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)

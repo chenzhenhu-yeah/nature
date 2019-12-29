@@ -24,7 +24,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
 
-        self.initBars = 90           # 初始化数据所用的天数
+        self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min5'
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
@@ -144,6 +144,11 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.can_buy = False
         if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
+
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_duo_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -279,7 +284,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
 
-        self.initBars = 90           # 初始化数据所用的天数
+        self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min5'
         # 初始化RSI入场阈值
         self.rsiBuy = 50 + self.rsiEntry
@@ -297,7 +302,7 @@ class Fut_RsiBollSignal_Kong(Signal):
 
         self.bollUp = 0
         self.bollDown = 0
-        self.gap = 100 
+        self.gap = 100
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -400,7 +405,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
         df.to_csv(filename, index=False, mode='a', header=False)
