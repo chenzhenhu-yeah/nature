@@ -116,27 +116,28 @@ class Gateway_Ht_CTP(object):
     #停止单需要盯min1,肯定要单启一个线程，线程中循环遍历队列（内部变量），无需同步，用List的pop(0)和append来实现。
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, dt, code, direction, offset, price, volume, portfolio):
+        filename = get_dss() +  'gateway_closed.csv'
+        if os.path.exists(filename):
+            return
+
+        if self.state == 'CLOSE':
+            print('gateway closed')
+            return
+
+        pz = get_contract(code).pz
+        if pz in self.pz_list and portfolio in self.pf_list:
+            print(pz, portfolio, ' send order here!')
+        else:
+            print(pz, ' just test order here!')
+            return
+
+        exchangeID = get_exchangeID(code)
+        if exchangeID == '':
+            return
+
         self.lock.acquire()
-        try:
-            filename = get_dss() +  'gateway_closed.csv'
-            if os.path.exists(filename):
-                return
 
-            if self.state == 'CLOSE':
-                print('gateway closed')
-                return
-
-            pz = get_contract(code).pz
-            if pz in self.pz_list and portfolio in self.pf_list:
-                print(pz, portfolio, ' send order here!')
-            else:
-                print(pz, ' just test order here!')
-                return
-
-            exchangeID = get_exchangeID(code)
-            if exchangeID == '':
-                return 'error'
-
+        try:            
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick
@@ -166,7 +167,7 @@ class Gateway_Ht_CTP(object):
             send_email(get_dss(), '交易路由出错', s)
 
         # 流控
-        time.sleep(1)
+        time.sleep(0.5)
         print('流控')
         self.lock.release()
 
