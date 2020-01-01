@@ -238,7 +238,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -261,7 +261,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -500,7 +500,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -524,7 +524,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
                                       'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
                                       'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:

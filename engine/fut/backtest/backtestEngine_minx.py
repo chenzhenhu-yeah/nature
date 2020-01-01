@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
-from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio
+from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio, Fut_DaLictaPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
@@ -49,7 +49,8 @@ class BacktestingEngine(object):
         """加载数据"""
         for vtSymbol in self.symbol_list:
             #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
-            filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            #filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            filename = get_dss( ) + 'backtest/bar/' + self.minx + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
@@ -464,10 +465,10 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'ag1901'
+    vtSymbol = 'm1901'
     #vtSymbol = 'c1901'
     #vtSymbol = 'CF901'
-    start_date = '20180129 00:00:00'
+    start_date = '20180209 00:00:00'
     #start_date = '20180219 00:00:00'
     end_date   = '20181231 00:00:00'
     #end_date   = '20180531 00:00:00'
@@ -479,14 +480,15 @@ def test_one(PortfolioClass, minx):
 
 if __name__ == '__main__':
     #PortfolioClass = Fut_AtrRsiPortfolio
-    PortfolioClass = Fut_TurtlePortfolio
+    #PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
     #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
     #PortfolioClass = Fut_CciBollPortfolio
     #PortfolioClass = Fut_DaLiPortfolio
+    PortfolioClass = Fut_DaLictaPortfolio
 
-    minx = 'min15'
+    minx = 'min30'
     #minx = 'min5'
 
     test_one(PortfolioClass, minx)

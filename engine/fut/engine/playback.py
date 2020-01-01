@@ -23,7 +23,9 @@ from nature import to_log, is_trade_day, send_email, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio, Fut_TurtlePortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
+from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
+
 #from ipdb import set_trace
 
 
@@ -70,25 +72,35 @@ class FutEngine(object):
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
 
-        symbols = setting['symbols_rsiboll']
-        rsiboll_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
+        if 'symbols_rsiboll' in setting:
+            symbols = setting['symbols_rsiboll']
+            rsiboll_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
-        symbols = setting['symbols_cciboll']
-        cciboll_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
+        if 'symbols_cciboll' in setting:
+            symbols = setting['symbols_cciboll']
+            cciboll_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
-        symbols = setting['symbols_dali']
-        dali_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+        if 'symbols_dali' in setting:
+            symbols = setting['symbols_dali']
+            dali_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
-        symbols = setting['symbols_atrrsi']
-        atrrsi_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        if 'symbols_dalicta' in setting:
+            symbols = setting['symbols_dalicta']
+            dalicta_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        symbols = setting['symbols_turtle']
-        turtle_symbol_list = symbols.split(',')
-        self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+        if 'symbols_atrrsi' in setting:
+            symbols = setting['symbols_atrrsi']
+            atrrsi_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+
+        if 'symbols_turtle' in setting:
+            symbols = setting['symbols_turtle']
+            turtle_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -136,6 +148,7 @@ class FutEngine(object):
     def run_playback(self):
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
+        g30 = BarGenerator('min30')
 
         for dt, barDict in self.dataDict.items():
             #print(dt)
@@ -144,6 +157,13 @@ class FutEngine(object):
             #print(dt)
             try:
                 for bar in barDict.values():
+
+                    bar_min30 = g30.update_bar(bar)
+                    if bar_min30 is not None:
+                        #g30.save_bar(bar_min30)
+                        for p in self.portfolio_list:
+                            p.onBar(bar_min30, 'min30')
+
                     bar_min15 = g15.update_bar(bar)
                     if bar_min15 is not None:
                         #g15.save_bar(bar_min5)
@@ -185,6 +205,7 @@ class FutEngine(object):
         df = pd.read_csv(fname)
         df['datetime'] = df['date'] + ' ' + df['time']
         df = df[df.datetime < self.startDt]
+        #print(vtSymbol, len(df), minx)
         assert len(df) >= initBars
 
         df = df.sort_values(by=['date','time'])
@@ -243,8 +264,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '2019-12-20 09:00:00'
-    end_date   = '2019-12-20 15:00:00'
+    start_date = '2019-12-30 09:00:00'
+    end_date   = '2019-12-30 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

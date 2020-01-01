@@ -23,7 +23,8 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio, Fut_DaLiPortfolio, Fut_TurtlePortfolio
+from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
+from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Gateway_Ht_CTP
 #from ipdb import set_trace
 
@@ -60,7 +61,6 @@ class FutEngine(object):
         # 初始化组合
         self.portfolio_list = []
 
-
         if 'symbols_rsiboll' in setting:
             symbols = setting['symbols_rsiboll']
             rsiboll_symbol_list = symbols.split(',')
@@ -75,6 +75,11 @@ class FutEngine(object):
             symbols = setting['symbols_dali']
             dali_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+
+        if 'symbols_dalicta' in setting:
+            symbols = setting['symbols_dalicta']
+            dalicta_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
         if 'symbols_atrrsi' in setting:
             symbols = setting['symbols_atrrsi']
@@ -104,6 +109,7 @@ class FutEngine(object):
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
+        g30 = BarGenerator('min30')
 
         while True:
             time.sleep(1)
@@ -124,6 +130,12 @@ class FutEngine(object):
                         vtSymbol_dict[id] = bar
                     elif vtSymbol_dict[id].time != bar.time:
                         vtSymbol_dict[id] = bar
+
+                        bar_min30 = g30.update_bar(bar)
+                        if bar_min30 is not None:
+                            g30.save_bar(bar_min30)
+                            for p in self.portfolio_list:
+                                p.onBar(bar_min30, 'min30')
 
                         bar_min15 = g15.update_bar(bar)
                         if bar_min15 is not None:
