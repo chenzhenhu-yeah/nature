@@ -485,11 +485,11 @@ if __name__ == '__main__':
     #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
     #PortfolioClass = Fut_CciBollPortfolio
-    #PortfolioClass = Fut_DaLiPortfolio
-    PortfolioClass = Fut_DaLictaPortfolio
+    PortfolioClass = Fut_DaLiPortfolio
+    #PortfolioClass = Fut_DaLictaPortfolio
 
-    minx = 'min30'
-    #minx = 'min5'
+    #minx = 'min30'
+    minx = 'min5'
 
     test_one(PortfolioClass, minx)
     #test_atrrsi_param(PortfolioClass, minx)

@@ -44,6 +44,7 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.bollDown = 0
 
         self.gap = 100
+        self.dida = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -162,11 +163,13 @@ class Fut_RsiBollSignal_Duo(Signal):
                 self.cost = bar.close
                 self.stop = 0
                 self.intraTradeHigh = bar.close
+                self.dida = 0
 
                 self.buy(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif self.unit > 0:
+            self.dida += 1
             # 计算多头持有期内的最高价，以及重置最低价
             self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
 
@@ -177,7 +180,8 @@ class Fut_RsiBollSignal_Duo(Signal):
                 self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
 
             if bar.close <= self.stop:
-                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
+            elif self.dida >= 10 and bar.close > self.cost and self.stop < self.cost:
                 self.sell(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
@@ -195,6 +199,7 @@ class Fut_RsiBollSignal_Duo(Signal):
                 self.intraTradeHigh = rec.intraTradeHigh
                 self.intraTradeLow = rec.intraTradeLow
                 self.stop = rec.stop
+                self.dida = rec.dida
                 if rec.has_result == 1:
                     self.result = SignalResult()
                     self.result.unit = rec.result_unit
@@ -207,14 +212,14 @@ class Fut_RsiBollSignal_Duo(Signal):
         r = []
         if self.result is None:
             r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+                   self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    0, 0, 0, 0, 0 ] ]
         else:
             r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+                   self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl ] ]
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
-                                      'intraTradeHigh','intraTradeLow','stop', \
+                                      'intraTradeHigh','intraTradeLow','stop', 'dida', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
@@ -303,6 +308,7 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.bollUp = 0
         self.bollDown = 0
         self.gap = 100
+        self.dida = 0
 
         # 需要持久化保存的变量
         self.cost = 0
@@ -423,11 +429,13 @@ class Fut_RsiBollSignal_Kong(Signal):
                 self.cost = bar.close
                 self.stop = 100E4
                 self.intraTradeLow = bar.close
+                self.dida = 0
 
                 self.short(bar.close, self.fixedSize)
 
         # 持有空头仓位
         elif self.unit < 0:
+            self.dida += 1
             self.intraTradeLow = min(self.intraTradeLow, bar.low)
 
             #self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
@@ -436,10 +444,9 @@ class Fut_RsiBollSignal_Kong(Signal):
             else:
                 self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
 
-            #print(self.stop)
-
             if bar.close >= self.stop:
-                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
+            elif self.dida >= 10 and bar.close < self.cost and self.stop > self.cost:
                 self.cover(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
@@ -457,6 +464,7 @@ class Fut_RsiBollSignal_Kong(Signal):
                 self.intraTradeHigh = rec.intraTradeHigh
                 self.intraTradeLow = rec.intraTradeLow
                 self.stop = rec.stop
+                self.dida = rec.dida
                 if rec.has_result == 1:
                     self.result = SignalResult()
                     self.result.unit = rec.result_unit
@@ -468,15 +476,15 @@ class Fut_RsiBollSignal_Kong(Signal):
     def save_var(self):
         r = []
         if self.result is None:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, self.cost, \
+                   self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    0, 0, 0, 0, 0 ] ]
         else:
-            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
-                   self.intraTradeHigh, self.intraTradeLow, self.stop, \
+            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, self.cost, \
+                   self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl ] ]
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
-                                      'intraTradeHigh','intraTradeLow','stop', \
+                                      'intraTradeHigh','intraTradeLow', 'stop', 'dida', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
         if os.path.exists(filename):
@@ -567,8 +575,14 @@ class Fut_RsiBollPortfolio(Portfolio):
         # 对价格四舍五入
         priceTick = get_contract(signal.vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
+        price_deal = price
+        if direction == DIRECTION_LONG:
+            price_deal += 3*priceTick
+        if direction == DIRECTION_SHORT:
+            price_deal -= 3*priceTick
 
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
+
+        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price_deal, volume*multiplier, self.name)
 
         # 记录成交数据
         trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)

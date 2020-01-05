@@ -29,7 +29,8 @@ def gen_line(df1, symbol):
 
 if __name__ == '__main__':
 
-    symbols = ['m1901','m1905','m1805']
+    #symbols = ['m1901','m1905','m1805']
+    symbols = ['m2001','m2005']
 
     fn = get_dss() +'backtest/fut/m/' + 'day_' + symbols[0] + '.csv'
     df = pd.read_csv(fn)
@@ -39,10 +40,10 @@ if __name__ == '__main__':
     df = pd.read_csv(fn)
     line2 = gen_line(df,symbols[1])
 
-    fn = get_dss() +'backtest/fut/m/' + 'day_' + symbols[2] + '.csv'
-    df = pd.read_csv(fn)
-    line3 = gen_line(df,symbols[2])
+    # fn = get_dss() +'backtest/fut/m/' + 'day_' + symbols[2] + '.csv'
+    # df = pd.read_csv(fn)
+    # line3 = gen_line(df,symbols[2])
 
     line = line1.overlap(line2)
-    line = line.overlap(line3)
+    #line = line.overlap(line3)
     line.render()

@@ -27,7 +27,6 @@ class Fut_DaLiSignal(Signal):
         self.atr_x = 8
 
         self.gap = 30
-        self.gap_base = self.gap
         self.gap_min = 15
         self.gap_max = 40
         self.price_min_1 = 2600
@@ -56,7 +55,6 @@ class Fut_DaLiSignal(Signal):
             if len(df) > 0:
                 rec = df.iloc[0,:]
                 self.gap = rec.gap
-                self.gap_base = rec.gap
                 self.gap_min = rec.gap_min
                 self.gap_max = rec.gap_max
                 self.atr_x = rec.atr_x
@@ -158,8 +156,12 @@ class Fut_DaLiSignal(Signal):
                 self.unit_cover()
                 self.unit_buy(bar.close)
 
-            # if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
-            #     print( len(self.price_duo_list), len(self.price_kong_list) )
+            if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
+                print( len(self.price_duo_list), len(self.price_kong_list) )
+
+            # to_log( '买开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
+            # to_log( str(self.price_duo_list) )
+            # to_log( str(self.price_kong_list) )
 
         # 平多仓、开空仓
         if self.can_short == True:
@@ -177,44 +179,71 @@ class Fut_DaLiSignal(Signal):
                 self.unit_sell()
                 self.unit_short(bar.close)
 
+
+            if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
+                print( len(self.price_duo_list), len(self.price_kong_list) )
+
+            # to_log( '卖开仓：'+str(self.pnl)+ '  '+str(self.gap)+'  ' +str(self.bar.close) )
+            # to_log( str(self.price_duo_list) )
+            # to_log( str(self.price_kong_list) )
+
     #----------------------------------------------------------------------
     def get_gap_plus(self):
         # 当为上涨趋势时，空头持仓增加，要控制。
         g = self.gap
+
         cc = len(self.price_duo_list) - len(self.price_kong_list)
+        # if  cc >= 11:
+        #     g -= 20
+        # elif cc >= 9:
+        #     g -= 10
+        # elif cc >= 7:
+        #     g -= 5
 
-        if abs(cc) >= 12:
-            g += self.gap_base
-        elif abs(cc) >= 10:
-            g += self.gap_base * 0.75
-        elif abs(cc) >= 8:
-            g += self.gap_base * 0.5
-        elif abs(cc) >= 6:
-            g += self.gap_base * 0.25
-
-        if cc >= 3 and cc < 6 and self.type == 'multi':
+        #if self.pnl > 40 and cc >= 1:
+        if cc >= 2:
             g = self.gap_min
 
+        if cc <= -12:
+            g += 20
+        elif cc <= -10:
+            g += 15
+        elif cc <= -8:
+            g += 10
+        elif cc <= -6:
+            g += 5
+
+        g = max(g, self.gap_min)
+        g = min(g, self.gap_max+10)
         return g
 
     #----------------------------------------------------------------------
     def get_gap_minus(self):
         g = self.gap
+
         cc = len(self.price_kong_list) - len(self.price_duo_list)
+        # if  cc >= 11:
+        #     g -= 20
+        # elif cc >= 9:
+        #     g -= 10
+        # elif cc >= 7:
+        #     g -= 5
 
-
-        if abs(cc) >= 12:
-            g += self.gap_base
-        elif abs(cc) >= 10:
-            g += self.gap_base * 0.75
-        elif abs(cc) >= 8:
-            g += self.gap_base * 0.5
-        elif abs(cc) >= 6:
-            g += self.gap_base * 0.25
-
-        if cc >= 3 and cc < 6 and self.type == 'multi':
+        #if self.pnl < -40 and cc >= 1:
+        if cc >= 2:
             g = self.gap_min
 
+        if cc <= -12:
+            g += 20
+        elif cc <= -10:
+            g += 15
+        elif cc <= -8:
+            g += 10
+        elif cc <= -6:
+            g += 5
+
+        g = max(g, self.gap_min)
+        g = min(g, self.gap_max+10)
         return g
 
     #----------------------------------------------------------------------
@@ -235,26 +264,7 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def unit_buy(self, price):
-        if len(self.price_duo_list) >= 3:
-            self.price_duo_list = sorted(self.price_duo_list)
-            p_tail = self.price_duo_list.pop(-1)
-            self.price_duo_list.append(p_tail - self.gap_base*0.5)
-            self.price_duo_list.append(price  + self.gap_base*0.5)
-        else:
-            self.price_duo_list.append(price)
-
-        self.unit_open(price, self.fixedSize)
-
-    #----------------------------------------------------------------------
-    def unit_short(self, price):
-        if len(self.price_kong_list) >= 3:
-            self.price_kong_list = sorted(self.price_kong_list)
-            p0 = self.price_kong_list.pop(0)
-            self.price_kong_list.append(p0 + self.gap_base*0.5)
-            self.price_kong_list.append(price - self.gap_base*0.5)
-        else:
-            self.price_kong_list.append(price)
-
+        self.price_duo_list.append(price)
         self.unit_open(price, self.fixedSize)
 
     #----------------------------------------------------------------------
@@ -263,6 +273,11 @@ class Fut_DaLiSignal(Signal):
         self.price_duo_list.pop(0)
 
         self.unit_close(self.bar.close)
+
+    #----------------------------------------------------------------------
+    def unit_short(self, price):
+        self.price_kong_list.append(price)
+        self.unit_open(price, self.fixedSize)
 
     #----------------------------------------------------------------------
     def unit_cover(self):
@@ -305,7 +320,7 @@ class Fut_DaLiSignal(Signal):
 
         for item in self.price_kong_list:
             pnl_hold += item - settle
-        pnl_hold = size * pnl_hold * self.fixedSize
+        pnl_hold = size * pnl_hold * self.fixedSize 
 
         self.unit = len(self.price_duo_list) - len(self.price_kong_list)
         r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \

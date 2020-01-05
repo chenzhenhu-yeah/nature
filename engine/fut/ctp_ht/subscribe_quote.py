@@ -6,7 +6,7 @@ __mtime__ = '20190506'
 
 import os
 import time
-import datetime
+from datetime import datetime
 import json
 import pandas as pd
 import schedule
@@ -24,6 +24,16 @@ from nature import Tick
 from nature import VtBarData
 from nature import SOCKET_BAR, get_dss, to_log, get_contract
 
+fn = get_dss() + 'fut/cfg/trade_time.csv'
+df_tt = pd.read_csv(fn, dtype='str')
+df_tt = df_tt[df_tt.seq=='1']
+df_tt_2300 = df_tt[df_tt.end=='23:00:59']
+df_tt_0230 = df_tt[df_tt.end=='02:30:59']
+
+pz_2300_list = list(df_tt_2300.symbol)
+pz_0230_list = list(df_tt_0230.symbol)
+print(pz_2300_list)
+print(pz_0230_list)
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
@@ -171,21 +181,13 @@ class HuQuote(CtpQuote):
             self.put_bar(bar, 'min1')
 
         c = get_contract(bar.vtSymbol)
-        if c.exchangeID == 'CZCE':
-            if c.pz in ['CF', 'SR'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
-                bar.time = '23:00:00'
-                self.put_bar(bar, 'min1')
 
-        if c.exchangeID == 'DCE':
-            if c.pz in ['m'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
-                bar.time = '23:00:00'
-                self.put_bar(bar, 'min1')
-
-        if c.exchangeID == 'SHFE':
-            if c.pz in ['rb'] and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
-                bar.time = '23:00:00'
-                self.put_bar(bar, 'min1')
-
+        if c.pz in pz_0230_list and tick.UpdateTime in ['02:28:57','02:28:58','02:28:59']:
+            bar.time = '02:30:00'
+            self.put_bar(bar, 'min1')
+        elif c.pz in pz_2300_list and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
+            bar.time = '23:00:00'
+            self.put_bar(bar, 'min1')
 
 class TestQuote(object):
     """TestQuote"""
@@ -197,8 +199,34 @@ class TestQuote(object):
         self.investor = investor
         self.pwd = pwd
         self.q = None
+        self.working = False
+
+    #----------------------------------------------------------------------
+    def is_market_date(self):
+        r = True
+        fn = get_dss() +  'fut/engine/market_date.csv'
+        if os.path.exists(fn):
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d')
+            tm = now.strftime('%H:%M:%S')
+
+            df = pd.read_csv(fn)
+            df = df[df.date == today]
+            if len(df) > 0:
+                morning_state = df.iat[0,1]
+                night_state = df.iat[0,2]
+                if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
+                    r = False
+                if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
+                    r = False
+
+        return r
 
     def run(self):
+        if self.is_market_date() == False:
+            self.working = False
+            return
+
         time.sleep(3)
         del self.q
         time.sleep(3)
@@ -208,15 +236,19 @@ class TestQuote(object):
         self.q.OnUserLogin = lambda o, i: self.subscribe_ids(self.q.id_list)
 
         self.q.ReqConnect(self.front)
+        self.working = True
 
     def subscribe_ids(self, ids):
         for id in ids:
             self.q.ReqSubscribeMarketData(id)
 
     def release(self):
+        if self.working == False:
+            return
+
         # 对quote的 ReqUserLogout方法做了修改
         self.q.ReqUserLogout()
-
+        self.working = False
 
     #----------------------------------------------------------------------
     def daily_worker(self):

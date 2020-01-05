@@ -2,7 +2,6 @@
 from __future__ import print_function
 
 from csv import DictReader
-from datetime import datetime
 from collections import OrderedDict, defaultdict
 
 import os
@@ -25,7 +24,7 @@ from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
-from nature import Gateway_Ht_CTP
+from nature import Gateway_Ht_CTP, pandian_run
 #from ipdb import set_trace
 
 ########################################################################
@@ -43,6 +42,7 @@ class FutEngine(object):
         self.gateway = None                # 路由
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
+        self.working = False
 
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
@@ -203,26 +203,46 @@ class FutEngine(object):
 
         priceTick = get_contract(vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
-        price_deal = price
-        if direction == DIRECTION_LONG:
-            price_deal += 3*priceTick
-        if direction == DIRECTION_SHORT:
-            price_deal -= 3*priceTick
 
         if self.gateway is not None:
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
-            threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price_deal, volume, pfName) ).start()
+            threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
+
+    #----------------------------------------------------------------------
+    def is_market_date(self):
+        r = True
+        fn = get_dss() +  'fut/engine/market_date.csv'
+        if os.path.exists(fn):
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d')
+            tm = now.strftime('%H:%M:%S')
+
+            df = pd.read_csv(fn)
+            df = df[df.date == today]
+            if len(df) > 0:
+                morning_state = df.iat[0,1]
+                night_state = df.iat[0,2]
+                if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
+                    r = False
+                if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
+                    r = False
+
+        return r
 
     #----------------------------------------------------------------------
     def worker_open(self):
         """盘前加载配置及数据"""
         try:
-            self.init_daily()
+            if self.is_market_date() == False:
+                self.working = False
+                return
 
+            self.init_daily()
             time.sleep(600)
             if self.gateway is not None:
                 self.gateway.check_risk()
 
+            self.working = True
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
@@ -231,6 +251,9 @@ class FutEngine(object):
     def worker_close(self):
         """盘后保存及展示数据"""
         try:
+            if self.working == False:
+                return
+
             if self.gateway is not None:
                 self.gateway.release()
             self.gateway = None                # 路由
@@ -240,6 +263,12 @@ class FutEngine(object):
             for p in self.portfolio_list:
                 p.daily_close()
             self.portfolio_list = []           # 组合
+            self.working = False
+
+            now = datetime.now()
+            tm = now.strftime('%H:%M:%S')
+            if tm > '15:00:00' and tm < '15:30:00'  :
+                pandian_run()
 
         except Exception as e:
             s = traceback.format_exc()

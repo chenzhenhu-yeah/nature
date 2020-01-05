@@ -11,7 +11,6 @@ import traceback
 import json
 import os
 from csv import DictReader
-from datetime import datetime
 from collections import OrderedDict, defaultdict
 
 from nature import CtpTrade
@@ -137,7 +136,7 @@ class Gateway_Ht_CTP(object):
 
         self.lock.acquire()
 
-        try:            
+        try:
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick

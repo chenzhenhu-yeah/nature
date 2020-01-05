@@ -484,8 +484,13 @@ class Fut_CciBollPortfolio(Portfolio):
         # 对价格四舍五入
         priceTick = get_contract(signal.vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
+        price_deal = price
+        if direction == DIRECTION_LONG:
+            price_deal += 3*priceTick
+        if direction == DIRECTION_SHORT:
+            price_deal -= 3*priceTick
 
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
+        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price_deal, volume*multiplier, self.name)
 
         # 记录成交数据
         trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
