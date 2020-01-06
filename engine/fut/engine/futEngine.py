@@ -216,6 +216,7 @@ class FutEngine(object):
             now = datetime.now()
             today = now.strftime('%Y-%m-%d')
             tm = now.strftime('%H:%M:%S')
+            print('in is_market_date, now time is: ', tm)
 
             df = pd.read_csv(fn)
             df = df[df.date == today]
@@ -267,8 +268,11 @@ class FutEngine(object):
 
             now = datetime.now()
             tm = now.strftime('%H:%M:%S')
-            if tm > '15:00:00' and tm < '15:30:00'  :
+            print( 'in worker close, now time is: ', tm )
+            if tm > '15:00:00' and tm < '15:30:00':
+                print('begin pandian_run')
                 pandian_run()
+                print('end pandian_run')
 
         except Exception as e:
             s = traceback.format_exc()

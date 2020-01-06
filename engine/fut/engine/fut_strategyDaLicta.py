@@ -19,7 +19,7 @@ class Fut_DaLictaSignal(Signal):
 
         # 策略参数
         self.fixedSize = 6            # 每次交易的数量
-        self.initBars = 150           # 初始化数据所用的天数
+        self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min30'
 
         # 策略临时变量
@@ -80,7 +80,7 @@ class Fut_DaLictaSignal(Signal):
 
         self.ma_short_arr = self.am.sma(8, array=True)
         self.ma_mid_arr = self.am.sma(21, array=True)
-        self.ma_long = self.am.sma(120)
+        self.ma_long = self.am.sma(100)
 
         if self.unit == 0:
             if self.bar.close >= self.ma_long and self.paused == False:
