@@ -15,7 +15,7 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
-        self.type = 'one'
+        self.type = 'multi'
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
@@ -30,10 +30,8 @@ class Fut_DaLiSignal(Signal):
         self.gap_base = self.gap
         self.gap_min = 15
         self.gap_max = 40
-        self.price_min_1 = 2600
-        self.price_min_2 = 2730
-        self.price_max_2 = 3000
-        self.price_max_1 = 3100
+        self.price_min = 2600
+        self.price_max = 3100
 
         self.price_duo_list =  []
         self.price_kong_list = []
@@ -55,27 +53,25 @@ class Fut_DaLiSignal(Signal):
             df = df[ df.symbol == self.vtSymbol ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
+                self.fixedSize = rec.fixed_size
                 self.gap = rec.gap
                 self.gap_base = rec.gap
                 self.gap_min = rec.gap_min
                 self.gap_max = rec.gap_max
                 self.atr_x = rec.atr_x
-                self.price_min_1 = rec.price_min_1
-                self.price_min_2 = rec.price_min_2
-                self.price_max_2 = rec.price_max_2
-                self.price_max_1 = rec.price_max_1
-                print('成功加载策略参数', self.vtSymbol,self.gap,self.gap_min,self.gap_max,self.atr_x, \
-                      self.price_min_1,self.price_min_2,self.price_max_2,self.price_max_1)
+                self.price_min = rec.price_min
+                self.price_max = rec.price_max
+                print('成功加载策略参数')
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'gap' in param_dict:
-            self.gap = param_dict['gap']
+            # self.gap = param_dict['gap']
             print('成功设置策略参数 self.gap: ',self.gap)
         if 'fixedSize' in param_dict:
-            self.fixedSize = param_dict['fixedSize']
-            if self.fixedSize > 1:
-                self.type = 'multi'
+            # self.fixedSize = param_dict['fixedSize']
+            # if self.fixedSize > 1:
+            #     self.type = 'multi'
             print('成功设置策略参数 self.fixedSize: ',self.fixedSize)
 
     #----------------------------------------------------------------------
@@ -91,14 +87,8 @@ class Fut_DaLiSignal(Signal):
             return
 
         #print('here')
-        if self.fixedSize == 1:
-            if self.bar.close <= self.price_min_1 or self.bar.close >= self.price_max_1:
-                return
-            if self.bar.close >= self.price_min_2 and self.bar.close <= self.price_max_2:
-                return
-        else:
-            if self.bar.close < self.price_min_2 or self.bar.close > self.price_max_2:
-                return
+        if self.bar.close < self.price_min or self.bar.close > self.price_max:
+            return
 
         self.calculateIndicator()     # 计算指标
         self.generateSignal(bar)      # 触发信号，产生交易指令
@@ -378,11 +368,8 @@ class Fut_DaLiPortfolio(Portfolio):
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'dali'
 
-        s_param = {}
-        for symbol in symbol_list:
-            s_param[symbol] = {'fixedSize':2}
-        #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, s_param)
-        Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, s_param)
+        Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, signal_param)
+        #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, {})
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
