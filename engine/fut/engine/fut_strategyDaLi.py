@@ -171,18 +171,18 @@ class Fut_DaLiSignal(Signal):
     def get_gap_plus(self):
         # 当为上涨趋势时，空头持仓增加，要控制。
         g = self.gap
-        cc = len(self.price_duo_list) - len(self.price_kong_list)
+        cc = ( len(self.price_duo_list) - len(self.price_kong_list) ) * self.fixedSize
 
-        if abs(cc) >= 12:
+        if abs(cc) >= 16:
             g += self.gap_base
-        elif abs(cc) >= 10:
+        elif abs(cc) >= 12:
             g += self.gap_base * 0.75
-        elif abs(cc) >= 8:
+        elif abs(cc) >= 10:
             g += self.gap_base * 0.5
-        elif abs(cc) >= 6:
+        elif abs(cc) >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= 3 and cc < 6 and self.type == 'multi':
+        if cc >= 4 and cc <= 6:
             g = self.gap_min
 
         return g
@@ -190,19 +190,19 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def get_gap_minus(self):
         g = self.gap
-        cc = len(self.price_kong_list) - len(self.price_duo_list)
+        cc = ( len(self.price_kong_list) - len(self.price_duo_list) ) * self.fixedSize
 
 
-        if abs(cc) >= 12:
+        if abs(cc) >= 16:
             g += self.gap_base
-        elif abs(cc) >= 10:
+        elif abs(cc) >= 12:
             g += self.gap_base * 0.75
-        elif abs(cc) >= 8:
+        elif abs(cc) >= 10:
             g += self.gap_base * 0.5
-        elif abs(cc) >= 6:
+        elif abs(cc) >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= 3 and cc < 6 and self.type == 'multi':
+        if cc >= 4 and cc <= 6:
             g = self.gap_min
 
         return g
