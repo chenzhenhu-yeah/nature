@@ -50,7 +50,8 @@ class BacktestingEngine(object):
         for vtSymbol in self.symbol_list:
             #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
             #filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
-            filename = get_dss( ) + 'backtest/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            #filename = get_dss( ) + 'backtest/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            filename = get_dss( ) + 'backtest/fut/' + vtSymbol + '/' +self.minx + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
@@ -465,10 +466,10 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'm1901'
+    vtSymbol = 'rb'
     #vtSymbol = 'c1901'
     #vtSymbol = 'CF901'
-    start_date = '20180209 00:00:00'
+    start_date = '20180109 00:00:00'
     #start_date = '20180219 00:00:00'
     end_date   = '20181231 00:00:00'
     #end_date   = '20180531 00:00:00'
@@ -484,12 +485,13 @@ if __name__ == '__main__':
     # PortfolioClass = Fut_AberrationPortfolio
     #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    #PortfolioClass = Fut_CciBollPortfolio
-    PortfolioClass = Fut_DaLiPortfolio
+    PortfolioClass = Fut_CciBollPortfolio
+    #PortfolioClass = Fut_DaLiPortfolio
     #PortfolioClass = Fut_DaLictaPortfolio
 
     #minx = 'min30'
-    minx = 'min5'
+    minx = 'min15'
+    #minx = 'min5'
 
     test_one(PortfolioClass, minx)
     #test_atrrsi_param(PortfolioClass, minx)

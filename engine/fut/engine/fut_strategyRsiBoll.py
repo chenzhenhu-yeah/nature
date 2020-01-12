@@ -146,10 +146,10 @@ class Fut_RsiBollSignal_Duo(Signal):
         if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_duo_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_duo_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -181,7 +181,7 @@ class Fut_RsiBollSignal_Duo(Signal):
 
             if bar.close <= self.stop:
                 self.sell(bar.close, abs(self.unit))
-            elif self.dida >= 10 and bar.close > self.cost and self.stop < self.cost:
+            elif self.dida >= 15 and bar.close > self.cost and self.stop < self.cost:
                 self.sell(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
@@ -411,10 +411,10 @@ class Fut_RsiBollSignal_Kong(Signal):
         if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
 
 
     #----------------------------------------------------------------------
@@ -446,7 +446,7 @@ class Fut_RsiBollSignal_Kong(Signal):
 
             if bar.close >= self.stop:
                 self.cover(bar.close, abs(self.unit))
-            elif self.dida >= 10 and bar.close < self.cost and self.stop > self.cost:
+            elif self.dida >= 15 and bar.close < self.cost and self.stop > self.cost:
                 self.cover(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
