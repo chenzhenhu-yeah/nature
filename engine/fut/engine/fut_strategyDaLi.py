@@ -281,7 +281,7 @@ class Fut_DaLiSignal(Signal):
         commission = 0
         slippage = 0
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + pz + '.csv'
+        filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             pnl_trade = df.pnl.sum()
@@ -307,7 +307,7 @@ class Fut_DaLiSignal(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'pnl_net','pnl_trade','pnl_hold', \
                                       'commission','slippage','price_duo_list','price_kong_list'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
