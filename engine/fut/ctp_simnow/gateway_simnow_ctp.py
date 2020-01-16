@@ -72,13 +72,13 @@ class Gateway_Simnow_CTP(object):
             if exchangeID == '':
                 return 'error'
 
-            if direction == DIRECTION_LONG and offset == '开仓':
+            if direction == DIRECTION_LONG and offset == 'Open':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
-            if direction == DIRECTION_SHORT and offset == '开仓':
+            if direction == DIRECTION_SHORT and offset == 'Open':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
-            if direction == DIRECTION_LONG and offset == '平仓':
+            if direction == DIRECTION_LONG and offset == 'Close':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
-            if direction == DIRECTION_SHORT and offset == '平仓':
+            if direction == DIRECTION_SHORT and offset == 'Close':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
         except Exception as e:
             now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())

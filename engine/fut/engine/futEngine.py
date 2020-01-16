@@ -43,6 +43,7 @@ class FutEngine(object):
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
         self.working = False
+        self.seq_tm = ''
 
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
@@ -51,6 +52,7 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def init_daily(self):
         """每日初始化交易引擎"""
+        self.seq_tm = ''
 
         # 加载品种
         config = open(get_dss()+'fut/cfg/config.json')
@@ -93,7 +95,7 @@ class FutEngine(object):
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
-        self.gateway.run()
+        self.gateway.open()
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -238,6 +240,14 @@ class FutEngine(object):
                 self.working = False
                 return
 
+            now = datetime.now()
+            tm = now.strftime('%H:%M:%S')
+            print( 'in worker open, now time is: ', tm )
+            if tm > '08:30:00' and tm < '09:00:00':
+                self.seq_tm = 'morning'
+            if tm > '20:30:00' and tm < '21:00:00':
+                self.seq_tm = 'night'
+
             self.init_daily()
             time.sleep(600)
             if self.gateway is not None:
@@ -255,24 +265,21 @@ class FutEngine(object):
             if self.working == False:
                 return
 
-            if self.gateway is not None:
-                self.gateway.release()
-            self.gateway = None                # 路由
-            self.vtSymbol_list = []
-
             # 保存信号参数
             for p in self.portfolio_list:
                 p.daily_close()
             self.portfolio_list = []           # 组合
             self.working = False
 
-            now = datetime.now()
-            tm = now.strftime('%H:%M:%S')
-            print( 'in worker close, now time is: ', tm )
-            if tm > '15:00:00' and tm < '15:30:00':
+            if self.seq_tm == 'morning':
                 print('begin pandian_run')
                 pandian_run()
                 print('end pandian_run')
+
+            if self.gateway is not None:
+                self.gateway.release()
+            self.gateway = None                # 路由
+            self.vtSymbol_list = []
 
         except Exception as e:
             s = traceback.format_exc()

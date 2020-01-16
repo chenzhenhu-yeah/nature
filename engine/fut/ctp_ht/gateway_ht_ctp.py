@@ -27,6 +27,8 @@ class Gateway_Ht_CTP(object):
     def __init__(self):
         self.state = 'CLOSE'
         self.lock = threading.Lock()
+        self.file_order_length = 0
+        self.file_trade_length = 0
 
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
@@ -86,6 +88,40 @@ class Gateway_Ht_CTP(object):
         self.t.t.ReqQryTradingAccount(self.broker, self.investor)
 
     #----------------------------------------------------------------------
+    def check_trade(self):
+        fn = get_dss() +  'fut/engine/gateway_order.csv'
+        df1 = pd.read_csv(fn)
+        df1 = df1[self.file_order_length:]
+        if len(df1) > 0:
+            g1 = df1.groupby(by=['symbol','direction','offset'])
+            r1 = g1.agg({'volume':np.sum})
+            r1 = r1.reset_index()
+            #print(r1)
+
+        fn = get_dss() +  'fut/engine/gateway_trade.csv'
+        df2 = pd.read_csv(fn)
+        df2 = df2[self.file_trade_length:]
+        if len(df2) > 0:
+            # 处理路由记录存在重复的情况
+            df2 = df2.drop_duplicates()
+            g2 = df2.groupby(by=['InstrumentID','Direction','Offset'])
+            r2 = g2.agg({'volume':np.sum})
+            r2 = r2.reset_index()
+            r2.columns = ['symbol','direction','offset','volume']
+            #print(r2)
+
+        if len(df1) > 0:
+            if len(df2) > 0:
+                result = pd.merge(r1, r2, how='left', on=['symbol','direction','offset','volume'], indicator=True)
+                print(result)
+                result = result[result._merge == 'left_only']
+                print(result)
+                if len(result) > 0:
+                    send_email(get_dss(), '发单未成交', '')
+            else:
+                send_email(get_dss(), '发单未成交', '')
+
+    #----------------------------------------------------------------------
     def on_connect(self, obj):
         self.t.ReqUserLogin(self.investor, self.pwd, self.broker, self.proc, self.appid, self.authcode)
 
@@ -102,13 +138,24 @@ class Gateway_Ht_CTP(object):
         else:
             print('gateway not connected.')
 
-    def run(self):
+    def open(self):
+        fn = get_dss() +  'fut/engine/gateway_order.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            self.file_order_length = len(df)
+
+        fn = get_dss() +  'fut/engine/gateway_trade.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            self.file_trade_length = len(df)
+
         print(self.state)
         if self.state == 'INITED':
             self.t.ReqConnect(self.front)
 
     def release(self):
         if self.state == 'OPEN':
+            self.check_trade()
             self.t.ReqUserLogout()
 
     #----------------------------------------------------------------------
@@ -145,19 +192,19 @@ class Gateway_Ht_CTP(object):
             print( str(r) )
             c = ['datetime', 'symbol', 'direction', 'offset', 'price', 'volume']
             df = pd.DataFrame(r, columns=c)
-            filename = get_dss() +  'fut/engine/gateway_deal.csv'
+            filename = get_dss() +  'fut/engine/gateway_order.csv'
             if os.path.exists(filename):
                 df.to_csv(filename, index=False, mode='a', header=False)
             else:
                 df.to_csv(filename, index=False)
 
-            if direction == DIRECTION_LONG and offset == '开仓':
+            if direction == DIRECTION_LONG and offset == 'Open':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Open, price, volume, exchangeID)
-            if direction == DIRECTION_SHORT and offset == '开仓':
+            if direction == DIRECTION_SHORT and offset == 'Open':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Open, price, volume, exchangeID)
-            if direction == DIRECTION_LONG and offset == '平仓':
+            if direction == DIRECTION_LONG and offset == 'Close':
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
-            if direction == DIRECTION_SHORT and offset == '平仓':
+            if direction == DIRECTION_SHORT and offset == 'Close':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
 
         except Exception as e:

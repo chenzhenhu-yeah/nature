@@ -11,13 +11,13 @@ import traceback
 
 from nature import send_instruction, get_dss, to_log, get_contract
 
-DIRECTION_LONG = u'多'
-DIRECTION_SHORT = u'空'
+DIRECTION_LONG = 'Buy'
+DIRECTION_SHORT = 'Sell'
 
-OFFSET_OPEN = u'开仓'
-OFFSET_CLOSE = u'平仓'
-OFFSET_CLOSETODAY = u'平今'
-OFFSET_CLOSEYESTERDAY = u'平昨'
+OFFSET_OPEN = 'Open'
+OFFSET_CLOSE = 'Close'
+OFFSET_CLOSETODAY = 'Close'
+OFFSET_CLOSEYESTERDAY = 'Close'
 
 # 默认空值
 EMPTY_STRING = ''
