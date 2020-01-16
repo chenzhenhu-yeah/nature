@@ -92,6 +92,8 @@ class Gateway_Ht_CTP(object):
         fn = get_dss() +  'fut/engine/gateway_order.csv'
         df1 = pd.read_csv(fn)
         df1 = df1[self.file_order_length:]
+        print('in check_trade')
+        print(df1)
         if len(df1) > 0:
             g1 = df1.groupby(by=['symbol','direction','offset'])
             r1 = g1.agg({'volume':np.sum})
@@ -101,6 +103,7 @@ class Gateway_Ht_CTP(object):
         fn = get_dss() +  'fut/engine/gateway_trade.csv'
         df2 = pd.read_csv(fn)
         df2 = df2[self.file_trade_length:]
+        print(df2)
         if len(df2) > 0:
             # 处理路由记录存在重复的情况
             df2 = df2.drop_duplicates()
@@ -108,7 +111,7 @@ class Gateway_Ht_CTP(object):
             r2 = g2.agg({'volume':np.sum})
             r2 = r2.reset_index()
             r2.columns = ['symbol','direction','offset','volume']
-            #print(r2)
+            print(r2)
 
         if len(df1) > 0:
             if len(df2) > 0:
