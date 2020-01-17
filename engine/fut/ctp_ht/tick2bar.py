@@ -14,12 +14,17 @@ from nature import CtpQuote
 from nature import Tick
 
 from nature import VtBarData, to_log, BarGenerator
-from nature import SOCKET_BAR, get_dss
+from nature import SOCKET_BAR, get_dss, get_contract
 
 
 #----------------------------------------------------------------------
 def _Generate_Bar_MinOne(tick, temp_bar, r, today):
-    """生成、推送、保存Bar"""
+    """
+    从tick加工生成bar_min1
+    temp_bar：存储上一个bar
+    r：存储数据加工结果
+    today：tradeDay
+    """
 
     new_bar = VtBarData()
     new_bar.date = today
@@ -29,6 +34,7 @@ def _Generate_Bar_MinOne(tick, temp_bar, r, today):
     new_bar.low =  tick.LastPrice
     new_bar.close = tick.LastPrice
 
+    # 上一个bar存储在变量bar中，最新bar存储在变量new_bar中。
     if temp_bar != []:
         bar = temp_bar.pop()
     else:
@@ -64,9 +70,10 @@ def proc_segment(df1,begin,end,num,symbol):
     """
     r =[]
     temp_bar = []
-    begin_day = ''
-    end_day = ''
+    begin_day = ''            # 该时段起始交易所在日期
+    end_day = ''              # 该时段结束交易所在日期
     n = len(df1)
+    # 初加工，将tick转成bar_min1。(这段逻辑写得有点绕，应该还有改进的空间。)
     for k, tick in df1.iterrows():
         # 第一条记录，确定关键变量的初始值
         if k == 0:
@@ -75,7 +82,7 @@ def proc_segment(df1,begin,end,num,symbol):
                 begin_day = tick.UpdateDate
                 end_day = tick.UpdateDate
             else:
-                # 跨零点
+                # 跨零点的时段
                 if tick.UpdateTime>='00:00:00' and tick.UpdateTime <= '02:30:01':
                     # 正常情况下，这段逻辑用不着。仅适用于数据缺失的情况。
                     end_day = tick.UpdateDate
@@ -103,7 +110,7 @@ def proc_segment(df1,begin,end,num,symbol):
         _Generate_Bar_MinOne(tick, temp_bar, r, tick.UpdateDate)
 
         if k == n-1:
-            # 收尾处理
+            # 收尾处理，将时间设为该时段的结束时间
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
@@ -111,7 +118,7 @@ def proc_segment(df1,begin,end,num,symbol):
     #     print(r)
     #     print(len(r), num)
 
-    # 如果有数据缺失，补全。
+    # 该时段内每个bar的时间是确定的，如果有数据缺失，补全。
     tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
     oneminute = datetime.timedelta(minutes=1)
     next = tm_begin + oneminute
@@ -120,7 +127,7 @@ def proc_segment(df1,begin,end,num,symbol):
         date = next.strftime('%Y-%m-%d')
         tm   = next.strftime('%H:%M:%S')
 
-        # 周末，要加两天。节假日通常不开夜盘。
+        # 周末，要加两天。节假日通常不开夜盘!!!。
         if tm == '00:00:00' and date != end_day:
             #print(date, end_day)
             #print(next)
@@ -129,12 +136,6 @@ def proc_segment(df1,begin,end,num,symbol):
             next += two_days
             date = next.strftime('%Y-%m-%d')
 
-            #print(next)
-            #print(date)
-
-
-        #print(date,tm)
-        #print(i)
         row = r[i]
         if row[0] == date and row[1] == tm:
             pass
@@ -178,28 +179,22 @@ def tick2bar(tradeDay):
             df = pd.read_csv(fn)
             # print(df.head(3))
 
-            # 读品种配置文件，获取四个交易时段
-            pz = symbol[:2]
-            if pz.isalpha():
-                pass
-            else:
-                # 大连交易所业务品种只有一个字母
-                pz = symbol[:1]
-
-            # 逐个时段遍历处理
+            # 获取品种交易时段
+            pz = get_contract(symbol).pz
             df2 = df_tm[df_tm.symbol==pz].sort_values(by='seq')
             r1 = []
+            # 逐个时段遍历处理
             for i,row in df2.iterrows():
                 if row.end > row.begin:
                     df1 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<=row.end)]
-                    # 处理tick异常数据
                     if len(df1) > 0:
+                        # 处理tick异常数据，删除盘后非交易时段推送的数据
                         df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
                         df1 = df1.reset_index()
                         dt = df1.at[0,'UpdateDate']
                         df1 = df1[df1.UpdateDate == dt]
                 else:
-                    # 夜盘跨零点交易品种，作特殊处理
+                    # 夜盘跨零点交易品种，作特殊拼接处理
                     df11 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<='23:59:59')]
                     df12 = df[(df.UpdateTime>='00:00:00') & (df.UpdateTime<=row.end)]
                     df1 = pd.concat([df11, df12])
@@ -208,13 +203,13 @@ def tick2bar(tradeDay):
                     # 排序很重要，因为tick送过来的顺序可能是乱的
                     df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
                     df1 = df1.reset_index()
-                    # print(i,len(df1))
-                    # print(df1.head(9))
+                    # 处理该时段的tick，加工返回bar数据集
                     r1 += proc_segment(df1, row.begin, row.end, row.num, symbol)
                 else:
                     to_log( 'tick数据有缺失：'+ tradeDay + ' ' + str(i) + ' ' + symbol )
 
 
+            # 保存结果到文件中
             df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
             fname = get_dss() + 'fut/bar/min1_' + symbol + '.csv'
             if os.path.exists(fname):
@@ -222,7 +217,7 @@ def tick2bar(tradeDay):
             else:
                 df_symbol.to_csv(fname, index=False, mode='a')
 
-            # 生成minx
+            # 根据min1的结果集生成minx
             g5 = BarGenerator('min5')
             g15 = BarGenerator('min15')
             g30 = BarGenerator('min30')
