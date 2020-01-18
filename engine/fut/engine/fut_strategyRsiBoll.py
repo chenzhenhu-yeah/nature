@@ -236,14 +236,11 @@ class Fut_RsiBollSignal_Duo(Signal):
             self.result = SignalResult()
         self.result.open(price, change)
 
-        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0, \
-               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
-               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0 ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -259,14 +256,11 @@ class Fut_RsiBollSignal_Duo(Signal):
         if self.result.pnl >= 50+self.gap:
             self.paused = True
 
-        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
-               0, price, self.result.pnl, \
-               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
-               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '', '平',  \
+               0, price, self.result.pnl ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -501,14 +495,11 @@ class Fut_RsiBollSignal_Kong(Signal):
             self.result = SignalResult()
         self.result.open(price, change)
 
-        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
-               abs(change), price, 0, \
-               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
-               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0 ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -525,14 +516,11 @@ class Fut_RsiBollSignal_Kong(Signal):
         if self.result.pnl >= 50+self.gap:
             self.paused = True
 
-        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
-               0, price, self.result.pnl, \
-               self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid, \
-               self.intraTradeHigh, self.intraTradeLow, self.stop] ]
-        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl',  \
-                                      'bollUp','bollDown','rsi_value','rsi_ma','atr_short','atr_mid', \
-                                      'intraTradeHigh','intraTradeLow','stop'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + self.vtSymbol + '.csv'
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '', '平',  \
+               0, price, self.result.pnl ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:

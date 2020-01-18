@@ -83,6 +83,6 @@ def one2x(pz,symbol):
 
 
 if __name__ == "__main__":
-    pz = 'OI'
+    pz = 'y'
     symbol = pz
     one2x(pz,symbol)

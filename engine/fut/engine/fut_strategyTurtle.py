@@ -18,6 +18,7 @@ class Fut_TurtleSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
+        self.type = 'mix'
 
         # 策略参数
         self.entryWindow = 100           # 入场通道周期数

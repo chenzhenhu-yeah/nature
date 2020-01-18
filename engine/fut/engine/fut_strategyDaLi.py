@@ -19,7 +19,7 @@ class Fut_DaLiSignal(Signal):
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
-        self.initBars = 100           # 初始化数据所用的天数
+        self.initBars = 90           # 初始化数据所用的天数
         self.minx = 'min5'
 
         self.atrValue = 0
@@ -82,6 +82,9 @@ class Fut_DaLiSignal(Signal):
             self.on_bar_minx(bar)
 
     def on_bar_minx(self, bar):
+        if self.paused == True:
+            return
+
         self.am.updateBar(bar)
         if not self.am.inited:
             return
@@ -276,7 +279,47 @@ class Fut_DaLiSignal(Signal):
                 self.price_kong_list = eval( rec.price_kong_list )
 
     #----------------------------------------------------------------------
+    def adjust_price_duo(self):
+        duo_list = self.price_duo_list
+        a1 = min(duo_list)
+        n = len(duo_list)
+        A = sum(duo_list)
+        x = int( (A-n*a1)/(0.5*n*(n-1)) )
+        #print(x)
+        r = []
+        for i in range(n):
+            ai = a1 + i*x
+            if i == n-1:
+                ai = A - sum(r)
+            r.append(ai)
+
+        return r
+
+    #----------------------------------------------------------------------
+    def adjust_price_kong(self):
+        kong_list = self.price_kong_list
+        b1 = max(kong_list)
+        n = len(kong_list)
+        B = sum(kong_list)
+        x = int( (n*b1-B)/(0.5*n*(n-1)) )
+        print(x)
+        r = []
+        for i in range(n):
+            bi = b1 - i*x
+            if i == n-1:
+                bi = B - sum(r)
+            r.append(bi)
+
+        return r
+
+    #----------------------------------------------------------------------
     def save_var(self):
+        if self.paused == True:
+            return
+
+        self.price_duo_list = self.adjust_price_duo()
+        self.price_kong_list = self.adjust_price_kong()
+
         pnl_trade = 0
         commission = 0
         slippage = 0

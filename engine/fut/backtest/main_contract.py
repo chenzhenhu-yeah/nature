@@ -19,9 +19,9 @@ if __name__ == '__main__':
     # 05(2019-03)、 01(2019-10)、
     # 05(2019-12)
 
-    pz = 'OI'
+    pz = 'y'
 
-    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + pz + '_01.csv'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + pz + '_05.csv'
     end_month = '2019-12'
 
     df_symbol = pd.read_csv(fn_symbol)

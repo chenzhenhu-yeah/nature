@@ -30,13 +30,13 @@ def gen_line(df1, symbol):
 if __name__ == '__main__':
 
     #symbols = ['m1901','m1905','m1805']
-    symbols = ['m2001','m2005']
+    symbols = ['m_01','y_01']
 
-    fn = get_dss() +'backtest/fut/m/' + 'day_' + symbols[0] + '.csv'
+    fn = get_dss() +'backtest/fut/m/' + symbols[0] + '.csv'
     df = pd.read_csv(fn)
     line1 = gen_line(df, symbols[0])
 
-    fn = get_dss() +'backtest/fut/m/' + 'day_' + symbols[1] + '.csv'
+    fn = get_dss() +'backtest/fut/y/' + symbols[1] + '.csv'
     df = pd.read_csv(fn)
     line2 = gen_line(df,symbols[1])
 

@@ -13,7 +13,7 @@ from nature import to_log
 
 
 class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin):
         """Constructor"""
         self.pz = pz
         self.size = size
@@ -22,6 +22,7 @@ class Contract(object):
         self.fixed_commission = fixed_commission
         self.slippage = slippage
         self.exchangeID = exchangeID
+        self.margin = margin
 
 def get_contract(symbol):
     pz = symbol[:2]
@@ -35,7 +36,7 @@ def get_contract(symbol):
     with open(filename_setting_fut,encoding='utf-8') as f:
         r = DictReader(f)
         for d in r:
-            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'] )
+            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']) )
 
     if pz in contract_dict:
         return contract_dict[pz]
@@ -147,6 +148,30 @@ def get_ts_code(code):
         code += '.SZ'
 
     return code
+
+
+#----------------------------------------------------------------------
+def is_market_date():
+    r = True
+    fn = get_dss() +  'fut/engine/market_date.csv'
+    if os.path.exists(fn):
+        now = datetime.now()
+        today = now.strftime('%Y-%m-%d')
+        tm = now.strftime('%H:%M:%S')
+        print('in is_market_date, now time is: ', tm)
+
+        df = pd.read_csv(fn)
+        df = df[df.date == today]
+        if len(df) > 0:
+            morning_state = df.iat[0,1]
+            night_state = df.iat[0,2]
+            if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
+                r = False
+            if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
+                r = False
+
+    return r
+
 
 if __name__ == '__main__':
     # dss = get_dss()

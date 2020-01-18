@@ -15,6 +15,7 @@ class Fut_AtrRsiSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
+        self.type = 'mix'
 
         # 策略参数
         self.atrLength = 1           # 计算ATR指标的窗口数

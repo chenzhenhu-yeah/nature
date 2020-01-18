@@ -9,8 +9,9 @@ import talib
 
 from nature import get_dss
 
-pz = 'OI'
-fn = get_dss() +'backtest/fut/' + pz + '/' + 'day_' + pz + '.csv'
+pz = 'm'
+#fn = get_dss() +'backtest/fut/' + pz + '/' + 'day_' + pz + '.csv'
+fn = get_dss() +'backtest/fut/' + pz + '/' + 'min30_' + pz + '.csv'
 #fn = get_dss() +'backtest/fut/m/' + 'min30_m1901.csv'
 
 df1 = pd.read_csv(fn)

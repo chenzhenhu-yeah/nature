@@ -75,11 +75,19 @@ class Signal(object):
             df = pd.read_csv(filename, sep='$')
             df = df[df.signal == self.portfolio.name]
             if len(df) > 0:
-                symbols = str( df.iat[0,1] )
-                symbol_list = symbols.split(',')
-                if self.vtSymbol in symbol_list:
+                symbols_dict = eval( df.iat[0,1] )
+                duo_symbol_list = symbols_dict['duo'].split(',')
+                kong_symbol_list = symbols_dict['kong'].split(',')
+                # print(symbols_dict)
+                # print(duo_symbol_list)
+                # print(kong_symbol_list)
+                #symbol_list = symbols.split(',')
+                if self.type == 'duo' and self.vtSymbol in duo_symbol_list:
                     self.paused = True
-                    print(self.vtSymbol + ' paused in ' + self.portfolio.name)
+                    print(self.vtSymbol + ' paused in ' + self.portfolio.name + ' ' + self.type)
+                if self.type == 'kong' and self.vtSymbol in kong_symbol_list:
+                    self.paused = True
+                    print(self.vtSymbol + ' paused in ' + self.portfolio.name + ' ' + self.type)
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)

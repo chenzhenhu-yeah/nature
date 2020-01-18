@@ -466,12 +466,12 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'rb'
+    vtSymbol = 'm'
     #vtSymbol = 'c1901'
     #vtSymbol = 'CF901'
-    start_date = '20180109 00:00:00'
+    start_date = '20190109 00:00:00'
     #start_date = '20180219 00:00:00'
-    end_date   = '20181231 00:00:00'
+    end_date   = '20191231 00:00:00'
     #end_date   = '20180531 00:00:00'
 
     #signal_param = {vtSymbol:{'trailingPercent':0.7, 'victoryPercent':0.3}}
@@ -485,12 +485,12 @@ if __name__ == '__main__':
     # PortfolioClass = Fut_AberrationPortfolio
     #PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    PortfolioClass = Fut_CciBollPortfolio
+    #PortfolioClass = Fut_CciBollPortfolio
     #PortfolioClass = Fut_DaLiPortfolio
-    #PortfolioClass = Fut_DaLictaPortfolio
+    PortfolioClass = Fut_DaLictaPortfolio
 
-    #minx = 'min30'
-    minx = 'min15'
+    minx = 'day'
+    #minx = 'min15'
     #minx = 'min5'
 
     test_one(PortfolioClass, minx)

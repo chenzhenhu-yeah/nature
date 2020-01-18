@@ -149,6 +149,7 @@ class FutEngine(object):
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
         g30 = BarGenerator('min30')
+        gday = BarGenerator('day')
 
         for dt, barDict in self.dataDict.items():
             #print(dt)
@@ -157,6 +158,13 @@ class FutEngine(object):
             #print(dt)
             try:
                 for bar in barDict.values():
+
+                    bar_day = gday.update_bar(bar)
+                    if bar_day is not None:
+                        #gday.save_bar(bar_day)
+                        for p in self.portfolio_list:
+                            p.onBar(bar_day, 'day')
+
 
                     bar_min30 = g30.update_bar(bar)
                     if bar_min30 is not None:
@@ -205,7 +213,7 @@ class FutEngine(object):
         df = pd.read_csv(fname)
         df['datetime'] = df['date'] + ' ' + df['time']
         df = df[df.datetime < self.startDt]
-        #print(vtSymbol, len(df), minx)
+        print(vtSymbol, len(df), minx)
         assert len(df) >= initBars
 
         df = df.sort_values(by=['date','time'])
@@ -264,8 +272,8 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '2020-01-06 09:00:00'
-    end_date   = '2020-01-06 15:00:00'
+    start_date = '2020-01-17 09:00:00'
+    end_date   = '2020-01-17 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

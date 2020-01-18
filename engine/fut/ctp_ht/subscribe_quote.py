@@ -15,7 +15,7 @@ from nature import CtpQuote
 from nature import Tick
 
 from nature import VtBarData
-from nature import SOCKET_BAR, get_dss, to_log, get_contract
+from nature import SOCKET_BAR, get_dss, to_log, get_contract, is_market_date
 
 fn = get_dss() + 'fut/cfg/trade_time.csv'
 df_tt = pd.read_csv(fn, dtype='str')
@@ -193,28 +193,8 @@ class TestQuote(object):
         self.working = False
 
     #----------------------------------------------------------------------
-    def is_market_date(self):
-        r = True
-        fn = get_dss() +  'fut/engine/market_date.csv'
-        if os.path.exists(fn):
-            now = datetime.now()
-            today = now.strftime('%Y-%m-%d')
-            tm = now.strftime('%H:%M:%S')
-
-            df = pd.read_csv(fn)
-            df = df[df.date == today]
-            if len(df) > 0:
-                morning_state = df.iat[0,1]
-                night_state = df.iat[0,2]
-                if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
-                    r = False
-                if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
-                    r = False
-
-        return r
-
     def run(self):
-        if self.is_market_date() == False:
+        if is_market_date() == False:
             self.working = False
             return
 

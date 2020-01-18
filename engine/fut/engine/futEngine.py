@@ -18,7 +18,7 @@ from multiprocessing.connection import Client
 import traceback
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email, get_dss, get_contract
+from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
@@ -112,6 +112,7 @@ class FutEngine(object):
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
         g30 = BarGenerator('min30')
+        gday = BarGenerator('day')
 
         while True:
             time.sleep(1)
@@ -132,6 +133,12 @@ class FutEngine(object):
                         vtSymbol_dict[id] = bar
                     elif vtSymbol_dict[id].time != bar.time:
                         vtSymbol_dict[id] = bar
+                        
+                        bar_day = gday.update_bar(bar)
+                        if bar_day is not None:
+                            gday.save_bar(bar_day)
+                            for p in self.portfolio_list:
+                                p.onBar(bar_day, 'day')
 
                         bar_min30 = g30.update_bar(bar)
                         if bar_min30 is not None:
@@ -210,33 +217,12 @@ class FutEngine(object):
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
             threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
 
-    #----------------------------------------------------------------------
-    def is_market_date(self):
-        r = True
-        fn = get_dss() +  'fut/engine/market_date.csv'
-        if os.path.exists(fn):
-            now = datetime.now()
-            today = now.strftime('%Y-%m-%d')
-            tm = now.strftime('%H:%M:%S')
-            print('in is_market_date, now time is: ', tm)
-
-            df = pd.read_csv(fn)
-            df = df[df.date == today]
-            if len(df) > 0:
-                morning_state = df.iat[0,1]
-                night_state = df.iat[0,2]
-                if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
-                    r = False
-                if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
-                    r = False
-
-        return r
 
     #----------------------------------------------------------------------
     def worker_open(self):
         """盘前加载配置及数据"""
         try:
-            if self.is_market_date() == False:
+            if is_market_date() == False:
                 self.working = False
                 return
 
