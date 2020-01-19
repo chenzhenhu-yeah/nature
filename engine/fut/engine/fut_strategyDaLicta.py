@@ -140,6 +140,9 @@ class Fut_DaLictaSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def save_var(self):
+        if self.paused == True:
+            return
+
         r = []
         if self.result is None:
             r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
@@ -323,6 +326,9 @@ class Fut_DaLictaSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def save_var(self):
+        if self.paused == True:
+            return
+
         r = []
         if self.result is None:
             r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \

@@ -1,5 +1,4 @@
 
-
 import pandas as pd
 from flask import Flask, render_template, request, redirect
 from datetime import datetime
@@ -7,8 +6,15 @@ from multiprocessing.connection import Client
 import time
 import tushare as ts
 import json
+import os
 
 from nature import read_log_today, a_file, get_dss
+
+def del_blank(c):
+    s = str(c).strip()
+    s = s.replace('\t','')
+    s = s.replace(' ','')
+    return s
 
 app = Flask(__name__)
 # app = Flask(__name__,template_folder='tpl') # 指定一个参数使用自己的模板目录
@@ -67,42 +73,97 @@ def show_fut_csv():
 
     return render_template("show_fut_csv.html",title="Show Log",rows=r)
 
+def check_symbols_p(key, value):
+    r = ''
+    if key == 'symbols_dalicta':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'day_' + symbol + '.csv 记录数不足60'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足60'
+
+    if key == 'symbols_dali':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'min5_' + symbol + '.csv 记录数不足100'
+            else:
+                r = 'min5_' + symbol + '.csv 记录数不足100'
+
+    if key in ['symbols_rsiboll', 'symbols_cciboll']:
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/min15_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'min15_' + symbol + '.csv 记录数不足100'
+            else:
+                r = 'min15_' + symbol + '.csv 记录数不足100'
+
+    if key == 'symbols_trade':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/min1_' + symbol + '.csv'
+            if os.path.exists(fn):
+                pass
+            else:
+                r = 'min1_' + symbol + '.csv 文件不存'
+
+
+    return r
+
 @app.route('/fut_config', methods=['get','post'])
 def fut_config():
+    tips = '提示：'
     filename = get_dss() + 'fut/cfg/config.json'
     if request.method == "POST":
-        key = request.form.get('key')
-        value = request.form.get('value')
-        with open(filename,'r') as f:
-            load_dict = json.load(f)
+        key = del_blank( request.form.get('key') )
+        value = del_blank( request.form.get('value') )
+        s = check_symbols_p(key, value)
+        if s != '':
+            tips += s
+        else:
+            with open(filename,'r') as f:
+                load_dict = json.load(f)
 
-        kind = request.form.get('kind')
-        if kind in ['add', 'alter']:
-            load_dict[key] = value
-        if kind == 'del':
-            load_dict.pop(key)
-        with open(filename,"w") as f:
-            json.dump(load_dict,f)
+            kind = request.form.get('kind')
+            if kind in ['add', 'alter']:
+                load_dict[key] = value
+            if kind == 'del':
+                load_dict.pop(key)
+            with open(filename,"w") as f:
+                json.dump(load_dict,f)
 
+    # 显示配置文件的内容
     r = [ ['key', 'value'] ]
     with open(filename,'r') as f:
         load_dict = json.load(f)
         for (key,value) in load_dict.items():
-            r.append( [key,value] )
+            if key not in ['front_trade','front_quote','broker','investor','pwd','appid','auth_code']:
+                r.append( [key,value] )
 
-    return render_template("fut_config.html",title="fut_config",rows=r)
+    return render_template("fut_config.html",tip=tips,rows=r)
 
 @app.route('/fut_setting_pz', methods=['get','post'])
 def fut_setting_pz():
     filename = get_dss() + 'fut/cfg/setting_pz.csv'
     if request.method == "POST":
-        pz = request.form.get('pz')
-        size = request.form.get('size')
-        priceTick = request.form.get('priceTick')
-        variableCommission = request.form.get('variableCommission')
-        fixedCommission = request.form.get('fixedCommission')
-        slippage = request.form.get('slippage')
-        exchangeID = request.form.get('exchangeID')
+        pz = del_blank( request.form.get('pz') )
+        size = del_blank( request.form.get('size') )
+        priceTick = del_blank( request.form.get('priceTick') )
+        variableCommission = del_blank( request.form.get('variableCommission') )
+        fixedCommission = del_blank( request.form.get('fixedCommission') )
+        slippage = del_blank( request.form.get('slippage') )
+        exchangeID = del_blank( request.form.get('exchangeID') )
+
         kind = request.form.get('kind')
 
         r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID]]
@@ -132,18 +193,23 @@ def fut_setting_pz():
 
 @app.route('/fut_trade_time', methods=['get','post'])
 def fut_trade_time():
+    tips = '提示：'
     filename = get_dss() + 'fut/cfg/trade_time.csv'
     if request.method == "POST":
-        symbol = request.form.get('symbol')
-        name = request.form.get('name')
+        symbol = del_blank( request.form.get('symbol') )
+        name = del_blank( request.form.get('name') )
         seq_list = request.form.getlist('seq')
         #return str(seq_list)
         r =[]
         for seq in seq_list:
-            begin = request.form.get('begin'+'_'+seq)
-            end = request.form.get('end'+'_'+seq)
-            num = request.form.get('num'+'_'+seq)
+            begin = del_blank( request.form.get('begin'+'_'+seq) )
+            end = del_blank( request.form.get('end'+'_'+seq) )
+            num = del_blank( request.form.get('num'+'_'+seq) )
             r.append( [name,symbol,seq,begin,end,num] )
+
+            if seq == '1':
+                tips += symbol + ' 夜盘结束时间为：' + end
+
         #return str(r)
 
         cols = ['name','symbol','seq','begin','end','num']
@@ -169,15 +235,18 @@ def fut_trade_time():
     for i, row in df.iterrows():
         r.append( list(row) )
 
-    return render_template("fut_trade_time.html",title="fut_trade_time",rows=r)
+    return render_template("fut_trade_time.html",tip=tips,rows=r)
 
 @app.route('/fut_signal_pause', methods=['get','post'])
 def fut_signal_pause():
+    tips = '提示：'
     filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
     if request.method == "POST":
-        signal = request.form.get('signal')
-        symbols = request.form.get('symbols')
+        signal = del_blank( request.form.get('signal') )
+        symbols = del_blank( request.form.get('symbols') )
         kind = request.form.get('kind')
+
+        tips += '请确认 ' + symbols + ' 是否为字典'
 
         r = [[signal,symbols]]
         cols = ['signal','symbols']
@@ -202,7 +271,7 @@ def fut_signal_pause():
     for i, row in df.iterrows():
         r.append( list(row) )
 
-    return render_template("fut_signal_pause.html",title="fut_signal_pause",rows=r)
+    return render_template("fut_signal_pause.html",tip=tips,rows=r)
 
 @app.route('/fut_signal_atrrsi', methods=['get','post'])
 def fut_signal_atrrsi():
@@ -280,6 +349,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    #app.run(host='0.0.0.0')
