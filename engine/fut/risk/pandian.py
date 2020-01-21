@@ -3,6 +3,7 @@ import pandas as pd
 
 import smtplib
 from email.mime.text import MIMEText
+import traceback
 
 import os
 import re
@@ -122,12 +123,16 @@ def render_p(today):
     pass
 
 def pandian_run():
-    now = datetime.now()
-    #today = now.strftime('%Y-%m-%d') + ' 15:00:00'
-    today = now.strftime('%Y-%m-%d')
+    try:
+        now = datetime.now()
+        #today = now.strftime('%Y-%m-%d') + ' 15:00:00'
+        today = now.strftime('%Y-%m-%d')
 
-    pandian_dali(today)
-    pandian_p(today)
+        pandian_dali(today)
+        pandian_p(today)
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
 
 if __name__ == '__main__':
     pandian_run()
