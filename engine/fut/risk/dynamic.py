@@ -30,7 +30,7 @@ def duo_adjust(a1):
 
 
 def kong_adjust(b1):
-    kong_list = [212,33,55.6]
+    kong_list = [212]
     n = len(kong_list)
     B = sum(kong_list)
     x = int( (n*b1-B)/(0.5*n*(n-1)) )

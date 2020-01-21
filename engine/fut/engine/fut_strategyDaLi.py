@@ -280,35 +280,45 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def adjust_price_duo(self):
-        duo_list = self.price_duo_list
-        a1 = min(duo_list)
-        n = len(duo_list)
-        A = sum(duo_list)
-        x = int( (A-n*a1)/(0.5*n*(n-1)) )
-        #print(x)
         r = []
-        for i in range(n):
-            ai = a1 + i*x
-            if i == n-1:
-                ai = A - sum(r)
-            r.append(ai)
+        duo_list = self.price_duo_list
+        n = len(duo_list)
+
+        if n > 1:
+            a1 = min(duo_list)
+            A = sum(duo_list)
+            x = int( (A-n*a1)/(0.5*n*(n-1)) )
+            #print(x)
+
+            for i in range(n):
+                ai = a1 + i*x
+                if i == n-1:
+                    ai = A - sum(r)
+                r.append(ai)
+        else:
+            r = duo_list
 
         return r
 
     #----------------------------------------------------------------------
     def adjust_price_kong(self):
-        kong_list = self.price_kong_list
-        b1 = max(kong_list)
-        n = len(kong_list)
-        B = sum(kong_list)
-        x = int( (n*b1-B)/(0.5*n*(n-1)) )
-        print(x)
         r = []
-        for i in range(n):
-            bi = b1 - i*x
-            if i == n-1:
-                bi = B - sum(r)
-            r.append(bi)
+        kong_list = self.price_kong_list
+        n = len(kong_list)
+
+        if n > 1:
+            b1 = max(kong_list)
+            B = sum(kong_list)
+            x = int( (n*b1-B)/(0.5*n*(n-1)) )
+            # print(x)
+
+            for i in range(n):
+                bi = b1 - i*x
+                if i == n-1:
+                    bi = B - sum(r)
+                r.append(bi)
+        else:
+            r = kong_list
 
         return r
 
