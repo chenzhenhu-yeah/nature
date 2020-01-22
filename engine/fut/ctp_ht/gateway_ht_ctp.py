@@ -1,5 +1,5 @@
 
-import numpy as np 
+import numpy as np
 import pandas as pd
 import smtplib
 from email.mime.text import MIMEText
@@ -108,7 +108,7 @@ class Gateway_Ht_CTP(object):
             # 处理路由记录存在重复的情况
             df2 = df2.drop_duplicates()
             g2 = df2.groupby(by=['InstrumentID','Direction','Offset'])
-            r2 = g2.agg({'volume':np.sum})
+            r2 = g2.agg({'Volume':np.sum})
             r2 = r2.reset_index()
             r2.columns = ['symbol','direction','offset','volume']
             print(r2)
@@ -120,9 +120,9 @@ class Gateway_Ht_CTP(object):
                 result = result[result._merge == 'left_only']
                 print(result)
                 if len(result) > 0:
-                    send_email(get_dss(), '发单未成交', '')
+                    send_email(get_dss(), 'Alert: 发单未成交', '')
             else:
-                send_email(get_dss(), '发单未成交', '')
+                send_email(get_dss(), 'Alert: 发单未成交', '')
 
     #----------------------------------------------------------------------
     def on_connect(self, obj):
