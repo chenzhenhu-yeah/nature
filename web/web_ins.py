@@ -16,8 +16,8 @@ def del_blank(c):
     s = s.replace(' ','')
     return s
 
-# app = Flask(__name__)
-app = Flask(__name__, static_url_path="")
+app = Flask(__name__)
+#app = Flask(__name__, static_url_path="/render")
 # app = Flask(__name__,template_folder='tpl') # 指定一个参数使用自己的模板目录
 
 @app.route('/')
@@ -312,13 +312,15 @@ def fut_signal_atrrsi():
     #return str(r)
     return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
 
+from flask import url_for
+
 @app.route('/ic_y_m', methods=['get','post'])
-def ic_m_y():
+def ic_y_m():
     symbol1 = 'y2005'
     symbol2 = 'm2005'
-    # start_dt = '2020-01-01'
-    # draw_web.ic(symbol1, symbol2, start_dt)
-    # time.sleep(1)
+    start_dt = '2020-01-01'
+    draw_web.ic(symbol1, symbol2, start_dt)
+    time.sleep(1)
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
@@ -329,8 +331,8 @@ def ic_OI_RM():
     start_dt = '2020-01-01'
     draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
-    fn = get_dss() + 'fut/render/ic_' + symbol1 + '_'+ symbol2+ '.html'
-    return redirect(fn)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
+    return app.send_static_file(fn)
 
 @app.route('/log')
 def show_log():
