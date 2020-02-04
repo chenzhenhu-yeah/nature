@@ -56,19 +56,19 @@ class Fut_CciBollSignal_Duo(Signal):
                 self.rsiLength = rec.rsiLength
                 self.trailingPercent = rec.trailingPercent
                 self.victoryPercent = rec.victoryPercent
-                print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
+                #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'bollWindow' in param_dict:
             self.bollWindow = param_dict['bollWindow']
-            print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
+            #print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
         if 'bollDev' in param_dict:
             self.bollDev = param_dict['bollDev']
-            print('成功设置策略参数 self.bollDev: ',self.bollDev)
+            #print('成功设置策略参数 self.bollDev: ',self.bollDev)
         if 'slMultiplier' in param_dict:
             self.slMultiplier = param_dict['slMultiplier']
-            print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
+            #print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -145,7 +145,8 @@ class Fut_CciBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -179,7 +180,8 @@ class Fut_CciBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -268,19 +270,19 @@ class Fut_CciBollSignal_Kong(Signal):
                 self.rsiLength = rec.rsiLength
                 self.trailingPercent = rec.trailingPercent
                 self.victoryPercent = rec.victoryPercent
-                print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
+                #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'bollWindow' in param_dict:
             self.bollWindow = param_dict['bollWindow']
-            print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
+            #print('成功设置策略参数 self.bollWindow: ',self.bollWindow)
         if 'bollDev' in param_dict:
             self.bollDev = param_dict['bollDev']
-            print('成功设置策略参数 self.bollDev: ',self.bollDev)
+            #print('成功设置策略参数 self.bollDev: ',self.bollDev)
         if 'slMultiplier' in param_dict:
             self.slMultiplier = param_dict['slMultiplier']
-            print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
+            #print('成功设置策略参数 self.slMultiplier: ',self.slMultiplier)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -359,7 +361,8 @@ class Fut_CciBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -393,7 +396,8 @@ class Fut_CciBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:

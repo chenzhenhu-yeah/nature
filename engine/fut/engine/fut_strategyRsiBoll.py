@@ -65,22 +65,22 @@ class Fut_RsiBollSignal_Duo(Signal):
                 self.rsiLength = rec.rsiLength
                 self.trailingPercent = rec.trailingPercent
                 self.victoryPercent = rec.victoryPercent
-                print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
+                #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'atrMaLength' in param_dict:
             self.atrMaLength = param_dict['atrMaLength']
-            print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
+            #print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
         if 'rsiLength' in param_dict:
             self.rsiLength = param_dict['rsiLength']
-            print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
+            #print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
         if 'trailingPercent' in param_dict:
             self.trailingPercent = param_dict['trailingPercent']
-            print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
+            #print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
         if 'victoryPercent' in param_dict:
             self.victoryPercent = param_dict['victoryPercent']
-            print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
+            #print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -186,7 +186,8 @@ class Fut_RsiBollSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -221,7 +222,8 @@ class Fut_RsiBollSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow','stop', 'dida', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:
@@ -323,22 +325,22 @@ class Fut_RsiBollSignal_Kong(Signal):
                 self.rsiLength = rec.rsiLength
                 self.trailingPercent = rec.trailingPercent
                 self.victoryPercent = rec.victoryPercent
-                print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
+                #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'atrMaLength' in param_dict:
             self.atrMaLength = param_dict['atrMaLength']
-            print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
+            #print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
         if 'rsiLength' in param_dict:
             self.rsiLength = param_dict['rsiLength']
-            print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
+            #print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
         if 'trailingPercent' in param_dict:
             self.trailingPercent = param_dict['trailingPercent']
-            print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
+            #print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
         if 'victoryPercent' in param_dict:
             self.victoryPercent = param_dict['victoryPercent']
-            print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
+            #print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -445,7 +447,8 @@ class Fut_RsiBollSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename, sep='$')
             df = df[df.vtSymbol == self.vtSymbol]
@@ -480,7 +483,8 @@ class Fut_RsiBollSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'intraTradeHigh','intraTradeLow', 'stop', 'dida', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, sep='$', mode='a', header=False)
         else:

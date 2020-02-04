@@ -59,11 +59,11 @@ class Signal(object):
     策略信号，实现策略逻辑，实例对象对应一支具体证券，属于且仅属于某个组合。
     包含K线容器，此容器用于计算指标。
     """
-    def __init__(self, portfolio, vtSymbol):
+    def __init__(self, portfolio, vtSymbol, size_am=100):
         """Constructor"""
         self.portfolio = portfolio      # 投资组合
         self.vtSymbol = vtSymbol        # 合约代码
-        self.am = ArrayManager(self.initBars)        # K线容器
+        self.am = ArrayManager(self.initBars, size_am)        # K线容器
         self.bar = None                 # 最新K线
         self.result = None              # 当前的交易
         self.unit = 0
@@ -94,6 +94,8 @@ class Signal(object):
         for bar in initData:
             self.bar = bar
             self.am.updateBar(bar)
+
+        print('完成加载组合 ' + portfolio.name +  ' 品种 ' + vtSymbol + ' 类型 ' + self.type)
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -127,6 +129,41 @@ class Signal(object):
         """买入平仓"""
         self.close(price)
         self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        self.unit += change
+
+        if not self.result:
+            self.result = SignalResult()
+        self.result.open(price, change)
+
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0, self.vtSymbol ] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl', 'symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/'+self.portfolio.name+'/signal_'+self.portfolio.name+'_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        self.unit = 0
+        self.result.close(price)
+
+        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
+               0, price, self.result.pnl, self.vtSymbol] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/'+self.portfolio.name+'/signal_'+self.portfolio.name+'_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+        self.result = None
 
 ########################################################################
 class Portfolio(object):
@@ -175,7 +212,7 @@ class Portfolio(object):
                 l.append(signal2)
 
 
-        print(u'投资组合的合约代码%s' %(self.vtSymbolList))
+        #print('投资组合的合约代码%s' %(self.vtSymbolList))
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):

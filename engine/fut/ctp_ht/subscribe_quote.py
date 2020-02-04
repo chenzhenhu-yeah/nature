@@ -198,6 +198,11 @@ class TestQuote(object):
             self.working = False
             return
 
+        now = datetime.now()
+        print('-'*60)
+        print( 'in run, now time is: ', now )
+        print('\n')
+
         time.sleep(3)
         del self.q
         time.sleep(3)
@@ -220,6 +225,9 @@ class TestQuote(object):
         # 对quote的 ReqUserLogout方法做了修改
         self.q.ReqUserLogout()
         self.working = False
+
+        now = datetime.now()
+        print( 'in release, now time is: ', now )
 
     #----------------------------------------------------------------------
     def daily_worker(self):
@@ -254,7 +262,7 @@ class TestQuote(object):
         schedule.every().friday.at("20:48").do(self.run)
         schedule.every().saturday.at("02:32").do(self.release)
 
-        print(u'行情接收器开始运行')
+        print('行情接收器开始运行')
         while True:
             schedule.run_pending()
             time.sleep(10)

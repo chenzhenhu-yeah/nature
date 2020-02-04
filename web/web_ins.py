@@ -8,7 +8,7 @@ import tushare as ts
 import json
 import os
 
-from nature import read_log_today, a_file, get_dss
+from nature import read_log_today, a_file, get_dss, draw_web
 
 def del_blank(c):
     s = str(c).strip()
@@ -309,6 +309,12 @@ def fut_signal_atrrsi():
 
     #return str(r)
     return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
+
+@app.route('/draw_m_y_2101_min15', methods=['get','post'])
+def draw_m_y_2101_min15():
+    draw_web.m_y_2101_min15()
+    time.sleep(1)
+    return render_template("y_m_2101_min15.html")
 
 @app.route('/log')
 def show_log():

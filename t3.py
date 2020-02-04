@@ -17,10 +17,10 @@ from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 from nature import VtBarData, ArrayManager
 
 r = []
-startDt = '2019-11-29 21:00:00'
+startDt = '2020-01-23 21:00:00'
 minx = 'min15'
-vtSymbol = 'rb2001'
-initBars = 30
+vtSymbol = 'rb2005'
+initBars = 100
 
 # 直接读取signal对应minx相关的文件。
 fname = get_dss() + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
@@ -44,11 +44,11 @@ for i, row in df.iterrows():
     r.append(bar)
 
 
-am = ArrayManager(initBars)        # K线容器
+am = ArrayManager(initBars,200)        # K线容器
 for bar in r:
     am.updateBar(bar)
 
-boll_up, boll_down = am.boll(20, 3.3, array=True)
+boll_up, boll_down = am.boll(20, 3.1, array=True)
 #rsiArray50 = am.rsi(10, array=True)
 #rsiMa  = rsiValue[-30:].mean()
 

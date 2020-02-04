@@ -19,11 +19,7 @@ from nature import SOCKET_BAR, get_dss
 ########################################################################
 
 
-def one2x(pz,symbol):
-    if pz == 'ag':
-        filename = get_dss() +'backtest/fut/' + pz + '/min1_' + pz + '_0105_0410.csv'
-    else:
-        filename = get_dss() +'backtest/fut/' + pz + '/min1_' + pz + '_0105_0310.csv'
+def one2x(pz,symbol,filename):
     df = pd.read_csv(filename)
 
     # 生成minx
@@ -83,6 +79,15 @@ def one2x(pz,symbol):
 
 
 if __name__ == "__main__":
-    pz = 'y'
-    symbol = pz
-    one2x(pz,symbol)
+    pz = 'RM'
+    symbol = 'RM_05'
+    fn = get_dss() +'backtest/fut/' + pz + '/' + pz + '_05.csv'
+
+    # if pz == 'ag':
+    #     fn = get_dss() +'backtest/fut/' + pz + '/min1_' + pz + '_0105_0410.csv'
+    # else:
+    #     fn = get_dss() +'backtest/fut/' + pz + '/min1_' + pz + '_0105_0310.csv'
+
+
+
+    one2x(pz,symbol,fn)

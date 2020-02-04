@@ -18,7 +18,7 @@ class Fut_DaLictaSignal_Duo(Signal):
         self.type = 'duo'
 
         # 策略参数
-        self.fixedSize = 6            # 每次交易的数量
+        self.fixedSize = 10            # 每次交易的数量
         self.initBars = 60           # 初始化数据所用的天数
         self.minx = 'day'
 
@@ -28,11 +28,11 @@ class Fut_DaLictaSignal_Duo(Signal):
         self.can_short = False
         self.can_cover = False
 
-        self.ma_mid_arr = None
-
         # 需要持久化保存的变量
         self.cost = 0
 
+        size_am = 100
+        assert self.initBars <= size_am
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
@@ -77,17 +77,21 @@ class Fut_DaLictaSignal_Duo(Signal):
         self.can_short = False
         self.can_cover = False
 
-        self.ma_mid_arr = self.am.sma(60, array=True)
+        ma_short_arr = self.am.sma(10, array=True)
+        ma_mid_arr = self.am.sma(30, array=True)
+        ma_long_arr = self.am.sma(60, array=True)
 
         if self.unit == 0:
-            if self.am.closeArray[-2] <= self.ma_mid_arr[-2] and self.am.closeArray[-1] > self.ma_mid_arr[-1]:
-                self.can_buy = True
+            if self.am.closeArray[-2] <= ma_long_arr[-2] and self.am.closeArray[-1] > ma_long_arr[-1]:
+                #if ma_long_arr[-1] > ma_short_arr[-1] and ma_short_arr[-1] > ma_mid_arr[-1] :
+                if ma_long_arr[-1] > ma_short_arr[-1]:
+                    self.can_buy = True
 
         if self.unit > 0:
-            if self.am.closeArray[-1] <= self.ma_mid_arr[-1]:
+            if ma_short_arr[-1] < ma_mid_arr[-1] and ma_short_arr[-2] >= ma_mid_arr[-2]:
                 self.can_sell = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,self.ma_mid_arr[-2],self.ma_mid_arr[-1]]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,ma_short_arr[-1],ma_mid_arr[-1],ma_long_arr[-1]]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/dalicta/bar_dalicta_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -204,7 +208,7 @@ class Fut_DaLictaSignal_Kong(Signal):
         self.type = 'kong'
 
         # 策略参数
-        self.fixedSize = 6            # 每次交易的数量
+        self.fixedSize = 10            # 每次交易的数量
         self.initBars = 60           # 初始化数据所用的天数
         self.minx = 'day'
 
@@ -214,11 +218,11 @@ class Fut_DaLictaSignal_Kong(Signal):
         self.can_short = False
         self.can_cover = False
 
-        self.ma_mid_arr = None
-
         # 需要持久化保存的变量
         self.cost = 0
 
+        size_am = 100
+        assert self.initBars <= size_am
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
@@ -263,17 +267,21 @@ class Fut_DaLictaSignal_Kong(Signal):
         self.can_short = False
         self.can_cover = False
 
-        self.ma_mid_arr = self.am.sma(60, array=True)
+        ma_short_arr = self.am.sma(10, array=True)
+        ma_mid_arr = self.am.sma(30, array=True)
+        ma_long_arr = self.am.sma(60, array=True)
 
         if self.unit == 0:
-            if self.am.closeArray[-2] >= self.ma_mid_arr[-2] and self.am.closeArray[-1] < self.ma_mid_arr[-1]:
-                self.can_short = True
+            if self.am.closeArray[-2] >= ma_long_arr[-2] and self.am.closeArray[-1] < ma_long_arr[-1]:
+                #if ma_long_arr[-1] < ma_short_arr[-1] and ma_short_arr[-1] < ma_mid_arr[-1] :
+                if ma_long_arr[-1] < ma_short_arr[-1]:
+                    self.can_short = True
 
         if self.unit < 0:
-            if self.am.closeArray[-1] <= self.ma_mid_arr[-1]:
+            if ma_short_arr[-1] > ma_mid_arr[-1] and ma_short_arr[-2] <= ma_mid_arr[-2]:
                 self.can_cover = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.can_cover,self.ma_mid_arr[-2],self.ma_mid_arr[-1]]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,ma_short_arr[-1],ma_mid_arr[-1],ma_long_arr[-1]]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/dalicta/bar_dalicta_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):

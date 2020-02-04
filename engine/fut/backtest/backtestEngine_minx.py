@@ -483,9 +483,9 @@ if __name__ == '__main__':
     #PortfolioClass = Fut_AtrRsiPortfolio
     #PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
-    #PortfolioClass = Fut_RsiBollPortfolio
+    # PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    #PortfolioClass = Fut_CciBollPortfolio
+    # PortfolioClass = Fut_CciBollPortfolio
     #PortfolioClass = Fut_DaLiPortfolio
     PortfolioClass = Fut_DaLictaPortfolio
 

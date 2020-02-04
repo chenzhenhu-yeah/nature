@@ -24,6 +24,7 @@ from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
+from nature import Fut_OwlPortfolio
 from nature import Gateway_Ht_CTP, pandian_run
 #from ipdb import set_trace
 
@@ -52,7 +53,6 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def init_daily(self):
         """每日初始化交易引擎"""
-        self.seq_tm = ''
 
         # 加载品种
         config = open(get_dss()+'fut/cfg/config.json')
@@ -83,15 +83,20 @@ class FutEngine(object):
             dalicta_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        if 'symbols_atrrsi' in setting:
-            symbols = setting['symbols_atrrsi']
-            atrrsi_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        # if 'symbols_atrrsi' in setting:
+        #     symbols = setting['symbols_atrrsi']
+        #     atrrsi_symbol_list = symbols.split(',')
+        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
             turtle_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+
+        if 'symbols_owl' in setting:
+            symbols = setting['symbols_owl']
+            owl_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
@@ -107,7 +112,7 @@ class FutEngine(object):
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
-        print('in put_service')
+        # print('in put_service')
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
@@ -133,7 +138,7 @@ class FutEngine(object):
                         vtSymbol_dict[id] = bar
                     elif vtSymbol_dict[id].time != bar.time:
                         vtSymbol_dict[id] = bar
-                        
+
                         bar_day = gday.update_bar(bar)
                         if bar_day is not None:
                             gday.save_bar(bar_day)
@@ -228,7 +233,9 @@ class FutEngine(object):
 
             now = datetime.now()
             tm = now.strftime('%H:%M:%S')
-            print( 'in worker open, now time is: ', tm )
+            print('-'*60)
+            print( 'in worker open, now time is: ', now )
+            print('\n')
             if tm > '08:30:00' and tm < '09:00:00':
                 self.seq_tm = 'morning'
             if tm > '20:30:00' and tm < '21:00:00':
@@ -257,15 +264,20 @@ class FutEngine(object):
             self.portfolio_list = []           # 组合
             self.working = False
 
+            print('seq_tm: ', self.seq_tm)
             if self.seq_tm == 'morning':
                 print('begin pandian_run')
                 pandian_run()
                 print('end pandian_run')
 
+            print('begin gateway release ')
             if self.gateway is not None:
                 self.gateway.release()
             self.gateway = None                # 路由
             self.vtSymbol_list = []
+
+            now = datetime.now()
+            print( 'in worker close, now time is: ', now )
 
         except Exception as e:
             s = traceback.format_exc()
@@ -305,7 +317,9 @@ def start():
     schedule.every().friday.at("20:56").do(e.worker_open)
     schedule.every().saturday.at("02:33").do(e.worker_close)
 
-    print(u'期货交易引擎开始运行')
+
+    print('期货交易引擎开始运行')
+
     while True:
         schedule.run_pending()
         time.sleep(10)

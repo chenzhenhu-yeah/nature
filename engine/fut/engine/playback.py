@@ -25,6 +25,7 @@ from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
+from nature import Fut_OwlPortfolio
 
 #from ipdb import set_trace
 
@@ -92,15 +93,20 @@ class FutEngine(object):
             dalicta_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        if 'symbols_atrrsi' in setting:
-            symbols = setting['symbols_atrrsi']
-            atrrsi_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        # if 'symbols_atrrsi' in setting:
+        #     symbols = setting['symbols_atrrsi']
+        #     atrrsi_symbol_list = symbols.split(',')
+        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
-        if 'symbols_turtle' in setting:
-            symbols = setting['symbols_turtle']
-            turtle_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+        # if 'symbols_turtle' in setting:
+        #     symbols = setting['symbols_turtle']
+        #     turtle_symbol_list = symbols.split(',')
+        #     self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+
+        if 'symbols_owl' in setting:
+            symbols = setting['symbols_owl']
+            owl_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -258,7 +264,6 @@ class FutEngine(object):
     def worker_close(self):
         """盘后保存及展示数据"""
 
-
         self.gateway = None                # 路由
 
         self.vtSymbol_list = []
@@ -272,7 +277,7 @@ class FutEngine(object):
 def start():
     print(u'期货交易引擎开始回放')
 
-    start_date = '2020-01-21 09:00:00'
+    start_date = '2020-01-20 09:00:00'
     end_date   = '2020-01-21 15:00:00'
 
     e = FutEngine()

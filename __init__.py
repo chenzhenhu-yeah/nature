@@ -45,6 +45,7 @@ from nature.engine.fut.engine.fut_strategyDonchian import Fut_DonchianPortfolio
 from nature.engine.fut.engine.fut_strategyCciBoll import Fut_CciBollPortfolio
 from nature.engine.fut.engine.fut_strategyDaLi import Fut_DaLiPortfolio
 from nature.engine.fut.engine.fut_strategyDaLicta import Fut_DaLictaPortfolio
+from nature.engine.fut.engine.fut_strategyOwl import Fut_OwlPortfolio
 
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
@@ -53,5 +54,5 @@ from nature.engine.fut.py_ctp.enums import DirectType, OffsetType
 
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP
 
-
+from nature.engine.fut.backtest import draw_web
 from nature.engine.fut.risk.pandian import pandian_run

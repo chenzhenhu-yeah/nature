@@ -158,7 +158,7 @@ def is_market_date():
         now = datetime.now()
         today = now.strftime('%Y-%m-%d')
         tm = now.strftime('%H:%M:%S')
-        print('in is_market_date, now time is: ', tm)
+        # print('in is_market_date, now time is: ', tm)
 
         df = pd.read_csv(fn)
         df = df[df.date == today]

@@ -17,7 +17,7 @@ from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 from nature import VtBarData, ArrayManager
 
 r = []
-startDt = '2019-12-27 21:00:00'
+startDt = '2020-01-17 21:00:00'
 minx = 'min15'
 vtSymbol = 'rb2005'
 initBars = 100
