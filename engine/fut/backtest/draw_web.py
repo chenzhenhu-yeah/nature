@@ -65,7 +65,8 @@ def ic(symbol1, symbol2, start_dt='2020-01-01'):
     line1 = gen_line(df1, symbol1+'-'+symbol2, price_min, price_max)
     line_ma  = gen_ma(df1, 10)
 
-    line1.overlap(line_ma).render('templates/ic_' + symbol1 + '_'+ symbol2+ '.html')
+    fn = get_dss() + 'fut/render/ic_' + symbol1 + '_'+ symbol2+ '.html'
+    line1.overlap(line_ma).render(fn)
 
 if __name__ == '__main__':
     pass
