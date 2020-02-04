@@ -48,7 +48,7 @@ def fut():
         r.append( list(row) )
     r.append( list(df.columns) )
     r = list( reversed(r) )
-    r = r[:9]
+    r = r[:20]
 
     return render_template("fut.html",title=symbol,rows_q=r_q,rows_t=r_t,rows=r)
 
@@ -163,11 +163,12 @@ def fut_setting_pz():
         fixedCommission = del_blank( request.form.get('fixedCommission') )
         slippage = del_blank( request.form.get('slippage') )
         exchangeID = del_blank( request.form.get('exchangeID') )
+        margin = del_blank( request.form.get('margin') )
 
         kind = request.form.get('kind')
 
-        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID]]
-        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID']
+        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID,margin]]
+        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID','margin']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
@@ -310,11 +311,23 @@ def fut_signal_atrrsi():
     #return str(r)
     return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
 
-@app.route('/draw_m_y_2101_min15', methods=['get','post'])
-def draw_m_y_2101_min15():
-    draw_web.m_y_2101_min15()
+@app.route('/ic_y_m', methods=['get','post'])
+def ic_m_y():
+    symbol1 = 'y2005'
+    symbol2 = 'm2005'
+    start_dt = '2020-01-01'
+    draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
-    return render_template("y_m_2101_min15.html")
+    return render_template('ic_' + symbol1 + '_'+ symbol2+ '.html')
+
+@app.route('/ic_OI_RM', methods=['get','post'])
+def ic_OI_RM():
+    symbol1 = 'OI005'
+    symbol2 = 'RM005'
+    start_dt = '2020-01-01'
+    draw_web.ic(symbol1, symbol2, start_dt)
+    time.sleep(1)
+    return render_template('ic_' + symbol1 + '_'+ symbol2+ '.html')
 
 @app.route('/log')
 def show_log():
@@ -355,6 +368,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    #app.run(host='0.0.0.0')
