@@ -37,7 +37,7 @@ def gen_ma(df1,n):
     return line
 
 if __name__ == '__main__':
-    pz = 'm'
+    pz = 'RM'
     fn = get_dss() +'backtest/fut/' + pz + '/' + 'day_' + pz + '.csv'
     #fn = get_dss() +'backtest/fut/' + pz + '/' + 'min30_' + pz + '.csv'
     #fn = get_dss() +'backtest/fut/m/' + 'min30_m1901.csv'

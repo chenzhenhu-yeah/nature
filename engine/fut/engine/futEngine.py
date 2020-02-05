@@ -236,9 +236,9 @@ class FutEngine(object):
             print('-'*60)
             print( 'in worker open, now time is: ', now )
             print('\n')
-            if tm > '08:30:00' and tm < '09:00:00':
+            if tm > '08:30:00' and tm < '09:30:00':
                 self.seq_tm = 'morning'
-            if tm > '20:30:00' and tm < '21:00:00':
+            if tm > '20:30:00' and tm < '21:30:00':
                 self.seq_tm = 'night'
 
             self.init_daily()
@@ -302,7 +302,7 @@ def start():
     schedule.every().tuesday.at("20:56").do(e.worker_open)
     schedule.every().wednesday.at("02:33").do(e.worker_close)
 
-    schedule.every().wednesday.at("08:56").do(e.worker_open)
+    schedule.every().wednesday.at("09:13").do(e.worker_open)
     schedule.every().wednesday.at("15:03").do(e.worker_close)
     schedule.every().wednesday.at("20:56").do(e.worker_open)
     schedule.every().thursday.at("02:33").do(e.worker_close)

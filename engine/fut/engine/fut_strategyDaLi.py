@@ -61,7 +61,7 @@ class Fut_DaLiSignal(Signal):
                 self.atr_x = rec.atr_x
                 self.price_min = rec.price_min
                 self.price_max = rec.price_max
-                print('成功加载策略参数')
+                #print('成功加载策略参数')
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
