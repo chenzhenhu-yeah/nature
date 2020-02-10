@@ -36,16 +36,16 @@ def pandian_dali(today):
     for symbol in dali_symbol_list:
         pz = str(get_contract(symbol).pz)
         df = df_value[df_value.pz == pz]
-        # 获得该品种最近日期的一条记录，新品种必要事先维护一条记录！！！
+        # 获得该品种最近日期的一条记录，新品种必须事先维护一条记录！！！
         if len(df) > 0:
             rec = df.iloc[-1,:]
             capital = rec.capital
             date = rec.date
             # 跨年了
-            if today[:4] != date[:4]:
-                newyear_value = rec.newyear_value   # 换年
+            if today[:4] == date[:4]:
+                newyear_value = rec.newyear_value
             else:
-                newyear_value = rec.cur_value
+                newyear_value = rec.cur_value                 # 换年
 
         else:
             continue

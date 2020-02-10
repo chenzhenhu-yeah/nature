@@ -19,7 +19,7 @@ class Fut_DaLiSignal(Signal):
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
-        self.initBars = 90           # 初始化数据所用的天数
+        self.initBars = 60           # 初始化数据所用的天数
         self.minx = 'min5'
 
         self.atrValue = 0
@@ -102,8 +102,9 @@ class Fut_DaLiSignal(Signal):
         self.can_buy = False
         self.can_short = False
 
-        self.atrValue = self.am.atr(self.atrWindow)
-        # print(self.atrValue)
+        atrArray = self.am.atr(1, array=True)
+        self.atrValue = atrArray[-self.atrWindow:].mean()
+
         self.gap = self.atr_x * self.atrValue
         self.gap = max(self.gap, self.gap_min)
         self.gap = min(self.gap, self.gap_max)
@@ -150,10 +151,7 @@ class Fut_DaLiSignal(Signal):
 
                 self.unit_cover()
                 self.unit_buy(bar.close)
-
-            # if len(self.price_duo_list) >= 10 or len(self.price_kong_list) >= 10:
-            #     print( len(self.price_duo_list), len(self.price_kong_list) )
-
+            
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
@@ -427,36 +425,3 @@ class Fut_DaLiPortfolio(Portfolio):
 
         Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, signal_param)
         #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, {})
-
-    #----------------------------------------------------------------------
-    def _bc_newSignal(self, signal, direction, offset, price, volume):
-        """
-        对交易信号进行过滤，符合条件的才发单执行。
-        计算真实交易价格和数量。
-        """
-        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
-        multiplier = int(round(multiplier, 0))
-        #print(multiplier)
-        multiplier = 1
-
-        #print(self.posDict)
-        # 计算合约持仓
-        if direction == DIRECTION_LONG:
-            self.posDict[signal.vtSymbol] += volume*multiplier
-        else:
-            self.posDict[signal.vtSymbol] -= volume*multiplier
-
-        #print(self.posDict)
-
-        # 对价格四舍五入
-        priceTick = get_contract(signal.vtSymbol).price_tick
-        price = int(round(price/priceTick, 0)) * priceTick
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
-
-        # 记录成交数据
-        trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
-        # l = self.tradeDict.setdefault(self.result.date, [])
-        # l.append(trade)
-
-        self.result.updateTrade(trade)
-        #print('here')

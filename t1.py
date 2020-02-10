@@ -16,6 +16,6 @@ import tushare as ts
 from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 from nature import VtBarData, ArrayManager
 
-ins_list= []
-df = pd.DataFrame(ins_list, columns=['ins','price','num'])
-print(df)
+i1= [np.nan]*19
+i2 = [1,2,3]
+print(i1+i2)

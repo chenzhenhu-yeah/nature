@@ -9,9 +9,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
-from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
+from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
 from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
+from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio
+from nature import Fut_Aberration_RawPortfolio, Fut_Aberration_EnhancePortfolio
+from nature import Fut_Cci_RawPortfolio, Fut_Cci_EnhancePortfolio
+from nature import Fut_Kama_RawPortfolio, Fut_Kama_EnhancePortfolio
 
 ########################################################################
 class BacktestingEngine(object):
@@ -44,16 +48,18 @@ class BacktestingEngine(object):
         self.startDt = startDt
         self.endDt = endDt
 
-    #----------------------------------------------------------------------
+    # 日期字段为 date, time-------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
         for vtSymbol in self.symbol_list:
-            filename = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
+            #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
+            #filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            #filename = get_dss( ) + 'backtest/bar/' + self.minx + '_' + vtSymbol + '.csv'
+            filename = get_dss( ) + 'backtest/fut/' + vtSymbol + '/' +self.minx + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
-                # print(d)
-                # print('here')
+                #print(d)
 
                 bar = VtBarData()
                 bar.vtSymbol = vtSymbol
@@ -64,81 +70,92 @@ class BacktestingEngine(object):
                 bar.close = float(d['close'])
                 bar.volume = d['volume']
 
-                dt = d['datetime']
+                date = str(d['date'])
+                bar.date = date
+                bar.time = str(d['time'])
+                if '-' in date:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                else:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
 
-                bar.date =  dt[:4] + dt[5:7] + dt[8:10]
-                bar.time =  dt[11:19]
-                bar.datetime = bar.date + ' ' + bar.time
-                # print(bar.datetime, bar.date, bar.time)
-                # return
-
-                # date = str(d['date'])
-                # bar.date = date
-                # bar.time = str(d['time'])
-                # if '-' in date:
-                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
-                # else:
-                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
-                #
-                # #bar.time = '00:00:00'
-                # #bar.datetime = bar.date + ' ' + bar.time
-                # bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
+                #bar.time = '00:00:00'
+                #bar.datetime = bar.date + ' ' + bar.time
+                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
 
                 barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.vtSymbol] = bar
                 # break
 
-        self.output(u'全部数据加载完成')
+            self.output(vtSymbol + '全部数据加载完成，数据量：' + str(len(df)) )
+
+    # 日期字段为 datetime ----------------------------------------------------------------
+    # def loadData(self):
+    #     """加载数据"""
+    #     for vtSymbol in self.symbol_list:
+    #         #filename = get_dss( )+ 'fut/bar/min5_' + vtSymbol + '.csv'
+    #         filename = get_dss( ) + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
+    #
+    #         df = pd.read_csv(filename)
+    #         for i, d in df.iterrows():
+    #             #print(d)
+    #
+    #             bar = VtBarData()
+    #             bar.vtSymbol = vtSymbol
+    #             bar.symbol = vtSymbol
+    #             bar.open = float(d['open'])
+    #             bar.high = float(d['high'])
+    #             bar.low = float(d['low'])
+    #             bar.close = float(d['close'])
+    #             bar.volume = d['volume']
+    #
+    #             bar.datetime = d['datetime']
+    #             bar.date = bar.datetime[:10]
+    #             bar.time = bar.datetime[11:]
+    #             bar.date = bar.date.replace('-','')
+    #             bar.datetime = bar.date + ' ' + bar.time
+    #             #print(bar.datetime); raise False
+    #
+    #             barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
+    #             barDict[bar.vtSymbol] = bar
+    #             # break
+    #
+    #         self.output(vtSymbol + '全部数据加载完成，数据量：' + str(len(df)) )
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
-
         assert minx != 'min1'
+
+        dt_list = self.dataDict.keys()
+        #print(dt_list)
+        dt_list = [x for x in dt_list if x<self.startDt]
+        assert len(dt_list) >= initBars
+
+        dt_list = sorted(dt_list)
+        init_dt_list = dt_list[-initBars:]
+        print( '初始化导入记录数量：', len(init_dt_list) )
+
         r = []
-
-        # 直接读取signal对应minx相关的文件。
-        fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
-        #print(fname)
-        df = pd.read_csv(fname)
-        df['datetime'] = df['date'] + ' ' + df['time']
-        df = df[df.datetime < self.startDt]
-        assert len(df) >= initBars
-
-        df = df.sort_values(by=['date','time'])
-        df = df.iloc[-initBars:]
-        #print(df)
-
-        for i, row in df.iterrows():
-            d = dict(row)
-            # print(d)
-            # print(type(d))
-            bar = VtBarData()
-            bar.__dict__ = d
-            r.append(bar)
+        for dt in init_dt_list:
+            bar_dict = self.dataDict[dt]
+            if vtSymbol in bar_dict:
+                bar = bar_dict[vtSymbol]
+                r.append(bar)
 
         return r
 
     #----------------------------------------------------------------------
     def runBacktesting(self):
-        """运行回测"""
-
-        g = BarGenerator(self.minx)
-
-        #print(len(self.dataDict))
-
+        print('开始回测')
         for dt, barDict in self.dataDict.items():
+            #print(dt)
             if dt < self.startDt or dt >  self.endDt:
-                #print(dt)
                 continue
 
-            # print('here')
+            # print(dt)
             for bar in barDict.values():
-                bar_minx = g.update_bar(bar)
-                if bar_minx is not None:
-                    self.portfolio.onBar(bar_minx, self.minx)
-
-                self.portfolio.onBar(bar, 'min1')
+                #print(dt, bar.close)
+                self.portfolio.onBar(bar, self.minx)
 
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
@@ -208,6 +225,13 @@ class BacktestingEngine(object):
         else:
             sharpeRatio = 0
 
+        # r = [[item] for item in balanceList]
+        # r = [[item] for item in netPnlList]
+        # print(self.date, self.netPnl, self.holdingPnl, self.tradingPnl, self.commission, self.slippage)
+        r = [[item.date, item.netPnl, item.holdingPnl, item.tradingPnl, item.commission, item.slippage] for item in resultList ]
+        df = pd.DataFrame(r)
+        df.to_csv('a.csv',index=False)
+
         # 返回结果
         result = {
             'startDate': startDate,
@@ -242,6 +266,9 @@ class BacktestingEngine(object):
             'date': dateList,
             'netPnl': netPnlList
         }
+
+        df = pd.DataFrame(timeseries)
+        df.to_csv('b.csv',index=False)
 
         return timeseries, result
 
@@ -300,7 +327,7 @@ class BacktestingEngine(object):
         pKDE.set_title('Daily Pnl Distribution')
         plt.hist(timeseries['netPnl'], bins=50)
 
-        plt.show()
+        # plt.show()
 
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
@@ -312,6 +339,20 @@ class BacktestingEngine(object):
     def output(self, content):
         """输出信息"""
         print(content)
+
+    #----------------------------------------------------------------------
+    def getTradeData(self, vtSymbol=''):
+        """获取交易数据"""
+        tradeList = []
+
+        for l in self.tradeDict.values():
+            for trade in l:
+                if not vtSymbol:
+                    tradeList.append(trade)
+                elif trade.vtSymbol == vtSymbol:
+                    tradeList.append(trade)
+
+        return tradeList
 
     #----------------------------------------------------------------------
     def show_result_key(self):
@@ -337,21 +378,9 @@ class BacktestingEngine(object):
 
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
 
+        # print(timeseries)
+
         return result
-
-    #----------------------------------------------------------------------
-    def getTradeData(self, vtSymbol=''):
-        """获取交易数据"""
-        tradeList = []
-
-        for l in self.tradeDict.values():
-            for trade in l:
-                if not vtSymbol:
-                    tradeList.append(trade)
-                elif trade.vtSymbol == vtSymbol:
-                    tradeList.append(trade)
-
-        return tradeList
 
 #----------------------------------------------------------------------
 def formatNumber(n):
@@ -359,6 +388,8 @@ def formatNumber(n):
     rn = round(n, 2)        # 保留两位小数
     return format(rn, ',')  # 加上千分符
 
+
+##############################################################################
 def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
     # 创建回测引擎对象
     e = BacktestingEngine([symbol], minx)
@@ -366,35 +397,56 @@ def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
     e.loadData()
     e.loadPortfolio(PortfolioClass, signal_param)
     e.runBacktesting()
+    e.portfolio.daily_close()
     return e.show_result_key()
+    #e.showResult()
 
 def test_one(PortfolioClass, minx):
+    # vtSymbol = 'IF99'
+    # start_date = '20160101 21:00:00'
+    # end_date   = '20181230 15:00:00'
+
     # vtSymbol = 'CF001'
+    # vtSymbol = 'ag1912'
     # start_date = '20191014 21:00:00'
-    # end_date   = '20191018 15:00:00'
+    # end_date   = '20191108 15:00:00'
 
-    # vtSymbol = 'rb1901'
-    # start_date = '20180515 00:00:00'
-    # end_date   = '20181231 00:00:00'
+    #vtSymbol = 'MA901'
+    #vtSymbol = 'rb1901'
+    vtSymbol = 'CF'
+    #vtSymbol = 'c1901'
+    #vtSymbol = 'CF901'
+    start_date = '20190109 00:00:00'
+    #start_date = '20180609 00:00:00'
+    end_date   = '20191231 00:00:00'
+    #end_date   = '20180531 00:00:00'
 
-    vtSymbol = 'CF901'
-    vtSymbol = 'rb1901'
-    start_date = '20180119 00:00:00'
-    end_date   = '20181231 00:00:00'
-
-    #signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     signal_param = {}
+    #signal_param = {vtSymbol:{'slMultiplier':0.5} }
+
+
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
 if __name__ == '__main__':
-    # PortfolioClass = Fut_AtrRsiPortfolio
-    # PortfolioClass = Fut_TurtlePortfolio
+    #PortfolioClass = Fut_AtrRsiPortfolio
+    #PortfolioClass = Fut_TurtlePortfolio
     # PortfolioClass = Fut_AberrationPortfolio
     # PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
-    PortfolioClass = Fut_CciBollPortfolio
+    # PortfolioClass = Fut_CciBollPortfolio
+    #PortfolioClass = Fut_DaLiPortfolio
+    #PortfolioClass = Fut_DaLictaPortfolio
+    #PortfolioClass = Fut_Aberration_RawPortfolio
+    #PortfolioClass = Fut_Aberration_EnhancePortfolio
+    PortfolioClass = Fut_Cci_RawPortfolio
+    #PortfolioClass = Fut_Cci_EnhancePortfolio
+    #PortfolioClass = Fut_Kama_RawPortfolio
+    #PortfolioClass = Fut_Kama_EnhancePortfolio
 
-    minx = 'min15'
+    minx = 'day'
+    #minx = 'min15'
     #minx = 'min5'
 
     test_one(PortfolioClass, minx)
+    #test_atrrsi_param(PortfolioClass, minx)
+    #test_cciboll_param(PortfolioClass, minx)

@@ -195,7 +195,6 @@ class Portfolio(object):
             if vtSymbol in signal1_param:
                 param_dict = signal1_param[vtSymbol]
                 signal1.set_param(param_dict)
-                #print('here')
 
             l = self.signalDict[vtSymbol]
             l.append(signal1)
@@ -237,6 +236,39 @@ class Portfolio(object):
         if minx != 'min1':
             self.result.updateBar(bar)
             self.result.updatePos(self.posDict)
+
+    #----------------------------------------------------------------------
+    def _bc_newSignal(self, signal, direction, offset, price, volume):
+        """
+        对交易信号进行过滤，符合条件的才发单执行。
+        计算真实交易价格和数量。
+        """
+        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
+        multiplier = int(round(multiplier, 0))
+        #print(multiplier)
+        multiplier = 1
+
+        #print(self.posDict)
+        # 计算合约持仓
+        if direction == DIRECTION_LONG:
+            self.posDict[signal.vtSymbol] += volume*multiplier
+        else:
+            self.posDict[signal.vtSymbol] -= volume*multiplier
+
+        #print(self.posDict)
+
+        # 对价格四舍五入
+        priceTick = get_contract(signal.vtSymbol).price_tick
+        price = int(round(price/priceTick, 0)) * priceTick
+        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
+
+        # 记录成交数据
+        trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
+        # l = self.tradeDict.setdefault(self.result.date, [])
+        # l.append(trade)
+
+        self.result.updateTrade(trade)
+        #print('here')
 
     #----------------------------------------------------------------------
     def daily_open(self):
@@ -404,7 +436,10 @@ class DailyResult(object):
                 commissionCost = (trade.volume * fixedCommission +
                                   trade.volume * trade.price * size * variableCommission)
                 slippageCost = trade.volume * size * slippage
-                pnl = side * (previousClose - trade.price) * trade.volume * size
+                if previousClose == 0:
+                    pnl = 0
+                else:
+                    pnl = side * (previousClose - trade.price) * trade.volume * size
 
                 self.commission += commissionCost
                 self.slippage += slippageCost
@@ -687,6 +722,14 @@ class ArrayManager(object):
         return result[-1]
 
     #----------------------------------------------------------------------
+    def kama(self, n, array=False):
+        """自适应均线"""
+        result = talib.KAMA(self.close, n)
+        if array:
+            return result
+        return result[-1]
+
+    #----------------------------------------------------------------------
     def std(self, n, array=False):
         """标准差"""
         result = talib.STDDEV(self.close, n)
@@ -766,3 +809,15 @@ class ArrayManager(object):
         if array:
             return up, down
         return up[-1], down[-1]
+
+    #----------------------------------------------------------------------
+    def er(self, n):
+        """efficiency_ratio"""
+        direction = self.close[-1] - self.close[-n]
+        volatility = 0
+        for i in range(1,n):
+            volatility += abs( self.close[-i] - self.close[-i-1] )
+        if volatility == 0:
+            return 0
+        else:
+            return round( abs(direction/volatility), 2 )

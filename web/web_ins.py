@@ -49,7 +49,7 @@ def fut():
         r.append( list(row) )
     r.append( list(df.columns) )
     r = list( reversed(r) )
-    r = r[:20]
+    r = r[:12]
 
     return render_template("fut.html",title=symbol,rows_q=r_q,rows_t=r_t,rows=r)
 
@@ -76,6 +76,17 @@ def show_fut_csv():
 
 def check_symbols_p(key, value):
     r = ''
+    if key == 'symbols_aberration_enhance':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 30:
+                    r = 'day_' + symbol + '.csv 记录数不足30'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足30'
+
     if key == 'symbols_dalicta':
         symbol_list = value.split(',')
         for symbol in symbol_list:
@@ -87,16 +98,27 @@ def check_symbols_p(key, value):
             else:
                 r = 'day_' + symbol + '.csv 记录数不足60'
 
-    if key == 'symbols_dali':
+    if key == 'symbols_cci_raw':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 100:
+                    r = 'day_' + symbol + '.csv 记录数不足100'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足100'
+
+    if key in ['symbols_dali', 'symbols_owl']:
         symbol_list = value.split(',')
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
             if os.path.exists(fn):
                 df = pd.read_csv(fn)
                 if len(df) <= 60:
-                    r = 'min5_' + symbol + '.csv 记录数不足100'
+                    r = 'min5_' + symbol + '.csv 记录数不足60'
             else:
-                r = 'min5_' + symbol + '.csv 记录数不足100'
+                r = 'min5_' + symbol + '.csv 记录数不足60'
 
     if key in ['symbols_rsiboll', 'symbols_cciboll']:
         symbol_list = value.split(',')
@@ -116,7 +138,7 @@ def check_symbols_p(key, value):
             if os.path.exists(fn):
                 pass
             else:
-                r = 'min1_' + symbol + '.csv 文件不存'
+                r = 'min1_' + symbol + '.csv 文件不存在'
 
 
     return r
@@ -373,6 +395,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    #app.run(host='0.0.0.0')

@@ -56,4 +56,4 @@ if __name__ == '__main__':
     d = d.overlap(line2)
     d = d.overlap(line3)
 
-    d.render('k_ma.html')
+    d.render('bar_ma.html')

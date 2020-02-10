@@ -21,7 +21,7 @@ def connect(fn_pz, fn_symbol, end_month):
         end_dt = end_month + '-31 99:99:99'
 
         df_symbol['datetime'] = df_symbol['date'] + ' ' + df_symbol['time']
-        df_symbol = df_symbol[ (df_symbol.datetime>=begin_dt) & (df_symbol.datetime<=end_dt) & (df_symbol.symbol >=symbol_pz)]
+        df_symbol = df_symbol[ (df_symbol.datetime>=begin_dt) & (df_symbol.datetime<=end_dt) & (df_symbol.symbol>=symbol_pz)]
         if len(df_symbol) > 0:
             del df_symbol['datetime']
             s = df_symbol.iloc[0,]
@@ -92,4 +92,4 @@ if __name__ == '__main__':
     # 05(2019-12)
     pass
 
-    bu()
+    #bu()

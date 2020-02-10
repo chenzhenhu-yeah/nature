@@ -130,7 +130,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:15").do(mail_log)
 
         #盘后
-        schedule.every().day.at("03:00").do(run_down_data)
+        # schedule.every().day.at("03:00").do(run_down_data)
         schedule.every().day.at("03:30").do(run_examine)
 
         print('schedule begin...')

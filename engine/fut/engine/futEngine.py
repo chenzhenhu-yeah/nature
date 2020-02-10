@@ -22,10 +22,13 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_m
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
+from nature import Gateway_Ht_CTP, pandian_run
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
-from nature import Gateway_Ht_CTP, pandian_run
+from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
+
+
 #from ipdb import set_trace
 
 ########################################################################
@@ -97,6 +100,16 @@ class FutEngine(object):
             symbols = setting['symbols_owl']
             owl_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
+
+        if 'symbols_aberration_enhance' in setting:
+            symbols = setting['symbols_aberration_enhance']
+            aberration_enhance_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
+
+        if 'symbols_cci_raw' in setting:
+            symbols = setting['symbols_cci_raw']
+            cci_raw_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

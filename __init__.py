@@ -38,7 +38,7 @@ from nature.engine.stk.stkEngine import StkEngine
 
 from nature.engine.fut.engine.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.engine.fut_strategyRsiBoll import Fut_RsiBollPortfolio
-from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
+#from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
 from nature.engine.fut.engine.fut_strategyAberration import Fut_AberrationPortfolio
 from nature.engine.fut.engine.fut_strategyTurtle import Fut_TurtlePortfolio
 from nature.engine.fut.engine.fut_strategyDonchian import Fut_DonchianPortfolio
@@ -46,6 +46,12 @@ from nature.engine.fut.engine.fut_strategyCciBoll import Fut_CciBollPortfolio
 from nature.engine.fut.engine.fut_strategyDaLi import Fut_DaLiPortfolio
 from nature.engine.fut.engine.fut_strategyDaLicta import Fut_DaLictaPortfolio
 from nature.engine.fut.engine.fut_strategyOwl import Fut_OwlPortfolio
+from nature.engine.fut.engine.fut_strategyAberration_Raw import Fut_Aberration_RawPortfolio
+from nature.engine.fut.engine.fut_strategyAberration_Enhance import Fut_Aberration_EnhancePortfolio
+from nature.engine.fut.engine.fut_strategyCci_Raw import Fut_Cci_RawPortfolio
+from nature.engine.fut.engine.fut_strategyCci_Enhance import Fut_Cci_EnhancePortfolio
+from nature.engine.fut.engine.fut_strategyKama_Raw import Fut_Kama_RawPortfolio
+from nature.engine.fut.engine.fut_strategyKama_Enhance import Fut_Kama_EnhancePortfolio
 
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote

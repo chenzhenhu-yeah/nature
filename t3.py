@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import talib
 
 import smtplib
 from email.mime.text import MIMEText
@@ -32,7 +33,7 @@ assert len(df) >= initBars
 
 df = df.sort_values(by=['date','time'])
 df = df.iloc[-initBars:]
-print(df)
+# print(df)
 
 for i, row in df.iterrows():
     d = dict(row)
@@ -48,10 +49,25 @@ am = ArrayManager(initBars,200)        # K线容器
 for bar in r:
     am.updateBar(bar)
 
-boll_up, boll_down = am.boll(20, 3.1, array=True)
-#rsiArray50 = am.rsi(10, array=True)
-#rsiMa  = rsiValue[-30:].mean()
+# boll_up, boll_down = am.boll(20, 3.1, array=True)
+# print(boll_up)
+# print(boll_down)
+#
+# ma = am.sma(10, array=True)
+# kama = am.kama(10, array=True)
+# # print(ma)
+# print(kama)
+#
+# s = kama[-10:].std(ddof=0)
+# print(s)
 
-#print(am.close)
-print(boll_up)
-print(boll_down)
+#
+#
+# print(help(talib.SMA))
+#
+# print(help(talib.LINEARREG))
+
+import statsmodels.api as sm
+#print(dir(sm.OLS))
+#print(help(sm.OLS.__init__))
+print(help(sm.OLS))

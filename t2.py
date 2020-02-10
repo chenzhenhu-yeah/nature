@@ -17,10 +17,10 @@ from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq
 from nature import VtBarData, ArrayManager
 
 r = []
-startDt = '2020-01-17 21:00:00'
-minx = 'min15'
-vtSymbol = 'rb2005'
-initBars = 100
+startDt = '2020-02-07 21:00:00'
+minx = 'min5'
+vtSymbol = 'm2005'
+initBars = 60
 
 # 直接读取signal对应minx相关的文件。
 fname = get_dss() + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
@@ -55,5 +55,5 @@ for bar in r:
 #atrValue = am.atr(30)
 atrValue = am.atr(1, array=True)
 atrMa = atrValue[-30:].mean()
-#print(atrValue)
+print(atrValue)
 print(atrMa)
