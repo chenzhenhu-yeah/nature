@@ -413,11 +413,11 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'CF'
+    vtSymbol = 'm'
     #vtSymbol = 'c1901'
     #vtSymbol = 'CF901'
-    start_date = '20190109 00:00:00'
-    #start_date = '20180609 00:00:00'
+    #start_date = '20190109 00:00:00'
+    start_date = '20180609 00:00:00'
     end_date   = '20191231 00:00:00'
     #end_date   = '20180531 00:00:00'
 
@@ -435,10 +435,10 @@ if __name__ == '__main__':
     # PortfolioClass = Fut_DonchianPortfolio
     # PortfolioClass = Fut_CciBollPortfolio
     #PortfolioClass = Fut_DaLiPortfolio
-    #PortfolioClass = Fut_DaLictaPortfolio
+    PortfolioClass = Fut_DaLictaPortfolio
     #PortfolioClass = Fut_Aberration_RawPortfolio
     #PortfolioClass = Fut_Aberration_EnhancePortfolio
-    PortfolioClass = Fut_Cci_RawPortfolio
+    #PortfolioClass = Fut_Cci_RawPortfolio
     #PortfolioClass = Fut_Cci_EnhancePortfolio
     #PortfolioClass = Fut_Kama_RawPortfolio
     #PortfolioClass = Fut_Kama_EnhancePortfolio
@@ -448,5 +448,3 @@ if __name__ == '__main__':
     #minx = 'min5'
 
     test_one(PortfolioClass, minx)
-    #test_atrrsi_param(PortfolioClass, minx)
-    #test_cciboll_param(PortfolioClass, minx)

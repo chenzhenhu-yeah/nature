@@ -15,7 +15,7 @@ def gen_kline(df1):
     k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
     #print(k_plot_value)
 
-    kline = Kline(init_opts=opts.InitOpts(width='1500px'))
+    kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
     kline.add_xaxis( list(df1['datetime']) )
     kline.add_yaxis('日K', k_plot_value)
     kline.set_global_opts(title_opts=opts.TitleOpts(title='Kline-基本示例'),
@@ -37,10 +37,10 @@ def gen_ma(df1,n):
     return line
 
 if __name__ == '__main__':
-    pz = 'RM'
-    fn = get_dss() +'backtest/fut/' + pz + '/' + 'day_' + pz + '.csv'
-    #fn = get_dss() +'backtest/fut/' + pz + '/' + 'min30_' + pz + '.csv'
-    #fn = get_dss() +'backtest/fut/m/' + 'min30_m1901.csv'
+    pz = 'm'
+    vtSymbol = 'm'
+    fn = get_dss() +'backtest/fut/' + pz + '/' + 'day_' + vtSymbol + '.csv'
+    #fn = get_dss() +'backtest/fut/' + pz + '/' + 'min30_' + vtSymbol + '.csv'
 
     df1 = pd.read_csv(fn)
     df1['datetime'] = df1['date'] + ' ' + df1['time']
@@ -56,4 +56,5 @@ if __name__ == '__main__':
     d = d.overlap(line2)
     d = d.overlap(line3)
 
-    d.render('bar_ma.html')
+    fn = get_dss( )+ 'backtest/render/bar_ma_' + vtSymbol + '.html'
+    d.render(fn)

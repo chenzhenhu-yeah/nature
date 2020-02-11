@@ -140,6 +140,30 @@ def check_symbols_p(key, value):
             else:
                 r = 'min1_' + symbol + '.csv 文件不存在'
 
+    if key == 'symbols_quote':
+        symbol_list = value.split(',')
+        for symbol in symbol_list:
+            pz = symbol[:2]
+            if pz.isalpha():
+                pass
+            else:
+                pz = symbol[:1]
+
+            fn = get_dss() + 'fut/cfg/setting_pz.csv'
+            df = pd.read_csv(fn)
+            pz_set = set(df.pz)
+            if pz in pz_set:
+                pass
+            else:
+                r = pz + '未在setting_pz中维护'
+
+            fn = get_dss() + 'fut/cfg/trade_time.csv'
+            df = pd.read_csv(fn)
+            pz_set = set(df.symbol)
+            if pz in pz_set:
+                pass
+            else:
+                r = pz + '未在trade_time中维护'
 
     return r
 
@@ -336,6 +360,107 @@ def fut_signal_atrrsi():
 
 from flask import url_for
 
+@app.route('/value_p_csv', methods=['get','post'])
+def value_p_csv():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn, dtype='str')
+
+    r = []
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    r.append( list(df.columns) )
+    r = reversed(r)
+
+    return render_template("show_fut_csv.html",title="value_p",rows=r)
+
+@app.route('/value_p_render', methods=['get','post'])
+def value_p_render():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['p']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+
+@app.route('/value_dali_csv', methods=['get','post'])
+def value_dali_csv():
+    fn = get_dss() + 'fut/engine/value_dali.csv'
+    df = pd.read_csv(fn, dtype='str')
+
+    r = []
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    r.append( list(df.columns) )
+    r = reversed(r)
+
+    return render_template("show_fut_csv.html",title="value_dali",rows=r)
+
+
+@app.route('/value_dali_render', methods=['get','post'])
+def value_dali_render():
+    fn = get_dss() + 'fut/engine/value_dali.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['pz']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+
+@app.route('/bar_ma_m', methods=['get','post'])
+def bar_ma_m():
+    symbol = 'm2005'
+    draw_web.bar_ma_m(symbol)
+    fn = 'bar_ma_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_ma_CF', methods=['get','post'])
+def bar_ma_CF():
+    symbol = 'CF005'
+    draw_web.bar_ma_CF(symbol)
+    fn = 'bar_ma_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_ma_ru', methods=['get','post'])
+def bar_ma_ru():
+    symbol = 'ru2009'
+    draw_web.bar_ma_ru(symbol)
+    fn = 'bar_ma_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_aberration_CF', methods=['get','post'])
+def bar_aberration_CF():
+    symbol = 'CF005'
+    draw_web.bar_aberration_CF(symbol)
+    fn = 'bar_aberration_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_cci_CF', methods=['get','post'])
+def bar_cci_CF():
+    symbol = 'CF005'
+    draw_web.bar_cci_CF(symbol)
+    fn = 'bar_cci_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_dalicta_m', methods=['get','post'])
+def bar_dalicta_m():
+    symbol = 'm2005'
+    draw_web.bar_dalicta_m(symbol)
+    fn = 'bar_dalicta_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
 @app.route('/ic_y_m', methods=['get','post'])
 def ic_y_m():
     symbol1 = 'y2005'
@@ -350,6 +475,26 @@ def ic_y_m():
 def ic_OI_RM():
     symbol1 = 'OI005'
     symbol2 = 'RM005'
+    start_dt = '2020-01-01'
+    draw_web.ic(symbol1, symbol2, start_dt)
+    time.sleep(1)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
+    return app.send_static_file(fn)
+
+@app.route('/ic_eb_bu', methods=['get','post'])
+def ic_eb_bu():
+    symbol1 = 'eb2009'
+    symbol2 = 'bu2012'
+    start_dt = '2020-01-01'
+    draw_web.ic(symbol1, symbol2, start_dt)
+    time.sleep(1)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
+    return app.send_static_file(fn)
+
+@app.route('/ic_eg_fu', methods=['get','post'])
+def ic_eg_fu():
+    symbol1 = 'eg2009'
+    symbol2 = 'fu2006'
     start_dt = '2020-01-01'
     draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
@@ -395,6 +540,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    #app.run(debug=True)
 
-    #app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')

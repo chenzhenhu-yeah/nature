@@ -81,12 +81,14 @@ class Fut_DaLictaSignal_Duo(Signal):
         ma_mid_arr = self.am.sma(30, array=True)
         ma_long_arr = self.am.sma(60, array=True)
 
+        # 当前价穿60日线，且10日线位于60日线之下，开仓
         if self.unit == 0:
             if self.am.closeArray[-2] <= ma_long_arr[-2] and self.am.closeArray[-1] > ma_long_arr[-1]:
                 #if ma_long_arr[-1] > ma_short_arr[-1] and ma_short_arr[-1] > ma_mid_arr[-1] :
                 if ma_long_arr[-1] > ma_short_arr[-1]:
                     self.can_buy = True
 
+        # 10日线穿30日线，平仓
         if self.unit > 0:
             if ma_short_arr[-1] < ma_mid_arr[-1] and ma_short_arr[-2] >= ma_mid_arr[-2]:
                 self.can_sell = True
@@ -271,12 +273,14 @@ class Fut_DaLictaSignal_Kong(Signal):
         ma_mid_arr = self.am.sma(30, array=True)
         ma_long_arr = self.am.sma(60, array=True)
 
+        # 当前价穿60日线，且10日线位于60日线之上，开仓
         if self.unit == 0:
             if self.am.closeArray[-2] >= ma_long_arr[-2] and self.am.closeArray[-1] < ma_long_arr[-1]:
                 #if ma_long_arr[-1] < ma_short_arr[-1] and ma_short_arr[-1] < ma_mid_arr[-1] :
                 if ma_long_arr[-1] < ma_short_arr[-1]:
                     self.can_short = True
 
+        # 10日线穿30日线，平仓
         if self.unit < 0:
             if ma_short_arr[-1] > ma_mid_arr[-1] and ma_short_arr[-2] <= ma_mid_arr[-2]:
                 self.can_cover = True

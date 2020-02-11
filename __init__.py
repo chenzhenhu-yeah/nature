@@ -59,6 +59,6 @@ from nature.engine.fut.py_ctp.structs import Tick
 from nature.engine.fut.py_ctp.enums import DirectType, OffsetType
 
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP
-
-from nature.engine.fut.backtest import draw_web
 from nature.engine.fut.risk.pandian import pandian_run
+
+from nature.web import draw_web
