@@ -12,6 +12,50 @@ import traceback
 from nature import to_log
 
 
+def get_symbols_quote():
+    symbols_list = []
+
+    # 加载配置
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    if 'symbols_quote' in setting:
+        symbols = setting['symbols_quote']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_01' in setting:
+        symbols = setting['symbols_quote_01']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_05' in setting:
+        symbols = setting['symbols_quote_05']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_06' in setting:
+        symbols = setting['symbols_quote_06']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_09' in setting:
+        symbols = setting['symbols_quote_09']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_10' in setting:
+        symbols = setting['symbols_quote_10']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    if 'symbols_quote_12' in setting:
+        symbols = setting['symbols_quote_12']
+        if len(symbols) > 0:
+            symbols_list += symbols.split(',')
+
+    symbols_list = sorted(list(set(symbols_list)))
+    return symbols_list
+
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin):
         """Constructor"""

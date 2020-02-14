@@ -140,30 +140,39 @@ def check_symbols_p(key, value):
             else:
                 r = 'min1_' + symbol + '.csv 文件不存在'
 
-    if key == 'symbols_quote':
-        symbol_list = value.split(',')
-        for symbol in symbol_list:
-            pz = symbol[:2]
-            if pz.isalpha():
-                pass
-            else:
-                pz = symbol[:1]
+    if key in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12']:
+        if len(value) > 0:
+            symbol_list = value.split(',')
+            for symbol in symbol_list:
+                pz = symbol[:2]
+                if pz.isalpha():
+                    pass
+                else:
+                    pz = symbol[:1]
 
-            fn = get_dss() + 'fut/cfg/setting_pz.csv'
-            df = pd.read_csv(fn)
-            pz_set = set(df.pz)
-            if pz in pz_set:
-                pass
-            else:
-                r = pz + '未在setting_pz中维护'
+                fn = get_dss() + 'fut/cfg/setting_pz.csv'
+                df = pd.read_csv(fn)
+                pz_set = set(df.pz)
+                if pz in pz_set:
+                    pass
+                else:
+                    r = pz + '未在setting_pz中维护'
 
-            fn = get_dss() + 'fut/cfg/trade_time.csv'
-            df = pd.read_csv(fn)
-            pz_set = set(df.symbol)
-            if pz in pz_set:
-                pass
-            else:
-                r = pz + '未在trade_time中维护'
+                fn = get_dss() + 'fut/cfg/trade_time.csv'
+                df = pd.read_csv(fn)
+                pz_set = set(df.symbol)
+                if pz in pz_set:
+                    pass
+                else:
+                    r = pz + '未在trade_time中维护'
+
+
+    symbols_all = ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12',
+                   'symbols_trade','gateway_pz','gateway_pf','symbols_owl','symbols_cci_raw','symbols_aberration_enhance',
+                   'symbols_cciboll','symbols_dali','symbols_rsiboll','symbols_atrrsi','symbols_turtle','symbols_dalicta',
+                  ]
+    if key not in symbols_all:
+        r = '新symbols，未在web端进行风控'
 
     return r
 
@@ -373,19 +382,6 @@ def value_p_csv():
 
     return render_template("show_fut_csv.html",title="value_p",rows=r)
 
-@app.route('/value_p_render', methods=['get','post'])
-def value_p_render():
-    fn = get_dss() + 'fut/engine/value_p.csv'
-    df = pd.read_csv(fn)
-    df['close'] = df['year_ratio']
-    df['symbol'] = df['p']
-
-    draw_web.value(df)
-    time.sleep(1)
-    fn = 'value.html'
-    return app.send_static_file(fn)
-
-
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():
     fn = get_dss() + 'fut/engine/value_dali.csv'
@@ -399,6 +395,17 @@ def value_dali_csv():
 
     return render_template("show_fut_csv.html",title="value_dali",rows=r)
 
+@app.route('/value_p_render', methods=['get','post'])
+def value_p_render():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['p']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
 
 @app.route('/value_dali_render', methods=['get','post'])
 def value_dali_render():
@@ -412,6 +419,29 @@ def value_dali_render():
     fn = 'value.html'
     return app.send_static_file(fn)
 
+@app.route('/risk_p_render', methods=['get','post'])
+def risk_p_render():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['risk']
+    df['symbol'] = df['p']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/risk_dali_render', methods=['get','post'])
+def risk_dali_render():
+    fn = get_dss() + 'fut/engine/value_dali.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['risk']
+    df['symbol'] = df['pz']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
 
 @app.route('/bar_ma_m', methods=['get','post'])
 def bar_ma_m():
@@ -439,7 +469,7 @@ def bar_ma_ru():
 
 @app.route('/bar_aberration_CF', methods=['get','post'])
 def bar_aberration_CF():
-    symbol = 'CF005'
+    symbol = 'CF009'
     draw_web.bar_aberration_CF(symbol)
     fn = 'bar_aberration_CF.html'
     time.sleep(1)
@@ -447,7 +477,7 @@ def bar_aberration_CF():
 
 @app.route('/bar_cci_CF', methods=['get','post'])
 def bar_cci_CF():
-    symbol = 'CF005'
+    symbol = 'CF009'
     draw_web.bar_cci_CF(symbol)
     fn = 'bar_cci_CF.html'
     time.sleep(1)
@@ -455,7 +485,7 @@ def bar_cci_CF():
 
 @app.route('/bar_dalicta_m', methods=['get','post'])
 def bar_dalicta_m():
-    symbol = 'm2005'
+    symbol = 'm2009'
     draw_web.bar_dalicta_m(symbol)
     fn = 'bar_dalicta_m.html'
     time.sleep(1)

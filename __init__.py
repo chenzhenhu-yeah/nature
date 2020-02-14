@@ -8,7 +8,7 @@ SOCKET_KQ_HT  = 9005
 
 from nature.logger import to_log, read_log_today
 
-from nature.tools import send_email, is_trade_time, is_price_time,is_trade_day
+from nature.tools import send_email, is_trade_time, is_price_time,is_trade_day, get_symbols_quote
 from nature.tools import get_ts_code, get_dss, get_nature_day, get_contract, is_market_date
 
 from nature.down_k.get_trading_dates import get_trading_dates

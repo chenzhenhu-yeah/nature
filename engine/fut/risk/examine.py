@@ -9,7 +9,8 @@ import re
 import datetime
 import time
 from csv import DictReader
-from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, to_log, get_contract
+from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, get_contract, to_log
+from nature import get_symbols_quote
 
 import json
 import tushare as ts
@@ -34,12 +35,14 @@ def examine():
         if pz not in tm_pz_set:
             to_log('examine: ' + pz + 'of setting_pz.csv not in trade_time.csv')
 
+#--------------------------------------------------------------------------------
     config = open(dss + 'fut/cfg/config.json')
     setting = json.load(config)
     # 加载配置，目前盯市的品种已在setting_pz中维护
-    symbols = setting['symbols_quote']
-    symbols_quote_list = symbols.split(',')
-    #print(symbol_list)
+    # symbols = setting['symbols_quote']
+    # symbols_quote_list = symbols.split(',')
+    symbols_quote_list = get_symbols_quote()
+    print(symbols_quote_list)
     for symbol in symbols_quote_list:
         c = get_contract(symbol)
         #print( c.pz )
@@ -52,6 +55,7 @@ def examine():
     for symbol in symbols_trade_list:
         if symbol not in symbols_quote_list:
             to_log('examine: ' + symbol + 'of symbols_trade not in symbols_quote')
+#--------------------------------------------------------------------------------
 
     # symbols_trade涵盖其他symbols，如symbols_rsiboll,symbols_atrrsi,symbols_cciboll
     symbols = setting['symbols_rsiboll']

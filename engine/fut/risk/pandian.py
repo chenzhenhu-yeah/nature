@@ -32,9 +32,15 @@ def pandian_dali(today):
     else:
         return
 
+    fn_param = dss +  'fut/engine/dali/signal_dali_param.csv'
+    df_param = pd.read_csv(fn_param)
+    df_param = df_param.set_index('symbol')
+    # print(df_param)
+
     r = []
     for symbol in dali_symbol_list:
-        pz = str(get_contract(symbol).pz)
+        c = get_contract(symbol)
+        pz = str(c.pz)
         df = df_value[df_value.pz == pz]
         # 获得该品种最近日期的一条记录，新品种必须事先维护一条记录！！！
         if len(df) > 0:
@@ -60,11 +66,18 @@ def pandian_dali(today):
 
             cur_value = int( capital + rec.pnl_net )
             year_ratio= round(100*(cur_value/newyear_value-1), 2)
-            margin = 0
-            risk = 0
             net_pos = rec.unit
-            multi_duo_list = rec.price_duo_list
-            multi_kong_list = rec.price_kong_list
+            multi_duo_list = eval(rec.price_duo_list)
+            multi_kong_list = eval(rec.price_kong_list)
+
+            if len(multi_duo_list) > len(multi_kong_list):
+                active_price = float( multi_duo_list[0] )
+            else:
+                active_price = float( multi_kong_list[0] )
+
+            margin = df_param.at[symbol,'fixed_size']*active_price*float(c.size)*float(c.margin) * ( len(multi_duo_list) + len(multi_kong_list) )
+            risk = round(100*(margin/cur_value), 2)
+
             r.append( [today,pz,capital,cur_value,newyear_value,year_ratio,margin,risk,net_pos,multi_duo_list,multi_kong_list] )
             #print(r)
             #return
@@ -91,28 +104,33 @@ def pandian_p(today):
             rec = df.iloc[-1,:]
             capital = rec.capital
             date = rec.date
-            if today[:4] != date[:4]:
-                newyear_value = rec.newyear_value   # 换年
+            if today[:4] == date[:4]:
+                newyear_value = rec.newyear_value
             else:
-                newyear_value = rec.cur_value
+                newyear_value = rec.cur_value           # 换年
 
         else:
             continue
 
         # 更新该品种的最新数据
-        fn = get_dss() +  'fut/engine/' + p + '/portfolio_' +p+ '_var.csv'
+        fn = get_dss() +  'fut/engine/' + p + '/portfolio_' + p + '_var.csv'
         #fn = get_dss() +  'fut/engine/rsiboll/portfolio_rsiboll_var.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn, sep='$')
-            #print(df)
             rec = df.iloc[-1,:]
-            #print(rec)
             cur_value = rec.portfolioValue
-
             year_ratio= round(100*(cur_value/newyear_value-1), 2)
-            pos_dict = rec.posDict
-            r.append( [today,p,capital,cur_value,newyear_value,year_ratio,pos_dict] )
-            #print(r)
+            pos_dict = eval(rec.posDict)
+            close_dict = eval(rec.closeDict)
+
+            margin = 0
+            for symbol in pos_dict:
+                # print(symbol, pos_dict[symbol], close_dict[symbol])
+                c = get_contract(symbol)
+                margin += abs(pos_dict[symbol])*close_dict[symbol]*float(c.size)*float(c.margin)
+
+            risk = round(100*(margin/cur_value), 2)
+            r.append( [today,p,capital,cur_value,newyear_value,year_ratio,margin,risk,str(close_dict)] )
 
     df = pd.DataFrame(r)
     df.to_csv(fn_value, index=False, mode='a', header=None)

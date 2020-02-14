@@ -15,7 +15,7 @@ from nature import Tick
 
 from nature import VtBarData, to_log, BarGenerator
 from nature import SOCKET_BAR, get_dss, get_contract
-
+from nature import get_symbols_quote
 
 #----------------------------------------------------------------------
 def _Generate_Bar_MinOne(tick, temp_bar, r, today):
@@ -163,10 +163,11 @@ def tick2bar(tradeDay):
     df_tm = pd.read_csv(fn)
 
     # 加载配置，目前盯市哪些业务品种
-    config = open(get_dss()+'fut/cfg/config.json')
-    setting = json.load(config)
-    symbols = setting['symbols_quote']
-    symbol_list = symbols.split(',')
+    # config = open(get_dss()+'fut/cfg/config.json')
+    # setting = json.load(config)
+    # symbols = setting['symbols_quote']
+    # symbol_list = symbols.split(',')
+    symbol_list = get_symbols_quote()
 
     # symbol_list = ['ag1912']
 

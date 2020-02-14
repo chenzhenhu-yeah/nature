@@ -91,7 +91,7 @@ def value(df):
 
 #################################################################################
 class Bar_Ma():
-    def gen_kline(self, df1):
+    def gen_kline(self, df1, symbol):
         dt_list =  list(df1['datetime'])
         #print(dt_list)
         k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
@@ -99,7 +99,7 @@ class Bar_Ma():
 
         kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
         kline.add_xaxis( list(df1['datetime']) )
-        kline.add_yaxis('bar', k_plot_value)
+        kline.add_yaxis(symbol, k_plot_value)
         kline.set_global_opts(title_opts=opts.TitleOpts(title='Min30'),
                               datazoom_opts=[opts.DataZoomOpts(range_start=0,range_end=100)],)
                               #xaxis_opts=opts.AxisOpts(type_='time'))
@@ -124,7 +124,7 @@ class Bar_Ma():
         df1['datetime'] = df1['date'] + ' ' + df1['time']
         print(df1.head())
 
-        kline = self.gen_kline(df1)
+        kline = self.gen_kline(df1,symbol)
         line1  = self.gen_ma(df1, 90)
         line2  = self.gen_ma(df1, 120)
         line3  = self.gen_ma(df1, 240)
@@ -154,7 +154,7 @@ def bar_ma_ru(symbol):
 #################################################################################
 
 class Bar_Aberration():
-    def gen_kline(self, df1):
+    def gen_kline(self, df1,symbol):
         df1['datetime'] = df1['date']
         dt_list =  list(df1['datetime'])
         k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
@@ -162,7 +162,7 @@ class Bar_Aberration():
 
         kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
         kline.add_xaxis( dt_list )
-        kline.add_yaxis( 'bar', k_plot_value )
+        kline.add_yaxis( symbol, k_plot_value )
         kline.set_global_opts(title_opts=opts.TitleOpts(title='日线'),
                               datazoom_opts=[opts.DataZoomOpts(range_start=0,range_end=100)],)
                               #xaxis_opts=opts.AxisOpts(type_='time'))
@@ -227,7 +227,7 @@ class Bar_Aberration():
         price_max = df1.close.max()
 
 
-        kline = self.gen_kline(df1)
+        kline = self.gen_kline(df1,symbol)
         line_boll = self.gen_boll(df1, 10, 2)
         kline = kline.overlap(line_boll)
         kline.render(fn_render)
@@ -240,15 +240,15 @@ def bar_aberration_CF(symbol):
 
 #################################################################################
 class Bar_Dalicta():
-    def gen_kline(self, df1):
+    def gen_kline(self, df1, symbol):
         df1['datetime'] = df1['date']
         dt_list =  list(df1['datetime'])
         k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
         #print(k_plot_value)
 
         kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
-        kline.add_xaxis( list(df1['datetime']) )
-        kline.add_yaxis('bar', k_plot_value)
+        kline.add_xaxis( dt_list )
+        kline.add_yaxis(symbol, k_plot_value)
         kline.set_global_opts(title_opts=opts.TitleOpts(title='日线'),
                               datazoom_opts=[opts.DataZoomOpts(range_start=0,range_end=100)],)
                               #xaxis_opts=opts.AxisOpts(type_='time'))
@@ -273,7 +273,7 @@ class Bar_Dalicta():
         df1['datetime'] = df1['date'] + ' ' + df1['time']
         print(df1.head())
 
-        kline = self.gen_kline(df1)
+        kline = self.gen_kline(df1,symbol)
         line1  = self.gen_ma(df1, 10)
         line2  = self.gen_ma(df1, 30)
         line3  = self.gen_ma(df1, 60)

@@ -151,7 +151,7 @@ class Fut_DaLiSignal(Signal):
 
                 self.unit_cover()
                 self.unit_buy(bar.close)
-            
+
         # 平多仓、开空仓
         if self.can_short == True:
             if len(self.price_duo_list) == 1:
@@ -246,7 +246,7 @@ class Fut_DaLiSignal(Signal):
         else:
             self.price_kong_list.append(price)
 
-        self.unit_open(price, self.fixedSize)
+        self.unit_open(price, -self.fixedSize)
 
     #----------------------------------------------------------------------
     def unit_sell(self):

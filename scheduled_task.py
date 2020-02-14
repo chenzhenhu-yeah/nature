@@ -17,7 +17,7 @@ from nature.hu_signal.price_signal import price_signal
 
 from nature.down_k.down_data import down_data
 from nature.engine.fut.ctp_ht.tick2bar import tick2bar
-from nature.engine.fut.examine import examine
+from nature.engine.fut.risk.examine import examine
 
 dss = r'../data/'
 

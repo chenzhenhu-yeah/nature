@@ -615,7 +615,7 @@ class BarGenerator(object):
             if new_bar.time[:5] in ['15:00']:
                 bar.time = new_bar.time[:-2] + '00'
                 self.bar_dict.pop(symbol)
-                r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
+                r.append( [new_bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
                 return bar
 
         self.bar_dict[symbol] = bar

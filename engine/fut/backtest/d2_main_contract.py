@@ -84,6 +84,46 @@ def bu():
     for p in param_list:
         connect(fn_pz, p[0], p[1])
 
+
+def ru():
+    pz = 'ru'
+    fn_pz = get_dss() +'backtest/fut/' + pz + '/min1_' + pz + '_0105_0310.csv'
+
+    param_list = []
+
+    symbol = 'ru1805'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2018-03'
+    param_list.append( [fn_symbol, end_month] )
+
+    symbol = 'ru1805'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2018-03'
+    param_list.append( [fn_symbol, end_month] )
+
+    symbol = 'ru1901'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2018-10'
+    param_list.append( [fn_symbol, end_month] )
+
+    symbol = 'ru1905'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2019-03'
+    param_list.append( [fn_symbol, end_month] )
+
+    symbol = 'ru2001'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2019-10'
+    param_list.append( [fn_symbol, end_month] )
+
+    symbol = 'ru2005'
+    fn_symbol = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    end_month = '2019-12'
+    param_list.append( [fn_symbol, end_month] )
+
+    for p in param_list:
+        connect(fn_pz, p[0], p[1])
+
 if __name__ == '__main__':
     # 按以下顺序：
     # 05(2018-03)、创立
@@ -93,3 +133,4 @@ if __name__ == '__main__':
     pass
 
     #bu()
+    ru()

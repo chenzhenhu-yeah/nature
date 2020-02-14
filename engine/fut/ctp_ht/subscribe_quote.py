@@ -16,6 +16,7 @@ from nature import Tick
 
 from nature import VtBarData
 from nature import SOCKET_BAR, get_dss, to_log, get_contract, is_market_date
+from nature import get_symbols_quote
 
 fn = get_dss() + 'fut/cfg/trade_time.csv'
 df_tt = pd.read_csv(fn, dtype='str')
@@ -36,10 +37,11 @@ class HuQuote(CtpQuote):
         CtpQuote.__init__(self)
 
         # 加载配置
-        config = open(get_dss()+'fut/cfg/config.json')
-        setting = json.load(config)
-        symbols = setting['symbols_quote']
-        self.id_list = symbols.split(',')
+        # config = open(get_dss()+'fut/cfg/config.json')
+        # setting = json.load(config)
+        # symbols = setting['symbols_quote']
+        # self.id_list = symbols.split(',')
+        self.id_list = get_symbols_quote()
 
         self.dss = get_dss()
         self.tradeDay = ''
