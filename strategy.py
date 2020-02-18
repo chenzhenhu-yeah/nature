@@ -72,7 +72,7 @@ class Signal(object):
         # 读取配置文件，看是否已暂停
         filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df[df.signal == self.portfolio.name]
             if len(df) > 0:
                 symbols_dict = eval( df.iat[0,1] )
@@ -180,6 +180,7 @@ class Portfolio(object):
         self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}
+        self.name_second = self.name 
 
         self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
@@ -273,9 +274,9 @@ class Portfolio(object):
     #----------------------------------------------------------------------
     def daily_open(self):
         # 从文件中读取posDict、portfolioValue
-        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name_second + '_var.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df.sort_values(by='datetime')
             df = df.reset_index()
             if len(df) > 0:
@@ -335,7 +336,7 @@ class Portfolio(object):
 
         # 保存组合交易记录
         df = pd.DataFrame(tr, columns=['vtSymbol','datetime','direction','offset','price','volume'])
-        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_deal.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name_second + '_deal.csv'
         if os.path.exists(filename):
             df.to_csv(filename,index=False,mode='a',header=False)
         else:
@@ -345,11 +346,11 @@ class Portfolio(object):
         dt = self.result.date
         r = [ [dt, int(self.portfolioValue + totalNetPnl), int(totalNetPnl), int(totalTradingPnl), int(totalholdingPnl), round(totalCommission,2), int(totalSlippage), str(self.posDict), str(self.result.closeDict)] ]
         df = pd.DataFrame(r, columns=['datetime','portfolioValue','netPnl','totalTradingPnl','totalholdingPnl','totalCommission','totalSlippage','posDict','closeDict'])
-        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name + '_var.csv'
+        filename = self.engine.dss + 'fut/engine/' + self.name +'/portfolio_' + self.name_second + '_var.csv'
         if os.path.exists(filename):
-            df.to_csv(filename,index=False,sep='$',mode='a',header=False)
+            df.to_csv(filename,index=False,mode='a',header=False)
         else:
-            df.to_csv(filename,index=False,sep='$')
+            df.to_csv(filename,index=False)
 
 
 ########################################################################

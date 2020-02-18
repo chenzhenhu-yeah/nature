@@ -27,7 +27,7 @@ from nature.hold.book import Book, has_factor, stk_report
 from nature.auto_trade.place_order import send_instruction
 from nature.filer import rc_file, a_file
 
-from nature.strategy import VtBarData, ArrayManager, GatewayPingan, BarGenerator
+from nature.strategy import VtBarData, ArrayManager, GatewayPingan, BarGenerator, DailyResult
 from nature.strategy import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_OPEN, OFFSET_CLOSE,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
@@ -50,8 +50,9 @@ from nature.engine.fut.engine.fut_strategyAberration_Raw import Fut_Aberration_R
 from nature.engine.fut.engine.fut_strategyAberration_Enhance import Fut_Aberration_EnhancePortfolio
 from nature.engine.fut.engine.fut_strategyCci_Raw import Fut_Cci_RawPortfolio
 from nature.engine.fut.engine.fut_strategyCci_Enhance import Fut_Cci_EnhancePortfolio
-from nature.engine.fut.engine.fut_strategyKama_Raw import Fut_Kama_RawPortfolio
-from nature.engine.fut.engine.fut_strategyKama_Enhance import Fut_Kama_EnhancePortfolio
+from nature.engine.fut.engine.fut_strategyMa import Fut_MaPortfolio
+from nature.engine.fut.engine.fut_strategyDualBand import Fut_DualBandPortfolio
+from nature.engine.fut.engine.fut_strategyIc import Fut_IcPortfolio
 
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
@@ -60,5 +61,6 @@ from nature.engine.fut.py_ctp.enums import DirectType, OffsetType
 
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP
 from nature.engine.fut.risk.pandian import pandian_run
+from nature.engine.fut.backtest.backtest_result import Backtest_Result
 
 from nature.web import draw_web

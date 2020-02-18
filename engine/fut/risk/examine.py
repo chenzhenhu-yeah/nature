@@ -57,28 +57,6 @@ def examine():
             to_log('examine: ' + symbol + 'of symbols_trade not in symbols_quote')
 #--------------------------------------------------------------------------------
 
-    # symbols_trade涵盖其他symbols，如symbols_rsiboll,symbols_atrrsi,symbols_cciboll
-    symbols = setting['symbols_rsiboll']
-    symbols_rsiboll_list = symbols.split(',')
-    for symbol in symbols_rsiboll_list:
-        if symbol not in symbols_trade_list:
-            to_log('examine: ' + symbol + 'of symbols_rsiboll not in symbols_trade')
-
-    symbols = setting['symbols_atrrsi']
-    symbols_atrrsi_list = symbols.split(',')
-    for symbol in symbols_atrrsi_list:
-        if symbol not in symbols_trade_list:
-            to_log('examine: ' + symbol + 'of symbols_atrrsi not in symbols_trade')
-
-    # symbols = setting['symbols_cciboll']
-    # symbols_cciboll_list = symbols.split(',')
-    # for symbol in symbols_cciboll_list:
-    #     if symbol not in symbols_trade_list:
-    #         to_log('examine: ' + symbol + 'of symbols_cciboll not in symbols_trade')
-
-
-    #
-
 
 
 if __name__ == '__main__':

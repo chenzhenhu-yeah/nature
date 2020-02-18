@@ -26,93 +26,93 @@ import talib
 
 from nature import get_dss
 
+################################################################################
+class Resid():
+    def gen_line_one(self, df1, symbol):
 
-class Bar_Cci():
-    def gen_kline(self, df1):
         df1['datetime'] = df1['date']
-        dt_list =  list(df1['datetime'])
-        k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
-        #print(k_plot_value)
+        dt_list1 =  list(df1['datetime'])
+        # print( len(dt_list1) )
+        # dt_list1 = [s[5:10] for s in dt_list1]
+        close_list1 = df1.apply(lambda record: float(record['close']), axis=1).tolist()
+        close_list1 = np.array(close_list1)
 
-        kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
-        kline.add_xaxis( dt_list )
-        kline.add_yaxis( 'bar', k_plot_value )
+
+        kline = Line(init_opts=opts.InitOpts(width='1500px'))
+        kline.add_xaxis( dt_list1 )
+        kline.add_yaxis(symbol, close_list1,label_opts=opts.LabelOpts(is_show=False))
         kline.set_global_opts(title_opts=opts.TitleOpts(title='日线'),
+                              #datazoom_opts=[opts.DataZoomOpts()],
+                              #xaxis_opts=opts.AxisOpts(type_='time'))
+                              yaxis_opts=opts.AxisOpts(is_scale=True,splitarea_opts=opts.SplitAreaOpts(is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)) ),
                               datazoom_opts=[opts.DataZoomOpts(is_show=True,type_="slider",xaxis_index=[0,1],range_start=0,range_end=100,),
                                              opts.DataZoomOpts(is_show=False,type_="inside",xaxis_index=[0,1],range_start=0,range_end=100,), ],
-                              tooltip_opts=opts.TooltipOpts( axis_pointer_type="cross" ),
-                              axispointer_opts=opts.AxisPointerOpts( is_show=True, link=[{"xAxisIndex": "all"}], ),
-                              )
+                              tooltip_opts=opts.TooltipOpts( trigger="axis",axis_pointer_type="cross" ),
+                              #axispointer_opts=opts.AxisPointerOpts(is_show=True, link=[{"xAxisIndex": "all"}], ),
+                             )
 
         return kline
 
+    def gen_line_two(self, df1):
 
-    def gen_cci(self, df1, n):
-        high_list = df1.apply(lambda record: float(record['high']), axis=1).tolist()
-        high_list = np.array(high_list)
+        df1['datetime'] = df1['date']
+        dt_list1 =  list(df1['datetime'])
+        # print( len(dt_list1) )
+        # dt_list1 = [s[5:10] for s in dt_list1]
+        close_list1 = df1.apply(lambda record: float(record['close']), axis=1).tolist()
+        close_list1 = np.array(close_list1)
 
-        low_list = df1.apply(lambda record: float(record['low']), axis=1).tolist()
-        low_list = np.array(low_list)
 
-        close_list = df1.apply(lambda record: float(record['close']), axis=1).tolist()
-        close_list = np.array(close_list)
+        kline = Line()
+        kline.add_xaxis( dt_list1 )
+        kline.add_yaxis('resid', close_list1, xaxis_index=1,yaxis_index=1,label_opts=opts.LabelOpts(is_show=False))
+        kline.set_global_opts(yaxis_opts=opts.AxisOpts(is_scale=True,splitarea_opts=opts.SplitAreaOpts(is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)) ),
+                              legend_opts=opts.LegendOpts(is_show=True,pos_right="40%")
+                              #xaxis_opts=opts.AxisOpts(type_='time'))
+                             )
 
-        rsi_n = talib.CCI(high_list, low_list, close_list, n)
-
-        line = Line()
-        line.add_xaxis( xaxis_data=list(df1['datetime']) )
-        line.add_yaxis( 'cci_'+str(n),
-                        y_axis=rsi_n,
-                        xaxis_index=1,
-                        yaxis_index=1,
-                        label_opts=opts.LabelOpts(is_show=False),
-                      )
-
-        line.set_global_opts(yaxis_opts=opts.AxisOpts(min_=-150,max_=150),
-                             # xaxis_opts=opts.AxisOpts(is_show=False),
-                             xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(is_show=False),),
-                             legend_opts=opts.LegendOpts(is_show=True,pos_right="38%"),
-                            )
-        line.set_series_opts(
-                            label_opts=opts.LabelOpts(is_show=False),
-                            )
-
-        return line
-
+        return kline
 
     def draw(self, symbol, fn_render):
-        fn = get_dss() +'fut/bar/day_' + symbol + '.csv'
-        df1 = pd.read_csv(fn)
-        # print(df1.head())
-        price_min = int( df1.close.min() * 0.99 )
-        price_max = df1.close.max()
 
-        kline = self.gen_kline(df1)
-        line_cci = self.gen_cci(df1, 100)
+        fn = get_dss() +'fut/bar/day_' + symbol + '.csv'
+        df = pd.read_csv(fn)
+        df1 = df.loc[:,['date','time','close']]
+
+        n = 30
+        close_list = df.apply(lambda record: float(record['close']), axis=1).tolist()
+        close_list = np.array(close_list)
+        ma_arr = talib.SMA(close_list, n)
+        df['ma'] = ma_arr
+        df['close'] = df['close'] - df['ma']
+        df2 = df.loc[:,['date','time','close']]
+
+        line1 = self.gen_line_one(df1, symbol)
+        line2 = self.gen_line_two(df2)
 
         grid_chart = Grid(
             init_opts=opts.InitOpts(
-                width="1390px",
+                width="1300px",
                 height="700px",
-                animation_opts=opts.AnimationOpts(animation=False),
+                #animation_opts=opts.AnimationOpts(animation=False),
             )
         )
         grid_chart.add(
-            kline,
-            grid_opts=opts.GridOpts(pos_left="10%", pos_right="8%", height="60%"),
+            line1,
+            grid_opts=opts.GridOpts(pos_left="5%", pos_right="3%", height="39%"),
         )
         grid_chart.add(
-            line_cci,
+            line2,
             grid_opts=opts.GridOpts(
-                pos_left="10%", pos_right="8%", pos_top="75%", height="17%" ),
+                pos_left="5%", pos_right="3%", pos_top="53%", height="39%" ),
         )
 
         grid_chart.render(fn_render)
 
 
 if __name__ == '__main__':
-    symbol = 'CF005'
+    symbol = 'm2009'
 
     fn_render = 'bar_test.html'
-    bar_ma = Bar_Cci()
+    bar_ma = Resid()
     bar_ma.draw(symbol, fn_render)

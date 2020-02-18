@@ -11,16 +11,16 @@ from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 
 ########################################################################
-class Fut_DaLictaSignal_Duo(Signal):
+class Fut_DualBandSignal_Duo(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'duo'
 
         # 策略参数
-        self.fixedSize = 10            # 每次交易的数量
-        self.initBars = 60           # 初始化数据所用的天数
-        self.minx = 'day'
+        self.fixedSize = 1            # 每次交易的数量
+        self.initBars = 100           # 初始化数据所用的天数
+        self.minx = 'min30'
 
         # 策略临时变量
         self.can_buy = False
@@ -35,9 +35,20 @@ class Fut_DaLictaSignal_Duo(Signal):
         assert self.initBars <= size_am
         Signal.__init__(self, portfolio, vtSymbol)
 
+        self.bm_bar = None
+        self.bm = ArrayManager(60)
+        self.init_bm()
+
+    #----------------------------------------------------------------------
+    def init_bm(self):
+        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, 60, 'day')
+        for bar in initData:
+            self.bm_bar = bar
+            self.bm.updateBar(bar)
+
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_param.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.symbol == self.vtSymbol ]
@@ -54,11 +65,25 @@ class Fut_DaLictaSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """新推送过来一个bar，进行处理"""
-        self.bar = bar
         if minx == 'day':
+            self.on_bar_day(bar)
+
+        if minx == 'min30':
             self.on_bar_minx(bar)
 
+    #----------------------------------------------------------------------
+    def on_bar_day(self, bar):
+        if self.paused == True:
+            return
+
+        self.bm.updateBar(bar)
+        if not self.bm.inited:
+            return
+
+    #----------------------------------------------------------------------
     def on_bar_minx(self, bar):
+        self.bar = bar
+
         if self.paused == True:
             return
 
@@ -74,32 +99,29 @@ class Fut_DaLictaSignal_Duo(Signal):
         """计算技术指标"""
         self.can_buy = False
         self.can_sell = False
-        self.can_short = False
-        self.can_cover = False
 
-        ma_short_arr = self.am.sma(10, array=True)
-        ma_mid_arr = self.am.sma(30, array=True)
-        ma_long_arr = self.am.sma(60, array=True)
+        ma_short_arr = self.am.sma(30, array=True)
+        ma_long_arr = self.am.sma(90, array=True)
 
-        # 当前价穿60日线，且10日线位于60日线之下，开仓
+        mb_short_arr = self.bm.sma(10, array=True)
+        mb_long_arr = self.bm.sma(60, array=True)
+
         if self.unit == 0:
-            if self.am.closeArray[-2] <= ma_long_arr[-2] and self.am.closeArray[-1] > ma_long_arr[-1]:
-                #if ma_long_arr[-1] > ma_short_arr[-1] and ma_short_arr[-1] > ma_mid_arr[-1] :
-                if ma_long_arr[-1] > ma_short_arr[-1]:
+            if ma_short_arr[-2] <= ma_long_arr[-2] and ma_short_arr[-1] > ma_long_arr[-1]:
+                if mb_short_arr[-1] >= mb_long_arr[-1]:
                     self.can_buy = True
 
-        # 10日线穿30日线，平仓
         if self.unit > 0:
-            if ma_short_arr[-1] < ma_mid_arr[-1] and ma_short_arr[-2] >= ma_mid_arr[-2]:
+            if ma_short_arr[-2] >= ma_long_arr[-2] and ma_short_arr[-1] < ma_long_arr[-1]:
                 self.can_sell = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,ma_short_arr[-1],ma_mid_arr[-1],ma_long_arr[-1]]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/dalicta/bar_dalicta_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,ma_short_arr[-1],ma_long_arr[-1],mb_short_arr[-1],mb_long_arr[-1]]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/dualband/bar_dualband_'+self.type+ '_' + self.vtSymbol + '.csv'
+        # if os.path.exists(filename):
+        #     df.to_csv(filename, index=False, mode='a', header=False)
+        # else:
+        #     df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -126,7 +148,7 @@ class Fut_DaLictaSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def load_var(self):
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_var_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
@@ -160,7 +182,7 @@ class Fut_DaLictaSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_var_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -178,7 +200,7 @@ class Fut_DaLictaSignal_Duo(Signal):
                abs(change), price, 0, self.vtSymbol ] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl', 'symbol'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -193,7 +215,7 @@ class Fut_DaLictaSignal_Duo(Signal):
                0, price, self.result.pnl, self.vtSymbol] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -203,16 +225,16 @@ class Fut_DaLictaSignal_Duo(Signal):
 
 
 ########################################################################
-class Fut_DaLictaSignal_Kong(Signal):
+class Fut_DualBandSignal_Kong(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
         self.type = 'kong'
 
         # 策略参数
-        self.fixedSize = 10            # 每次交易的数量
-        self.initBars = 60           # 初始化数据所用的天数
-        self.minx = 'day'
+        self.fixedSize = 1            # 每次交易的数量
+        self.initBars = 100           # 初始化数据所用的天数
+        self.minx = 'min30'
 
         # 策略临时变量
         self.can_buy = False
@@ -227,9 +249,21 @@ class Fut_DaLictaSignal_Kong(Signal):
         assert self.initBars <= size_am
         Signal.__init__(self, portfolio, vtSymbol)
 
+        self.bm_bar = None
+        self.bm = ArrayManager(60)
+        self.init_bm()
+
+    #----------------------------------------------------------------------
+    def init_bm(self):
+        initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, 60, 'day')
+        for bar in initData:
+            self.bm_bar = bar
+            self.bm.updateBar(bar)
+
+
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_param.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.symbol == self.vtSymbol ]
@@ -246,11 +280,25 @@ class Fut_DaLictaSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """新推送过来一个bar，进行处理"""
-        self.bar = bar
         if minx == 'day':
+            self.on_bar_day(bar)
+
+        if minx == 'min30':
             self.on_bar_minx(bar)
 
+    #----------------------------------------------------------------------
+    def on_bar_day(self, bar):
+        if self.paused == True:
+            return
+
+        self.bm.updateBar(bar)
+        if not self.bm.inited:
+            return
+
+    #----------------------------------------------------------------------
     def on_bar_minx(self, bar):
+        self.bar = bar
+
         if self.paused == True:
             return
 
@@ -264,34 +312,31 @@ class Fut_DaLictaSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        self.can_buy = False
-        self.can_sell = False
         self.can_short = False
         self.can_cover = False
 
-        ma_short_arr = self.am.sma(10, array=True)
-        ma_mid_arr = self.am.sma(30, array=True)
-        ma_long_arr = self.am.sma(60, array=True)
+        ma_short_arr = self.am.sma(30, array=True)
+        ma_long_arr = self.am.sma(90, array=True)
 
-        # 当前价穿60日线，且10日线位于60日线之上，开仓
+        mb_short_arr = self.bm.sma(10, array=True)
+        mb_long_arr = self.bm.sma(60, array=True)
+
         if self.unit == 0:
-            if self.am.closeArray[-2] >= ma_long_arr[-2] and self.am.closeArray[-1] < ma_long_arr[-1]:
-                #if ma_long_arr[-1] < ma_short_arr[-1] and ma_short_arr[-1] < ma_mid_arr[-1] :
-                if ma_long_arr[-1] < ma_short_arr[-1]:
+            if ma_short_arr[-2] >= ma_long_arr[-2] and ma_short_arr[-1] < ma_long_arr[-1]:
+                if mb_short_arr[-1] <= mb_long_arr[-1]:
                     self.can_short = True
 
-        # 10日线穿30日线，平仓
         if self.unit < 0:
-            if ma_short_arr[-1] > ma_mid_arr[-1] and ma_short_arr[-2] <= ma_mid_arr[-2]:
+            if ma_short_arr[-2] <= ma_long_arr[-2] and ma_short_arr[-1] > ma_long_arr[-1]:
                 self.can_cover = True
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,ma_short_arr[-1],ma_mid_arr[-1],ma_long_arr[-1]]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/dalicta/bar_dalicta_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.can_cover,ma_short_arr[-1],ma_long_arr[-1],mb_short_arr[-1],mb_long_arr[-1]]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/dualband/bar_dualband_'+self.type+ '_' + self.vtSymbol + '.csv'
+        # if os.path.exists(filename):
+        #     df.to_csv(filename, index=False, mode='a', header=False)
+        # else:
+        #     df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -318,7 +363,7 @@ class Fut_DaLictaSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def load_var(self):
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_var_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_var_' + pz + '.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
@@ -352,7 +397,7 @@ class Fut_DaLictaSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_var_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_var_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -370,7 +415,7 @@ class Fut_DaLictaSignal_Kong(Signal):
                abs(change), price, 0, self.vtSymbol ] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl', 'symbol'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -385,7 +430,7 @@ class Fut_DaLictaSignal_Kong(Signal):
                0, price, self.result.pnl, self.vtSymbol] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
         pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        filename = get_dss() +  'fut/engine/dualband/signal_dualband_'+self.type+ '_deal_' + pz + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -394,12 +439,12 @@ class Fut_DaLictaSignal_Kong(Signal):
         self.result = None
 
 ########################################################################
-class Fut_DaLictaPortfolio(Portfolio):
+class Fut_DualBandPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.name = 'dalicta'
-        Portfolio.__init__(self, Fut_DaLictaSignal_Duo, engine, symbol_list, signal_param, Fut_DaLictaSignal_Kong, signal_param)
+        self.name = 'dualband'
+        Portfolio.__init__(self, Fut_DualBandSignal_Duo, engine, symbol_list, signal_param, Fut_DualBandSignal_Kong, signal_param)
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):

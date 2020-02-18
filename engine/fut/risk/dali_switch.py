@@ -18,7 +18,7 @@ def dali_switch_run(symbol, old_price, new_price):
     pz = str(get_contract(new_symbol).pz)
     fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
     if os.path.exists(fn):
-        df = pd.read_csv(fn, sep='$')
+        df = pd.read_csv(fn)
         if len(df) > 0:
             rec = df.iloc[-1,:]            # 取最近日期的记录
             old_duo_list = eval( rec.price_duo_list )
@@ -42,7 +42,7 @@ def dali_switch_run(symbol, old_price, new_price):
             print(rec)
 
             df2 = pd.DataFrame( [rec.tolist()] )
-            df2.to_csv(fn, index=False, sep='$', mode='a', header=False)
+            df2.to_csv(fn, index=False, mode='a', header=False)
 
 
 if __name__ == '__main__':

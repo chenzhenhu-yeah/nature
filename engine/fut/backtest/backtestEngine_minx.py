@@ -10,25 +10,32 @@ import matplotlib.pyplot as plt
 
 from nature import get_stk_hfq, to_log, get_dss
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
-from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
-from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
+
+from nature import Backtest_Result
+from nature import Fut_DualBandPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
     """组合类CTA策略回测引擎"""
 
     #----------------------------------------------------------------------
-    def __init__(self,symbol_list,minx='min5'):
+    def __init__(self, symbol_list, minx_s, minx_l):
         """Constructor"""
         self.dss = get_dss()
 
         self.portfolio = None                # 一对一
         self.startDt = None
         self.endDt = None
-        self.backtest_dt_list = []
-        self.dataDict = OrderedDict()
         self.symbol_list = symbol_list
-        self.minx = minx
+
+        self.backtest_dt_list = []
+
+        self.minx_s = minx_s
+        self.dataDict_s = OrderedDict()
+
+        self.minx_l = minx_l
+        self.dataDict_l = OrderedDict()
+
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, signal_param):
@@ -47,13 +54,18 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
+        self.load_data_s()
+        self.load_data_l()
+
+    #----------------------------------------------------------------------
+    def load_data_s(self):
+
         for vtSymbol in self.symbol_list:
-            filename = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
+            filename = get_dss( ) + 'backtest/fut/' + vtSymbol + '/' +self.minx_s + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
-                # print(d)
-                # print('here')
+                #print(d)
 
                 bar = VtBarData()
                 bar.vtSymbol = vtSymbol
@@ -64,337 +76,173 @@ class BacktestingEngine(object):
                 bar.close = float(d['close'])
                 bar.volume = d['volume']
 
-                dt = d['datetime']
+                date = str(d['date'])
+                bar.date = date
+                bar.time = str(d['time'])
+                if '-' in date:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                else:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
 
-                bar.date =  dt[:4] + dt[5:7] + dt[8:10]
-                bar.time =  dt[11:19]
-                bar.datetime = bar.date + ' ' + bar.time
-                # print(bar.datetime, bar.date, bar.time)
-                # return
+                #bar.time = '00:00:00'
+                #bar.datetime = bar.date + ' ' + bar.time
+                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
 
-                # date = str(d['date'])
-                # bar.date = date
-                # bar.time = str(d['time'])
-                # if '-' in date:
-                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
-                # else:
-                #     bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
-                #
-                # #bar.time = '00:00:00'
-                # #bar.datetime = bar.date + ' ' + bar.time
-                # bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
-
-                barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
+                barDict = self.dataDict_s.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.vtSymbol] = bar
                 # break
 
-        self.output(u'全部数据加载完成')
+            print(self.minx_s + ' 加载数据量：' + str(len(df)) )
+
+
+    #----------------------------------------------------------------------
+    def load_data_l(self):
+
+        for vtSymbol in self.symbol_list:
+            filename = get_dss( ) + 'backtest/fut/' + vtSymbol + '/' +self.minx_l + '_' + vtSymbol + '.csv'
+
+            df = pd.read_csv(filename)
+            for i, d in df.iterrows():
+                #print(d)
+
+                bar = VtBarData()
+                bar.vtSymbol = vtSymbol
+                bar.symbol = vtSymbol
+                bar.open = float(d['open'])
+                bar.high = float(d['high'])
+                bar.low = float(d['low'])
+                bar.close = float(d['close'])
+                bar.volume = d['volume']
+
+                date = str(d['date'])
+                bar.date = date
+                bar.time = str(d['time'])
+                if '-' in date:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                else:
+                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+
+                #bar.time = '00:00:00'
+                #bar.datetime = bar.date + ' ' + bar.time
+                bar.datetime = datetime.strftime(bar.datetime, '%Y%m%d %H:%M:%S')
+
+                barDict = self.dataDict_l.setdefault(bar.datetime, OrderedDict())
+                barDict[bar.vtSymbol] = bar
+                # break
+
+            print(self.minx_l + ' 加载数据量：' + str(len(df)) )
+
 
     #----------------------------------------------------------------------
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """读取startDt前n条Bar数据，用于初始化am"""
-
-        assert minx != 'min1'
         r = []
 
-        # 直接读取signal对应minx相关的文件。
-        fname = self.dss + 'fut/bar/' + self.minx + '_' + vtSymbol + '.csv'
-        #print(fname)
-        df = pd.read_csv(fname)
-        df['datetime'] = df['date'] + ' ' + df['time']
-        df = df[df.datetime < self.startDt]
-        assert len(df) >= initBars
+        if minx == self.minx_s:
+            dt_list = self.dataDict_s.keys()
+            #print(dt_list)
+            dt_list = [x for x in dt_list if x<self.startDt]
+            assert len(dt_list) >= initBars
 
-        df = df.sort_values(by=['date','time'])
-        df = df.iloc[-initBars:]
-        #print(df)
+            dt_list = sorted(dt_list)
+            init_dt_list = dt_list[-initBars:]
+            print( self.minx_s + ' 初始化导入记录数量：', len(init_dt_list) )
 
-        for i, row in df.iterrows():
-            d = dict(row)
-            # print(d)
-            # print(type(d))
-            bar = VtBarData()
-            bar.__dict__ = d
-            r.append(bar)
+
+            for dt in init_dt_list:
+                bar_dict = self.dataDict_s[dt]
+                if vtSymbol in bar_dict:
+                    bar = bar_dict[vtSymbol]
+                    r.append(bar)
+
+        if minx == self.minx_l:
+            dt_list = self.dataDict_l.keys()
+            #print(dt_list)
+            dt_list = [x for x in dt_list if x<self.startDt]
+            assert len(dt_list) >= initBars
+
+            dt_list = sorted(dt_list)
+            init_dt_list = dt_list[-initBars:]
+            print( self.minx_l + ' 初始化导入记录数量：', len(init_dt_list) )
+
+
+            for dt in init_dt_list:
+                bar_dict = self.dataDict_l[dt]
+                if vtSymbol in bar_dict:
+                    bar = bar_dict[vtSymbol]
+                    r.append(bar)
 
         return r
 
     #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
+        # 提取回测起始日期之后的dt_s_list
+        dt_s_list = self.dataDict_s.keys()
+        dt_s_list = [dt for dt in dt_s_list if dt >=self.startDt]
+        dt_s_list = sorted(dt_s_list)
 
-        g = BarGenerator(self.minx)
-
-        #print(len(self.dataDict))
-
-        for dt, barDict in self.dataDict.items():
-            if dt < self.startDt or dt >  self.endDt:
-                #print(dt)
+        # 大循环为dt_l
+        for dt_l, barDict_l in self.dataDict_l.items():
+            if dt_l < self.startDt or dt_l >  self.endDt:
+                #print(dt_l)
                 continue
 
-            # print('here')
-            for bar in barDict.values():
-                bar_minx = g.update_bar(bar)
-                if bar_minx is not None:
-                    self.portfolio.onBar(bar_minx, self.minx)
+            # 通过循环，获得当前长周期时点前的dt_s，并推送
+            loop = True
+            while loop:
+                if len(dt_s_list) > 0:
+                    dt_s = dt_s_list[0]
+                    if  dt_s <= dt_l:
+                        barDict_s = self.dataDict_s[dt_s]
+                        for bar in barDict_s.values():
+                            self.portfolio.onBar(bar, self.minx_s)
+                        # pop已推送的数据
+                        dt_s_list.pop(0)
+                        # print('s: ', dt_s)
+                    else:
+                        loop = False
+                else:
+                    loop = False
 
-                self.portfolio.onBar(bar, 'min1')
+            # print('l: ', dt_l)
+            # 推送长周期时点数据 
+            for bar in barDict_l.values():
+                self.portfolio.onBar(bar, self.minx_l)
 
-    #----------------------------------------------------------------------
-    def calculateResult(self, annualDays=240):
-        """计算结果"""
-        self.output(u'开始统计回测结果')
-
-        for result in self.portfolio.resultList:
-            result.calculatePnl()
-
-        resultList = self.portfolio.resultList
-        dateList = [result.date for result in resultList]
-        #print(dateList)
-
-        startDate = dateList[0]
-        endDate = dateList[-1]
-        totalDays = len(dateList)
-
-        profitDays = 0
-        lossDays = 0
-        endBalance = self.portfolio.portfolioValue
-        highlevel = self.portfolio.portfolioValue
-        totalNetPnl = 0
-        totalCommission = 0
-        totalSlippage = 0
-        totalTradeCount = 0
-
-        netPnlList = []
-        balanceList = []
-        highlevelList = []
-        drawdownList = []
-        ddPercentList = []
-        returnList = []
-
-        for result in resultList:
-            if result.netPnl > 0:
-                profitDays += 1
-            elif result.netPnl < 0:
-                lossDays += 1
-            netPnlList.append(result.netPnl)
-
-            prevBalance = endBalance
-            endBalance += result.netPnl
-            balanceList.append(endBalance)
-            returnList.append(endBalance/prevBalance - 1)
-
-            highlevel = max(highlevel, endBalance)
-            highlevelList.append(highlevel)
-
-            drawdown = endBalance - highlevel
-            drawdownList.append(drawdown)
-            ddPercentList.append(drawdown/highlevel*100)
-
-            totalCommission += result.commission
-            totalSlippage += result.slippage
-            totalTradeCount += result.tradeCount
-            totalNetPnl += result.netPnl
-
-        maxDrawdown = min(drawdownList)
-        maxDdPercent = min(ddPercentList)
-        totalReturn = (endBalance / self.portfolio.portfolioValue - 1) * 100
-        dailyReturn = np.mean(returnList) * 100
-        annualizedReturn = dailyReturn * annualDays
-        returnStd = np.std(returnList) * 100
-
-        if returnStd:
-            sharpeRatio = dailyReturn / returnStd * np.sqrt(annualDays*72)
-        else:
-            sharpeRatio = 0
-
-        # 返回结果
-        result = {
-            'startDate': startDate,
-            'endDate': endDate,
-            'totalDays': totalDays,
-            'profitDays': profitDays,
-            'lossDays': lossDays,
-            'endBalance': endBalance,
-            'maxDrawdown': maxDrawdown,
-            'maxDdPercent': maxDdPercent,
-            'totalNetPnl': totalNetPnl,
-            'dailyNetPnl': totalNetPnl/totalDays,
-            'totalCommission': totalCommission,
-            'dailyCommission': totalCommission/totalDays,
-            'totalSlippage': totalSlippage,
-            'dailySlippage': totalSlippage/totalDays,
-            'totalTradeCount': totalTradeCount,
-            'dailyTradeCount': totalTradeCount/totalDays,
-            'totalReturn': totalReturn,
-            'annualizedReturn': annualizedReturn,
-            'dailyReturn': dailyReturn,
-            'returnStd': returnStd,
-            'sharpeRatio': sharpeRatio
-            }
-
-        timeseries = {
-            'balance': balanceList,
-            'return': returnList,
-            'highLevel': highlevel,
-            'drawdown': drawdownList,
-            'ddPercent': ddPercentList,
-            'date': dateList,
-            'netPnl': netPnlList
-        }
-
-        return timeseries, result
-
-    #----------------------------------------------------------------------
-    def showResult(self):
-        """显示回测结果"""
-        timeseries, result = self.calculateResult()
-
-        # 输出统计结果
-        self.output('-' * 30)
-        self.output(u'首个交易日：\t%s' % result['startDate'])
-        self.output(u'最后交易日：\t%s' % result['endDate'])
-
-        self.output(u'总交易日：\t%s' % result['totalDays'])
-        self.output(u'盈利交易日\t%s' % result['profitDays'])
-        self.output(u'亏损交易日：\t%s' % result['lossDays'])
-
-        self.output(u'起始资金：\t%s' % self.portfolio.portfolioValue)
-        self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
-
-        self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
-        self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
-        self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
-        self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))
-        self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))
-
-        self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
-        self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
-        self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
-
-        self.output(u'日均盈亏：\t%s' % formatNumber(result['dailyNetPnl']))
-        self.output(u'日均手续费：\t%s' % formatNumber(result['dailyCommission']))
-        self.output(u'日均滑点：\t%s' % formatNumber(result['dailySlippage']))
-        self.output(u'日均成交笔数：\t%s' % formatNumber(result['dailyTradeCount']))
-
-        self.output(u'日均收益率：\t%s%%' % formatNumber(result['dailyReturn']))
-        self.output(u'收益标准差：\t%s%%' % formatNumber(result['returnStd']))
-        self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
-
-        # 绘图
-        fig = plt.figure(figsize=(10, 16))
-
-        pBalance = plt.subplot(4, 1, 1)
-        pBalance.set_title('Balance')
-        plt.plot(timeseries['date'], timeseries['balance'])
-
-        pDrawdown = plt.subplot(4, 1, 2)
-        pDrawdown.set_title('Drawdown')
-        pDrawdown.fill_between(range(len(timeseries['drawdown'])), timeseries['drawdown'])
-
-        pPnl = plt.subplot(4, 1, 3)
-        pPnl.set_title('Daily Pnl')
-        plt.bar(range(len(timeseries['drawdown'])), timeseries['netPnl'])
-
-        pKDE = plt.subplot(4, 1, 4)
-        pKDE.set_title('Daily Pnl Distribution')
-        plt.hist(timeseries['netPnl'], bins=50)
-
-        plt.show()
 
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
         """记录交易数据（由portfolio调用）"""
-
         pass
 
-    #----------------------------------------------------------------------
-    def output(self, content):
-        """输出信息"""
-        print(content)
-
-    #----------------------------------------------------------------------
-    def show_result_key(self):
-        """返回回测信息"""
-        timeseries, result = self.calculateResult()
-
-        # 输出统计结果
-        self.output('-' * 30)
-        # self.output(u'首个交易日：\t%s' % result['startDate'])
-        # self.output(u'最后交易日：\t%s' % result['endDate'])
-
-        # self.output(u'起始资金：\t%s' % self.portfolio.portfolioValue)
-        # self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
-
-        self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
-        # self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
-        # self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))
-        self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))
-
-        # self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
-        # self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
-        self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
-
-        self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
-
-        return result
-
-    #----------------------------------------------------------------------
-    def getTradeData(self, vtSymbol=''):
-        """获取交易数据"""
-        tradeList = []
-
-        for l in self.tradeDict.values():
-            for trade in l:
-                if not vtSymbol:
-                    tradeList.append(trade)
-                elif trade.vtSymbol == vtSymbol:
-                    tradeList.append(trade)
-
-        return tradeList
-
-#----------------------------------------------------------------------
-def formatNumber(n):
-    """格式化数字到字符串"""
-    rn = round(n, 2)        # 保留两位小数
-    return format(rn, ',')  # 加上千分符
-
-def run_once(PortfolioClass,symbol,start_date,end_date,signal_param,minx):
+########################################################################################
+def run_once(PortfolioClass,symbol,start_date,end_date,signal_param, minx_s, minx_l):
     # 创建回测引擎对象
-    e = BacktestingEngine([symbol], minx)
+    e = BacktestingEngine([symbol], minx_s, minx_l)
     e.setPeriod(start_date, end_date)
     e.loadData()
     e.loadPortfolio(PortfolioClass, signal_param)
     e.runBacktesting()
-    return e.show_result_key()
 
-def test_one(PortfolioClass, minx):
-    # vtSymbol = 'CF001'
-    # start_date = '20191014 21:00:00'
-    # end_date   = '20191018 15:00:00'
+    bt_r = Backtest_Result(e.portfolio)
+    return bt_r.show_result_key()
 
-    # vtSymbol = 'rb1901'
-    # start_date = '20180515 00:00:00'
-    # end_date   = '20181231 00:00:00'
+def test_one(PortfolioClass, minx_s, minx_l):
+    vtSymbol = 'CF'
 
-    vtSymbol = 'CF901'
-    vtSymbol = 'rb1901'
-    start_date = '20180119 00:00:00'
-    end_date   = '20181231 00:00:00'
+    start_date = '20190109 00:00:00'
+    #start_date = '20180609 00:00:00'
+    end_date   = '20191231 00:00:00'
 
     #signal_param = {vtSymbol:{'trailingPercent':0.6, 'victoryPercent':0.3}}
     signal_param = {}
-    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
+    run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx_s, minx_l)
 
 if __name__ == '__main__':
-    # PortfolioClass = Fut_AtrRsiPortfolio
-    # PortfolioClass = Fut_TurtlePortfolio
-    # PortfolioClass = Fut_AberrationPortfolio
-    # PortfolioClass = Fut_RsiBollPortfolio
-    # PortfolioClass = Fut_DonchianPortfolio
-    PortfolioClass = Fut_CciBollPortfolio
+    PortfolioClass = Fut_DualBandPortfolio
 
-    minx = 'min15'
-    #minx = 'min5'
+    minx_s = 'min30'
+    minx_l = 'day'
 
-    test_one(PortfolioClass, minx)
+    test_one(PortfolioClass, minx_s, minx_l)

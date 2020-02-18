@@ -148,7 +148,7 @@ class Fut_CciBollSignal_Duo(Signal):
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
             df = df.sort_values(by='datetime')
             df = df.reset_index()
@@ -183,9 +183,9 @@ class Fut_CciBollSignal_Duo(Signal):
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
-            df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+            df.to_csv(filename, index=False, mode='a', header=False)
         else:
-            df.to_csv(filename, index=False, sep='$')
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def open(self, price, change):
@@ -364,7 +364,7 @@ class Fut_CciBollSignal_Kong(Signal):
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
             df = df.sort_values(by='datetime')
             df = df.reset_index()
@@ -399,9 +399,9 @@ class Fut_CciBollSignal_Kong(Signal):
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/cciboll/signal_cciboll_'+self.type+'_var_' + pz + '.csv'
         if os.path.exists(filename):
-            df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+            df.to_csv(filename, index=False, mode='a', header=False)
         else:
-            df.to_csv(filename, index=False, sep='$')
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def open(self, price, change):

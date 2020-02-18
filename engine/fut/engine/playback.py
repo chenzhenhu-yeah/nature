@@ -27,6 +27,7 @@ from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfol
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
+from nature import Fut_IcPortfolio
 
 #from ipdb import set_trace
 
@@ -87,15 +88,15 @@ class FutEngine(object):
             dali_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
-        # if 'symbols_dalicta' in setting:
-        #     symbols = setting['symbols_dalicta']
-        #     dalicta_symbol_list = symbols.split(',')
-        #     self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
+        if 'symbols_dalicta' in setting:
+            symbols = setting['symbols_dalicta']
+            dalicta_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        # if 'symbols_atrrsi' in setting:
-        #     symbols = setting['symbols_atrrsi']
-        #     atrrsi_symbol_list = symbols.split(',')
-        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        if 'symbols_atrrsi' in setting:
+            symbols = setting['symbols_atrrsi']
+            atrrsi_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
@@ -116,6 +117,18 @@ class FutEngine(object):
             symbols = setting['symbols_cci_raw']
             cci_raw_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
+
+        if 'symbols_ic' in setting:
+            symbols = setting['symbols_ic']
+            ic_symbol_list = symbols.split(',')
+
+            fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
+                        self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
+
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -221,30 +234,28 @@ class FutEngine(object):
         assert minx != 'min1'
 
         r = []
-
         # 直接读取signal对应minx相关的文件。
-        fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
-        #print(fname)
-        df = pd.read_csv(fname)
-        df['datetime'] = df['date'] + ' ' + df['time']
-        df = df[df.datetime < self.startDt]
-        print(vtSymbol, len(df), minx)
-        assert len(df) >= initBars
+        fn = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            df['datetime'] = df['date'] + ' ' + df['time']
+            df = df[df.datetime < self.startDt]
+            print(vtSymbol, len(df), minx)
+            assert len(df) >= initBars
 
-        df = df.sort_values(by=['date','time'])
-        df = df.iloc[-initBars:]
-        # print(df)
+            df = df.sort_values(by=['date','time'])
+            df = df.iloc[-initBars:]
+            # print(df)
 
-        for i, row in df.iterrows():
-            d = dict(row)
-            #print(d)
-            # print(type(d))
-            bar = VtBarData()
-            bar.__dict__ = d
-            #print(bar.__dict__)
-            r.append(bar)
+            for i, row in df.iterrows():
+                d = dict(row)
+                #print(d)
+                # print(type(d))
+                bar = VtBarData()
+                bar.__dict__ = d
+                #print(bar.__dict__)
+                r.append(bar)
 
-        #print(r)
         return r
 
     #----------------------------------------------------------------------

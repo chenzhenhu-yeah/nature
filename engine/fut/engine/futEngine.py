@@ -27,7 +27,7 @@ from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfol
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
-
+from nature import Fut_IcPortfolio
 
 #from ipdb import set_trace
 
@@ -86,10 +86,10 @@ class FutEngine(object):
             dalicta_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        # if 'symbols_atrrsi' in setting:
-        #     symbols = setting['symbols_atrrsi']
-        #     atrrsi_symbol_list = symbols.split(',')
-        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        if 'symbols_atrrsi' in setting:
+            symbols = setting['symbols_atrrsi']
+            atrrsi_symbol_list = symbols.split(',')
+            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
@@ -110,6 +110,17 @@ class FutEngine(object):
             symbols = setting['symbols_cci_raw']
             cci_raw_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
+
+        if 'symbols_ic' in setting:
+            symbols = setting['symbols_ic']
+            ic_symbol_list = symbols.split(',')
+
+            fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
+                        self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

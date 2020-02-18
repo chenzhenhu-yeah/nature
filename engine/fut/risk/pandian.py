@@ -27,7 +27,6 @@ def pandian_dali(today):
     # 读取value_dali文件
     fn_value = dss +  'fut/engine/value_dali.csv'
     if os.path.exists(fn_value):
-        #df_value = pd.read_csv(fn_value, sep='$')
         df_value = pd.read_csv(fn_value)
     else:
         return
@@ -59,7 +58,7 @@ def pandian_dali(today):
         # 更新该品种的最新数据
         fn_signal = dss +  'fut/engine/dali/signal_dali_' +'multi'+ '_var_' + pz + '.csv'
         if os.path.exists(fn_signal):
-            df = pd.read_csv(fn_signal, sep='$')
+            df = pd.read_csv(fn_signal)
             df = df[df.vtSymbol == symbol]
             rec = df.iloc[-1,:]
             # print(rec)
@@ -89,7 +88,6 @@ def pandian_p(today):
     # 读取value_p文件
     fn_value = get_dss() +  'fut/engine/value_p.csv'
     if os.path.exists(fn_value):
-        #df_value = pd.read_csv(fn_value, sep='$')
         df_value = pd.read_csv(fn_value)
         #print(df_value)
     else:
@@ -116,7 +114,7 @@ def pandian_p(today):
         fn = get_dss() +  'fut/engine/' + p + '/portfolio_' + p + '_var.csv'
         #fn = get_dss() +  'fut/engine/rsiboll/portfolio_rsiboll_var.csv'
         if os.path.exists(fn):
-            df = pd.read_csv(fn, sep='$')
+            df = pd.read_csv(fn)
             rec = df.iloc[-1,:]
             cur_value = rec.portfolioValue
             year_ratio= round(100*(cur_value/newyear_value-1), 2)

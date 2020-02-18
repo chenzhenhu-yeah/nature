@@ -14,7 +14,7 @@ from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, to_log, g
 import json
 import tushare as ts
 
-def duo_adjust(a1):
+def disperse_duo(a1):
     duo_list = [212,33,55.6]
     n = len(duo_list)
     A = sum(duo_list)
@@ -29,7 +29,7 @@ def duo_adjust(a1):
     print(r)
 
 
-def kong_adjust(b1):
+def disperse_kong(b1):
     kong_list = [212]
     n = len(kong_list)
     B = sum(kong_list)
@@ -43,9 +43,75 @@ def kong_adjust(b1):
         r.append(bi)
     print(r)
 
+###################################################################################
+
+def gather_duo():
+    gap = 20
+    num = 3
+    duo_list = [212,33,55.6,72,98]
+    duo_list = sorted(duo_list)
+    n = len(duo_list)
+    A = sum(duo_list)
+    assert n > num
+    print(duo_list)
+    print(A)
+
+    r = []
+    for i in range(num):
+        a = duo_list[0] + i*gap
+        r.append(a)
+
+
+    A_part = sum(r)
+    A = A - A_part
+    n = n - num
+    avg = int(A/n)
+    a1 = r[-1] + gap*3
+    gap = avg - a1
+    for i in range(n-1):
+        a = a1 + i*gap
+        r.append(a)
+    r.append(sum(duo_list)-sum(r))
+    print(r)
+    print(sum(r))
+
+
+def gather_kong():
+    gap = 5
+    num = 3
+    kong_list = [2634.0, 2622.0, 2610.0, 2598.0, 2583.0]
+    kong_list = sorted(kong_list, reverse=True)
+    n = len(kong_list)
+    A = sum(kong_list)
+    assert n > num
+    print(kong_list)
+    print(A)
+
+    r = []
+    for i in range(num):
+        a = kong_list[0] - i*gap
+        r.append(a)
+
+
+    A_part = sum(r)
+    A = A - A_part
+    n = n - num
+    avg = int(A/n)
+    a1 = r[-1] - gap*3
+    gap = avg - a1
+    for i in range(n-1):
+        a = a1 - i*gap
+        r.append(a)
+    r.append(sum(kong_list)-sum(r))
+    print(r)
+    print(sum(r))
+
+
+###################################################################################
+
 if __name__ == '__main__':
-    # a1 = 30
-    # duo_adjust(a1)
-    #pass
-    b1 = 200
-    kong_adjust(b1)
+    pass
+
+    # kong_adjust(200)
+    # gather_duo()
+    gather_kong()

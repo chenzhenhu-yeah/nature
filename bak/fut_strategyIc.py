@@ -7,7 +7,7 @@ from collections import OrderedDict, defaultdict
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
-from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
+from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
 
 ########################################################################
@@ -66,7 +66,7 @@ class Fut_IcSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
 
-        self.portfolio.got_dict[self.vtSymbol] = True
+        self.portfolio.got_dict[self.vtSymbol] == True
 
         if '_' in self.vtSymbol:
             # 此处对价差进行分析，产生交易信号
@@ -79,7 +79,7 @@ class Fut_IcSignal(Signal):
 
         r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short]]
         df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/ic/bar_ic_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -118,35 +118,27 @@ class Fut_IcPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'ic'
-
-        assert len(symbol_list) == 2
-        self.symbol_g = symbol_list[0]
-        self.symbol_d = symbol_list[1]
-        self.dual_name = self.symbol_g + '_' + self.symbol_d
-        symbol_list.append(self.dual_name)
-        self.direction_g = 'direction_g'
-        self.num_g = 0
-        self.direction_d = 'direction_d'
-        self.num_d = 0
         self.got_dict = {}
-        self.got_dict[self.symbol_g] = False
-        self.got_dict[self.symbol_d] = False
+        self.dual_dict = {}
 
         df = self.load_param()
         if df is not None:
             for i, row in df.iterrows():
                 if row.symbol_g in symbol_list and row.symbol_d in symbol_list:
-                    self.direction_g = row.symbol_g
-                    self.num_g = row.direction_g
-                    self.direction_d = row.num_g
-                    self.num_d = row.num_d
+                    symbol_list.append(row.symbol_dual)
+                    self.dual_dict[row.symbol_dual] = { 'symbol_g':row.symbol_g,
+                                                        'direction_g':row.direction_g,
+                                                        'num_g':row.num_g,
+                                                        'symbol_d':row.symbol_d,
+                                                        'direction_d':row.direction_d,
+                                                        'num_d':row.num_d,
+                                                      }
+            # 将品种对加入symbol_list
+            symbol_list += self.dual_dict.keys()
+
 
         Portfolio.__init__(self, Fut_IcSignal, engine, symbol_list, signal_param)
-
-        self.name_second = 'ic_' + self.dual_name
-
-        # print(symbol_list, self.dual_name)
-
+        #Portfolio.__init__(self, Fut_IcSignal, engine, symbol_list, {}, Fut_IcSignal, {})
 
     #----------------------------------------------------------------------
     def load_param(self):
@@ -178,63 +170,47 @@ class Fut_IcPortfolio(Portfolio):
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:
             signal.onBar(bar, minx)
-            # print(bar.vtSymbol, bar.time)
 
         """
         在此实现P层的业务控制逻辑
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
+        for dual in self.dual_dict.keys():
+            if dual_dict[dual].symbol_g in self.got_dict and dual_dict[dual].symbol_d in self.got_dict:
+                if self.got_dict[dual_dict[dual].symbol_g] == True and self.got_dict[dual_dict[dual].symbol_d] == True:
+                    # 将bar推送给signal
+                    for signal in self.signalDict[dual]:
+                        for s_g in self.signalDict[dual_dict[dual].symbol_g]:
+                            price_g = s_g.bar.close
+                        for s_d in self.signalDict[dual_dict[dual].symbol_d]:
+                            price_d = s_d.bar.close
+
+                        price_gap = price_g - price_d
+                        bar_dual = VtBarData()
+                        bar_dual.open = price_gap
+                        bar_dual.high = price_gap
+                        bar_dual.low = price_gap
+                        bar_dual.close = price_gap
+                        bar_dual.date = self.bar.date
+                        bar_dual.time = self.bar.time
+
+                        signal.onBar(bar, minx)
 
 
-        if self.got_dict[self.symbol_g] == True and self.got_dict[self.symbol_d] == True:
-            for signal in self.signalDict[self.dual_name]:
-                for s_g in self.signalDict[self.symbol_g]:
-                    price_g = s_g.bar.close
-                for s_d in self.signalDict[self.symbol_d]:
-                    price_d = s_d.bar.close
-
-                price_gap = price_g - price_d
-                bar_dual = VtBarData()
-                bar_dual.vtSymbol = self.dual_name
-                bar_dual.open = price_gap
-                bar_dual.high = price_gap
-                bar_dual.low = price_gap
-                bar_dual.close = price_gap
-                bar_dual.date = bar.date
-                bar_dual.time = bar.time
-                bar_dual.datetime = bar.date + ' ' + bar.time
-
-                # 将bar推送给signal
-                signal.onBar(bar_dual, minx)
-                self.result.updateBar(bar_dual)
-
-                # print(bar_dual.vtSymbol, bar_dual.datetime )
-
-            self.got_dict[self.symbol_g] = False
-            self.got_dict[self.symbol_d] = False
-
+                    self.got_dict[dual.symbol_g] == False
+                    self.got_dict[dual.symbol_d] == False
 
         self.result.updateBar(bar)
         self.result.updatePos(self.posDict)
 
 
     #----------------------------------------------------------------------
-    def _bc_dual_signal(self, direction, offset, volume_g, volume_d):
-        for signal in self.signalDict[self.symbol_g]:
-            signal_g = signal
-        for signal in self.signalDict[self.symbol_d]:
-            signal_d = signal
+    def _bc_dual_signal(self, ) :
+        pass
 
-        if direction == DIRECTION_LONG and offset == OFFSET_OPEN:
-            signal_g.buy(signal_g.bar.close, volume_g)
-            signal_d.short(signal_d.bar.close, volume_d)
-        if direction == DIRECTION_SHORT and offset == OFFSET_OPEN:
-            signal_g.short(signal_g.bar.close, volume_g)
-            signal_d.buy(signal_d.bar.close, volume_d)
-        if direction == DIRECTION_LONG and offset == OFFSET_CLOSE:
-            signal_g.cover(signal_g.bar.close, volume_g)
-            signal_d.sell(signal_d.bar.close, volume_d)
-        if direction == DIRECTION_SHORT and offset == OFFSET_CLOSE:
-            signal_g.sell(signal_g.bar.close, volume_g)
-            signal_d.cover(signal_d.bar.close, volume_d)
+
+
+
+
+        

@@ -8,7 +8,7 @@ import tushare as ts
 import json
 import os
 
-from nature import read_log_today, a_file, get_dss, draw_web
+from nature import read_log_today, a_file, get_dss, draw_web, get_symbols_quote
 
 def del_blank(c):
     s = str(c).strip()
@@ -40,10 +40,7 @@ def fut():
     r_t.append( list(row) )
 
     filename = get_dss() + 'fut/engine/engine_deal.csv'
-    if 'var' in filename:
-        df = pd.read_csv(filename, sep='$', dtype='str')
-    else:
-        df = pd.read_csv(filename, dtype='str')
+    df = pd.read_csv(filename, dtype='str')
     r = []
     for i, row in df.iterrows():
         r.append( list(row) )
@@ -60,11 +57,7 @@ def fut_csv():
 @app.route('/show_fut_csv', methods=['post'])
 def show_fut_csv():
     filename = get_dss() + request.form.get('filename')
-    if 'var' in filename:
-        df = pd.read_csv(filename, sep='$', dtype='str')
-    else:
-        #df = pd.read_csv(filename, sep=',', dtype='str')
-        df = pd.read_csv(filename, dtype='str')
+    df = pd.read_csv(filename, dtype='str')
 
     r = []
     for i, row in df.iterrows():
@@ -87,7 +80,7 @@ def check_symbols_p(key, value):
             else:
                 r = 'day_' + symbol + '.csv 记录数不足30'
 
-    if key == 'symbols_dalicta':
+    if key in ['symbols_dalicta', 'symbols_dualband']:
         symbol_list = value.split(',')
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
@@ -166,10 +159,21 @@ def check_symbols_p(key, value):
                 else:
                     r = pz + '未在trade_time中维护'
 
+    if key not in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12','symbols_trade','gateway_pz','gateway_pf']:
+        config = open(get_dss() + 'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols_trade']
+        symbols_trade_list = symbols.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+            for symbol in symbol_list:
+                if symbol not in  symbols_trade_list:
+                    r = symbol + ' 未在symbols_trade中维护'
 
     symbols_all = ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12',
                    'symbols_trade','gateway_pz','gateway_pf','symbols_owl','symbols_cci_raw','symbols_aberration_enhance',
                    'symbols_cciboll','symbols_dali','symbols_rsiboll','symbols_atrrsi','symbols_turtle','symbols_dalicta',
+                   'symbols_dualband','symbols_ic','symbols_ma',
                   ]
     if key not in symbols_all:
         r = '新symbols，未在web端进行风控'
@@ -309,21 +313,21 @@ def fut_signal_pause():
         cols = ['signal','symbols']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, sep='$',  mode='a', header=False, index=False)
+            df.to_csv(filename, mode='a', header=False, index=False)
         if kind == 'del':
-            df = pd.read_csv(filename, sep='$',  dtype='str')
+            df = pd.read_csv(filename, dtype='str')
             df = df[df.signal != signal ]
-            df.to_csv(filename, sep='$',  index=False)
+            df.to_csv(filename, index=False)
         if kind == 'alter':
             # 删
-            df = pd.read_csv(filename, sep='$',  dtype='str')
+            df = pd.read_csv(filename, dtype='str')
             df = df[df.signal != signal ]
-            df.to_csv(filename, sep='$',  index=False)
+            df.to_csv(filename, index=False)
             # 增
             df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, sep='$', mode='a', header=False, index=False)
+            df.to_csv(filename, mode='a', header=False, index=False)
 
-    df = pd.read_csv(filename, sep='$', dtype='str')
+    df = pd.read_csv(filename, dtype='str')
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
@@ -464,6 +468,58 @@ def bar_ma_ru():
     symbol = 'ru2009'
     draw_web.bar_ma_ru(symbol)
     fn = 'bar_ma_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_day_CF', methods=['get','post'])
+def resid_day_CF():
+    symbol = 'CF009'
+    draw_web.resid_day_CF(symbol)
+    fn = 'resid_day_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/resid_min30_CF', methods=['get','post'])
+def resid_min30_CF():
+    symbol = 'CF005'
+    draw_web.resid_min30_CF(symbol)
+    fn = 'resid_min30_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/resid_day_m', methods=['get','post'])
+def resid_day_m():
+    symbol = 'm2009'
+    draw_web.resid_day_m(symbol)
+    fn = 'resid_day_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_min30_m', methods=['get','post'])
+def resid_min30_m():
+    symbol = 'm2005'
+    draw_web.resid_min30_m(symbol)
+    fn = 'resid_min30_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_day_ru', methods=['get','post'])
+def resid_day_ru():
+    symbol = 'ru2009'
+    draw_web.resid_day_ru(symbol)
+    fn = 'resid_day_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_min30_ru', methods=['get','post'])
+def resid_min30_ru():
+    symbol = 'ru2009'
+    draw_web.resid_min30_ru(symbol)
+    fn = 'resid_min30_ru.html'
     time.sleep(1)
     return app.send_static_file(fn)
 

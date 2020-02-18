@@ -19,11 +19,11 @@ class Fut_Cci_RawSignal_Duo(Signal):
         self.type = 'duo'
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 100           # 初始化数据所用的天数
+        self.initBars = 80           # 初始化数据所用的天数
         self.minx = 'day'
 
         # 策略参数
-        self.cciWindow = 100                      # CCI窗口数
+        self.cciWindow = 80                      # CCI窗口数
         self.atrWindow = 10
         self.slMultiplier = 1.5                  # CF
         self.hard_stop_ratio = 0.01
@@ -181,11 +181,11 @@ class Fut_Cci_RawSignal_Kong(Signal):
         self.type = 'kong'
 
         self.fixedSize = 1           # 每次交易的数量
-        self.initBars = 100           # 初始化数据所用的天数
+        self.initBars = 80           # 初始化数据所用的天数
         self.minx = 'day'
 
         # 策略参数
-        self.cciWindow = 100                      # CCI窗口数
+        self.cciWindow = 80                      # CCI窗口数
         self.atrWindow = 10
         self.slMultiplier = 1.5                  # CF
         self.hard_stop_ratio = 0.01

@@ -114,7 +114,7 @@ class Fut_AberrationSignal_Duo(Signal):
     def load_var(self):
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
             if len(df) > 0:
                 rec = df.iloc[-1,:]            # 取最近日期的记录
@@ -138,7 +138,7 @@ class Fut_AberrationSignal_Duo(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
-        df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+        df.to_csv(filename, index=False, mode='a', header=False)
 
     #----------------------------------------------------------------------
     def open(self, price, change):
@@ -265,7 +265,7 @@ class Fut_AberrationSignal_Kong(Signal):
     def load_var(self):
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
         if os.path.exists(filename):
-            df = pd.read_csv(filename, sep='$')
+            df = pd.read_csv(filename)
             df = df[df.vtSymbol == self.vtSymbol]
             if len(df) > 0:
                 rec = df.iloc[-1,:]            # 取最近日期的记录
@@ -289,7 +289,7 @@ class Fut_AberrationSignal_Kong(Signal):
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         filename = get_dss() +  'fut/check/signal_aberration_'+self.type+'_var.csv'
-        df.to_csv(filename, index=False, sep='$', mode='a', header=False)
+        df.to_csv(filename, index=False, mode='a', header=False)
 
     #----------------------------------------------------------------------
     def open(self, price, change):
