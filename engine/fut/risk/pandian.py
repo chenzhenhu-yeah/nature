@@ -128,7 +128,7 @@ def pandian_p(today):
                 margin += abs(pos_dict[symbol])*close_dict[symbol]*float(c.size)*float(c.margin)
 
             risk = round(100*(margin/cur_value), 2)
-            r.append( [today,p,capital,cur_value,newyear_value,year_ratio,margin,risk,str(close_dict)] )
+            r.append( [today,p,capital,cur_value,newyear_value,year_ratio,margin,risk,str(pos_dict)] )
 
     df = pd.DataFrame(r)
     df.to_csv(fn_value, index=False, mode='a', header=None)
