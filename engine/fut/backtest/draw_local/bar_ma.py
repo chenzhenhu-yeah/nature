@@ -9,7 +9,7 @@ import talib
 
 from nature import get_dss
 
-def gen_kline(df1):
+def gen_kline(df1, vtSymbol):
     dt_list =  list(df1['datetime'])
     #print(dt_list)
     k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
@@ -17,8 +17,8 @@ def gen_kline(df1):
 
     kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
     kline.add_xaxis( list(df1['datetime']) )
-    kline.add_yaxis('日K', k_plot_value)
-    kline.set_global_opts(title_opts=opts.TitleOpts(title='Kline-基本示例'),
+    kline.add_yaxis(vtSymbol, k_plot_value)
+    kline.set_global_opts(title_opts=opts.TitleOpts(title='K线'),
                           datazoom_opts=[opts.DataZoomOpts()],)
                           #xaxis_opts=opts.AxisOpts(type_='time'))
     return kline
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     print(df1.head())
 
 
-    kline = gen_kline(df1)
+    kline = gen_kline(df1, vtSymbol)
     line1  = gen_ma(df1, 10)
     line2  = gen_ma(df1, 30)
     line3  = gen_ma(df1, 60)
@@ -56,5 +56,5 @@ if __name__ == '__main__':
     d = d.overlap(line2)
     d = d.overlap(line3)
 
-    fn = get_dss( )+ 'backtest/render/bar_ma_' + vtSymbol + '.html'
+    fn = get_dss( )+ 'backtest/render/bar_ma.html'
     d.render(fn)

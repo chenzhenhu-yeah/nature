@@ -46,17 +46,13 @@ def gen_kline_two(df1):
 
     return kline
 
-def draw_charts():
-
-    #fn = get_dss() +'backtest/fut/m/' + 'm_01_05.csv'
-    fn = get_dss() +'backtest/fut/m/' + 'day_m.csv'
-    df1 = pd.read_csv(fn)
+def draw_charts(fn1, fn2):
+    df1 = pd.read_csv(fn1)
     df1['datetime'] = df1['date'] + ' ' + df1['time']
     #print(df1.head())
     kline1 = gen_kline_one(df1)
 
-    fn = get_dss() +'backtest/fut/y/' + 'day_y.csv'
-    df2 = pd.read_csv(fn)
+    df2 = pd.read_csv(fn2)
     df2['datetime'] = df2['date'] + ' ' + df2['time']
     #print(df1.head())
     kline2 = gen_kline_two(df2)
@@ -78,8 +74,13 @@ def draw_charts():
             pos_left="3%", pos_right="3%", pos_top="53%", height="39%" ),
     )
 
-    grid_chart.render("brush.html")
-
+    fn = get_dss( ) + 'backtest/render/bar2.html'
+    grid_chart.render(fn)
 
 if __name__ == "__main__":
-    draw_charts()
+    #fn1 = get_dss() +'backtest/fut/m/' + 'm_01_05.csv'
+    fn1 = get_dss() +'backtest/fut/m/' + 'day_m.csv'
+
+    fn2 = get_dss() +'backtest/fut/y/' + 'day_y.csv'
+
+    draw_charts(fn1, fn2)

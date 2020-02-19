@@ -18,9 +18,9 @@ def gen_kline(df1):
     kline.add_xaxis( list(df1['datetime']) )
     kline.add_yaxis('日K', kline_data)
 
-    kline.set_global_opts(title_opts=opts.TitleOpts(title='Kline-基本示例'),
-                          datazoom_opts=[opts.DataZoomOpts(is_show=True,type_="slider",xaxis_index=[0,1,2],range_start=98,range_end=100,),
-                                         opts.DataZoomOpts(is_show=False,type_="inside",xaxis_index=[0,1,2],range_start=98,range_end=100,), ],
+    kline.set_global_opts(title_opts=opts.TitleOpts(title='K线'),
+                          datazoom_opts=[opts.DataZoomOpts(is_show=True,type_="slider",xaxis_index=[0,1,2],range_start=0,range_end=100,),
+                                         opts.DataZoomOpts(is_show=False,type_="inside",xaxis_index=[0,1,2],range_start=0,range_end=100,), ],
                           legend_opts=opts.LegendOpts(is_show=False),
                           yaxis_opts=opts.AxisOpts(is_scale=True,splitarea_opts=opts.SplitAreaOpts(is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)) ),
                           tooltip_opts=opts.TooltipOpts(
@@ -31,32 +31,16 @@ def gen_kline(df1):
                                                         border_color="#ccc",
                                                         textstyle_opts=opts.TextStyleOpts(color="#000"),
                                                         ),
-                          # visualmap_opts=opts.VisualMapOpts(
-                          #                                   is_show=False,
-                          #                                   dimension=2,
-                          #                                   series_index=5,
-                          #                                   is_piecewise=True,
-                          #                                   pieces=[
-                          #                                       {"value": 1, "color": "#ec0000"},
-                          #                                       {"value": -1, "color": "#00da3c"}, ],
-                          #                                  ),
                           axispointer_opts=opts.AxisPointerOpts(
                                                                 is_show=True,
                                                                 link=[{"xAxisIndex": "all"}],
                                                                 label=opts.LabelOpts(background_color="#777"),
                                                                ),
-                          # brush_opts=opts.BrushOpts(
-                          #                             x_axis_index="all",
-                          #                             brush_link="all",
-                          #                             out_of_brush={"colorAlpha": 0.1},
-                          #                             brush_type="lineX",
-                          #                          ),
                       )
 
     return kline
 
 def gen_rsi(df1):
-
     close_list = df1.apply(lambda record: float(record['close']), axis=1).tolist()
     close_list = np.array(close_list)
 
@@ -80,13 +64,10 @@ def gen_rsi(df1):
     line.set_global_opts(
                         # xaxis_opts=opts.AxisOpts(is_show=False),
                         xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(is_show=False),),
+                        legend_opts=opts.LegendOpts(is_show=True,pos_right="50%"),
                         )
     line.set_series_opts(
                         label_opts=opts.LabelOpts(is_show=False),
-                        markline_opts=opts.MarkLineOpts(
-                            #data=[opts.MarkLineItem(y=66),opts.MarkLineItem(y=33),],
-                            data=[opts.MarkLineItem(y=50)],
-                            )
                         )
 
     return line
@@ -108,18 +89,6 @@ def gen_atr(df1):
 
     line = Line()
     line.add_xaxis( xaxis_data=list(df1['datetime']) )
-    # line.add_yaxis( 'atr_1',
-    #                 y_axis=atr_1,
-    #                 xaxis_index=2,
-    #                 yaxis_index=2,
-    #                 label_opts=opts.LabelOpts(is_show=False),
-    #               )
-    # line.add_yaxis( 'atr_10',
-    #                 y_axis=atr_10,
-    #                 xaxis_index=2,
-    #                 yaxis_index=2,
-    #                 label_opts=opts.LabelOpts(is_show=False),
-    #               )
     line.add_yaxis( 'atr_20',
                     y_axis=atr_20,
                     xaxis_index=2,
@@ -134,58 +103,13 @@ def gen_atr(df1):
                   )
     line.set_global_opts(
                         xaxis_opts=opts.AxisOpts(is_show=False),
+                        legend_opts=opts.LegendOpts(is_show=True,pos_right="30%"),
                         )
 
     return line
 
-def gen_poit_one(df2):
-
-    df = df2[(df2.offset=='开') & (df2.direction=='多')]
-    if len(df)>0:
-        dt_list =  list(df['datetime'])
-        price_list = df.apply(lambda record: float(record['price']), axis=1).tolist()
-        price_list = np.array(price_list)
-    else:
-        dt_list = []
-        price_list = []
-
-    c = Scatter()
-    c.add_xaxis(dt_list)
-    c.add_yaxis('', price_list, label_opts=opts.LabelOpts(position='top'))
-    return c
-
-def gen_poit_two(df2):
-    df = df2[(df2.offset=='开') & (df2.direction=='空')]
-    if len(df) > 0:
-        dt_list =  list(df['datetime'])
-        price_list = df.apply(lambda record: float(record['price']), axis=1).tolist()
-        price_list = np.array(price_list)
-    else:
-        dt_list = []
-        price_list = []
-
-    c = Scatter()
-    c.add_xaxis(dt_list)
-    c.add_yaxis('', price_list, label_opts=opts.LabelOpts(position='bottom'))
-    return c
-
-def gen_poit_three(df2):
-    df = df2[df2.offset=='平']
-    if len(df) > 0:
-        dt_list =  list(df['datetime'])
-        price_list = df.apply(lambda record: float(record['price']), axis=1).tolist()
-        price_list = np.array(price_list)
-    else:
-        dt_list = []
-        price_list = []
-
-    c = Scatter()
-    c.add_xaxis(dt_list)
-    c.add_yaxis('', price_list)
-    return c
 
 def draw_charts():
-
     vtSymbol = 'm'
 
     fn = get_dss( )+ 'backtest/fut/m/day_' + vtSymbol + '.csv'
@@ -200,28 +124,29 @@ def draw_charts():
 
     grid_chart = Grid(
         init_opts=opts.InitOpts(
-            width="1000px",
+            width="1500px",
             height="700px",
             animation_opts=opts.AnimationOpts(animation=False),
         )
     )
     grid_chart.add(
         kline,
-        grid_opts=opts.GridOpts(pos_left="10%", pos_right="8%", height="45%"),
+        grid_opts=opts.GridOpts(pos_left="3%", pos_right="8%", height="45%"),
     )
     grid_chart.add(
         line_rsi,
         grid_opts=opts.GridOpts(
-            pos_left="10%", pos_right="8%", pos_top="57%", height="17%" ),
+            pos_left="3%", pos_right="8%", pos_top="57%", height="17%" ),
     )
 
     grid_chart.add(
         line_atr,
         grid_opts=opts.GridOpts(
-            pos_left="10%", pos_right="8%", pos_top="76%", height="17%" ),
+            pos_left="3%", pos_right="8%", pos_top="76%", height="17%" ),
     )
 
-    grid_chart.render("brush.html")
+    fn = get_dss( ) + 'backtest/render/bar_ti_ti.html'
+    grid_chart.render(fn)
 
 
 if __name__ == "__main__":

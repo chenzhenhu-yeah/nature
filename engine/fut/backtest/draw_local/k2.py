@@ -11,8 +11,8 @@ from nature import get_dss
 
 
 def gen_line(df1, s1, price_min, price_max):
-    #df1['datetime'] = df1['date'] + ' ' + df1['time']
-    df1['datetime'] = df1['date']
+    df1['datetime'] = df1['date'] + ' ' + df1['time']
+    # df1['datetime'] = df1['date']
     dt_list1 =  list(df1['datetime'])
     # print( len(dt_list1) )
     # dt_list1 = [s[5:10] for s in dt_list1]
@@ -28,31 +28,36 @@ def gen_line(df1, s1, price_min, price_max):
                            datazoom_opts=[opts.DataZoomOpts(is_show=True,type_="slider",range_start=0,range_end=100,),],
                          )
     line1.add_xaxis( xaxis_data=dt_list1 )
-    line1.add_yaxis( s1, y_axis=close_list1, )
+    line1.add_yaxis( s1,
+                     y_axis=close_list1,
+                     #is_connect_nones=True,
+                   )
     line1.set_series_opts(label_opts=opts.LabelOpts(is_show=False))
 
     return line1
 
 
 if __name__ == '__main__':
-    pz1, s1 = 'RM', 'RM_01'                        # s1价格低
-    pz2, s2 = 'RM', 'RM_05'                        # s2价格高
+    pz1, s1 = 'y', 'y'                        # s1价格低
+    pz2, s2 = 'm', 'm'                        # s2价格高
     price_min, price_max = 1800, 2800              # 价差区间
 
     fn = get_dss() +'backtest/fut/' + pz1 + '/day_' + s1 + '.csv'
     df1 = pd.read_csv(fn)
+    price_min = df1.close.min()
+    price_max = df1.close.max()
 
     fn = get_dss() +'backtest/fut/' + pz2 + '/day_' + s2 + '.csv'
     df2 = pd.read_csv(fn)
-
-    print(df1.head(3))
-    print(df2.head(3))
+    price_min = min( price_min, df2.close.min() )
+    price_max = max( price_max, df2.close.max() )
 
     print(len(df1))
     print(len(df2))
 
-    line1_01 = gen_line(df1, s1, 10000, 20000)
-    line1_05 = gen_line(df2, s2, -600, 600)
-    #line = line1_01.overlap(line1_05)
-    line = line1_05.overlap(line1_01)
-    line.render('html/k2_'+s1+'_'+s2+'.html')
+    line1 = gen_line(df1, s1, price_min, price_max)
+    line2 = gen_line(df2, s2, price_min, price_max)
+    line = line1.overlap(line2)
+
+    fn = get_dss( ) + 'backtest/render/k2.html'
+    line.render(fn)

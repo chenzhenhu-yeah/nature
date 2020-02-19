@@ -330,10 +330,10 @@ class Fut_CciBollSignal_Kong(Signal):
         #if boll_condition:
             self.can_short = True
 
-        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.cciValue,self.atrValue,boll_condition, cci_condition]]
-        # df = pd.DataFrame(r)
-        # filename = get_dss() +  'fut/engine/cciboll/bar_cciboll_kong_' + self.vtSymbol + '.csv'
-        # df.to_csv(filename, index=False, mode='a', header=False)
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.cciValue,self.atrValue,self.slMultiplier,boll_condition, cci_condition,self.intraTradeLow,self.stop]]
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/engine/cciboll/bar_cciboll_kong_' + self.vtSymbol + '.csv'
+        df.to_csv(filename, index=False, mode='a', header=False)
 
 
     #----------------------------------------------------------------------

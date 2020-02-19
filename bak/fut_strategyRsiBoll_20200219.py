@@ -18,48 +18,69 @@ class Fut_RsiBollSignal_Duo(Signal):
         self.type = 'duo'
 
         # 策略参数
+        self.rsiLength = 5           # 计算RSI的窗口数
+        self.rsiEntry = 16           # RSI的开仓信号
+        self.trailingPercent = 0.7   # 百分比移动止损
+        self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
+
         self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min5'
-
-        self.bollWindow = 60
-        self.bollDev = 3
-        self.atrValue = None
-        self.atrWindow = 10
-        self.slMultiplier = 1.5                  # CF
-        self.hard_stop_ratio = 0.001
+        # 初始化RSI入场阈值
+        self.rsiBuy = 50 + self.rsiEntry
+        self.rsiSell = 50 - self.rsiEntry
 
         # 策略临时变量
+        self.atr_short = 0
+        self.atr_mid = 0
+        self.atr_long = 0
+
+        self.rsi_value = 0                        # RSI指标的数值
+        self.rsi_ma = 0
         self.can_buy = False
         self.can_short = False
 
         self.bollUp = 0
         self.bollDown = 0
 
+        self.gap = 100
+        self.dida = 0
+
         # 需要持久化保存的变量
         self.cost = 0
         self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
-        self.intraTradeLow = 100E4
+        self.intraTradeLow = 0                   # 持仓期内的最低点
         self.stop = 0                            # 多头止损
-        self.hard_stop = 0                       # 硬止损
-        self.dida = 0
 
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_rsiboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
+                self.rsiLength = rec.rsiLength
+                self.trailingPercent = rec.trailingPercent
+                self.victoryPercent = rec.victoryPercent
+                #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'atrMaLength' in param_dict:
             self.atrMaLength = param_dict['atrMaLength']
             #print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
+        if 'rsiLength' in param_dict:
+            self.rsiLength = param_dict['rsiLength']
+            #print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
+        if 'trailingPercent' in param_dict:
+            self.trailingPercent = param_dict['trailingPercent']
+            #print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
+        if 'victoryPercent' in param_dict:
+            self.victoryPercent = param_dict['victoryPercent']
+            #print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -72,10 +93,28 @@ class Fut_RsiBollSignal_Duo(Signal):
         if minx == self.minx:
             self.on_bar_minx(bar)
 
+        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
+
+
     def on_bar_min1(self, bar):
         if bar.time in ['09:01:00','21:01:00']:
-            if bar.open - self.am.closeArray[-1] > 100:
+            if abs( bar.open - self.am.closeArray[-1] ) > self.gap:
                 self.paused = True
+
+        # 持有多头仓位
+        if self.unit > 0:
+            if bar.close <= self.stop:
+                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
+
+        # 持有空头仓位
+        elif self.unit < 0:
+            if bar.close >= self.stop:
+                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
@@ -89,51 +128,61 @@ class Fut_RsiBollSignal_Duo(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
+        atrArray = self.am.atr(1, array=True)  # 长度为100，有效数据为initBars        # print(len(atrArray));  print(atrArray);  assert False
+        self.atr_short = atrArray[-3:].mean()
+        self.atr_mid = atrArray[-20:].mean()
+        self.atr_long = atrArray[-50:].mean()
+        atr_condition = True if self.atr_short > self.atr_mid else False
 
-        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        self.bollUp, self.bollDown = self.am.boll(60, 3)
         boll_condition = True if self.bar.close > self.bollUp else False
 
+        rsiArray = self.am.rsi(self.rsiLength, array=True)
+        self.rsi_value = rsiArray[-1]
+        self.rsi_ma= rsiArray[-35:].mean()
+        rsi_condition  = True if self.rsi_value > self.rsiBuy and self.rsi_ma < 60 else False
+
         self.can_buy = False
-        if boll_condition:
+        if rsi_condition and boll_condition and atr_condition:
             self.can_buy = True
 
-        atrArray = self.am.atr(1, array=True)
-        self.atrValue = atrArray[-self.atrWindow:].mean()
-
-
-        self.can_sell = False
-        self.intraTradeHigh = max(self.intraTradeHigh, self.bar.close)
-        self.stop = self.intraTradeHigh - self.atrValue * self.slMultiplier
-
-        self.dida += 1
-        if self.bar.close <= self.stop and self.unit > 0 and self.dida > 60:
-            self.can_sell = True
-
-        if self.bar.close <= self.hard_stop and self.unit > 0:
-            self.can_sell = True
-
-
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_sell,self.bollUp,self.bollDown,boll_condition,self.atrValue,self.intraTradeHigh,self.stop,self.hard_stop]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_duo_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_duo_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
 
     # #----------------------------------------------------------------------
     def generateSignal(self, bar):
+
         # 当前无仓位
         if self.unit == 0:
+            self.intraTradeHigh = bar.high
+            self.intraTradeLow = bar.low
+
             if self.can_buy == True and self.paused == False:
-                self.dida = 0
                 self.cost = bar.close
+                self.stop = 0
                 self.intraTradeHigh = bar.close
-                self.hard_stop = (1 - self.hard_stop_ratio) * bar.close
+                self.dida = 0
+
                 self.buy(bar.close, self.fixedSize)
 
         # 持有多头仓位
         elif self.unit > 0:
-            if self.can_sell == True:
-                self.sell(bar.close, abs(self.unit))
+            self.dida += 1
+            # 计算多头持有期内的最高价，以及重置最低价
+            self.intraTradeHigh = max(self.intraTradeHigh, bar.high)
 
+            #self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
+            if self.stop < self.cost:
+                self.stop = max( self.stop, self.intraTradeHigh * (1-self.trailingPercent/100) )
+            else:
+                self.stop = max( self.stop, self.intraTradeHigh * (1-self.victoryPercent/100) )
+
+            if bar.close <= self.stop:
+                self.sell(bar.close, abs(self.unit))
+            elif self.dida >= 15 and bar.close > self.cost and self.stop < self.cost:
+                self.sell(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
     def load_var(self):
@@ -163,15 +212,15 @@ class Fut_RsiBollSignal_Duo(Signal):
     def save_var(self):
         r = []
         if self.result is None:
-            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, self.cost, \
+            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
                    self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    0, 0, 0, 0, 0 ] ]
         else:
-            r = [ [self.portfolio.result.date, self.vtSymbol, self.unit, self.cost, \
+            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, self.cost, \
                    self.intraTradeHigh, self.intraTradeLow, self.stop, self.dida, \
                    1, self.result.unit, self.result.entry, self.result.exit, self.result.pnl ] ]
         df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit','cost', \
-                                      'intraTradeHigh','intraTradeLow', 'stop', 'dida', \
+                                      'intraTradeHigh','intraTradeLow','stop', 'dida', \
                                       'has_result','result_unit','result_entry','result_exit', 'result_pnl'])
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+'_var_' + pz + '.csv'
@@ -179,6 +228,47 @@ class Fut_RsiBollSignal_Duo(Signal):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
             df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        """开仓"""
+        self.unit += change
+
+        if not self.result:
+            self.result = SignalResult()
+        self.result.open(price, change)
+
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0 ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        """平仓"""
+        self.unit = 0
+        self.result.close(price)
+
+        # 本次盈利超150点，暂停策略至收盘
+        if self.result.pnl >= 50+self.gap:
+            self.paused = True
+
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '', '平',  \
+               0, price, self.result.pnl ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+        self.result = None
 
 
 ########################################################################
@@ -189,42 +279,52 @@ class Fut_RsiBollSignal_Kong(Signal):
         self.type = 'kong'
 
         # 策略参数
+        self.rsiLength = 5           # 计算RSI的窗口数
+        self.rsiEntry = 16           # RSI的开仓信号
+        self.trailingPercent = 0.7   # 百分比移动止损
+        self.victoryPercent = 0.3
         self.fixedSize = 1           # 每次交易的数量
+
         self.initBars = 100           # 初始化数据所用的天数
         self.minx = 'min5'
-
-        self.bollWindow = 60
-        self.bollDev = 3
-        self.atrValue = None
-        self.atrWindow = 10
-        self.slMultiplier = 1.5
-        self.hard_stop_ratio = 0.001
+        # 初始化RSI入场阈值
+        self.rsiBuy = 50 + self.rsiEntry
+        self.rsiSell = 50 - self.rsiEntry
 
         # 策略临时变量
+        self.atr_short = 0
+        self.atr_mid = 0
+        self.atr_long = 0
+
+        self.rsi_value = 0                        # RSI指标的数值
+        self.rsi_ma = 0
         self.can_buy = False
         self.can_short = False
 
         self.bollUp = 0
         self.bollDown = 0
+        self.gap = 100
+        self.dida = 0
 
         # 需要持久化保存的变量
         self.cost = 0
-        self.intraTradeHigh = 0                      # 移动止损用的持仓期内最高价
-        self.intraTradeLow = 100E4                   # 持仓期内的最低点
-        self.stop = 0                                # 多头止损
-        self.hard_stop = 100E4                       # 硬止损
-        self.dida = 0
+        self.intraTradeHigh = 0                  # 移动止损用的持仓期内最高价
+        self.intraTradeLow = 0                   # 持仓期内的最低点
+        self.stop = 0                            # 多头止损
 
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
     def load_param(self):
-        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_param.csv'
+        filename = get_dss() +  'fut/cfg/signal_rsiboll_param.csv'
         if os.path.exists(filename):
             df = pd.read_csv(filename)
             df = df[ df.pz == get_contract(self.vtSymbol).pz ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
+                self.rsiLength = rec.rsiLength
+                self.trailingPercent = rec.trailingPercent
+                self.victoryPercent = rec.victoryPercent
                 #print('成功加载策略参数', self.rsiLength, self.trailingPercent, self.victoryPercent)
 
     #----------------------------------------------------------------------
@@ -232,6 +332,15 @@ class Fut_RsiBollSignal_Kong(Signal):
         if 'atrMaLength' in param_dict:
             self.atrMaLength = param_dict['atrMaLength']
             #print('成功设置策略参数 self.atrMaLength: ',self.atrMaLength)
+        if 'rsiLength' in param_dict:
+            self.rsiLength = param_dict['rsiLength']
+            #print('成功设置策略参数 self.rsiLength: ',self.rsiLength)
+        if 'trailingPercent' in param_dict:
+            self.trailingPercent = param_dict['trailingPercent']
+            #print('成功设置策略参数 self.trailingPercent: ',self.trailingPercent)
+        if 'victoryPercent' in param_dict:
+            self.victoryPercent = param_dict['victoryPercent']
+            #print('成功设置策略参数 self.victoryPercent: ',self.victoryPercent)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -244,13 +353,29 @@ class Fut_RsiBollSignal_Kong(Signal):
         if minx == self.minx:
             self.on_bar_minx(bar)
 
+        # r = [[minx,bar.date,bar.time,bar.open,bar.close]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
+
 
     def on_bar_min1(self, bar):
         # 开盘有大缺口，暂停开仓
         if bar.time in ['09:01:00','21:01:00']:
-            if bar.open - self.am.closeArray[-1]  < -100:
+            if abs( bar.open - self.am.closeArray[-1] ) > self.gap:
                 self.paused = True
 
+        # 持有多头仓位
+        if self.unit > 0:
+            if bar.close <= self.stop:
+                # print('平多: ', bar.datetime, self.intraTradeHigh, self.stop, bar.close)
+                self.sell(bar.close, abs(self.unit))
+
+        # 持有空头仓位
+        elif self.unit < 0:
+            if bar.close >= self.stop:
+                # print('平空: ', bar.datetime, self.intraTradeLow, self.stop, bar.close)
+                self.cover(bar.close, abs(self.unit))
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
@@ -264,32 +389,28 @@ class Fut_RsiBollSignal_Kong(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
+        atrArray = self.am.atr(1, array=True)  # 长度为100，有效数据为initBars        # print(len(atrArray));  print(atrArray);  assert False
+        self.atr_short = atrArray[-3:].mean()
+        self.atr_mid = atrArray[-20:].mean()
+        self.atr_long = atrArray[-50:].mean()
+        atr_condition = True if self.atr_short > self.atr_mid else False
 
-        self.bollUp, self.bollDown = self.am.boll(self.bollWindow, self.bollDev)
+        self.bollUp, self.bollDown = self.am.boll(60, 3)
         boll_condition = True if self.bar.close < self.bollDown else False
 
+        rsiArray = self.am.rsi(self.rsiLength, array=True)
+        self.rsi_value = rsiArray[-1]
+        self.rsi_ma= rsiArray[-35:].mean()
+        rsi_condition  = True if self.rsi_value < self.rsiSell and self.rsi_ma > 40 else False
+
         self.can_short = False
-        if boll_condition:
+        if rsi_condition and boll_condition and atr_condition:
             self.can_short = True
 
-        atrArray = self.am.atr(1, array=True)
-        self.atrValue = atrArray[-self.atrWindow:].mean()
-
-        self.can_cover = False
-        self.intraTradeLow = min(self.intraTradeLow, self.bar.close)
-        self.stop = self.intraTradeLow + self.atrValue * self.slMultiplier
-
-        self.dida += 1
-        if self.bar.close >= self.stop and self.unit < 0 and self.dida > 60:
-            self.can_cover = True
-
-        if self.bar.close >= self.hard_stop and self.unit < 0:
-            self.can_cover = True
-
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.can_cover,self.bollUp,self.bollDown,boll_condition,self.atrValue,self.intraTradeHigh,self.stop,self.hard_stop]]
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
-        df.to_csv(filename, index=False, mode='a', header=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.can_short,self.bollUp,self.bollDown,self.rsi_value,self.rsi_ma,self.atr_short,self.atr_mid,rsi_condition, boll_condition, atr_condition]]
+        # df = pd.DataFrame(r)
+        # filename = get_dss() +  'fut/engine/rsiboll/bar_rsiboll_kong_' + self.vtSymbol + '.csv'
+        # df.to_csv(filename, index=False, mode='a', header=False)
 
 
     #----------------------------------------------------------------------
@@ -297,16 +418,31 @@ class Fut_RsiBollSignal_Kong(Signal):
 
         # 当前无仓位
         if self.unit == 0:
+            self.intraTradeHigh = bar.high
+            self.intraTradeLow = bar.low
+
             if self.can_short == True and self.paused == False:
-                self.dida = 0
                 self.cost = bar.close
+                self.stop = 100E4
                 self.intraTradeLow = bar.close
-                self.hard_stop = (1 + self.hard_stop_ratio) * bar.close
+                self.dida = 0
+
                 self.short(bar.close, self.fixedSize)
 
-        # 持有多头仓位
+        # 持有空头仓位
         elif self.unit < 0:
-            if self.can_cover == True:
+            self.dida += 1
+            self.intraTradeLow = min(self.intraTradeLow, bar.low)
+
+            #self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
+            if self.stop > self.cost:
+                self.stop = min( self.stop, self.intraTradeLow * (1+self.trailingPercent/100) )
+            else:
+                self.stop = min( self.stop, self.intraTradeLow * (1+self.victoryPercent/100) )
+
+            if bar.close >= self.stop:
+                self.cover(bar.close, abs(self.unit))
+            elif self.dida >= 15 and bar.close < self.cost and self.stop > self.cost:
                 self.cover(bar.close, abs(self.unit))
 
     #----------------------------------------------------------------------
@@ -354,6 +490,47 @@ class Fut_RsiBollSignal_Kong(Signal):
         else:
             df.to_csv(filename, index=False)
 
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        """开仓"""
+        self.unit += change
+
+        if not self.result:
+            self.result = SignalResult()
+        self.result.open(price, change)
+
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0 ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        """平仓"""
+        self.unit = 0
+        self.result.close(price)
+
+        # 本次盈利超150点，暂停策略至收盘
+        if self.result.pnl >= 50+self.gap:
+            self.paused = True
+
+        r = [ [self.bar.date+' '+self.bar.time, self.vtSymbol, '', '平',  \
+               0, price, self.result.pnl ] ]
+        df = pd.DataFrame(r, columns=['datetime','symbol','direction','offset','volume','price','pnl'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/rsiboll/signal_rsiboll_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+        self.result = None
 
 ########################################################################
 class Fut_RsiBollPortfolio(Portfolio):

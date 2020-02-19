@@ -86,10 +86,10 @@ class FutEngine(object):
             dalicta_symbol_list = symbols.split(',')
             self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
-        if 'symbols_atrrsi' in setting:
-            symbols = setting['symbols_atrrsi']
-            atrrsi_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        # if 'symbols_atrrsi' in setting:
+        #     symbols = setting['symbols_atrrsi']
+        #     atrrsi_symbol_list = symbols.split(',')
+        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
