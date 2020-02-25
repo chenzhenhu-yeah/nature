@@ -71,12 +71,12 @@ class Fut_OwlSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
         r = []
+        self.can_buy = False
+        self.can_sell = False
+        self.can_short = False
+        self.can_cover = False
 
         for row in self.ins_list:
-            self.can_buy = False
-            self.can_sell = False
-            self.can_short = False
-            self.can_cover = False
 
             ins = row[0]
             price = row[1]
@@ -85,10 +85,18 @@ class Fut_OwlSignal(Signal):
 
             if ins == 'up_buy' and self.bar.close >= price:
                 self.can_buy = True
+            elif ins == 'down_buy' and self.bar.close <= price:
+                self.can_buy = True
             elif ins == 'up_sell' and self.bar.close >= price:
                 self.can_sell = True
+            elif ins == 'down_sell' and self.bar.close <= price:
+                self.can_sell = True
+            elif ins == 'up_short' and self.bar.close >= price:
+                self.can_short = True
             elif ins == 'down_short' and self.bar.close <= price:
                 self.can_short = True
+            elif ins == 'up_cover' and self.bar.close >= price:
+                self.can_cover = True
             elif ins == 'down_cover' and self.bar.close <= price:
                 self.can_cover = True
             elif ins == 'up_warn' and self.bar.close >= price:
@@ -135,8 +143,10 @@ class Fut_OwlSignal(Signal):
     #----------------------------------------------------------------------
     def save_var(self):
         filename = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        df = pd.DataFrame(self.ins_list, columns=['ins','price','num'])          
+        df = pd.DataFrame(self.ins_list, columns=['ins','price','num'])
         df.to_csv(filename, index=False)
+
+        print('here in owl.save_var !!!')
 
     #----------------------------------------------------------------------
     def open(self, price, change):

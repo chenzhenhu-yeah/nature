@@ -129,10 +129,15 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
+        try:
+            p = PortfolioClass(self, symbol_list, {})
+            p.daily_open()
+            self.portfolio_list.append(p)
 
-        p = PortfolioClass(self, symbol_list, {})
-        p.daily_open()
-        self.portfolio_list.append(p)
+        except Exception as e:
+            s = traceback.format_exc()
+            to_log(s)
+            to_log('加载投资组合出现异常')
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
@@ -207,20 +212,22 @@ class FutEngine(object):
         #fname = self.dss + 'fut/bar/' + minx + '_' + vtSymbol + '.csv'
         fname = self.dss + 'fut/put/rec/' + minx + '_' + vtSymbol + '.csv'
         #print(fname)
-        df = pd.read_csv(fname)
-        assert len(df) >= initBars
 
-        df = df.sort_values(by=['date','time'])
-        df = df.iloc[-initBars:]
-        #print(df)
+        if os.path.exists(fn):
+            df = pd.read_csv(fname)
+            assert len(df) >= initBars
 
-        for i, row in df.iterrows():
-            d = dict(row)
-            # print(d)
-            # print(type(d))
-            bar = VtBarData()
-            bar.__dict__ = d
-            r.append(bar)
+            df = df.sort_values(by=['date','time'])
+            df = df.iloc[-initBars:]
+            #print(df)
+
+            for i, row in df.iterrows():
+                d = dict(row)
+                # print(d)
+                # print(type(d))
+                bar = VtBarData()
+                bar.__dict__ = d
+                r.append(bar)
 
         return r
 
@@ -321,7 +328,7 @@ def start():
     schedule.every().monday.at("20:56").do(e.worker_open)
     schedule.every().tuesday.at("02:33").do(e.worker_close)
 
-    schedule.every().tuesday.at("08:56").do(e.worker_open)
+    schedule.every().tuesday.at("08:06").do(e.worker_open)
     schedule.every().tuesday.at("15:03").do(e.worker_close)
     schedule.every().tuesday.at("20:56").do(e.worker_open)
     schedule.every().wednesday.at("02:33").do(e.worker_close)
