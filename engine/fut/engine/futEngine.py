@@ -213,7 +213,7 @@ class FutEngine(object):
         fname = self.dss + 'fut/put/rec/' + minx + '_' + vtSymbol + '.csv'
         #print(fname)
 
-        if os.path.exists(fn):
+        if os.path.exists(fname):
             df = pd.read_csv(fname)
             assert len(df) >= initBars
 
