@@ -356,7 +356,7 @@ def start():
         time.sleep(10)
 
 if __name__ == '__main__':
-    start()
+    start() 
 
     # engine5 = FutEngine()
     # engine5.worker_open()
