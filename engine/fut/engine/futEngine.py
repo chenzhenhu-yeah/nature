@@ -52,6 +52,7 @@ class FutEngine(object):
         # 开启bar监听服务
         #threading.Thread( target=self.bar_service, args=() ).start()
         threading.Thread( target=self.put_service, args=() ).start()
+        threading.Thread( target=self.traded_service, args=() ).start()
 
     #----------------------------------------------------------------------
     def init_daily(self):
@@ -68,53 +69,82 @@ class FutEngine(object):
 
         if 'symbols_rsiboll' in setting:
             symbols = setting['symbols_rsiboll']
-            rsiboll_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                rsiboll_symbol_list = symbols.split(',')
+            else:
+                rsiboll_symbol_list = []
             self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
-        if 'symbols_cciboll' in setting:
-            symbols = setting['symbols_cciboll']
-            cciboll_symbol_list = symbols.split(',')
-            self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
+        # if 'symbols_cciboll' in setting:
+        #     symbols = setting['symbols_cciboll']
+        #     if len(symbols) > 0:
+        #         cciboll_symbol_list = symbols.split(',')
+        #     else:
+        #         cciboll_symbol_list = []
+        #     self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
         if 'symbols_dali' in setting:
             symbols = setting['symbols_dali']
-            dali_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                dali_symbol_list = symbols.split(',')
+            else:
+                dali_symbol_list = []
             self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
         if 'symbols_dalicta' in setting:
             symbols = setting['symbols_dalicta']
-            dalicta_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                dalicta_symbol_list = symbols.split(',')
+            else:
+                dalicta_symbol_list = []
             self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
 
         # if 'symbols_atrrsi' in setting:
         #     symbols = setting['symbols_atrrsi']
-        #     atrrsi_symbol_list = symbols.split(',')
+        #     if len(symbols) > 0:
+        #         atrrsi_symbol_list = symbols.split(',')
+        #     else:
+        #         atrrsi_symbol_list = []
         #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
-            turtle_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                turtle_symbol_list = symbols.split(',')
+            else:
+                turtle_symbol_list = []
             self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
 
         if 'symbols_owl' in setting:
             symbols = setting['symbols_owl']
-            owl_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                owl_symbol_list = symbols.split(',')
+            else:
+                owl_symbol_list = []
             self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
 
         if 'symbols_aberration_enhance' in setting:
             symbols = setting['symbols_aberration_enhance']
-            aberration_enhance_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                aberration_enhance_symbol_list = symbols.split(',')
+            else:
+                aberration_enhance_symbol_list = []
             self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
 
         if 'symbols_cci_raw' in setting:
             symbols = setting['symbols_cci_raw']
-            cci_raw_symbol_list = symbols.split(',')
+            if len(symbols) > 0:
+                cci_raw_symbol_list = symbols.split(',')
+            else:
+                cci_raw_symbol_list = []
             self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
 
         if 'symbols_ic' in setting:
             symbols = setting['symbols_ic']
-            ic_symbol_list = symbols.split(',')
-
+            if len(symbols) > 0:
+                ic_symbol_list = symbols.split(',')
+            else:
+                ic_symbol_list = []
             fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
             if os.path.exists(fn):
                 df = pd.read_csv(fn)
@@ -138,6 +168,34 @@ class FutEngine(object):
             s = traceback.format_exc()
             to_log(s)
             to_log('加载投资组合出现异常')
+
+    #----------------------------------------------------------------------
+    def traded_service(self):
+        print('成交回报线程开始工作')
+
+        fn_trade = self.dss + 'fut/engine/gateway_trade.csv'
+        df_trade = pd.read_csv(fn_trade)
+        n = len(df_trade)
+        tradeid_list = []
+
+        while True:
+            time.sleep(23)
+            if self.working == True:
+                df_trade = pd.read_csv(fn_trade, skiprows=n)
+                df_trade.columns = ['Direction','ExchangeID','InstrumentID','Offset','OrderID','Price','SysID','TradeID','TradeTime','TradingDay','Volume']
+                # print(df_trade)
+                for i, row in df_trade.iterrows():
+                    n += 1
+                    if row.TradeID in tradeid_list:
+                        continue
+                    else:
+                        print( '分发成交回报，TradeID: '+str(row.TradeID) )
+                        tradeid_list.append(row.TradeID)
+                        for p in self.portfolio_list:
+                            p.on_trade( {'symbol':row.InstrumentID,'direction':row.Direction,'offset':row.Offset,'price':row.Price,'volume':row.Volume} )
+            else:
+                tradeid_list = []
+
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
@@ -273,11 +331,11 @@ class FutEngine(object):
                 self.seq_tm = 'night'
 
             self.init_daily()
+            self.working = True
             time.sleep(600)
             if self.gateway is not None:
                 self.gateway.check_risk()
 
-            self.working = True
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
@@ -356,7 +414,7 @@ def start():
         time.sleep(10)
 
 if __name__ == '__main__':
-    start() 
+    start()
 
     # engine5 = FutEngine()
     # engine5.worker_open()

@@ -153,7 +153,7 @@ class Fut_OwlSignal(Signal):
         pass
 
     #----------------------------------------------------------------------
-    def close(self, price):
+    def close(self, price, change):
         pass
 
 

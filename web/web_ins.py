@@ -69,8 +69,19 @@ def show_fut_csv():
 
 def check_symbols_p(key, value):
     r = ''
+
+    if key == 'gateway_pf':
+        v  = eval(value)
+        # if type(v) != type({}):
+        if isinstance(v, dict) == False:
+            r = '非字典'
+
     if key == 'symbols_aberration_enhance':
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -81,7 +92,11 @@ def check_symbols_p(key, value):
                 r = 'day_' + symbol + '.csv 记录数不足30'
 
     if key in ['symbols_dalicta', 'symbols_dualband']:
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -92,7 +107,11 @@ def check_symbols_p(key, value):
                 r = 'day_' + symbol + '.csv 记录数不足60'
 
     if key == 'symbols_cci_raw':
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -103,7 +122,11 @@ def check_symbols_p(key, value):
                 r = 'day_' + symbol + '.csv 记录数不足100'
 
     if key in ['symbols_dali', 'symbols_owl']:
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -114,7 +137,11 @@ def check_symbols_p(key, value):
                 r = 'min5_' + symbol + '.csv 记录数不足60'
 
     if key in ['symbols_rsiboll', 'symbols_cciboll']:
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/rec/min15_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -125,7 +152,11 @@ def check_symbols_p(key, value):
                 r = 'min15_' + symbol + '.csv 记录数不足100'
 
     if key == 'symbols_trade':
-        symbol_list = value.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
         for symbol in symbol_list:
             fn = get_dss() + 'fut/put/min1_' + symbol + '.csv'
             if os.path.exists(fn):
@@ -187,7 +218,11 @@ def fut_config():
     if request.method == "POST":
         key = del_blank( request.form.get('key') )
         value = del_blank( request.form.get('value') )
-        s = check_symbols_p(key, value)
+        try:
+            s = check_symbols_p(key, value)
+        except:
+            s = '该项设置出错了 ！'
+
         if s != '':
             tips += s
         else:
@@ -405,6 +440,7 @@ def value_p_render():
     df = pd.read_csv(fn)
     df['close'] = df['year_ratio']
     df['symbol'] = df['p']
+    df = df[ df.symbol.isin(['dali','star','opt']) ]
 
     draw_web.value(df)
     time.sleep(1)
@@ -417,6 +453,42 @@ def value_dali_render():
     df = pd.read_csv(fn)
     df['close'] = df['year_ratio']
     df['symbol'] = df['pz']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_m_render', methods=['get','post'])
+def value_dali_m_render():
+    fn = get_dss() + 'fut/engine/value_dali_m.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['name']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_RM_render', methods=['get','post'])
+def value_dali_RM_render():
+    fn = get_dss() + 'fut/engine/value_dali_RM.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['name']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_MA_render', methods=['get','post'])
+def value_dali_MA_render():
+    fn = get_dss() + 'fut/engine/value_dali_MA.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['name']
 
     draw_web.value(df)
     time.sleep(1)
@@ -626,6 +698,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    # app.run(debug=True)
 
     app.run(host='0.0.0.0')

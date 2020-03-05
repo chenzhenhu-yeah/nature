@@ -278,7 +278,7 @@ class Fut_TurtleSignal(Signal):
         df.to_csv(filename, index=False, mode='a', header=False)
 
     #----------------------------------------------------------------------
-    def close(self, price):
+    def close(self, price, change):
         """平仓"""
         self.unit = 0
         self.result.close(price)

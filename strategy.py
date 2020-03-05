@@ -7,7 +7,10 @@ import talib
 import tushare as ts
 from csv import DictReader
 from collections import OrderedDict, defaultdict
-import traceback
+import threading
+
+# import traceback
+
 
 from nature import send_instruction, get_dss, to_log, get_contract
 
@@ -68,6 +71,8 @@ class Signal(object):
         self.result = None              # 当前的交易
         self.unit = 0
         self.paused = False
+        self.order_list = []
+        self.lock = threading.Lock()
 
         # 读取配置文件，看是否已暂停
         filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
@@ -102,6 +107,10 @@ class Signal(object):
         assert False, '子类必须实现此函数'
 
     #----------------------------------------------------------------------
+    def on_trade(self, t):
+        pass
+
+    #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """调用组合中的接口，传递下单指令"""
         self.portfolio._bc_newSignal(self, direction, offset, price, volume)
@@ -109,25 +118,29 @@ class Signal(object):
     #----------------------------------------------------------------------
     def buy(self, price, volume):
         """买入开仓"""
+        self.order_list.append( {'direction': 'Buy', 'offset':'Open', 'price':price, 'volume':abs(volume), 'traded':0} )
         self.open(price, volume)
         self.newSignal(DIRECTION_LONG, OFFSET_OPEN, price, volume)
 
     #----------------------------------------------------------------------
     def sell(self, price, volume):
         """卖出平仓"""
-        self.close(price)
+        self.order_list.append( {'direction': 'Sell', 'offset':'Close', 'price':price, 'volume':abs(volume), 'traded':0} )
+        self.close(price, -volume)
         self.newSignal(DIRECTION_SHORT, OFFSET_CLOSE, price, volume)
 
     #----------------------------------------------------------------------
     def short(self, price, volume):
         """卖出开仓"""
+        self.order_list.append( {'direction': 'Sell', 'offset':'Open', 'price':price, 'volume':abs(volume), 'traded':0} )
         self.open(price, -volume)
         self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, price, volume)
 
     #----------------------------------------------------------------------
     def cover(self, price, volume):
         """买入平仓"""
-        self.close(price)
+        self.order_list.append( {'direction': 'Buy', 'offset':'Close', 'price':price, 'volume':abs(volume), 'traded':0} )
+        self.close(price, volume)
         self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, price, volume)
 
     #----------------------------------------------------------------------
@@ -149,12 +162,12 @@ class Signal(object):
             df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
-    def close(self, price):
-        self.unit = 0
+    def close(self, price, change):
+        self.unit += change
         self.result.close(price)
 
-        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
-               0, price, self.result.pnl, self.vtSymbol] ]
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '平',  \
+               abs(change), price, self.result.pnl, self.vtSymbol] ]
         df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
         pz = str(get_contract(self.vtSymbol).pz)
         filename = get_dss() +  'fut/engine/'+self.portfolio.name+'/signal_'+self.portfolio.name+'_'+self.type+ '_deal_' + pz + '.csv'
@@ -165,6 +178,7 @@ class Signal(object):
 
         self.result = None
 
+        
 ########################################################################
 class Portfolio(object):
     """
@@ -180,12 +194,13 @@ class Portfolio(object):
         self.portfolioValue = 100E4          # 组合市值
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}
-        self.name_second = self.name 
+        self.name_second = self.name
 
         self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
 
         self.vtSymbolList = symbol_list
+
         # 初始化信号字典、持仓字典
         for vtSymbol in self.vtSymbolList:
             self.posDict[vtSymbol] = 0
@@ -270,6 +285,20 @@ class Portfolio(object):
 
         self.result.updateTrade(trade)
         #print('here')
+
+    #----------------------------------------------------------------------
+    def on_trade(self, t):
+        """引擎新推送过来成交回报，传递给每个signal"""
+        # print( self.name, '收到成交回报 ')
+
+        # 不处理不相关的品种
+        if t['symbol'] not in self.vtSymbolList:
+            return
+
+        # 将bar推送给signal
+        for signal in self.signalDict[t['symbol']]:
+            signal.on_trade(t)
+
 
     #----------------------------------------------------------------------
     def daily_open(self):

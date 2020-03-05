@@ -16,7 +16,7 @@ def gen_line(df1, symbol, price_min, price_max):
     close_list = df1.apply(lambda record: float(record['close']), axis=1).tolist()
     close_list = np.array(close_list)
 
-    line1 = Line(init_opts=opts.InitOpts(width='1500px'))
+    line1 = Line(init_opts=opts.InitOpts(height='700px',width='1300px'))
     line1.set_global_opts( yaxis_opts=opts.AxisOpts(min_=price_min,
                                                     #min_=999,
                                                     max_=price_max,
@@ -72,8 +72,8 @@ def ic(symbol1, symbol2, start_dt='2020-01-01'):
 
 def value(df):
 
-    price_min = float(df['close'].min()) - 0.1
-    price_max = float(df['close'].max()) + 0.1
+    price_min = float(df['close'].min()) - 3
+    price_max = float(df['close'].max()) + 3
 
     df0 = df.loc[:,['date']]
     df0 = df0.drop_duplicates()

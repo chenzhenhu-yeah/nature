@@ -56,10 +56,8 @@ class Gateway_Ht_CTP(object):
         self.t.OnTrade = self.on_trade
         self.t.OnInstrumentStatus = lambda obj, inst, stat: None
 
-        pz= setting['gateway_pz']
-        self.pz_list = pz.split(',')
         pf = setting['gateway_pf']
-        self.pf_list = pf.split(',')
+        self.pf_dict = eval(pf)
 
         self.state = 'INITED'
 
@@ -176,10 +174,15 @@ class Gateway_Ht_CTP(object):
             return
 
         pz = get_contract(code).pz
-        if pz in self.pz_list and portfolio in self.pf_list:
-            print(pz, portfolio, ' send order here!')
+        if portfolio in self.pf_dict:
+            pz_list = self.pf_dict[portfolio].split(',')
+            if pz in pz_list:
+                print(portfolio, ' ', pz, ' send order here!')
+            else:
+                print(portfolio, ' ', pz, ' just test order here!')
+                return
         else:
-            print(pz, ' just test order here!')
+            print(portfolio, ' ', pz, ' just test order here!')
             return
 
         exchangeID = get_exchangeID(code)
@@ -189,6 +192,11 @@ class Gateway_Ht_CTP(object):
         self.lock.acquire()
 
         try:
+            now = datetime.now()
+            now = now.strftime('%H:%M')
+            if now in ['10:14', '10:15', '10:16']:
+                time.sleep(900)
+
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick
             price = int(round(price/priceTick, 0)) * priceTick

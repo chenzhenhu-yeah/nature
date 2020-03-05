@@ -41,8 +41,6 @@ class Fut_DaLiSignal(Signal):
         self.can_short = False
         self.pnl = 0
 
-        # 需要持久化保存的变量
-
         Signal.__init__(self, portfolio, vtSymbol)
 
     #----------------------------------------------------------------------
@@ -77,14 +75,15 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """新推送过来一个bar，进行处理"""
+        self.lock.acquire()
+
         self.bar = bar
         if minx == 'min5':
             self.on_bar_minx(bar)
 
-    def on_bar_minx(self, bar):
-        if self.paused == True:
-            return
+        self.lock.release()
 
+    def on_bar_minx(self, bar):
         self.am.updateBar(bar)
         if not self.am.inited:
             return
@@ -93,8 +92,32 @@ class Fut_DaLiSignal(Signal):
         if self.bar.close < self.price_min or self.bar.close > self.price_max:
             return
 
+        if self.paused == True:
+            return
+
         self.calculateIndicator()     # 计算指标
         self.generateSignal(bar)      # 触发信号，产生交易指令
+
+    #----------------------------------------------------------------------
+    def on_trade(self, t):
+        print(self.order_list)
+        print( '收到成交回报 ', str(t) )
+        print(self.paused)
+
+        self.lock.acquire()
+
+        b = True
+        for o in self.order_list:
+            if o['direction'] == t['direction'] and o['offset'] == t['offset'] and o['traded'] < o['volume']:
+                o['traded'] += t['volume']
+            if o['traded'] < o['volume']:
+                b = False
+        if b == True:
+            self.paused = False
+
+        self.lock.release()
+        print(self.order_list)
+        print(self.paused)
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -110,17 +133,19 @@ class Fut_DaLiSignal(Signal):
         self.gap = min(self.gap, self.gap_max)
         #self.gap = 20
 
-        if self.bar.close <= self.get_price_kong() - self.get_gap_minus() :
+        gap_minus = self.get_gap_minus()
+        if self.bar.close <= self.get_price_kong() - gap_minus:
         #if self.bar.close <= self.get_price_kong() - self.gap:
             self.can_buy = True
             self.pnl = (self.get_price_kong() - self.bar.close) * self.fixedSize
 
-        if self.bar.close >= self.get_price_duo() + self.get_gap_plus() :
+        gap_plus = self.get_gap_plus()
+        if self.bar.close >= self.get_price_duo() + gap_plus:
         #if self.bar.close >= self.get_price_duo() + self.gap:
             self.can_short = True
             self.pnl = (self.get_price_duo() - self.bar.close) * self.fixedSize
 
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap]]
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap,gap_plus,gap_minus]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
@@ -130,12 +155,14 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
+
         if len(self.price_duo_list) == 0 or len(self.price_kong_list) == 0 :
             self.buy(bar.close, self.fixedSize)
             self.short(bar.close, self.fixedSize)
             self.unit_buy(bar.close)
             self.unit_short(bar.close)
 
+        #priceTick = get_contract(self.vtSymbol).price_tick
         # 平空仓、开多仓
         if self.can_buy == True:
             if len(self.price_kong_list) == 1:
@@ -144,13 +171,13 @@ class Fut_DaLiSignal(Signal):
                 self.unit_cover()
                 self.unit_short(bar.close)
                 self.unit_buy(bar.close)
-
             else:
                 self.cover(bar.close, self.fixedSize)
                 self.buy(bar.close, self.fixedSize)
 
                 self.unit_cover()
                 self.unit_buy(bar.close)
+            self.paused = True
 
         # 平多仓、开空仓
         if self.can_short == True:
@@ -167,23 +194,24 @@ class Fut_DaLiSignal(Signal):
 
                 self.unit_sell()
                 self.unit_short(bar.close)
+            self.paused = True
 
     #----------------------------------------------------------------------
     def get_gap_plus(self):
         # 当为上涨趋势时，空头持仓增加，要控制。
         g = self.gap
-        cc = ( len(self.price_duo_list) - len(self.price_kong_list) ) * self.fixedSize
+        cc = len(self.price_kong_list) - len(self.price_duo_list)
 
-        if abs(cc) >= 20:
+        if cc >= 20:
             g += self.gap_base
-        elif abs(cc) >= 16:
+        elif cc >= 16:
             g += self.gap_base * 0.75
-        elif abs(cc) >= 12:
+        elif cc >= 12:
             g += self.gap_base * 0.5
-        elif abs(cc) >= 8:
+        elif cc >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= 4 and cc <= 6:
+        if cc >= -4 and cc <= 4:
             g = self.gap_min
 
         return g
@@ -191,8 +219,7 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def get_gap_minus(self):
         g = self.gap
-        cc = ( len(self.price_kong_list) - len(self.price_duo_list) ) * self.fixedSize
-
+        cc = len(self.price_duo_list) - len(self.price_kong_list)
 
         if abs(cc) >= 20:
             g += self.gap_base
@@ -203,7 +230,7 @@ class Fut_DaLiSignal(Signal):
         elif abs(cc) >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= 4 and cc <= 6:
+        if cc >= -4 and cc <= 4:
             g = self.gap_min
 
         return g
@@ -367,6 +394,12 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def open(self, price, change):
         pass
+        print('come here open !')
+
+    #----------------------------------------------------------------------
+    def close(self, price, change):
+        pass
+        print('come here close !')
 
     #----------------------------------------------------------------------
     def unit_open(self, price, change):
@@ -390,9 +423,6 @@ class Fut_DaLiSignal(Signal):
         else:
             df.to_csv(filename, index=False)
 
-    #----------------------------------------------------------------------
-    def close(self, price):
-        pass
 
     #----------------------------------------------------------------------
     def unit_close(self, price):

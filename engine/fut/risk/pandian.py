@@ -94,7 +94,8 @@ def pandian_p(today):
         return
 
     r = []
-    p_list = ['rsiboll', 'cciboll', 'dali']
+    # p_list = [ 'dali', 'ic', 'opt', 'star', 'cui' ]
+    p_list = [ 'dali', 'opt', 'star']
     for p in p_list:
         df = df_value[df_value.p == p]
         # 获得该组合最近日期的一条记录
@@ -113,6 +114,7 @@ def pandian_p(today):
         # 更新该品种的最新数据
         fn = get_dss() +  'fut/engine/' + p + '/portfolio_' + p + '_var.csv'
         #fn = get_dss() +  'fut/engine/rsiboll/portfolio_rsiboll_var.csv'
+        # print(fn)
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             rec = df.iloc[-1,:]
@@ -130,14 +132,171 @@ def pandian_p(today):
             risk = round(100*(margin/cur_value), 2)
             r.append( [today,p,capital,cur_value,newyear_value,year_ratio,margin,risk,str(pos_dict)] )
 
+    # print(r)
     df = pd.DataFrame(r)
     df.to_csv(fn_value, index=False, mode='a', header=None)
 
-def render_dali(today):
-    pass
+#-----------------------------------------------------------------------------------------------------------
+def pandian_dali_m(today):
+    #date,name,capital,cur_value,newyear_value,year_ratio,margin,risk,
+    r = []
+    capital = 0
+    cur_value = 0
+    newyear_value = 0
+    dss = get_dss()
 
-def render_p(today):
-    pass
+    # 读取value_dali文件
+    fn = dss +  'fut/engine/value_dali.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    df = df[df.pz == 'm']
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += rec.capital
+        cur_value += rec.cur_value
+        newyear_value += rec.newyear_value
+        r.append([today, 'dali', rec.capital, rec.cur_value, rec.newyear_value,0,0,0])
+    else:
+        return
+
+    fn = dss +  'fut/engine/daliopt/portfolio_daliopt_m_var.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += 20000
+        cur_value += rec.portfolioValue
+        newyear_value += 20000
+        r.append([today, 'daliopt', 20000, rec.portfolioValue, 20000,0,0,0])
+    else:
+        return
+
+    capital += 30000
+    cur_value += 30000
+    newyear_value += 30000
+    r.append([today, 'dalicta', 30000, 30000, 30000, 0,0,0])
+    r.append([today, 'daliall', capital, cur_value, newyear_value, 0,0,0])
+    # print( r )
+
+    df = pd.DataFrame(r)
+    df.columns = ['date','name','capital','cur_value','newyear_value','year_ratio','margin','risk']
+    df['year_ratio'] = round( (df.cur_value / df.newyear_value - 1)*100, 2)
+    fn = dss + 'fut/engine/value_dali_m.csv'
+    df.to_csv(fn, index=False, mode='a', header=None)
+
+#-----------------------------------------------------------------------------------------------------------
+def pandian_dali_RM(today):
+    #date,name,capital,cur_value,newyear_value,year_ratio,margin,risk,
+    r = []
+    capital = 0
+    cur_value = 0
+    newyear_value = 0
+    dss = get_dss()
+
+    # 读取value_dali文件
+    fn = dss + 'fut/engine/value_dali.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    df = df[df.pz == 'RM']
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += rec.capital
+        cur_value += rec.cur_value
+        newyear_value += rec.newyear_value
+        r.append([today, 'dali', rec.capital, rec.cur_value, rec.newyear_value,0,0,0])
+    else:
+        return
+
+    fn = dss +  'fut/engine/daliopt/portfolio_daliopt_RM_var.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += 20000
+        cur_value += rec.portfolioValue
+        newyear_value += 20000
+        r.append([today, 'daliopt', 20000, rec.portfolioValue, 20000,0,0,0])
+    else:
+        return
+
+    capital += 30000
+    cur_value += 30000
+    newyear_value += 30000
+    r.append([today, 'dalicta', 30000, 30000, 30000, 0,0,0])
+    r.append([today, 'daliall', capital, cur_value, newyear_value, 0,0,0])
+    # print( r )
+
+    df = pd.DataFrame(r)
+    df.columns = ['date','name','capital','cur_value','newyear_value','year_ratio','margin','risk']
+    df['year_ratio'] = round( (df.cur_value / df.newyear_value - 1)*100, 2)
+    fn = dss + 'fut/engine/value_dali_RM.csv'
+    df.to_csv(fn, index=False, mode='a', header=None)
+
+#-----------------------------------------------------------------------------------------------------------
+def pandian_dali_MA(today):
+    r = []
+    capital = 0
+    cur_value = 0
+    newyear_value = 0
+    dss = get_dss()
+
+    # 读取value_dali文件
+    fn = dss + 'fut/engine/value_dali.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    df = df[ df.pz == 'MA' ]
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += rec.capital
+        cur_value += rec.cur_value
+        newyear_value += rec.newyear_value
+        r.append([today, 'dali', rec.capital, rec.cur_value, rec.newyear_value,0,0,0])
+    else:
+        return
+
+    fn = dss +  'fut/engine/daliopt/portfolio_daliopt_MA_var.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+    else:
+        return
+
+    if len(df) > 0:
+        rec = df.iloc[-1,:]
+        capital += 20000
+        cur_value += rec.portfolioValue
+        newyear_value += 20000
+        r.append([today, 'daliopt', 20000, rec.portfolioValue, 20000,0,0,0])
+    else:
+        return
+
+    capital += 30000
+    cur_value += 30000
+    newyear_value += 30000
+    r.append([today, 'dalicta', 30000, 30000, 30000, 0,0,0])
+    r.append([today, 'daliall', capital, cur_value, newyear_value, 0,0,0])
+    # print( r )
+
+    df = pd.DataFrame(r)
+    df.columns = ['date','name','capital','cur_value','newyear_value','year_ratio','margin','risk']
+    df['year_ratio'] = round( (df.cur_value / df.newyear_value - 1)*100, 2)
+    fn = dss + 'fut/engine/value_dali_MA.csv'
+    df.to_csv(fn, index=False, mode='a', header=None)
+
 
 def pandian_run():
     try:
@@ -147,6 +306,10 @@ def pandian_run():
 
         pandian_dali(today)
         pandian_p(today)
+        pandian_dali_m(today)
+        pandian_dali_RM(today)
+        pandian_dali_MA(today)
+
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
