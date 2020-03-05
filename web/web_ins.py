@@ -629,31 +629,31 @@ def ic_y_m():
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
-@app.route('/ic_OI_RM', methods=['get','post'])
-def ic_OI_RM():
-    symbol1 = 'OI005'
-    symbol2 = 'RM005'
-    start_dt = '2020-01-01'
+@app.route('/ic1', methods=['get','post'])
+def ic1():
+    symbol1 = 'p2005'
+    symbol2 = 'p2009'
+    start_dt = '2020-03-06'
     draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
-@app.route('/ic_eb_bu', methods=['get','post'])
-def ic_eb_bu():
-    symbol1 = 'eb2009'
-    symbol2 = 'bu2012'
-    start_dt = '2020-01-01'
+@app.route('/ic2', methods=['get','post'])
+def ic2():
+    symbol1 = 'y2005'
+    symbol2 = 'p2005'
+    start_dt = '2020-03-06'
     draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
-@app.route('/ic_eg_fu', methods=['get','post'])
-def ic_eg_fu():
-    symbol1 = 'eg2009'
-    symbol2 = 'fu2006'
-    start_dt = '2020-01-01'
+@app.route('/ic3', methods=['get','post'])
+def ic3():
+    symbol1 = 'y2009'
+    symbol2 = 'p2009'
+    start_dt = '2020-03-06'
     draw_web.ic(symbol1, symbol2, start_dt)
     time.sleep(1)
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'

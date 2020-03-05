@@ -199,7 +199,8 @@ class FutEngine(object):
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
-        # print('in put_service')
+        print('on_bar线程开始工作')
+
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
