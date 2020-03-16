@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
         # 盘中
         schedule.every().day.at("15:10").do(run_tick2bar)
-        schedule.every().day.at("15:15").do(mail_log)
+        schedule.every().day.at("15:16").do(mail_log)
 
         #盘后
         # schedule.every().day.at("03:00").do(run_down_data)

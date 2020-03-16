@@ -27,7 +27,7 @@ from nature.hold.book import Book, has_factor, stk_report
 from nature.auto_trade.place_order import send_instruction
 from nature.filer import rc_file, a_file
 
-from nature.strategy import VtBarData, ArrayManager, GatewayPingan, BarGenerator, DailyResult
+from nature.strategy import Tick, VtBarData, ArrayManager, GatewayPingan, BarGenerator, DailyResult
 from nature.strategy import (DIRECTION_LONG, DIRECTION_SHORT,
                                      OFFSET_OPEN, OFFSET_CLOSE,
                                      OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY)
@@ -54,9 +54,11 @@ from nature.engine.fut.engine.fut_strategyMa import Fut_MaPortfolio
 from nature.engine.fut.engine.fut_strategyDualBand import Fut_DualBandPortfolio
 from nature.engine.fut.engine.fut_strategyIc import Fut_IcPortfolio
 
+from nature.engine.fut.engine.opt_short_put import Opt_Short_PutPortfolio
+
+
 from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
-from nature.engine.fut.py_ctp.structs import Tick
 from nature.engine.fut.py_ctp.enums import DirectType, OffsetType
 
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP

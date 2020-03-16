@@ -9,6 +9,7 @@ import threading
 from multiprocessing.connection import Client
 import traceback
 from csv import DictReader
+import sys
 
 from nature import CtpTrade
 from nature import CtpQuote
@@ -18,16 +19,16 @@ from nature import VtBarData
 from nature import SOCKET_BAR, get_dss, to_log, get_contract, is_market_date
 from nature import get_symbols_quote
 
-fn = get_dss() + 'fut/cfg/trade_time.csv'
-df_tt = pd.read_csv(fn, dtype='str')
-df_tt = df_tt[df_tt.seq=='1']
-df_tt_2300 = df_tt[df_tt.end=='23:00:59']
-df_tt_0230 = df_tt[df_tt.end=='02:30:59']
-
-pz_2300_list = list(df_tt_2300.symbol)
-pz_0230_list = list(df_tt_0230.symbol)
-print('夜盘结束时间为23:00的品种： ', pz_2300_list)
-print('夜盘结束时间为02:30的品种： ', pz_0230_list)
+# fn = get_dss() + 'fut/cfg/trade_time.csv'
+# df_tt = pd.read_csv(fn, dtype='str')
+# df_tt = df_tt[df_tt.seq=='1']
+# df_tt_2300 = df_tt[df_tt.end=='23:00:59']
+# df_tt_0230 = df_tt[df_tt.end=='02:30:59']
+#
+# pz_2300_list = list(df_tt_2300.symbol)
+# pz_0230_list = list(df_tt_0230.symbol)
+# print('夜盘结束时间为23:00的品种： ', pz_2300_list)
+# print('夜盘结束时间为02:30的品种： ', pz_0230_list)
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
@@ -74,6 +75,12 @@ class HuQuote(CtpQuote):
         tick.LowerLimitPrice = pDepthMarketData.getLowerLimitPrice()
         tick.PreOpenInterest = pDepthMarketData.getPreOpenInterest()
 
+        tick.PreSettlementPrice = pDepthMarketData.getPreSettlementPrice()
+        tick.PreClosePrice = pDepthMarketData.getPreClosePrice()
+        tick.OpenPrice = pDepthMarketData.getOpenPrice()
+        tick.PreDelta = pDepthMarketData.getPreDelta()
+        tick.CurrDelta = pDepthMarketData.getCurrDelta()
+
         # 非交易时段也会产生少量数据，增加时段管控避免各种意外情况
         if (tick.UpdateTime>='08:59:59' and tick.UpdateTime <= '15:00:01') or \
         (tick.UpdateTime>='20:59:59' and tick.UpdateTime <= '23:59:59') or \
@@ -106,8 +113,7 @@ class HuQuote(CtpQuote):
         df = pd.DataFrame([f.__dict__])
         df['Localtime'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         df['UpdateDate'] = UpdateDate
-        cols = ['Localtime','LastPrice','AveragePrice','Volume',
-                'OpenInterest','PreOpenInterest','UpdateMillisec','UpdateDate','UpdateTime']
+        cols = ['Localtime','LastPrice','Instrument','AskPrice','AskVolume','BidPrice','BidVolume','AveragePrice','UpperLimitPrice','LowerLimitPrice','PreSettlementPrice','PreClosePrice','OpenPrice','PreDelta','CurrDelta','PreOpenInterest','OpenInterest','UpdateMillisec','Volume','UpdateDate','UpdateTime']
         df = df[cols]
 
         fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
@@ -122,7 +128,7 @@ class HuQuote(CtpQuote):
     # 保存新生成的bar到put目录下的相应文件，通过该文件来进行多进程数据的同步-----------------------
     def put_bar(self, bar, minx):
         df = pd.DataFrame([bar.__dict__])
-        cols = ['date','time','open','high','low','close','volume']
+        cols = ['date','time','open','high','low','close','volume','AskPrice','AskVolume','BidPrice','BidVolume','AveragePrice','UpperLimitPrice','LowerLimitPrice','PreSettlementPrice','PreClosePrice','OpenPrice','PreDelta','CurrDelta','PreOpenInterest','OpenInterest']
         df = df[cols]
 
         fname = self.dss + 'fut/put/' + minx + '_' + bar.vtSymbol + '.csv'
@@ -139,6 +145,25 @@ class HuQuote(CtpQuote):
         new_bar.high = tick.LastPrice
         new_bar.low =  tick.LastPrice
         new_bar.close = tick.LastPrice
+
+        new_bar.volume = tick.Volume
+        new_bar.OpenInterest = tick.OpenInterest
+
+        new_bar.AskPrice = tick.AskPrice
+        new_bar.BidPrice = tick.BidPrice
+        new_bar.AskVolume = tick.AskVolume
+        new_bar.BidVolume = tick.BidVolume
+
+        new_bar.AveragePrice = tick.AveragePrice
+        new_bar.UpperLimitPrice = tick.UpperLimitPrice
+        new_bar.LowerLimitPrice = tick.LowerLimitPrice
+        new_bar.PreOpenInterest = tick.PreOpenInterest
+
+        new_bar.PreSettlementPrice = tick.PreSettlementPrice
+        new_bar.PreClosePrice = tick.PreClosePrice
+        new_bar.OpenPrice = tick.OpenPrice
+        new_bar.PreDelta = tick.PreDelta
+        new_bar.CurrDelta = tick.CurrDelta
 
         # 上一个bar存储在变量bar中，最新bar存储在变量new_bar中，
         id = new_bar.vtSymbol
@@ -170,17 +195,17 @@ class HuQuote(CtpQuote):
         self.bar_min1_dict[id] = bar
 
         # 收盘前，确保委托单能够成功发出！
-        if tick.UpdateTime in ['14:58:57','14:58:58','14:58:59']:
-            bar.time = '15:00:00'
-            self.put_bar(bar, 'min1')
-
-        c = get_contract(bar.vtSymbol)
-        if c.pz in pz_0230_list and tick.UpdateTime in ['02:28:57','02:28:58','02:28:59']:
-            bar.time = '02:30:00'
-            self.put_bar(bar, 'min1')
-        elif c.pz in pz_2300_list and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
-            bar.time = '23:00:00'
-            self.put_bar(bar, 'min1')
+        # if tick.UpdateTime in ['14:58:57','14:58:58','14:58:59']:
+        #     bar.time = '15:00:00'
+        #     self.put_bar(bar, 'min1')
+        #
+        # c = get_contract(bar.vtSymbol)
+        # if c.pz in pz_0230_list and tick.UpdateTime in ['02:28:57','02:28:58','02:28:59']:
+        #     bar.time = '02:30:00'
+        #     self.put_bar(bar, 'min1')
+        # elif c.pz in pz_2300_list and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
+        #     bar.time = '23:00:00'
+        #     self.put_bar(bar, 'min1')
 
 class TestQuote(object):
     """TestQuote"""
@@ -231,13 +256,22 @@ class TestQuote(object):
         now = datetime.now()
         print( 'in release, now time is: ', now )
 
+
+    #----------------------------------------------------------------------
+    def anytime(self):
+        print('行情接收器开始运行_anytime')
+
+        self.run()
+        schedule.every().day.at("15:02").do(self.release)
+        schedule.every().day.at("02:32").do(self.release)
+
+        while True:
+            schedule.run_pending()
+            time.sleep(10)
+
     #----------------------------------------------------------------------
     def daily_worker(self):
-        """运行"""
-        # schedule.every().day.at("08:48").do(self.run)
-        # schedule.every().day.at("15:02").do(self.release)
-        # schedule.every().day.at("20:48").do(self.run)
-        # schedule.every().day.at("02:32").do(self.release)
+        print('行情接收器开始运行_daily_worker')
 
         schedule.every().monday.at("08:48").do(self.run)
         schedule.every().monday.at("15:02").do(self.release)
@@ -264,43 +298,32 @@ class TestQuote(object):
         schedule.every().friday.at("20:48").do(self.run)
         schedule.every().saturday.at("02:32").do(self.release)
 
-        print('行情接收器开始运行')
         while True:
             schedule.run_pending()
             time.sleep(10)
 
 if __name__ == "__main__":
     try:
-        # # 海通
-        # front_trade = 'tcp://180.168.212.75:41305'
-        # front_quote = 'tcp://180.168.212.75:41313'
-        # broker = '8000'
-        # investor = '71081980'
-        # pwd = 'zhenhu123'
-
         # 加载配置
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
         front_trade = setting['front_trade']
         front_quote = setting['front_quote']
         broker = setting['broker']
-
-        # CTP
-        # front_trade = 'tcp://180.168.146.187:10101'
-        # front_quote = 'tcp://180.168.146.187:10111'
-        # broker = '9999'
         investor = ''
         pwd = ''
 
-        time.sleep(3)
         qq = TestQuote(front_quote, broker, investor, pwd)
 
-        qq.daily_worker()
+        # print( '参数个数为:', len(sys.argv), '个参数。' )
+        # print( '参数列表:', str(sys.argv) )
 
-        # print('begin')
-        # qq.run()
-        # print('wait')
-        # input()
+        if len(sys.argv) == 1:
+            qq.daily_worker()
+
+        if len(sys.argv) == 2:
+            if sys.argv[1] == '-anytime':
+                qq.anytime()
 
     except Exception as e:
         s = traceback.format_exc()

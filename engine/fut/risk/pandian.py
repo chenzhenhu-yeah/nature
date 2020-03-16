@@ -69,10 +69,8 @@ def pandian_dali(today):
             multi_duo_list = eval(rec.price_duo_list)
             multi_kong_list = eval(rec.price_kong_list)
 
-            if len(multi_duo_list) > len(multi_kong_list):
-                active_price = float( multi_duo_list[0] )
-            else:
-                active_price = float( multi_kong_list[0] )
+
+            active_price = (int(multi_duo_list[0]) + int(multi_kong_list[0])) * 0.5
 
             margin = df_param.at[symbol,'fixed_size']*active_price*float(c.size)*float(c.margin) * ( len(multi_duo_list) + len(multi_kong_list) )
             risk = round(100*(margin/cur_value), 2)

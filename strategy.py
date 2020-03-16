@@ -8,6 +8,7 @@ import tushare as ts
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 import threading
+from datetime import datetime
 
 # import traceback
 
@@ -178,7 +179,7 @@ class Signal(object):
 
         self.result = None
 
-        
+
 ########################################################################
 class Portfolio(object):
     """
@@ -276,6 +277,15 @@ class Portfolio(object):
         # 对价格四舍五入
         priceTick = get_contract(signal.vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
+
+        now = datetime.now()
+        tm = now.strftime('%H:%M:%S')
+        if (tm > '14:45:00' and tm < '15:00:00') or (tm > '22:45:00' and tm < '23:00:00'):
+            if direction == DIRECTION_LONG:
+                price += priceTick
+            if direction == DIRECTION_SHORT:
+                price -= priceTick
+
         self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
 
         # 记录成交数据
@@ -531,6 +541,34 @@ class GatewayPingan(Gateway):
         if ins_dict != {}:
             send_instruction(ins_dict)
 
+
+########################################################################
+class Tick:
+    """分笔数据"""
+
+    def __init__(self):
+        self.Instrument = ''           # 合约代码
+        self.LastPrice = 0.0           # 最新价
+        self.AskPrice = 0.0            # 挂卖价
+        self.BidPrice = 0.0            # 挂买价
+        self.AskVolume = 1             # 挂卖量
+        self.BidVolume = 1             # 挂买量
+        self.UpdateTime = ''           # 时间
+        self.UpdateMillisec = 0        # 毫秒
+        self.Volume = 1                # 成交量
+        self.OpenInterest = 1.0        # 持仓量
+        self.AveragePrice = 0.0        # 均价
+        self.UpperLimitPrice = 0.0     # 涨板价
+        self.LowerLimitPrice = 0.0     # 跌板价
+        self.PreOpenInterest = 0.0     # 昨持仓
+
+
+        self.PreSettlementPrice = 0.0  # 前结算价
+        self.PreClosePrice = 0.0       # 前收盘价
+        self.OpenPrice = 0.0           # 开盘价
+        self.PreDelta = 0.0
+        self.CurrDelta = 0.0
+
 ########################################################################
 class VtBaseData(object):
     """回调函数推送数据的基础类，其他数据类继承于此"""
@@ -564,10 +602,26 @@ class VtBarData(VtBaseData):
         self.time = EMPTY_STRING            # 时间
         self.datetime = None                # python的datetime时间对象
 
-        self.volume = EMPTY_INT             # 成交量
-        self.openInterest = EMPTY_INT       # 持仓量
         self.interval = EMPTY_UNICODE       # K线周期
 
+        self.volume = EMPTY_INT             # 成交量
+        self.OpenInterest = EMPTY_INT       # 持仓量
+
+        self.AskPrice = 0.0            # 挂卖价
+        self.BidPrice = 0.0            # 挂买价
+        self.AskVolume = 1             # 挂卖量
+        self.BidVolume = 1             # 挂买量
+
+        self.AveragePrice = 0.0        # 均价
+        self.UpperLimitPrice = 0.0     # 涨板价
+        self.LowerLimitPrice = 0.0     # 跌板价
+        self.PreOpenInterest = 0.0     # 昨持仓
+
+        self.PreSettlementPrice = 0.0  # 前结算价
+        self.PreClosePrice = 0.0       # 前收盘价
+        self.OpenPrice = 0.0           # 开盘价
+        self.PreDelta = 0.0
+        self.CurrDelta = 0.0
 
     def print_bar(self):
         print(self.vtSymbol)
@@ -615,34 +669,38 @@ class BarGenerator(object):
         bar.close = new_bar.close
 
         if self.minx == 'min5':
-            if new_bar.time[3:5] in ['05','10','15','20','25','30','35','40','45','50','55','00']:
+            if new_bar.time[3:5] in ['04','09','14','19','24','29','34','39','44','49','54','59']:
                 # 将 bar的秒钟改为整点，推送并保存bar
+                bar.date = new_bar.date
                 bar.time = new_bar.time[:-2] + '00'
                 self.bar_dict.pop(symbol)
                 r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
                 return bar
 
         elif self.minx == 'min15':
-            if new_bar.time[3:5] in ['15','30','45','00']:
+            if new_bar.time[3:5] in ['14','29','44','59']:
+                bar.date = new_bar.date
                 bar.time = new_bar.time[:-2] + '00'
                 self.bar_dict.pop(symbol)
                 r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
                 return bar
 
         elif self.minx == 'min30':
-            min30_list = ['09:30','10:00','10:45','11:15',
-                          '13:45','14:15','14:45','15:00', \
-                          '21:30','22:00','22:30','23:00', \
-                          '23:30','00:00','00:30','01:00', \
-                          '01:30','02:00','02:30']
+            min30_list = ['09:29','09:59','10:44','11:14',
+                          '13:44','14:14','14:44','14:59', \
+                          '21:29','21:59','22:29','22:59', \
+                          '23:29','23:59','00:29','00:59', \
+                          '01:29','01:59','02:29']
             if new_bar.time[:5] in min30_list:
+                bar.date = new_bar.date
                 bar.time = new_bar.time[:-2] + '00'
                 self.bar_dict.pop(symbol)
                 r.append( [bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )
                 return bar
 
         elif self.minx == 'day':
-            if new_bar.time[:5] in ['15:00']:
+            if new_bar.time[:5] in ['14:58']:
+                bar.date = new_bar.date
                 bar.time = new_bar.time[:-2] + '00'
                 self.bar_dict.pop(symbol)
                 r.append( [new_bar.date, bar.time, bar.open, bar.high, bar.low, bar.close, 0] )

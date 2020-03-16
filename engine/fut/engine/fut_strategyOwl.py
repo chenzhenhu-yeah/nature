@@ -5,7 +5,7 @@ import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 
-from nature import to_log, get_dss, get_contract
+from nature import to_log, get_dss, get_contract, send_email
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
@@ -100,9 +100,9 @@ class Fut_OwlSignal(Signal):
             elif ins == 'down_cover' and self.bar.close <= price:
                 self.can_cover = True
             elif ins == 'up_warn' and self.bar.close >= price:
-                pass
+                send_email(get_dss(), self.bar.vtSymbol+' up_warn: '+str(price), '')
             elif ins == 'down_warn' and self.bar.close <= price:
-                pass
+                send_email(get_dss(), self.bar.vtSymbol+' down_warn: '+str(price), '')
             else:
                 r.append(row)
 
@@ -146,7 +146,7 @@ class Fut_OwlSignal(Signal):
         df = pd.DataFrame(self.ins_list, columns=['ins','price','num'])
         df.to_csv(filename, index=False)
 
-        print('here in owl.save_var !!!')
+        # print('here in owl.save_var !!!')
 
     #----------------------------------------------------------------------
     def open(self, price, change):

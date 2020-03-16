@@ -43,6 +43,7 @@ class Fut_DaLictaSignal_Duo(Signal):
             df = df[ df.symbol == self.vtSymbol ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
+                self.fixedSize = rec['fixed_size']
                 print('成功加载策略参数' )
 
     #----------------------------------------------------------------------
@@ -59,11 +60,12 @@ class Fut_DaLictaSignal_Duo(Signal):
             self.on_bar_minx(bar)
 
     def on_bar_minx(self, bar):
-        if self.paused == True:
-            return
 
         self.am.updateBar(bar)
         if not self.am.inited:
+            return
+
+        if self.paused == True:
             return
 
         self.calculateIndicator()     # 计算指标
@@ -81,12 +83,10 @@ class Fut_DaLictaSignal_Duo(Signal):
         ma_mid_arr = self.am.sma(30, array=True)
         ma_long_arr = self.am.sma(60, array=True)
 
-        # 当前价穿60日线，且10日线位于60日线之下，开仓
+        # 当前价穿60日线，开仓
         if self.unit == 0:
             if self.am.closeArray[-2] <= ma_long_arr[-2] and self.am.closeArray[-1] > ma_long_arr[-1]:
-                #if ma_long_arr[-1] > ma_short_arr[-1] and ma_short_arr[-1] > ma_mid_arr[-1] :
-                if ma_long_arr[-1] > ma_short_arr[-1]:
-                    self.can_buy = True
+                self.can_buy = True
 
         # 10日线穿30日线，平仓
         if self.unit > 0:
@@ -235,6 +235,7 @@ class Fut_DaLictaSignal_Kong(Signal):
             df = df[ df.symbol == self.vtSymbol ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
+                self.fixedSize = rec['fixed_size']
                 print('成功加载策略参数' )
 
     #----------------------------------------------------------------------
@@ -251,11 +252,11 @@ class Fut_DaLictaSignal_Kong(Signal):
             self.on_bar_minx(bar)
 
     def on_bar_minx(self, bar):
-        if self.paused == True:
-            return
-
         self.am.updateBar(bar)
         if not self.am.inited:
+            return
+
+        if self.paused == True:
             return
 
         self.calculateIndicator()     # 计算指标
@@ -273,12 +274,10 @@ class Fut_DaLictaSignal_Kong(Signal):
         ma_mid_arr = self.am.sma(30, array=True)
         ma_long_arr = self.am.sma(60, array=True)
 
-        # 当前价穿60日线，且10日线位于60日线之上，开仓
+        # 当前价穿60日线，开仓
         if self.unit == 0:
             if self.am.closeArray[-2] >= ma_long_arr[-2] and self.am.closeArray[-1] < ma_long_arr[-1]:
-                #if ma_long_arr[-1] < ma_short_arr[-1] and ma_short_arr[-1] < ma_mid_arr[-1] :
-                if ma_long_arr[-1] < ma_short_arr[-1]:
-                    self.can_short = True
+                self.can_short = True
 
         # 10日线穿30日线，平仓
         if self.unit < 0:
@@ -401,35 +400,4 @@ class Fut_DaLictaPortfolio(Portfolio):
         self.name = 'dalicta'
         Portfolio.__init__(self, Fut_DaLictaSignal_Duo, engine, symbol_list, signal_param, Fut_DaLictaSignal_Kong, signal_param)
 
-    #----------------------------------------------------------------------
-    def _bc_newSignal(self, signal, direction, offset, price, volume):
-        """
-        对交易信号进行过滤，符合条件的才发单执行。
-        计算真实交易价格和数量。
-        """
-        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
-        multiplier = int(round(multiplier, 0))
-        #print(multiplier)
-        multiplier = 1
-
-        #print(self.posDict)
-        # 计算合约持仓
-        if direction == DIRECTION_LONG:
-            self.posDict[signal.vtSymbol] += volume*multiplier
-        else:
-            self.posDict[signal.vtSymbol] -= volume*multiplier
-
-        #print(self.posDict)
-
-        # 对价格四舍五入
-        priceTick = get_contract(signal.vtSymbol).price_tick
-        price = int(round(price/priceTick, 0)) * priceTick
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
-
-        # 记录成交数据
-        trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
-        # l = self.tradeDict.setdefault(self.result.date, [])
-        # l.append(trade)
-
-        self.result.updateTrade(trade)
-        #print('here')
+        self.name_second = 'dalicta_' + str(get_contract(symbol_list[0]).pz)

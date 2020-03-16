@@ -17,6 +17,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio
 from nature import Fut_Aberration_RawPortfolio, Fut_Aberration_EnhancePortfolio
 from nature import Fut_Cci_RawPortfolio, Fut_Cci_EnhancePortfolio
 from nature import Fut_MaPortfolio
+from nature import Opt_Short_PutPortfolio
 
 ########################################################################
 class BacktestingEngine(object):
@@ -144,11 +145,11 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'ru'
+    vtSymbol = 'm'
     #vtSymbol = 'c1901'
     #vtSymbol = 'CF901'
-    #start_date = '20190109 00:00:00'
-    start_date = '20180609 00:00:00'
+    start_date = '2019109 00:00:00'
+    # start_date = '20180609 00:00:00'
     end_date   = '20191231 00:00:00'
     #end_date   = '20180531 00:00:00'
 
@@ -167,12 +168,15 @@ if __name__ == '__main__':
     #PortfolioClass = Fut_DaLiPortfolio
     #PortfolioClass = Fut_DaLictaPortfolio
     #PortfolioClass = Fut_Aberration_RawPortfolio
-    PortfolioClass = Fut_Aberration_EnhancePortfolio
+    #PortfolioClass = Fut_Aberration_EnhancePortfolio
     #PortfolioClass = Fut_Cci_RawPortfolio
     #PortfolioClass = Fut_Cci_EnhancePortfolio
     #PortfolioClass = Fut_MaPortfolio
 
-    minx = 'day'
+    PortfolioClass = Opt_Short_PutPortfolio
+
+    #minx = 'day'
+    minx = 'min30'
     #minx = 'min15'
     #minx = 'min5'
 

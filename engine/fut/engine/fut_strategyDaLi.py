@@ -19,7 +19,7 @@ class Fut_DaLiSignal(Signal):
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
-        self.initBars = 60           # 初始化数据所用的天数
+        self.initBars = 60            # 初始化数据所用的天数
         self.minx = 'min5'
 
         self.atrValue = 0
@@ -100,9 +100,9 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def on_trade(self, t):
-        print(self.order_list)
-        print( '收到成交回报 ', str(t) )
-        print(self.paused)
+        # print(self.order_list)
+        # print( '收到成交回报 ', str(t) )
+        # print(self.paused)
 
         self.lock.acquire()
 
@@ -116,8 +116,8 @@ class Fut_DaLiSignal(Signal):
             self.paused = False
 
         self.lock.release()
-        print(self.order_list)
-        print(self.paused)
+        # print(self.order_list)
+        # print(self.paused)
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):

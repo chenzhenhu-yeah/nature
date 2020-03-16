@@ -16,6 +16,7 @@ import threading
 from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
 import traceback
+import sys
 
 from nature import SOCKET_BAR
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
@@ -71,73 +72,56 @@ class FutEngine(object):
             symbols = setting['symbols_rsiboll']
             if len(symbols) > 0:
                 rsiboll_symbol_list = symbols.split(',')
-            else:
-                rsiboll_symbol_list = []
-            self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
+                self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
         # if 'symbols_cciboll' in setting:
         #     symbols = setting['symbols_cciboll']
         #     if len(symbols) > 0:
         #         cciboll_symbol_list = symbols.split(',')
-        #     else:
-        #         cciboll_symbol_list = []
-        #     self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
+        #         self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
 
         if 'symbols_dali' in setting:
             symbols = setting['symbols_dali']
             if len(symbols) > 0:
                 dali_symbol_list = symbols.split(',')
-            else:
-                dali_symbol_list = []
-            self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+                self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
         if 'symbols_dalicta' in setting:
             symbols = setting['symbols_dalicta']
             if len(symbols) > 0:
                 dalicta_symbol_list = symbols.split(',')
-            else:
-                dalicta_symbol_list = []
-            self.loadPortfolio(Fut_DaLictaPortfolio, dalicta_symbol_list)
+                for symbol in dalicta_symbol_list:
+                    self.loadPortfolio(Fut_DaLictaPortfolio, [symbol])
 
         # if 'symbols_atrrsi' in setting:
         #     symbols = setting['symbols_atrrsi']
         #     if len(symbols) > 0:
         #         atrrsi_symbol_list = symbols.split(',')
-        #     else:
-        #         atrrsi_symbol_list = []
-        #     self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
+        #         self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
         if 'symbols_turtle' in setting:
             symbols = setting['symbols_turtle']
             if len(symbols) > 0:
                 turtle_symbol_list = symbols.split(',')
-            else:
-                turtle_symbol_list = []
-            self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+                self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
 
         if 'symbols_owl' in setting:
             symbols = setting['symbols_owl']
             if len(symbols) > 0:
                 owl_symbol_list = symbols.split(',')
-            else:
-                owl_symbol_list = []
-            self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
+                self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
 
         if 'symbols_aberration_enhance' in setting:
             symbols = setting['symbols_aberration_enhance']
             if len(symbols) > 0:
                 aberration_enhance_symbol_list = symbols.split(',')
-            else:
-                aberration_enhance_symbol_list = []
-            self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
+                self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
 
         if 'symbols_cci_raw' in setting:
             symbols = setting['symbols_cci_raw']
             if len(symbols) > 0:
                 cci_raw_symbol_list = symbols.split(',')
-            else:
-                cci_raw_symbol_list = []
-            self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
+                self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
 
         if 'symbols_ic' in setting:
             symbols = setting['symbols_ic']
@@ -189,7 +173,7 @@ class FutEngine(object):
                     if row.TradeID in tradeid_list:
                         continue
                     else:
-                        print( '分发成交回报，TradeID: '+str(row.TradeID) )
+                        print( '分发成交回报，TradeID: '+str(row.TradeID)+'， symbol: '+str(row.InstrumentID) )
                         tradeid_list.append(row.TradeID)
                         for p in self.portfolio_list:
                             p.on_trade( {'symbol':row.InstrumentID,'direction':row.Direction,'offset':row.Offset,'price':row.Price,'volume':row.Volume} )
@@ -326,9 +310,9 @@ class FutEngine(object):
             print('-'*60)
             print( 'in worker open, now time is: ', now )
             print('\n')
-            if tm > '08:30:00' and tm < '09:30:00':
+            if tm > '08:30:00' and tm < '14:30:00':
                 self.seq_tm = 'morning'
-            if tm > '20:30:00' and tm < '21:30:00':
+            if tm > '20:30:00' and tm < '22:30:00':
                 self.seq_tm = 'night'
 
             self.init_daily()
@@ -374,13 +358,24 @@ class FutEngine(object):
             to_log(s)
 
 #----------------------------------------------------------------------
-def start():
+def anytime():
+    print('期货交易引擎开始运行_anytime')
 
     e = FutEngine()
-    # schedule.every().day.at("08:56").do(e.worker_open)
-    # schedule.every().day.at("15:03").do(e.worker_close)
-    # schedule.every().day.at("20:56").do(e.worker_open)
-    # schedule.every().day.at("02:33").do(e.worker_close)
+    time.sleep(10)
+    e.worker_open()
+    schedule.every().day.at("15:03").do(e.worker_close)
+    schedule.every().day.at("02:33").do(e.worker_close)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
+
+#----------------------------------------------------------------------
+def start():
+    print('期货交易引擎开始运行')
+
+    e = FutEngine()
 
     schedule.every().monday.at("08:56").do(e.worker_open)
     schedule.every().monday.at("15:03").do(e.worker_close)
@@ -407,15 +402,15 @@ def start():
     schedule.every().friday.at("20:56").do(e.worker_open)
     schedule.every().saturday.at("02:33").do(e.worker_close)
 
-
-    print('期货交易引擎开始运行')
-
     while True:
         schedule.run_pending()
         time.sleep(10)
 
 if __name__ == '__main__':
-    start()
 
-    # engine5 = FutEngine()
-    # engine5.worker_open()
+    if len(sys.argv) == 1:
+        start()
+
+    if len(sys.argv) == 2:
+        if sys.argv[1] == '-anytime':
+            anytime()
