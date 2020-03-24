@@ -240,13 +240,13 @@ class Fut_DaLiSignal(Signal):
         g = self.gap
         cc = len(self.price_duo_list) - len(self.price_kong_list)
 
-        if abs(cc) >= 20:
+        if cc >= 20:
             g += self.gap_base
-        elif abs(cc) >= 16:
+        elif cc >= 16:
             g += self.gap_base * 0.75
-        elif abs(cc) >= 12:
+        elif cc >= 12:
             g += self.gap_base * 0.5
-        elif abs(cc) >= 8:
+        elif cc >= 8:
             g += self.gap_base * 0.25
 
         if cc >= -4 and cc <= 4:
