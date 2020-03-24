@@ -162,26 +162,15 @@ class Fut_DaLiSignal(Signal):
             self.unit_buy(bar.close)
             self.unit_short(bar.close)
 
-
-        cc = len(self.price_duo_list) - len(self.price_kong_list)
         #priceTick = get_contract(self.vtSymbol).price_tick
         # 平空仓、开多仓
         if self.can_buy == True:
-            if len(self.price_kong_list) <= 3 or cc >= 5:
+            if len(self.price_kong_list) == 1:
                 self.buy(bar.close, self.fixedSize)
 
-                self.unit_buy(bar.close)
                 self.unit_cover()
-
-                self.price_kong_list = sorted(self.price_kong_list)
-                lowest = min( bar.close, self.price_kong_list[0] )
-                lowest = lowest - self.gap_max
-                self.unit_short(lowest)
-
-                self.price_duo_list = sorted(self.price_duo_list)
-                p_tail = self.price_duo_list.pop(-1)
-                self.price_duo_list.append(p_tail - (bar.close-lowest))
-
+                self.unit_short(bar.close)
+                self.unit_buy(bar.close)
             else:
                 self.cover(bar.close, self.fixedSize)
                 self.buy(bar.close, self.fixedSize)
@@ -192,20 +181,12 @@ class Fut_DaLiSignal(Signal):
 
         # 平多仓、开空仓
         if self.can_short == True:
-            if len(self.price_duo_list) <= 3 or cc <= -5:
+            if len(self.price_duo_list) == 1:
                 self.short(bar.close, self.fixedSize)
 
-                self.unit_short(bar.close)
                 self.unit_sell()
-
-                self.price_duo_list = sorted(self.price_duo_list)
-                highest = max( bar.close, self.price_duo_list[-1] )
-                highest += self.gap_max
-                self.unit_buy(highest)
-
-                self.price_kong_list = sorted(self.price_kong_list)
-                p0 = self.price_kong_list.pop(0)
-                self.price_kong_list.append(p0 + (highest-bar.close))
+                self.unit_buy(bar.close)
+                self.unit_short(bar.close)
 
             else:
                 self.sell(bar.close, self.fixedSize)
@@ -272,12 +253,26 @@ class Fut_DaLiSignal(Signal):
 
     #----------------------------------------------------------------------
     def unit_buy(self, price):
-        self.price_duo_list.append(price)
+        if len(self.price_duo_list) >= 3:
+            self.price_duo_list = sorted(self.price_duo_list)
+            p_tail = self.price_duo_list.pop(-1)
+            self.price_duo_list.append(p_tail - self.gap_base*0.5)
+            self.price_duo_list.append(price  + self.gap_base*0.5)
+        else:
+            self.price_duo_list.append(price)
+
         self.unit_open(price, self.fixedSize)
 
     #----------------------------------------------------------------------
     def unit_short(self, price):
-        self.price_kong_list.append(price)
+        if len(self.price_kong_list) >= 3:
+            self.price_kong_list = sorted(self.price_kong_list)
+            p0 = self.price_kong_list.pop(0)
+            self.price_kong_list.append(p0 + self.gap_base*0.5)
+            self.price_kong_list.append(price - self.gap_base*0.5)
+        else:
+            self.price_kong_list.append(price)
+
         self.unit_open(price, -self.fixedSize)
 
     #----------------------------------------------------------------------
@@ -317,7 +312,7 @@ class Fut_DaLiSignal(Signal):
         if n > 1:
             a1 = min(duo_list)
             A = sum(duo_list)
-            x = int( (A-n*a1)/(0.5*n*(n-1)) + 0.5 )           # 四舍五入
+            x = int( (A-n*a1)/(0.5*n*(n-1)) )
             #print(x)
 
             for i in range(n):
@@ -339,7 +334,7 @@ class Fut_DaLiSignal(Signal):
         if n > 1:
             b1 = max(kong_list)
             B = sum(kong_list)
-            x = int( (n*b1-B)/(0.5*n*(n-1)) + 0.5 )           # 四舍五入
+            x = int( (n*b1-B)/(0.5*n*(n-1)) )
             # print(x)
 
             for i in range(n):

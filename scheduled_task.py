@@ -8,7 +8,7 @@ import datetime
 from multiprocessing.connection import Client
 import traceback
 
-from nature import to_log
+from nature import to_log, pandian_run, book_opt_run
 from nature import get_trading_dates, send_email
 
 from nature.engine.stk.nearboll.use_ma import use_ma
@@ -109,6 +109,26 @@ def run_tick2bar():
         s = traceback.format_exc()
         to_log(s)
 
+def run_pandian():
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            pandian_run()
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+def run_book_opt():
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            book_opt_run()
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
 def run_down_data():
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
@@ -126,12 +146,14 @@ if __name__ == '__main__':
         '''
 
         # 盘中
-        schedule.every().day.at("15:10").do(run_tick2bar)
+        schedule.every().day.at("15:05").do(run_tick2bar)
+        # schedule.every().day.at("15:10").do(run_book_opt)
+        schedule.every().day.at("15:15").do(run_pandian)
         schedule.every().day.at("15:16").do(mail_log)
 
         #盘后
         # schedule.every().day.at("03:00").do(run_down_data)
-        schedule.every().day.at("03:30").do(run_examine)
+        # schedule.every().day.at("03:30").do(run_examine)
 
         print('schedule begin...')
         while True:

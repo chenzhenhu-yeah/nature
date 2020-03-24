@@ -338,11 +338,11 @@ class FutEngine(object):
             self.portfolio_list = []           # 组合
             self.working = False
 
-            print('seq_tm: ', self.seq_tm)
-            if self.seq_tm == 'morning':
-                print('begin pandian_run')
-                pandian_run()
-                print('end pandian_run')
+            # print('seq_tm: ', self.seq_tm)
+            # if self.seq_tm == 'morning':
+            #     print('begin pandian_run')
+            #     pandian_run()
+            #     print('end pandian_run')
 
             print('begin gateway release ')
             if self.gateway is not None:
