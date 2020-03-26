@@ -79,8 +79,8 @@ def one2x(pz,symbol,filename):
 
 
 if __name__ == "__main__":
-    pz = 'ru'
-    symbol = 'min1_ru'
+    pz = 'y'
+    symbol = pz + '09'
     fn = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
 
     one2x(pz,symbol,fn)
