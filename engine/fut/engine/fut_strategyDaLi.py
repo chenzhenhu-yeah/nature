@@ -164,12 +164,11 @@ class Fut_DaLiSignal(Signal):
             self.unit_buy(bar.close)
             self.unit_short(bar.close)
 
-
         cc = len(self.price_duo_list) - len(self.price_kong_list)
-        #priceTick = get_contract(self.vtSymbol).price_tick
+
         # 平空仓、开多仓
         if self.can_buy == True:
-            if len(self.price_kong_list) <= 3 or cc >= 5:
+            if len(self.price_kong_list) <= 3 or cc >= 10:
                 # 价格下跌，买开仓
                 self.buy(bar.close, self.fixedSize)
                 self.unit_buy(bar.close)
@@ -184,21 +183,30 @@ class Fut_DaLiSignal(Signal):
                 # 多队列成本需同步调整
                 self.duo_adjust_price = self.duo_adjust_price - (bar.close - lowest)
 
-                # self.price_duo_list = sorted(self.price_duo_list)
-                # p_tail = self.price_duo_list.pop(-1)
-                # self.price_duo_list.append(p_tail - (bar.close-lowest))
-
             else:
-                self.cover(bar.close, self.fixedSize)
-                self.buy(bar.close, self.fixedSize)
+                if cc <= -10 :
+                    self.cover(bar.close, self.fixedSize)
+                    self.unit_cover()
 
-                self.unit_cover()
-                self.unit_buy(bar.close)
+                    # 多单队列数量保持不变
+                    self.price_duo_list = sorted(self.price_duo_list)
+                    highest = self.price_duo_list.pop(-1)
+                    self.unit_buy(bar.close)
+
+                    # 空队列成本需同步调整
+                    self.kong_adjust_price = self.kong_adjust_price - (highest - bar.close)
+
+                else:
+                    self.cover(bar.close, self.fixedSize)
+                    self.unit_cover()
+
+                    self.buy(bar.close, self.fixedSize)
+                    self.unit_buy(bar.close)
             self.paused = True
 
         # 平多仓、开空仓
         if self.can_short == True:
-            if len(self.price_duo_list) <= 3 or cc <= -5:
+            if len(self.price_duo_list) <= 3 or cc <= -10:
                 self.short(bar.close, self.fixedSize)
                 self.unit_short(bar.close)
 
@@ -211,16 +219,25 @@ class Fut_DaLiSignal(Signal):
                 # 空队列成本需同步调整
                 self.kong_adjust_price = self.kong_adjust_price + (highest - bar.close)
 
-                # self.price_kong_list = sorted(self.price_kong_list)
-                # p0 = self.price_kong_list.pop(0)
-                # self.price_kong_list.append(p0 + (highest-bar.close))
-
             else:
-                self.sell(bar.close, self.fixedSize)
-                self.short(bar.close, self.fixedSize)
+                if cc >= 10:
+                    self.sell(bar.close, self.fixedSize)
+                    self.unit_sell()
 
-                self.unit_sell()
-                self.unit_short(bar.close)
+                    # 空单队列数量保持不变
+                    self.price_kong_list = sorted(self.price_kong_list)
+                    lowest = self.price_kong_list.pop(0)
+                    self.unit_short(bar.close)
+
+                    # 空队列成本需同步调整
+                    self.duo_adjust_price = self.duo_adjust_price + (bar.close - lowest)
+
+                else:
+                    self.sell(bar.close, self.fixedSize)
+                    self.unit_sell()
+
+                    self.short(bar.close, self.fixedSize)
+                    self.unit_short(bar.close)
             self.paused = True
 
     #----------------------------------------------------------------------
