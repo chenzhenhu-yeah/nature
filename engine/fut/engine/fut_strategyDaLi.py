@@ -168,7 +168,7 @@ class Fut_DaLiSignal(Signal):
 
         # 平空仓、开多仓
         if self.can_buy == True:
-            if len(self.price_kong_list) <= 3 or cc >= 10:
+            if len(self.price_kong_list) <= 3 or cc >= 2:
                 # 价格下跌，买开仓
                 self.buy(bar.close, self.fixedSize)
                 self.unit_buy(bar.close)
