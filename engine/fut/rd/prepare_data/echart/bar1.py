@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from nature import get_dss
 
-fn = get_dss() +'backtest/fut/m/' + 'day_m.csv'
+fn = get_dss() +'backtest/fut/al/' + 'day_al01.csv'
 
 df1 = pd.read_csv(fn)
 df1['datetime'] = df1['date'] + ' ' + df1['time']

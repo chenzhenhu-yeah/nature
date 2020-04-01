@@ -79,8 +79,12 @@ def one2x(pz,symbol,filename):
 
 
 if __name__ == "__main__":
-    pz = 'y'
-    symbol = pz + '09'
-    fn = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+    pz_list = ['al']
+    # mm_list = ['01']
+    mm_list = ['02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 
-    one2x(pz,symbol,fn)
+    for pz in pz_list:
+        for mm in mm_list:
+            symbol = pz + mm
+            fn = get_dss() +'backtest/fut/' + pz + '/' + symbol + '.csv'
+            one2x(pz,symbol,fn)

@@ -66,12 +66,12 @@ def draw_charts(fn1, fn2):
     )
     grid_chart.add(
         kline1,
-        grid_opts=opts.GridOpts(pos_left="3%", pos_right="3%", height="39%"),
+        grid_opts=opts.GridOpts(pos_left="5%", pos_right="3%", height="39%"),
     )
     grid_chart.add(
         kline2,
         grid_opts=opts.GridOpts(
-            pos_left="3%", pos_right="3%", pos_top="53%", height="39%" ),
+            pos_left="3%", pos_right="5%", pos_top="53%", height="39%" ),
     )
 
     fn = get_dss( ) + 'backtest/render/bar2.html'
@@ -79,8 +79,8 @@ def draw_charts(fn1, fn2):
 
 if __name__ == "__main__":
     #fn1 = get_dss() +'backtest/fut/m/' + 'm_01_05.csv'
-    fn1 = get_dss() +'backtest/fut/m/' + 'day_m.csv'
+    fn1 = get_dss() +'backtest/fut/al/' + 'day_al01.csv'
 
-    fn2 = get_dss() +'backtest/fut/y/' + 'day_y.csv'
+    fn2 = get_dss() +'backtest/fut/al/' + 'day_al02.csv'
 
     draw_charts(fn1, fn2)

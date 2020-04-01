@@ -182,6 +182,32 @@ def p15():
 
     sp(year+' - '+title, symbol1, symbol2, start_dt, end_dt, fn1, fn2)
 
-p15()
+#------------------------------------------------------------------------------
+def al12():
+    year = '2019'
+
+    title = 'al12'
+    symbol1 = 'al01'
+    symbol2 = 'al02'
+    start_dt = year + '-03-01'
+    end_dt   = year + '-12-31'
+    fn1 = get_dss() +'backtest/fut/al/day_' + symbol1 + '.csv'
+    fn2 = get_dss() +'backtest/fut/al/day_' + symbol2 + '.csv'
+
+    sp(year+' - '+title, symbol1, symbol2, start_dt, end_dt, fn1, fn2)
 
 #------------------------------------------------------------------------------
+def al23():
+    year = '2019'
+
+    title = 'al23'
+    symbol1 = 'al02'
+    symbol2 = 'al03'
+    start_dt = year + '-04-01'
+    end_dt   = year + '-12-31'
+    fn1 = get_dss() +'backtest/fut/al/day_' + symbol1 + '.csv'
+    fn2 = get_dss() +'backtest/fut/al/day_' + symbol2 + '.csv'
+
+    sp(year+' - '+title, symbol1, symbol2, start_dt, end_dt, fn1, fn2)
+
+al23()

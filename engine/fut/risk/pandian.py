@@ -73,7 +73,7 @@ def pandian_dali(today):
             active_price = (int(multi_duo_list[0]) + int(multi_kong_list[0])) * 0.5
 
             margin = df_param.at[symbol,'fixed_size']*active_price*float(c.size)*float(c.margin) * ( len(multi_duo_list) + len(multi_kong_list) )
-            risk = round(100*(margin/cur_value), 2)
+            risk = round(100*(margin/capital), 2)
 
             r.append( [today,pz,capital,cur_value,newyear_value,year_ratio,margin,risk,net_pos,multi_duo_list,multi_kong_list] )
             #print(r)
@@ -127,7 +127,7 @@ def pandian_p(today):
                 c = get_contract(symbol)
                 margin += abs(pos_dict[symbol])*close_dict[symbol]*float(c.size)*float(c.margin)
 
-            risk = round(100*(margin/cur_value), 2)
+            risk = round(100*(margin/capital), 2)
             r.append( [today,p,capital,cur_value,newyear_value,year_ratio,margin,risk,str(pos_dict)] )
 
     # print(r)
