@@ -44,6 +44,7 @@ class FutEngine(object):
         """Constructor"""
 
         self.dss = get_dss()
+        self.type = 'trade'
         self.gateway = None                # 路由
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
@@ -382,7 +383,7 @@ def start():
     schedule.every().monday.at("20:56").do(e.worker_open)
     schedule.every().tuesday.at("02:33").do(e.worker_close)
 
-    schedule.every().tuesday.at("08:56").do(e.worker_open)
+    schedule.every().tuesday.at("08:52").do(e.worker_open)
     schedule.every().tuesday.at("15:03").do(e.worker_close)
     schedule.every().tuesday.at("20:56").do(e.worker_open)
     schedule.every().wednesday.at("02:33").do(e.worker_close)

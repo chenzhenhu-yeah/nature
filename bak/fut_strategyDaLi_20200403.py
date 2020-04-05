@@ -25,12 +25,13 @@ class Fut_DaLiSignal(Signal):
         self.atrValue = 0
         self.atrWindow = 20
         self.atr_x = 8
-        self.dual = 10
 
         self.gap = 30
         self.gap_base = self.gap
         self.gap_min = 15
         self.gap_max = 40
+        self.price_min = 2600
+        self.price_max = 3100
 
         self.price_duo_list =  []
         self.price_kong_list = []
@@ -41,13 +42,8 @@ class Fut_DaLiSignal(Signal):
         self.can_buy = False
         self.can_short = False
         self.pnl = 0
-        self.first = True
 
         Signal.__init__(self, portfolio, vtSymbol)
-
-        self.backtest = True if self.portfolio.engine.type == 'backtest' else False
-        # self.backtest = True               # 回测模式
-        # self.backtest = False              # 实盘模式
 
     #----------------------------------------------------------------------
     def load_param(self):
@@ -63,8 +59,8 @@ class Fut_DaLiSignal(Signal):
                 self.gap_min = rec.gap_min
                 self.gap_max = rec.gap_max
                 self.atr_x = rec.atr_x
-                self.dual = rec.dual
-
+                self.price_min = rec.price_min
+                self.price_max = rec.price_max
                 #print('成功加载策略参数')
 
     #----------------------------------------------------------------------
@@ -84,58 +80,21 @@ class Fut_DaLiSignal(Signal):
         self.lock.acquire()
 
         self.bar = bar
-        if minx == 'min1':
-            self.on_bar_min1(bar)
         if minx == 'min5':
             self.on_bar_minx(bar)
 
         self.lock.release()
-
-    def on_bar_min1(self, bar):
-        if self.first == True:
-            # 跳空后，调整队列
-            # g = bar.close - bar.PreClosePrice
-            g = bar.close - self.am.closeArray[-1]
-
-            if abs(g) > self.gap_base:
-                print(self.vtSymbol + ' 开盘跳空缺口')
-                self.record([[self.bar.date, self.bar.time, self.vtSymbol + ' 开盘跳空缺口']])
-                self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
-                cc = len(self.price_duo_list) - len(self.price_kong_list)
-
-                # 高开
-                if g > 0:
-                    self.price_duo_list = sorted(self.price_duo_list)
-                    while self.price_duo_list[0] < bar.close:
-                        lowest = self.price_duo_list.pop(0)
-                        highest = self.price_duo_list[-1] + self.gap_base
-                        self.price_duo_list.append(highest)
-                        self.price_duo_list = sorted(self.price_duo_list)
-                        self.kong_adjust_price = self.kong_adjust_price  + (highest - lowest)
-
-                    self.price_kong_list = self.adjust_price_kong(bar.close)
-
-                # 低开
-                if g < 0:
-                    self.price_kong_list = sorted(self.price_kong_list)
-                    while self.price_kong_list[-1] > bar.close:
-                        highest = self.price_kong_list.pop(-1)
-                        lowest  = self.price_kong_list[0] - self.gap_base
-                        self.price_kong_list.append(lowest)
-                        self.price_kong_list = sorted(self.price_kong_list)
-                        self.duo_adjust_price = self.duo_adjust_price - (highest - lowest)
-
-                    self.price_duo_list = self.adjust_price_duo(bar.close)
-
-                self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
-        self.first = False
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
-        if self.paused == True and self.backtest == False:
+        #print('here')
+        if self.bar.close < self.price_min or self.bar.close > self.price_max:
+            return
+
+        if self.paused == True:
             return
 
         self.calculateIndicator()     # 计算指标
@@ -161,15 +120,6 @@ class Fut_DaLiSignal(Signal):
         self.lock.release()
         # print(self.order_list)
         # print(self.paused)
-
-    #----------------------------------------------------------------------
-    def record(self, r):
-        df = pd.DataFrame(r)
-        filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -198,10 +148,16 @@ class Fut_DaLiSignal(Signal):
             self.pnl = (self.get_price_duo() - self.bar.close) * self.fixedSize
 
         r = [[self.bar.date,self.bar.time,self.bar.close,self.can_buy,self.can_short,self.atrValue,self.gap,gap_plus,gap_minus]]
-        self.record(r)
+        df = pd.DataFrame(r)
+        filename = get_dss() +  'fut/engine/dali/bar_dali_'+self.type+ '_' + self.vtSymbol + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
+
         if len(self.price_duo_list) == 0 or len(self.price_kong_list) == 0 :
             self.buy(bar.close, self.fixedSize)
             self.short(bar.close, self.fixedSize)
@@ -212,22 +168,7 @@ class Fut_DaLiSignal(Signal):
 
         # 平空仓、开多仓
         if self.can_buy == True:
-            self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
-            if cc < 0:
-                # 价格从高位下跌，仓差收窄，收窄时只有一种方式，单减。
-                # 平空仓，移多队列。此时队列中的数量是充足的。
-                self.cover(bar.close, self.fixedSize)
-                self.unit_cover()
-
-                # 移多队列，队列数量保持不变
-                self.price_duo_list = sorted(self.price_duo_list)
-                highest = self.price_duo_list.pop(-1)
-                self.unit_buy(bar.close)
-
-                # 空队列成本需同步调整
-                self.kong_adjust_price = self.kong_adjust_price - (highest - bar.close)
-            elif cc < self.dual or len(self.price_kong_list) <= 3:
-                # 价格回归后继续下跌，仓差走扩，起步阶段用仓差单增的方式。
+            if len(self.price_kong_list) <= 3 or cc >= 2:
                 # 价格下跌，买开仓
                 self.buy(bar.close, self.fixedSize)
                 self.unit_buy(bar.close)
@@ -241,36 +182,31 @@ class Fut_DaLiSignal(Signal):
 
                 # 多队列成本需同步调整
                 self.duo_adjust_price = self.duo_adjust_price - (bar.close - lowest)
+
             else:
-                # 价格深度下跌，仓差走扩，临近底部，用仓差双增的方式。
-                self.cover(bar.close, self.fixedSize)
-                self.unit_cover()
+                if cc <= -10 :
+                    self.cover(bar.close, self.fixedSize)
+                    self.unit_cover()
 
-                self.buy(bar.close, self.fixedSize)
-                self.unit_buy(bar.close)
+                    # 多单队列数量保持不变
+                    self.price_duo_list = sorted(self.price_duo_list)
+                    highest = self.price_duo_list.pop(-1)
+                    self.unit_buy(bar.close)
 
+                    # 空队列成本需同步调整
+                    self.kong_adjust_price = self.kong_adjust_price - (highest - bar.close)
+
+                else:
+                    self.cover(bar.close, self.fixedSize)
+                    self.unit_cover()
+
+                    self.buy(bar.close, self.fixedSize)
+                    self.unit_buy(bar.close)
             self.paused = True
-            self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
 
         # 平多仓、开空仓
         if self.can_short == True:
-            self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
-            if cc > 0:
-                # 价格从底部上涨，仓差收窄，收窄时只有一种方式，单减。
-                # 平多仓，移空队列。此时队列中的数量是充足的。
-                self.sell(bar.close, self.fixedSize)
-                self.unit_sell()
-
-                # 空单队列数量保持不变
-                self.price_kong_list = sorted(self.price_kong_list)
-                lowest = self.price_kong_list.pop(0)
-                self.unit_short(bar.close)
-
-                # 空队列成本需同步调整
-                self.duo_adjust_price = self.duo_adjust_price + (bar.close - lowest)
-            elif cc > -self.dual or len(self.price_duo_list) <= 3:
-                # 价格回归后继续上涨，仓差走扩，起步阶段用仓差单增的方式。
-                # 价格上涨，开空仓，移多队列
+            if len(self.price_duo_list) <= 3 or cc <= -10:
                 self.short(bar.close, self.fixedSize)
                 self.unit_short(bar.close)
 
@@ -282,16 +218,27 @@ class Fut_DaLiSignal(Signal):
 
                 # 空队列成本需同步调整
                 self.kong_adjust_price = self.kong_adjust_price + (highest - bar.close)
+
             else:
-                # 价格疯狂上涨，仓差走扩，临近顶部，用仓差双增的方式。
-                self.sell(bar.close, self.fixedSize)
-                self.unit_sell()
+                if cc >= 10:
+                    self.sell(bar.close, self.fixedSize)
+                    self.unit_sell()
 
-                self.short(bar.close, self.fixedSize)
-                self.unit_short(bar.close)
+                    # 空单队列数量保持不变
+                    self.price_kong_list = sorted(self.price_kong_list)
+                    lowest = self.price_kong_list.pop(0)
+                    self.unit_short(bar.close)
 
+                    # 空队列成本需同步调整
+                    self.duo_adjust_price = self.duo_adjust_price + (bar.close - lowest)
+
+                else:
+                    self.sell(bar.close, self.fixedSize)
+                    self.unit_sell()
+
+                    self.short(bar.close, self.fixedSize)
+                    self.unit_short(bar.close)
             self.paused = True
-            self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
 
     #----------------------------------------------------------------------
     def get_gap_plus(self):
@@ -308,7 +255,7 @@ class Fut_DaLiSignal(Signal):
         elif cc >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= -1 and cc <= 1:
+        if cc >= -4 and cc <= 4:
             g = self.gap_min
 
         return g
@@ -327,7 +274,7 @@ class Fut_DaLiSignal(Signal):
         elif cc >= 8:
             g += self.gap_base * 0.25
 
-        if cc >= -1 and cc <= 1:
+        if cc >= -4 and cc <= 4:
             g = self.gap_min
 
         return g
@@ -387,16 +334,13 @@ class Fut_DaLiSignal(Signal):
                 self.price_kong_list = eval( rec.price_kong_list )
 
     #----------------------------------------------------------------------
-    def adjust_price_duo(self, head=None):
+    def adjust_price_duo(self):
         r = []
         duo_list = self.price_duo_list
         n = len(duo_list)
 
         if n > 1:
-            if head is None:
-                a1 = min(duo_list)
-            else:
-                a1 = head
+            a1 = min(duo_list)
             A = sum(duo_list)
             A += self.duo_adjust_price
             x = int( (A-n*a1)/(0.5*n*(n-1)) + 0.5 )           # 四舍五入
@@ -408,22 +352,18 @@ class Fut_DaLiSignal(Signal):
                     ai = A - sum(r)
                 r.append(ai)
         else:
-            r = [ duo_list[0] + self.duo_adjust_price ]
+            r = duo_list
 
-        self.duo_adjust_price = 0
         return r
 
     #----------------------------------------------------------------------
-    def adjust_price_kong(self, head=None):
+    def adjust_price_kong(self):
         r = []
         kong_list = self.price_kong_list
         n = len(kong_list)
 
         if n > 1:
-            if head is None:
-                b1 = max(kong_list)
-            else:
-                b1 = head
+            b1 = max(kong_list)
             B = sum(kong_list)
             B += self.kong_adjust_price
             x = int( (n*b1-B)/(0.5*n*(n-1)) + 0.5 )           # 四舍五入
@@ -435,14 +375,13 @@ class Fut_DaLiSignal(Signal):
                     bi = B - sum(r)
                 r.append(bi)
         else:
-            r = [ kong_list[0] + self.kong_adjust_price ]
+            r = kong_list
 
-        self.kong_adjust_price = 0
         return r
 
     #----------------------------------------------------------------------
     def save_var(self):
-        if self.paused == True and self.backtest == False:
+        if self.paused == True:
             return
 
         self.price_duo_list = self.adjust_price_duo()

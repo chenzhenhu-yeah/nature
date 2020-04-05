@@ -107,6 +107,39 @@ def gather_kong():
     print(sum(r))
 
 
+
+###################################################################################
+
+def balance_point():
+
+    for price in [2200, 2300, 2400]:
+        duo_list  = [2314.0, 2322.0, 2330.0, 2338.0, 2346.0, 2354.0, 2362.0, 2370.0]
+        kong_list = [2306.0, 2285.0, 2264.0, 2243.0, 2222.0]
+
+
+        print('\n', price )
+        duo_list = [price-x for x in duo_list]
+        print(sum(duo_list))
+        kong_list = [x-price for x in kong_list]
+        print(sum(kong_list))
+
+        print( sum(duo_list)+sum(kong_list) )
+
+
+
+def suo():
+    price = 2315
+    duo_list  = [2378.0, 2386.0, 2394.0, 2402.0, 2410.0, 2418.0, 2426.0, 2434.0, 2442.0, 2450.0, 2458.0, 2466.0, 2516.0]
+    kong_list = [2201.0, 2180.0, 2159.0, 2138.0, 2117.0, 2096.0, 2075.0, 2054.0, 2033.0, 2012.0, 1991.0, 1970.0, 1916.0]
+
+    duo_list = [price-x for x in duo_list]
+    print(sum(duo_list))
+    kong_list = [x-price for x in kong_list]
+    print(sum(kong_list))
+
+    print( sum(duo_list)+sum(kong_list) )
+
+
 ###################################################################################
 
 if __name__ == '__main__':
@@ -114,4 +147,5 @@ if __name__ == '__main__':
 
     # kong_adjust(200)
     # gather_duo()
-    gather_kong()
+    balance_point()
+    # suo()

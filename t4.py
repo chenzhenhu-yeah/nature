@@ -16,10 +16,6 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_m
 
 import sys
 
-print( '参数个数为:', len(sys.argv), '个参数。' )
-print( '参数列表:', str(sys.argv) )
-
-
 #
 # duo  = [2736.0, 2711.0, 2687.0]
 # kong = [2675.0, 2651.0, 2627.0, 2503.0, 2479.0, 2455.0, 2516.0]

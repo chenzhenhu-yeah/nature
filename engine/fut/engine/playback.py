@@ -43,6 +43,7 @@ class FutEngine(object):
         """Constructor"""
 
         self.dss = get_dss()
+        self.type = 'backtest'
         self.gateway = None                # 路由
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
@@ -73,17 +74,11 @@ class FutEngine(object):
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
 
-        if 'symbols_rsiboll' in setting:
-            symbols = setting['symbols_rsiboll']
-            if len(symbols) > 0:
-                rsiboll_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
-
-        # if 'symbols_cciboll' in setting:
-        #     symbols = setting['symbols_cciboll']
+        # if 'symbols_rsiboll' in setting:
+        #     symbols = setting['symbols_rsiboll']
         #     if len(symbols) > 0:
-        #         cciboll_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_CciBollPortfolio, cciboll_symbol_list)
+        #         rsiboll_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
         if 'symbols_dali' in setting:
             symbols = setting['symbols_dali']
@@ -91,56 +86,49 @@ class FutEngine(object):
                 dali_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
-        if 'symbols_dalicta' in setting:
-            symbols = setting['symbols_dalicta']
-            if len(symbols) > 0:
-                dalicta_symbol_list = symbols.split(',')
-                for symbol in dalicta_symbol_list:
-                    self.loadPortfolio(Fut_DaLictaPortfolio, [symbol])
-
-        # if 'symbols_atrrsi' in setting:
-        #     symbols = setting['symbols_atrrsi']
+        # if 'symbols_dalicta' in setting:
+        #     symbols = setting['symbols_dalicta']
         #     if len(symbols) > 0:
-        #         atrrsi_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
-
-        if 'symbols_turtle' in setting:
-            symbols = setting['symbols_turtle']
-            if len(symbols) > 0:
-                turtle_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
-
-        if 'symbols_owl' in setting:
-            symbols = setting['symbols_owl']
-            if len(symbols) > 0:
-                owl_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
-
-        if 'symbols_aberration_enhance' in setting:
-            symbols = setting['symbols_aberration_enhance']
-            if len(symbols) > 0:
-                aberration_enhance_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
-
-        if 'symbols_cci_raw' in setting:
-            symbols = setting['symbols_cci_raw']
-            if len(symbols) > 0:
-                cci_raw_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
-
-        if 'symbols_ic' in setting:
-            symbols = setting['symbols_ic']
-            if len(symbols) > 0:
-                ic_symbol_list = symbols.split(',')
-            else:
-                ic_symbol_list = []
-            fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
-                        self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
-
+        #         dalicta_symbol_list = symbols.split(',')
+        #         for symbol in dalicta_symbol_list:
+        #             self.loadPortfolio(Fut_DaLictaPortfolio, [symbol])
+        #
+        # if 'symbols_turtle' in setting:
+        #     symbols = setting['symbols_turtle']
+        #     if len(symbols) > 0:
+        #         turtle_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+        #
+        # if 'symbols_owl' in setting:
+        #     symbols = setting['symbols_owl']
+        #     if len(symbols) > 0:
+        #         owl_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
+        #
+        # if 'symbols_aberration_enhance' in setting:
+        #     symbols = setting['symbols_aberration_enhance']
+        #     if len(symbols) > 0:
+        #         aberration_enhance_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
+        #
+        # if 'symbols_cci_raw' in setting:
+        #     symbols = setting['symbols_cci_raw']
+        #     if len(symbols) > 0:
+        #         cci_raw_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
+        #
+        # if 'symbols_ic' in setting:
+        #     symbols = setting['symbols_ic']
+        #     if len(symbols) > 0:
+        #         ic_symbol_list = symbols.split(',')
+        #     else:
+        #         ic_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
+        #                 self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -310,8 +298,8 @@ def start():
     print(u'期货交易引擎开始回放')
 
     # start_date = '2019-12-01 09:00:00'
-    start_date = '2020-02-17 09:00:00'
-    end_date   = '2020-02-18 15:00:00'
+    start_date = '2020-04-03 09:00:00'
+    end_date   = '2020-04-03 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)
