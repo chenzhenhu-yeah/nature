@@ -25,6 +25,7 @@ class BacktestingEngine(object):
     def __init__(self,symbol_list,minx='min5'):
         """Constructor"""
         self.dss = get_dss()
+        self.type = 'backtest'
 
         self.portfolio = None                # 一对一
         self.startDt = None

@@ -67,16 +67,15 @@ class Fut_DaLiSignal(Signal):
 
                 #print('成功加载策略参数')
 
-    #----------------------------------------------------------------------
+    # 回测时用，实盘用不上----------------------------------------------------
     def set_param(self, param_dict):
-        if 'gap' in param_dict:
-            # self.gap = param_dict['gap']
-            print('成功设置策略参数 self.gap: ',self.gap)
-        if 'fixedSize' in param_dict:
-            # self.fixedSize = param_dict['fixedSize']
-            # if self.fixedSize > 1:
-            #     self.type = 'multi'
-            print('成功设置策略参数 self.fixedSize: ',self.fixedSize)
+        if 'price_duo_list' in param_dict:
+            self.price_duo_list = param_dict['price_duo_list']
+            print('成功设置策略参数 self.price_duo_list: ',self.price_duo_list)
+
+        if 'price_kong_list' in param_dict:
+            self.price_kong_list = param_dict['price_kong_list']
+            print('成功设置策略参数 self.price_kong_list: ',self.price_kong_list)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -385,6 +384,8 @@ class Fut_DaLiSignal(Signal):
                 rec = df.iloc[-1,:]            # 取最近日期的记录
                 self.price_duo_list = eval( rec.price_duo_list )
                 self.price_kong_list = eval( rec.price_kong_list )
+                # print(self.price_duo_list)
+                # print(self.price_kong_list)
 
     #----------------------------------------------------------------------
     def adjust_price_duo(self, head=None):
@@ -487,12 +488,12 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def open(self, price, change):
         pass
-        print('come here open !')
+        # print('come here open !')
 
     #----------------------------------------------------------------------
     def close(self, price, change):
         pass
-        print('come here close !')
+        # print('come here close !')
 
     #----------------------------------------------------------------------
     def unit_open(self, price, change):

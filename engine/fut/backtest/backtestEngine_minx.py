@@ -22,6 +22,7 @@ class BacktestingEngine(object):
     def __init__(self, symbol_list, minx_s, minx_l):
         """Constructor"""
         self.dss = get_dss()
+        self.type = 'backtest'
 
         self.portfolio = None                # 一对一
         self.startDt = None
@@ -206,7 +207,7 @@ class BacktestingEngine(object):
                     loop = False
 
             # print('l: ', dt_l)
-            # 推送长周期时点数据 
+            # 推送长周期时点数据
             for bar in barDict_l.values():
                 self.portfolio.onBar(bar, self.minx_l)
 

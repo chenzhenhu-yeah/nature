@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from nature import Backtest_Result
-from nature import get_stk_hfq, to_log, get_dss
+from nature import get_stk_hfq, to_log, get_dss, get_contract
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_AberrationPortfolio
 from nature import Fut_DonchianPortfolio, Fut_TurtlePortfolio, Fut_CciBollPortfolio
@@ -27,6 +27,7 @@ class BacktestingEngine(object):
     def __init__(self,symbol_list,minx='min5'):
         """Constructor"""
         self.dss = get_dss()
+        self.type = 'backtest'
 
         self.portfolio = None                # 一对一
         self.startDt = None
@@ -54,7 +55,8 @@ class BacktestingEngine(object):
     def loadData(self):
         """加载数据"""
         for vtSymbol in self.symbol_list:
-            filename = get_dss( ) + 'backtest/fut/' + vtSymbol + '/' +self.minx + '_' + vtSymbol + '.csv'
+            pz = str(get_contract(vtSymbol).pz)
+            filename = get_dss( ) + 'backtest/fut/' + pz + '/' +self.minx + '_' + vtSymbol + '.csv'
 
             df = pd.read_csv(filename)
             for i, d in df.iterrows():
@@ -145,16 +147,17 @@ def test_one(PortfolioClass, minx):
 
     #vtSymbol = 'MA901'
     #vtSymbol = 'rb1901'
-    vtSymbol = 'm'
-    #vtSymbol = 'c1901'
+    # vtSymbol = 'm2005'
+    vtSymbol = 'm01'
     #vtSymbol = 'CF901'
-    start_date = '2019109 00:00:00'
-    # start_date = '20180609 00:00:00'
+    # start_date = '20200101 00:00:00'
+    # end_date   = '20200403 00:00:00'
+
+    start_date = '20190101 00:00:00'
     end_date   = '20191231 00:00:00'
-    #end_date   = '20180531 00:00:00'
 
     signal_param = {}
-    #signal_param = {vtSymbol:{'slMultiplier':0.5} }
+    signal_param = {vtSymbol:{'price_duo_list':[2742.0, 2782.0, 2800], 'price_kong_list':[2735, 2715, 2705]} }
 
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 
@@ -165,19 +168,18 @@ if __name__ == '__main__':
     # PortfolioClass = Fut_RsiBollPortfolio
     # PortfolioClass = Fut_DonchianPortfolio
     # PortfolioClass = Fut_CciBollPortfolio
-    #PortfolioClass = Fut_DaLiPortfolio
+    PortfolioClass = Fut_DaLiPortfolio
     #PortfolioClass = Fut_DaLictaPortfolio
     #PortfolioClass = Fut_Aberration_RawPortfolio
     #PortfolioClass = Fut_Aberration_EnhancePortfolio
     #PortfolioClass = Fut_Cci_RawPortfolio
     #PortfolioClass = Fut_Cci_EnhancePortfolio
     #PortfolioClass = Fut_MaPortfolio
-
-    PortfolioClass = Opt_Short_PutPortfolio
+    # PortfolioClass = Opt_Short_PutPortfolio
 
     #minx = 'day'
-    minx = 'min30'
+    # minx = 'min30'
     #minx = 'min15'
-    #minx = 'min5'
+    minx = 'min5'
 
     test_one(PortfolioClass, minx)
