@@ -95,22 +95,22 @@ class Fut_DaLiSignal(Signal):
             # 跳空后，调整队列
             # g = bar.close - bar.PreClosePrice
             g = bar.close - self.am.closeArray[-1]
+            cc = len(self.price_duo_list) - len(self.price_kong_list)
 
             if abs(g) > self.gap_base:
                 print(self.vtSymbol + ' 开盘跳空缺口')
                 self.record([[self.bar.date, self.bar.time, self.vtSymbol + ' 开盘跳空缺口']])
                 self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
-                cc = len(self.price_duo_list) - len(self.price_kong_list)
 
                 # 高开
                 if g > 0:
                     self.price_duo_list = sorted(self.price_duo_list)
                     while self.price_duo_list[0] < bar.close:
                         lowest = self.price_duo_list.pop(0)
-                        highest = self.price_duo_list[-1] + self.gap_base
-                        self.price_duo_list.append(highest)
+                        newest = bar.close + 3*self.gap_base
+                        self.price_duo_list.append(newest)
                         self.price_duo_list = sorted(self.price_duo_list)
-                        self.kong_adjust_price = self.kong_adjust_price  + (highest - lowest)
+                        self.kong_adjust_price = self.kong_adjust_price  + (newest - lowest)
 
                     self.price_kong_list = self.adjust_price_kong(bar.close)
 
@@ -119,10 +119,10 @@ class Fut_DaLiSignal(Signal):
                     self.price_kong_list = sorted(self.price_kong_list)
                     while self.price_kong_list[-1] > bar.close:
                         highest = self.price_kong_list.pop(-1)
-                        lowest  = self.price_kong_list[0] - self.gap_base
-                        self.price_kong_list.append(lowest)
+                        newest  = bar.close - 3*self.gap_base
+                        self.price_kong_list.append(newest)
                         self.price_kong_list = sorted(self.price_kong_list)
-                        self.duo_adjust_price = self.duo_adjust_price - (highest - lowest)
+                        self.duo_adjust_price = self.duo_adjust_price - (highest - newest)
 
                     self.price_duo_list = self.adjust_price_duo(bar.close)
 
