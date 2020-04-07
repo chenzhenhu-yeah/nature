@@ -67,3 +67,4 @@ from nature.engine.fut.risk.book_opt import book_opt_run
 from nature.engine.fut.backtest.backtest_result import Backtest_Result
 
 from nature.web import draw_web
+from nature.web import draw_web_plot

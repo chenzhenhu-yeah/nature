@@ -8,7 +8,8 @@ import tushare as ts
 import json
 import os
 
-from nature import read_log_today, a_file, get_dss, draw_web, get_symbols_quote
+from nature import read_log_today, a_file, get_dss, get_symbols_quote
+from nature import draw_web, draw_web_plot
 
 def del_blank(c):
     s = str(c).strip()
@@ -634,10 +635,13 @@ def ic1():
     symbol1 = 'p2005'
     symbol2 = 'p2009'
     start_dt = '2020-03-06'
-    draw_web.ic(symbol1, symbol2, start_dt)
-    time.sleep(1)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
-    return app.send_static_file(fn)
+    # draw_web.ic(symbol1, symbol2, start_dt)
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    # time.sleep(1)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    # return app.send_static_file(fn)
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
 
 @app.route('/ic2', methods=['get','post'])
 def ic2():
@@ -698,6 +702,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

@@ -25,7 +25,7 @@ def sp(title, symbol1, symbol2, start_dt, end_dt, fn1, fn2):
     price_min = df1['close'].min()
     price_max =  df1['close'].max()
 
-    df1 = df1.set_index('date')
+    df1 = df1.set_index('date') 
 
     plt.figure(figsize=(15,7))
     plt.xticks(rotation=45)
