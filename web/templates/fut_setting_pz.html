@@ -73,18 +73,18 @@
 
       <form method="post" action="fut_setting_pz">
       <fieldset>
-      <p> pz:<input type="text" name="pz"  required/> </p>
-      <p> size:<input type="text" name="size" /> </p>
-      <p> priceTick:<input type="text" name="priceTick" /> </p>
-      <p> variableCommission:<input type="text" name="variableCommission" /> </p>
-      <p> fixedCommission:<input type="text" name="fixedCommission" /> </p>
-      <p> slippage:<input type="text" name="slippage" /> </p>
-      <p> exchangeID:<input type="text" name="exchangeID" /> </p>
-      <p> margin:<input type="text" name="margin" /> </p>
+      <p> pz:<input type="text" name="pz" value="{{words.pz}}"  required/> </p>
+      <p> size:<input type="text" name="size" value="{{words.size}}" /> </p>
+      <p> priceTick:<input type="text" name="priceTick" value="{{words.priceTick}}" /> </p>
+      <p> variableCommission:<input type="text" name="variableCommission" value="{{words.variableCommission}}" /> </p>
+      <p> fixedCommission:<input type="text" name="fixedCommission" value="{{words.fixedCommission}}" /> </p>
+      <p> slippage:<input type="text" name="slippage" value="{{words.slippage}}" /> </p>
+      <p> exchangeID:<input type="text" name="exchangeID" value="{{words.exchangeID}}" /> </p>
+      <p> margin:<input type="text" name="margin" value="{{words.margin}}" /> </p>
 
       <p>
         <pre>
-        add<input type="radio" name="kind" value="add" />     del<input type="radio" name="kind" value="del" />     alter<input type="radio" name="kind" value="alter" />
+        add<input type="radio" name="kind" value="add" />     del<input type="radio" name="kind" value="del" />     alter<input type="radio" name="kind" value="alter" />     query<input type="radio" name="kind" value="query" />
         </pre>
       </p>
       </fieldset>

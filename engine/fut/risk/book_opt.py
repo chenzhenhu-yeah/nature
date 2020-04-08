@@ -213,10 +213,10 @@ def fresh_daliopt():
 def book_opt_run():
     # 以下调用顺序不能乱！
 
-    # fresh_book()
+    fresh_book()
     new_book()
-    # get_trade()
-    # fresh_daliopt()
+    get_trade()
+    fresh_daliopt()
 
 
 if __name__ == '__main__':

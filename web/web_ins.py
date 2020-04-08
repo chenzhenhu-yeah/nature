@@ -250,6 +250,7 @@ def fut_config():
 
 @app.route('/fut_setting_pz', methods=['get','post'])
 def fut_setting_pz():
+    setting_dict = {'pz':'','size':'','priceTick':'','variableCommission':'','fixedCommission':'','slippage':'','exchangeID':'','margin':''}
     filename = get_dss() + 'fut/cfg/setting_pz.csv'
     if request.method == "POST":
         pz = del_blank( request.form.get('pz') )
@@ -280,13 +281,19 @@ def fut_setting_pz():
             # 增
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'query':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz == pz ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                setting_dict = dict(rec)
 
     df = pd.read_csv(filename, dtype='str')
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
 
-    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r)
+    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r,words=setting_dict)
 
 @app.route('/fut_trade_time', methods=['get','post'])
 def fut_trade_time():
