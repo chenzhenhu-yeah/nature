@@ -632,36 +632,184 @@ def ic_y_m():
 
 @app.route('/ic1', methods=['get','post'])
 def ic1():
-    symbol1 = 'p2005'
-    symbol2 = 'p2009'
+    symbol1 = 'm2005'
+    symbol2 = 'm2009'
     start_dt = '2020-03-06'
-    # draw_web.ic(symbol1, symbol2, start_dt)
     draw_web_plot.ic(symbol1, symbol2, start_dt)
-    # time.sleep(1)
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    # return app.send_static_file(fn)
     now = str(int(time.time()))
     return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
 
 @app.route('/ic2', methods=['get','post'])
 def ic2():
-    symbol1 = 'y2005'
-    symbol2 = 'p2005'
+    symbol1 = 'm2009'
+    symbol2 = 'm2101'
     start_dt = '2020-03-06'
-    draw_web.ic(symbol1, symbol2, start_dt)
-    time.sleep(1)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
-    return app.send_static_file(fn)
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
 
 @app.route('/ic3', methods=['get','post'])
 def ic3():
+    symbol1 = 'y2005'
+    symbol2 = 'y2009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic4', methods=['get','post'])
+def ic4():
     symbol1 = 'y2009'
+    symbol2 = 'y2101'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic5', methods=['get','post'])
+def ic5():
+    symbol1 = 'p2005'
     symbol2 = 'p2009'
     start_dt = '2020-03-06'
-    draw_web.ic(symbol1, symbol2, start_dt)
-    time.sleep(1)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
-    return app.send_static_file(fn)
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic6', methods=['get','post'])
+def ic6():
+    symbol1 = 'p2009'
+    symbol2 = 'p2101'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic7', methods=['get','post'])
+def ic7():
+    symbol1 = 'CF005'
+    symbol2 = 'CF009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic8', methods=['get','post'])
+def ic8():
+    symbol1 = 'CF009'
+    symbol2 = 'CF101'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ic9', methods=['get','post'])
+def ic9():
+    symbol1 = 'y2005'
+    symbol2 = 'y2009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+
+@app.route('/ip1', methods=['get','post'])
+def ip1():
+    symbol1 = 'y2005'
+    symbol2 = 'm2005'
+    start_dt = '2020-02-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip2', methods=['get','post'])
+def ip2():
+    symbol1 = 'OI005'
+    symbol2 = 'RM005'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip3', methods=['get','post'])
+def ip3():
+    symbol1 = 'y2005'
+    symbol2 = 'p2005'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip4', methods=['get','post'])
+def ip4():
+    symbol1 = 'y2005'
+    symbol2 = 'OI005'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip5', methods=['get','post'])
+def ip5():
+    symbol1 = 'p2005'
+    symbol2 = 'p2009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip6', methods=['get','post'])
+def ip6():
+    symbol1 = 'p2009'
+    symbol2 = 'p2101'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip7', methods=['get','post'])
+def ip7():
+    symbol1 = 'CF005'
+    symbol2 = 'CF009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip8', methods=['get','post'])
+def ip8():
+    symbol1 = 'CF009'
+    symbol2 = 'CF101'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+
+@app.route('/ip9', methods=['get','post'])
+def ip9():
+    symbol1 = 'y2005'
+    symbol2 = 'y2009'
+    start_dt = '2020-03-06'
+    draw_web_plot.ic(symbol1, symbol2, start_dt)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
 
 @app.route('/log')
 def show_log():

@@ -104,10 +104,12 @@ class Fut_DaLiSignal(Signal):
 
                 # 高开
                 if g > 0:
+                    i = 0
                     self.price_duo_list = sorted(self.price_duo_list)
                     while self.price_duo_list[0] < bar.close:
+                        i += 1
                         lowest = self.price_duo_list.pop(0)
-                        newest = bar.close + 3*self.gap_base
+                        newest = bar.close + i*3*self.gap_base
                         self.price_duo_list.append(newest)
                         self.price_duo_list = sorted(self.price_duo_list)
                         self.kong_adjust_price = self.kong_adjust_price  + (newest - lowest)
@@ -116,10 +118,12 @@ class Fut_DaLiSignal(Signal):
 
                 # 低开
                 if g < 0:
+                    i = 0
                     self.price_kong_list = sorted(self.price_kong_list)
                     while self.price_kong_list[-1] > bar.close:
+                        i += 1
                         highest = self.price_kong_list.pop(-1)
-                        newest  = bar.close - 3*self.gap_base
+                        newest  = bar.close - i*3*self.gap_base
                         self.price_kong_list.append(newest)
                         self.price_kong_list = sorted(self.price_kong_list)
                         self.duo_adjust_price = self.duo_adjust_price - (highest - newest)
