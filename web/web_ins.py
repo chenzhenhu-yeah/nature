@@ -637,186 +637,162 @@ def ic_y_m():
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
+def ic(seq):
+    r = ''
+    seq = 'ic' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.name == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        start_dt = rec.start_dt
+        draw_web_plot.ic(symbol1, symbol2, start_dt)
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+@app.route('/ic0', methods=['get','post'])
+def ic0():
+    return ic(0)
+
 @app.route('/ic1', methods=['get','post'])
 def ic1():
-    symbol1 = 'm2005'
-    symbol2 = 'm2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(1)
 
 @app.route('/ic2', methods=['get','post'])
 def ic2():
-    symbol1 = 'm2009'
-    symbol2 = 'm2101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(2)
 
 @app.route('/ic3', methods=['get','post'])
 def ic3():
-    symbol1 = 'y2005'
-    symbol2 = 'y2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(3)
 
 @app.route('/ic4', methods=['get','post'])
 def ic4():
-    symbol1 = 'y2009'
-    symbol2 = 'y2101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(4)
 
 @app.route('/ic5', methods=['get','post'])
 def ic5():
-    symbol1 = 'p2005'
-    symbol2 = 'p2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(5)
 
 @app.route('/ic6', methods=['get','post'])
 def ic6():
-    symbol1 = 'p2009'
-    symbol2 = 'p2101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(6)
 
 @app.route('/ic7', methods=['get','post'])
 def ic7():
-    symbol1 = 'CF005'
-    symbol2 = 'CF009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(7)
 
 @app.route('/ic8', methods=['get','post'])
 def ic8():
-    symbol1 = 'CF009'
-    symbol2 = 'CF101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(8)
 
 @app.route('/ic9', methods=['get','post'])
 def ic9():
-    symbol1 = 'y2005'
-    symbol2 = 'y2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ic(9)
 
+def ip(seq):
+    r = ''
+    seq = 'ip' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.name == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        start_dt = rec.start_dt
+        draw_web_plot.ic(symbol1, symbol2, start_dt)
+        fn = 'ip_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+@app.route('/ip0', methods=['get','post'])
+def ip0():
+    return ip(0)
 
 @app.route('/ip1', methods=['get','post'])
 def ip1():
-    symbol1 = 'y2005'
-    symbol2 = 'm2005'
-    start_dt = '2020-02-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(1)
 
 @app.route('/ip2', methods=['get','post'])
 def ip2():
-    symbol1 = 'OI005'
-    symbol2 = 'RM005'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(2)
 
 @app.route('/ip3', methods=['get','post'])
 def ip3():
-    symbol1 = 'y2005'
-    symbol2 = 'p2005'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(3)
 
 @app.route('/ip4', methods=['get','post'])
 def ip4():
-    symbol1 = 'y2005'
-    symbol2 = 'OI005'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(4)
 
 @app.route('/ip5', methods=['get','post'])
 def ip5():
-    symbol1 = 'p2005'
-    symbol2 = 'p2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(5)
 
 @app.route('/ip6', methods=['get','post'])
 def ip6():
-    symbol1 = 'p2009'
-    symbol2 = 'p2101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(6)
 
 @app.route('/ip7', methods=['get','post'])
 def ip7():
-    symbol1 = 'CF005'
-    symbol2 = 'CF009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(7)
 
 @app.route('/ip8', methods=['get','post'])
 def ip8():
-    symbol1 = 'CF009'
-    symbol2 = 'CF101'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(8)
 
 @app.route('/ip9', methods=['get','post'])
 def ip9():
-    symbol1 = 'y2005'
-    symbol2 = 'y2009'
-    start_dt = '2020-03-06'
-    draw_web_plot.ic(symbol1, symbol2, start_dt)
-    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-    now = str(int(time.time()))
-    return '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return ip(9)
+
+@app.route('/mates_config', methods=['get','post'])
+def mates_config():
+    setting_dict = {'pz':'','size':'','priceTick':'','variableCommission':'','fixedCommission':'','slippage':'','exchangeID':'','margin':''}
+    fn = 'mates.csv'
+    if request.method == "POST":
+        pz = del_blank( request.form.get('pz') )
+        size = del_blank( request.form.get('size') )
+        priceTick = del_blank( request.form.get('priceTick') )
+        variableCommission = del_blank( request.form.get('variableCommission') )
+        fixedCommission = del_blank( request.form.get('fixedCommission') )
+        slippage = del_blank( request.form.get('slippage') )
+        exchangeID = del_blank( request.form.get('exchangeID') )
+        margin = del_blank( request.form.get('margin') )
+
+        kind = request.form.get('kind')
+
+        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID,margin]]
+        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID','margin']
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz != pz ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+
+        if kind == 'query':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.pz == pz ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                setting_dict = dict(rec)
+
+    r = []
+    # df = pd.read_csv(fn, dtype='str')
+    # r = [ list(df.columns) ]
+    # for i, row in df.iterrows():
+    #     r.append( list(row) )
+
+    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r,words=setting_dict)
 
 @app.route('/log')
 def show_log():

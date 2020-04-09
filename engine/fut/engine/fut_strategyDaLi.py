@@ -446,10 +446,7 @@ class Fut_DaLiSignal(Signal):
         return r
 
     #----------------------------------------------------------------------
-    def save_var(self):
-        if self.paused == True and self.backtest == False:
-            return
-
+    def save_var(self):        
         self.price_duo_list = self.adjust_price_duo()
         self.price_kong_list = self.adjust_price_kong()
 

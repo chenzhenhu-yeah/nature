@@ -18,14 +18,18 @@ def update_rec_price(rec):
     pos_dict = eval(rec.posDict)
     close_dict = eval(rec.closeDict)
 
+    now = datetime.now()
+    today = now.strftime('%Y%m%d')
+    rec.date = today
+
     for symbol in pos_dict:
         # 读 day_symbol.csv 文件，获取最新收盘价，再做其他处理
         fn = dss + 'fut/bar/day_' + symbol + '.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
-            rec = df.iloc[-1,:]
-            net_pnl += (rec.close - close_dict[symbol]) * pos_dict[symbol]
-            close_dict[symbol] = rec.close
+            row = df.iloc[-1,:]
+            net_pnl += (row.close - close_dict[symbol]) * pos_dict[symbol]
+            close_dict[symbol] = row.close
 
     rec.netPnl = net_pnl
     rec.closeDict = str(close_dict)
@@ -154,7 +158,8 @@ def new_book():
 def get_trade():
     now = datetime.now()
     today = int( now.strftime('%Y%m%d') )
-    today =  int('20200319')
+
+    today =  int('20200409')
 
     fn = get_dss() +  'fut/engine/gateway_trade.csv'
     df = pd.read_csv(fn)
@@ -181,7 +186,7 @@ def fresh_daliopt():
     today = now.strftime('%Y-%m-%d')
     pz_list = ['m','RM','MA']
     for pz in pz_list:
-        fn_p = dss + 'fut/engine/daliopt/portfolio_' + pz + '_var.csv'
+        fn_p = dss + 'fut/engine/daliopt/portfolio_daliopt_' + pz + '_var.csv'
         df_p = pd.read_csv(fn_p)
         rec = df_p.iloc[-1,:]
         pos_dict = eval(rec.posDict)
