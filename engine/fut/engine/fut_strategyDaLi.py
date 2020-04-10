@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
+import traceback
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
@@ -52,9 +53,10 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/engine/dali/signal_dali_param.csv'
+        pz = str(get_contract(self.vtSymbol).pz)
         if os.path.exists(filename):
             df = pd.read_csv(filename)
-            df = df[ df.symbol == self.vtSymbol ]
+            df = df[ df.pz == pz ]
             if len(df) > 0:
                 rec = df.iloc[0,:]
                 self.fixedSize = rec.fixed_size
@@ -106,7 +108,7 @@ class Fut_DaLiSignal(Signal):
                 if g > 0:
                     i = 0
                     self.price_duo_list = sorted(self.price_duo_list)
-                    while self.price_duo_list[0] < bar.close:
+                    while self.price_duo_list[0] < bar.close - self.gap_base:
                         i += 1
                         lowest = self.price_duo_list.pop(0)
                         newest = bar.close + i*3*self.gap_base
@@ -120,7 +122,7 @@ class Fut_DaLiSignal(Signal):
                 if g < 0:
                     i = 0
                     self.price_kong_list = sorted(self.price_kong_list)
-                    while self.price_kong_list[-1] > bar.close:
+                    while self.price_kong_list[-1] > bar.close + self.gap_base:
                         i += 1
                         highest = self.price_kong_list.pop(-1)
                         newest  = bar.close - i*3*self.gap_base
@@ -446,45 +448,49 @@ class Fut_DaLiSignal(Signal):
         return r
 
     #----------------------------------------------------------------------
-    def save_var(self):        
-        self.price_duo_list = self.adjust_price_duo()
-        self.price_kong_list = self.adjust_price_kong()
+    def save_var(self):
+        try:
+            self.price_duo_list = self.adjust_price_duo()
+            self.price_kong_list = self.adjust_price_kong()
 
-        pnl_trade = 0
-        commission = 0
-        slippage = 0
-        pz = str(get_contract(self.vtSymbol).pz)
-        filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + pz + '.csv'
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            pnl_trade = df.pnl.sum()
-            commission = df.commission.sum()
-            slippage = df.slippage.sum()
+            pnl_trade = 0
+            commission = 0
+            slippage = 0
+            pz = str(get_contract(self.vtSymbol).pz)
+            filename = get_dss() + 'fut/engine/dali/signal_dali_'+self.type+ '_deal_' + pz + '.csv'
+            if os.path.exists(filename):
+                df = pd.read_csv(filename)
+                pnl_trade = df.pnl.sum()
+                commission = df.commission.sum()
+                slippage = df.slippage.sum()
 
-        settle = self.bar.close
-        pnl_hold = 0
-        ct = get_contract(self.vtSymbol)
-        size = ct.size
-        for item in self.price_duo_list:
-            pnl_hold += settle - item
+            settle = self.bar.close
+            pnl_hold = 0
+            ct = get_contract(self.vtSymbol)
+            size = ct.size
+            for item in self.price_duo_list:
+                pnl_hold += settle - item
 
-        for item in self.price_kong_list:
-            pnl_hold += item - settle
-        pnl_hold = size * pnl_hold * self.fixedSize
+            for item in self.price_kong_list:
+                pnl_hold += item - settle
+            pnl_hold = size * pnl_hold * self.fixedSize
 
-        self.unit = len(self.price_duo_list) - len(self.price_kong_list)
-        r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \
-               pnl_trade+pnl_hold-commission-slippage, pnl_trade, pnl_hold, \
-               commission, slippage, str(self.price_duo_list), str(self.price_kong_list)] ]
+            self.unit = len(self.price_duo_list) - len(self.price_kong_list)
+            r = [ [self.portfolio.result.date,self.vtSymbol, self.unit, \
+                   pnl_trade+pnl_hold-commission-slippage, pnl_trade, pnl_hold, \
+                   commission, slippage, str(self.price_duo_list), str(self.price_kong_list)] ]
 
-        df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
-                                      'pnl_net','pnl_trade','pnl_hold', \
-                                      'commission','slippage','price_duo_list','price_kong_list'])
-        filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + pz + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
+            df = pd.DataFrame(r, columns=['datetime','vtSymbol','unit', \
+                                          'pnl_net','pnl_trade','pnl_hold', \
+                                          'commission','slippage','price_duo_list','price_kong_list'])
+            filename = get_dss() +  'fut/engine/dali/signal_dali_'+self.type+ '_var_' + pz + '.csv'
+            if os.path.exists(filename):
+                df.to_csv(filename, index=False, mode='a', header=False)
+            else:
+                df.to_csv(filename, index=False)
+        except Exception as e:
+            s = traceback.format_exc()
+            to_log(s)
 
     #----------------------------------------------------------------------
     def open(self, price, change):

@@ -792,7 +792,7 @@ def mates_config():
     # for i, row in df.iterrows():
     #     r.append( list(row) )
 
-    return render_template("fut_setting_pz.html",title="fut_setting_pz",rows=r,words=setting_dict)
+    return render_template("mates_config.html",title="mates_config",rows=r,words=setting_dict)
 
 @app.route('/log')
 def show_log():

@@ -13,7 +13,7 @@
          margin-right:18px;
       }
       section {
-         width:550px;
+         width:900px;
          float:left;
          margin-bottom:36px;
       }
@@ -73,14 +73,49 @@
 
       <form method="post" action="fut_setting_pz">
       <fieldset>
-      <p> pz:<input type="text" name="pz" value="{{words.pz}}"  required/> </p>
-      <p> size:<input type="text" name="size" value="{{words.size}}" /> </p>
-      <p> priceTick:<input type="text" name="priceTick" value="{{words.priceTick}}" /> </p>
-      <p> variableCommission:<input type="text" name="variableCommission" value="{{words.variableCommission}}" /> </p>
-      <p> fixedCommission:<input type="text" name="fixedCommission" value="{{words.fixedCommission}}" /> </p>
-      <p> slippage:<input type="text" name="slippage" value="{{words.slippage}}" /> </p>
-      <p> exchangeID:<input type="text" name="exchangeID" value="{{words.exchangeID}}" /> </p>
-      <p> margin:<input type="text" name="margin" value="{{words.margin}}" /> </p>
+      <p>
+      ic0:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip0:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+      <p>
+      ic1:&nbsp<input type="text" name="ic1_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic1_mate2" value="{{words.pz}}"  /> &emsp;
+      ip1:&nbsp<input type="text" name="ip1_mate1" value="{{words.size}}" />
+               <input type="text" name="ip1_mate2" value="{{words.size}}" />
+      </p>
+      <p>
+      ic2:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip2:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+      <p>
+      ic0:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip0:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+      <p>
+      ic0:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip0:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+<p>
+      ic0:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip0:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+<p>
+      ic0:&nbsp<input type="text" name="ic0_mate1" value="{{words.pz}}"  />
+               <input type="text" name="ic0_mate2" value="{{words.pz}}"  /> &emsp;
+      ip0:&nbsp<input type="text" name="ip0_mate1" value="{{words.size}}" />
+               <input type="text" name="ip0_mate2" value="{{words.size}}" />
+      </p>
+
 
       <p>
         <pre>
@@ -93,18 +128,6 @@
       <input type="submit" value="Submit"/>
       </div>
       </form>
-
-       <p>清单:</p>
-       <table>
-        {% for row in rows %}
-        <tr>
-          {% for d in row %}
-          <td class="description">{{ d }}</td>
-          {% endfor %}
-        <tr>
-        {% endfor %}
-       </table>
-
     </section>
   </body>
 </html>
