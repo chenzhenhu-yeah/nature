@@ -24,7 +24,7 @@ def update_rec_price(rec):
 
     for symbol in pos_dict:
         # 读 day_symbol.csv 文件，获取最新收盘价，再做其他处理
-        size = str(get_contract(symbol).size)
+        size = int(get_contract(symbol).size)
         fn = dss + 'fut/bar/day_' + symbol + '.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
