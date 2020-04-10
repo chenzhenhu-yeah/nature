@@ -24,11 +24,12 @@ def update_rec_price(rec):
 
     for symbol in pos_dict:
         # 读 day_symbol.csv 文件，获取最新收盘价，再做其他处理
+        size = str(get_contract(symbol).size)
         fn = dss + 'fut/bar/day_' + symbol + '.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             row = df.iloc[-1,:]
-            net_pnl += (row.close - close_dict[symbol]) * pos_dict[symbol]
+            net_pnl += (row.close - close_dict[symbol]) * pos_dict[symbol] * size
             close_dict[symbol] = row.close
 
     rec.netPnl = net_pnl
@@ -158,8 +159,7 @@ def new_book():
 def get_trade():
     now = datetime.now()
     today = int( now.strftime('%Y%m%d') )
-
-    today =  int('20200409')
+    # today =  int('20200409')
 
     fn = get_dss() +  'fut/engine/gateway_trade.csv'
     df = pd.read_csv(fn)
