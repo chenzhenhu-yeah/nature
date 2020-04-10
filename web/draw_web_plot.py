@@ -11,15 +11,17 @@ import talib
 from nature import get_dss
 
 
-def ic(symbol1, symbol2, start_dt='2020-01-01'):
+def ic(symbol1, symbol2):
     fn = get_dss() +'fut/bar/day_' + symbol1 + '.csv'
     df1 = pd.read_csv(fn)
+    fn = get_dss() +'fut/bar/day_' + symbol2 + '.csv'
+    df2 = pd.read_csv(fn)
+    start_dt = df1.at[0,'date'] if df1.at[0,'date'] > df2.at[0,'date'] else df2.at[0,'date']
+
     df1 = df1[df1.date >= start_dt]
     df1 = df1.reset_index()
     # print(df1.head(3))
 
-    fn = get_dss() +'fut/bar/day_' + symbol2 + '.csv'
-    df2 = pd.read_csv(fn)
     df2 = df2[df2.date >= start_dt]
     df2 = df2.reset_index()
     # print(df2.head(3))
@@ -43,6 +45,8 @@ def ic(symbol1, symbol2, start_dt='2020-01-01'):
     for label in ax.get_xticklabels():
         label.set_visible(False)
     for label in ax.get_xticklabels()[1::5]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
         label.set_visible(True)
 
     fn = 'static/ic_' + symbol1 + '_' + symbol2 + '.jpg'

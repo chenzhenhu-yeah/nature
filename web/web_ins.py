@@ -647,8 +647,7 @@ def ic(seq):
         rec = df.iloc[0,:]
         symbol1 = rec.mate1
         symbol2 = rec.mate2
-        start_dt = rec.start_dt
-        draw_web_plot.ic(symbol1, symbol2, start_dt)
+        draw_web_plot.ic(symbol1, symbol2)
         fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
         now = str(int(time.time()))
         r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
@@ -704,8 +703,7 @@ def ip(seq):
         rec = df.iloc[0,:]
         symbol1 = rec.mate1
         symbol2 = rec.mate2
-        start_dt = rec.start_dt
-        draw_web_plot.ic(symbol1, symbol2, start_dt)
+        draw_web_plot.ic(symbol1, symbol2)
         fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
         now = str(int(time.time()))
         r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
