@@ -642,7 +642,7 @@ def ic(seq):
     seq = 'ic' + str(seq)
     fn = 'mates.csv'
     df = pd.read_csv(fn)
-    df = df[df.name == seq]
+    df = df[df.seq == seq]
     if len(df) > 0:
         rec = df.iloc[0,:]
         symbol1 = rec.mate1
@@ -699,14 +699,14 @@ def ip(seq):
     seq = 'ip' + str(seq)
     fn = 'mates.csv'
     df = pd.read_csv(fn)
-    df = df[df.name == seq]
+    df = df[df.seq == seq]
     if len(df) > 0:
         rec = df.iloc[0,:]
         symbol1 = rec.mate1
         symbol2 = rec.mate2
         start_dt = rec.start_dt
         draw_web_plot.ic(symbol1, symbol2, start_dt)
-        fn = 'ip_' + symbol1 + '_'+ symbol2+ '.jpg'
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
         now = str(int(time.time()))
         r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
@@ -753,46 +753,24 @@ def ip9():
 
 @app.route('/mates_config', methods=['get','post'])
 def mates_config():
-    setting_dict = {'pz':'','size':'','priceTick':'','variableCommission':'','fixedCommission':'','slippage':'','exchangeID':'','margin':''}
+    setting_dict = {}
     fn = 'mates.csv'
+
     if request.method == "POST":
-        pz = del_blank( request.form.get('pz') )
-        size = del_blank( request.form.get('size') )
-        priceTick = del_blank( request.form.get('priceTick') )
-        variableCommission = del_blank( request.form.get('variableCommission') )
-        fixedCommission = del_blank( request.form.get('fixedCommission') )
-        slippage = del_blank( request.form.get('slippage') )
-        exchangeID = del_blank( request.form.get('exchangeID') )
-        margin = del_blank( request.form.get('margin') )
-
+        df = pd.read_csv(fn, dtype='str')
         kind = request.form.get('kind')
-
-        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID,margin]]
-        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID','margin']
         if kind == 'alter':
-            # 删
-            df = pd.read_csv(filename, dtype='str')
-            df = df[df.pz != pz ]
-            df.to_csv(filename, index=False)
-            # 增
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
+            for i, row in df.iterrows():
+                df.iat[i,1] = del_blank( request.form.get(df.iat[i,0]+'_mate1') )
+                df.iat[i,2] = del_blank( request.form.get(df.iat[i,0]+'_mate2') )
+            df.to_csv(fn, index=False)
 
+    df = pd.read_csv(fn, dtype='str')
+    for i, row in df.iterrows():
+        setting_dict[row.seq + '_mate1'] =  row.mate1
+        setting_dict[row.seq + '_mate2'] =  row.mate2
 
-        if kind == 'query':
-            df = pd.read_csv(filename, dtype='str')
-            df = df[df.pz == pz ]
-            if len(df) > 0:
-                rec = df.iloc[0,:]
-                setting_dict = dict(rec)
-
-    r = []
-    # df = pd.read_csv(fn, dtype='str')
-    # r = [ list(df.columns) ]
-    # for i, row in df.iterrows():
-    #     r.append( list(row) )
-
-    return render_template("mates_config.html",title="mates_config",rows=r,words=setting_dict)
+    return render_template("mates_config.html",title="mates_config",words=setting_dict)
 
 @app.route('/log')
 def show_log():
