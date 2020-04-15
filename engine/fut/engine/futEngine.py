@@ -28,7 +28,7 @@ from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfol
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
-from nature import Fut_IcPortfolio
+from nature import Fut_IcPortfolio, Fut_YuePortfolio
 
 #from ipdb import set_trace
 
@@ -136,6 +136,19 @@ class FutEngine(object):
                 for i, row in df.iterrows():
                     if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
                         self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
+
+        if 'symbols_yue' in setting:
+            symbols = setting['symbols_yue']
+            if len(symbols) > 0:
+                yue_symbol_list = symbols.split(',')
+            else:
+                yue_symbol_list = []
+            fn = get_dss() +  'fut/engine/yue/portfolio_yue_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
+                        self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

@@ -25,7 +25,7 @@ def sp(title, symbol1, symbol2, start_dt, end_dt, fn1, fn2):
     price_min = df1['close'].min()
     price_max =  df1['close'].max()
 
-    df1 = df1.set_index('date') 
+    df1 = df1.set_index('date')
 
     plt.figure(figsize=(15,7))
     plt.xticks(rotation=45)
@@ -210,4 +210,20 @@ def al23():
 
     sp(year+' - '+title, symbol1, symbol2, start_dt, end_dt, fn1, fn2)
 
-al23()
+#------------------------------------------------------------------------------
+def al67():
+    year = '2019'
+
+    title = 'al67'
+    symbol1 = 'al11'
+    symbol2 = 'al12'
+    start_dt = '2018' + '-01-01'
+    end_dt   = '2019' + '-12-31'
+    fn1 = get_dss() +'backtest/fut/al/day_' + symbol1 + '.csv'
+    fn2 = get_dss() +'backtest/fut/al/day_' + symbol2 + '.csv'
+
+    sp(year+' - '+title, symbol1, symbol2, start_dt, end_dt, fn1, fn2)
+
+
+al67()
+# al12()

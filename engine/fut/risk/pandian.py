@@ -33,7 +33,7 @@ def pandian_dali(today):
 
     fn_param = dss +  'fut/engine/dali/signal_dali_param.csv'
     df_param = pd.read_csv(fn_param)
-    df_param = df_param.set_index('symbol')
+    df_param = df_param.set_index('pz')
     # print(df_param)
 
     r = []
@@ -72,7 +72,7 @@ def pandian_dali(today):
 
             active_price = (int(multi_duo_list[0]) + int(multi_kong_list[0])) * 0.5
 
-            margin = df_param.at[symbol,'fixed_size']*active_price*float(c.size)*float(c.margin) * ( len(multi_duo_list) + len(multi_kong_list) )
+            margin = df_param.at[pz,'fixed_size']*active_price*float(c.size)*float(c.margin) * ( len(multi_duo_list) + len(multi_kong_list) )
             risk = round(100*(margin/capital), 2)
 
             r.append( [today,pz,capital,cur_value,newyear_value,year_ratio,margin,risk,net_pos,multi_duo_list,multi_kong_list] )

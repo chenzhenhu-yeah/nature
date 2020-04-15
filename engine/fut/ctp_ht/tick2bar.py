@@ -141,7 +141,7 @@ def proc_segment(df1,begin,end,num,symbol):
             pass
         else:
             # 缺少bar，补齐
-            to_log( '当tick2bar时数据有缺失：'+ date + ' ' + tm + ' ' + symbol + ' ' + str(row[2]) )
+            # to_log( 'tick数据缺失，已补齐：'+ date + ' ' + tm + ' ' + symbol + ' ' + str(row[2]) )
             bar1 = [ date, tm, row[2], row[3], row[4], row[5], 0 ]
             r.insert(i,bar1)
         next = next + oneminute
@@ -207,7 +207,7 @@ def tick2bar(tradeDay):
                     # 处理该时段的tick，加工返回bar数据集
                     r1 += proc_segment(df1, row.begin, row.end, row.num, symbol)
                 else:
-                    to_log( 'tick数据有缺失：'+ tradeDay + ' ' + str(i) + ' ' + symbol )
+                    to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
 
 
             # 保存结果到文件中

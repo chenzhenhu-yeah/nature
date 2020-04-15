@@ -12,7 +12,7 @@ from nature import get_dss
 # 加载配置
 config = open(get_dss()+'csv/config.json')
 setting = json.load(config)
-pro_id = setting['pro_id']          
+pro_id = setting['pro_id']
 pro = ts.pro_api(pro_id)
 
 def get_hu_k_data(xcod,tim0):
@@ -23,7 +23,7 @@ def get_hu_k_data(xcod,tim0):
     df3 = df3.set_index('trade_date')
     df3.index=pd.to_datetime(df3.index)
 
-    #print(df3.head())
+    # print(df3.head())
     return df3
 
 def down_fut_single(code,dss,tim01):
@@ -56,8 +56,9 @@ def down_fut_single(code,dss,tim01):
         xd=np.round(xd,3);
         xd.to_csv(fss)
 
-def down_fut_all(dss,time0='2018-01-01'):
-    codes = ['IC1909.CFX','IC1906.CFX','IC.CFX',]
+def down_fut_all(dss,time0='2020-01-01'):
+    # codes = ['IC1909.CFX','IC1906.CFX','IC.CFX',]
+    codes = ['al2006.SHFE','al2007.SHFE','al2008.SHFE',]
 
     print('down_fut begin ...')
 

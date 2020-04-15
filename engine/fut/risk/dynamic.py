@@ -112,11 +112,12 @@ def gather_kong():
 
 def balance_point():
 
-    for price in [2200, 2300, 2400]:
-        duo_list  = [2314.0, 2322.0, 2330.0, 2338.0, 2346.0, 2354.0, 2362.0, 2370.0]
-        kong_list = [2306.0, 2285.0, 2264.0, 2243.0, 2222.0]
+    for price in [1753, 1770]:
 
 
+
+        duo_list  = [1779.0, 1826.0, 1873.0, 1920.0, 1967.0, 2014.0, 2061.0, 2108.0, 2155.0, 2202.0, 2249.0, 2296.0, 2343.0, 2390.0, 2437.0, 2484.0, 2531.0, 2548.0, 2802.0]
+        kong_list = [1776.0, 1736.0, 1673.0, 1642.0, 1609.0]
         print('\n', price )
         duo_list = [price-x for x in duo_list]
         print(sum(duo_list))
@@ -139,6 +140,17 @@ def suo():
 
     print( sum(duo_list)+sum(kong_list) )
 
+def jia():
+    duo_list  = [1707.0, 1753.0, 1799.0, 1845.0, 1891.0, 1937.0, 1983.0, 2029.0, 2075.0, 2121.0, 2167.0, 2213.0, 2259.0, 2305.0, 2351.0, 2397.0, 2443.0, 2489.0, 2535.0, 2581.0, 2690.0]
+    kong_list = [1709.0, 1655.0, 1601.0]
+
+    # print(np.array(duo_list) + 84)
+    # print(np.array(kong_list) + 84)
+
+    # r = list( np.array(duo_list) + 75 )
+    r = list( np.array(kong_list) + 75 )
+    df = pd.DataFrame([r])
+    df.to_csv('a1.csv', index=False)
 
 ###################################################################################
 
@@ -147,5 +159,6 @@ if __name__ == '__main__':
 
     # kong_adjust(200)
     # gather_duo()
-    balance_point()
+    # balance_point()
     # suo()
+    jia()

@@ -93,19 +93,20 @@ class Fut_DaLiSignal(Signal):
         self.lock.release()
 
     def on_bar_min1(self, bar):
+        # 开盘缺口处理
         if self.first == True:
             # 跳空后，调整队列
             # g = bar.close - bar.PreClosePrice
             g = bar.close - self.am.closeArray[-1]
             cc = len(self.price_duo_list) - len(self.price_kong_list)
 
-            if abs(g) > self.gap_base:
+            if abs(g) > 2*self.gap_base:
                 print(self.vtSymbol + ' 开盘跳空缺口')
                 self.record([[self.bar.date, self.bar.time, self.vtSymbol + ' 开盘跳空缺口']])
                 self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
 
                 # 高开
-                if g > 0:
+                if g > 0 and cc <= 0:
                     i = 0
                     self.price_duo_list = sorted(self.price_duo_list)
                     while self.price_duo_list[0] < bar.close - self.gap_base:
@@ -119,7 +120,7 @@ class Fut_DaLiSignal(Signal):
                     self.price_kong_list = self.adjust_price_kong(bar.close)
 
                 # 低开
-                if g < 0:
+                if g < 0 and cc >= 0 :
                     i = 0
                     self.price_kong_list = sorted(self.price_kong_list)
                     while self.price_kong_list[-1] > bar.close + self.gap_base:
@@ -139,6 +140,15 @@ class Fut_DaLiSignal(Signal):
         self.am.updateBar(bar)
         if not self.am.inited:
             return
+
+        # 涨跌停时暂停交易
+        if bar.close == bar.UpperLimitPrice:
+            self.pause = True
+            to_log(self.vtSymbol + ' 已涨停，该品种dali策略暂停交易')
+
+        if bar.close == bar.LowerLimitPrice:
+            self.pause = True
+            to_log(self.vtSymbol + ' 已跌停，该品种dali策略暂停交易')
 
         if self.paused == True and self.backtest == False:
             return
@@ -231,7 +241,7 @@ class Fut_DaLiSignal(Signal):
 
                 # 空队列成本需同步调整
                 self.kong_adjust_price = self.kong_adjust_price - (highest - bar.close)
-            elif cc < self.dual or len(self.price_kong_list) <= 3:
+            elif cc < self.dual or len(self.price_kong_list) <= 5:
                 # 价格回归后继续下跌，仓差走扩，起步阶段用仓差单增的方式。
                 # 价格下跌，买开仓
                 self.buy(bar.close, self.fixedSize)
@@ -273,7 +283,7 @@ class Fut_DaLiSignal(Signal):
 
                 # 空队列成本需同步调整
                 self.duo_adjust_price = self.duo_adjust_price + (bar.close - lowest)
-            elif cc > -self.dual or len(self.price_duo_list) <= 3:
+            elif cc > -self.dual or len(self.price_duo_list) <= 5:
                 # 价格回归后继续上涨，仓差走扩，起步阶段用仓差单增的方式。
                 # 价格上涨，开空仓，移多队列
                 self.short(bar.close, self.fixedSize)

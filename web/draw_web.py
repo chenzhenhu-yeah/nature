@@ -135,6 +135,11 @@ class Bar_Ma():
 
         kline.render(fn_render)
 
+def bar_ma(symbol):
+    fn_render = 'static/bar_ma.html'
+    bar_ma = Bar_Ma()
+    bar_ma.draw(symbol, fn_render)
+
 def bar_ma_m(symbol):
     fn_render = 'static/bar_ma_m.html'
     bar_ma = Bar_Ma()
@@ -237,6 +242,10 @@ def bar_aberration_CF(symbol):
     bar_ma = Bar_Aberration()
     bar_ma.draw(symbol, fn_render)
 
+def bar_aberration(symbol):
+    fn_render = 'static/bar_aberration.html'
+    bar_ma = Bar_Aberration()
+    bar_ma.draw(symbol, fn_render)
 
 #################################################################################
 class Bar_Dalicta():
@@ -289,10 +298,16 @@ def bar_dalicta_m(symbol):
     bar_ma = Bar_Dalicta()
     bar_ma.draw(symbol, fn_render)
 
+def bar_dalicta(symbol):
+    fn_render = 'static/bar_dalicta.html'
+    bar_ma = Bar_Dalicta()
+    bar_ma.draw(symbol, fn_render)
+
+
 ################################################################################
 
 class Bar_Cci():
-    def gen_kline(self, df1):
+    def gen_kline(self, df1, symbol):
         df1['datetime'] = df1['date']
         dt_list =  list(df1['datetime'])
         k_plot_value = df1.apply(lambda record: [record['open'], record['close'], record['low'], record['high']], axis=1).tolist()
@@ -300,7 +315,7 @@ class Bar_Cci():
 
         kline = Kline(init_opts=opts.InitOpts(width='1500px',height="700px",))
         kline.add_xaxis( dt_list )
-        kline.add_yaxis( 'bar', k_plot_value )
+        kline.add_yaxis( symbol, k_plot_value )
         kline.set_global_opts(title_opts=opts.TitleOpts(title='日线'),
                               datazoom_opts=[opts.DataZoomOpts(is_show=True,type_="slider",xaxis_index=[0,1],range_start=0,range_end=100,),
                                              opts.DataZoomOpts(is_show=False,type_="inside",xaxis_index=[0,1],range_start=0,range_end=100,), ],
@@ -351,7 +366,7 @@ class Bar_Cci():
         price_min = int( df1.close.min() * 0.99 )
         price_max = df1.close.max()
 
-        kline = self.gen_kline(df1)
+        kline = self.gen_kline(df1, symbol)
         line_cci = self.gen_cci(df1, 100)
 
         grid_chart = Grid(
@@ -375,6 +390,11 @@ class Bar_Cci():
 
 def bar_cci_CF(symbol):
     fn_render = 'static/bar_cci_CF.html'
+    bar_ma = Bar_Cci()
+    bar_ma.draw(symbol, fn_render)
+
+def bar_cci(symbol):
+    fn_render = 'static/bar_cci.html'
     bar_ma = Bar_Cci()
     bar_ma.draw(symbol, fn_render)
 

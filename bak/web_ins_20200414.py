@@ -1,7 +1,6 @@
 
 import pandas as pd
 from flask import Flask, render_template, request, redirect
-from flask import url_for
 from datetime import datetime
 from multiprocessing.connection import Client
 import time
@@ -9,10 +8,14 @@ import tushare as ts
 import json
 import os
 
-from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show
-from nature import del_blank, check_symbols_p
+from nature import read_log_today, a_file, get_dss, get_symbols_quote
+from nature import draw_web, draw_web_plot
 
+def del_blank(c):
+    s = str(c).strip()
+    s = s.replace('\t','')
+    s = s.replace(' ','')
+    return s
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -65,6 +68,151 @@ def show_fut_csv():
 
     return render_template("show_fut_csv.html",title="Show Log",rows=r)
 
+def check_symbols_p(key, value):
+    r = ''
+
+    if key == 'gateway_pf':
+        v  = eval(value)
+        # if type(v) != type({}):
+        if isinstance(v, dict) == False:
+            r = '非字典'
+
+    if key == 'symbols_aberration_enhance':
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 30:
+                    r = 'day_' + symbol + '.csv 记录数不足30'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足30'
+
+    if key in ['symbols_dalicta', 'symbols_dualband']:
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'day_' + symbol + '.csv 记录数不足60'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足60'
+
+    if key == 'symbols_cci_raw':
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/day_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 100:
+                    r = 'day_' + symbol + '.csv 记录数不足100'
+            else:
+                r = 'day_' + symbol + '.csv 记录数不足100'
+
+    if key in ['symbols_dali', 'symbols_owl']:
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'min5_' + symbol + '.csv 记录数不足60'
+            else:
+                r = 'min5_' + symbol + '.csv 记录数不足60'
+
+    if key in ['symbols_rsiboll', 'symbols_cciboll']:
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/rec/min15_' + symbol + '.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                if len(df) <= 60:
+                    r = 'min15_' + symbol + '.csv 记录数不足100'
+            else:
+                r = 'min15_' + symbol + '.csv 记录数不足100'
+
+    if key == 'symbols_trade':
+        if len(value) > 0:
+            symbol_list = value.split(',')
+        else:
+            symbol_list = []
+
+        for symbol in symbol_list:
+            fn = get_dss() + 'fut/put/min1_' + symbol + '.csv'
+            if os.path.exists(fn):
+                pass
+            else:
+                r = 'min1_' + symbol + '.csv 文件不存在'
+
+    if key in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12']:
+        if len(value) > 0:
+            symbol_list = value.split(',')
+            for symbol in symbol_list:
+                pz = symbol[:2]
+                if pz.isalpha():
+                    pass
+                else:
+                    pz = symbol[:1]
+
+                fn = get_dss() + 'fut/cfg/setting_pz.csv'
+                df = pd.read_csv(fn)
+                pz_set = set(df.pz)
+                if pz in pz_set:
+                    pass
+                else:
+                    r = pz + '未在setting_pz中维护'
+
+                fn = get_dss() + 'fut/cfg/trade_time.csv'
+                df = pd.read_csv(fn)
+                pz_set = set(df.symbol)
+                if pz in pz_set:
+                    pass
+                else:
+                    r = pz + '未在trade_time中维护'
+
+    # 判读策略将交易的品种是否在symbols_trade中维护
+    if key not in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12','symbols_trade','gateway_pz','gateway_pf']:
+        config = open(get_dss() + 'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols_trade']
+        symbols_trade_list = symbols.split(',')
+        if len(value) > 0:
+            symbol_list = value.split(',')
+            for symbol in symbol_list:
+                if symbol not in  symbols_trade_list:
+                    r = symbol + ' 未在symbols_trade中维护'
+
+    symbols_all = ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12',
+                   'symbols_trade','gateway_pz','gateway_pf','symbols_owl','symbols_cci_raw','symbols_aberration_enhance',
+                   'symbols_cciboll','symbols_dali','symbols_rsiboll','symbols_atrrsi','symbols_turtle','symbols_dalicta',
+                   'symbols_dualband','symbols_ic','symbols_ma','symbols_yue',
+                  ]
+    if key not in symbols_all:
+        r = '新symbols，未在web端进行风控'
+
+    return r
+
 @app.route('/fut_config', methods=['get','post'])
 def fut_config():
     tips = '提示：'
@@ -72,12 +220,10 @@ def fut_config():
     if request.method == "POST":
         key = del_blank( request.form.get('key') )
         value = del_blank( request.form.get('value') )
-
-        s = check_symbols_p(key, value)
-        # try:
-        #     s = check_symbols_p(key, value)
-        # except:
-        #     s = '该项设置出错了 ！'
+        try:
+            s = check_symbols_p(key, value)
+        except:
+            s = '该项设置出错了 ！'
 
         if s != '':
             tips += s
@@ -269,6 +415,7 @@ def fut_signal_atrrsi():
     #return str(r)
     return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
 
+from flask import url_for
 
 @app.route('/value_p_csv', methods=['get','post'])
 def value_p_csv():
@@ -381,6 +528,106 @@ def risk_dali_render():
     fn = 'value.html'
     return app.send_static_file(fn)
 
+@app.route('/bar_ma_m', methods=['get','post'])
+def bar_ma_m():
+    symbol = 'm2005'
+    draw_web.bar_ma_m(symbol)
+    fn = 'bar_ma_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_ma_CF', methods=['get','post'])
+def bar_ma_CF():
+    symbol = 'CF005'
+    draw_web.bar_ma_CF(symbol)
+    fn = 'bar_ma_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_ma_ru', methods=['get','post'])
+def bar_ma_ru():
+    symbol = 'ru2009'
+    draw_web.bar_ma_ru(symbol)
+    fn = 'bar_ma_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_day_CF', methods=['get','post'])
+def resid_day_CF():
+    symbol = 'CF009'
+    draw_web.resid_day_CF(symbol)
+    fn = 'resid_day_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/resid_min30_CF', methods=['get','post'])
+def resid_min30_CF():
+    symbol = 'CF005'
+    draw_web.resid_min30_CF(symbol)
+    fn = 'resid_min30_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/resid_day_m', methods=['get','post'])
+def resid_day_m():
+    symbol = 'm2009'
+    draw_web.resid_day_m(symbol)
+    fn = 'resid_day_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_min30_m', methods=['get','post'])
+def resid_min30_m():
+    symbol = 'm2005'
+    draw_web.resid_min30_m(symbol)
+    fn = 'resid_min30_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_day_ru', methods=['get','post'])
+def resid_day_ru():
+    symbol = 'ru2009'
+    draw_web.resid_day_ru(symbol)
+    fn = 'resid_day_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+
+@app.route('/resid_min30_ru', methods=['get','post'])
+def resid_min30_ru():
+    symbol = 'ru2009'
+    draw_web.resid_min30_ru(symbol)
+    fn = 'resid_min30_ru.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_aberration_CF', methods=['get','post'])
+def bar_aberration_CF():
+    symbol = 'CF009'
+    draw_web.bar_aberration_CF(symbol)
+    fn = 'bar_aberration_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_cci_CF', methods=['get','post'])
+def bar_cci_CF():
+    symbol = 'CF009'
+    draw_web.bar_cci_CF(symbol)
+    fn = 'bar_cci_CF.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
+@app.route('/bar_dalicta_m', methods=['get','post'])
+def bar_dalicta_m():
+    symbol = 'm2009'
+    draw_web.bar_dalicta_m(symbol)
+    fn = 'bar_dalicta_m.html'
+    time.sleep(1)
+    return app.send_static_file(fn)
+
 @app.route('/ic_y_m', methods=['get','post'])
 def ic_y_m():
     symbol1 = 'y2005'
@@ -391,10 +638,123 @@ def ic_y_m():
     fn = 'ic_' + symbol1 + '_'+ symbol2+ '.html'
     return app.send_static_file(fn)
 
+def ic(seq):
+    r = ''
+    seq = 'ic' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.seq == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        draw_web_plot.ic(symbol1, symbol2)
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+@app.route('/ic0', methods=['get','post'])
+def ic0():
+    return ic(0)
+
+@app.route('/ic1', methods=['get','post'])
+def ic1():
+    return ic(1)
+
+@app.route('/ic2', methods=['get','post'])
+def ic2():
+    return ic(2)
+
+@app.route('/ic3', methods=['get','post'])
+def ic3():
+    return ic(3)
+
+@app.route('/ic4', methods=['get','post'])
+def ic4():
+    return ic(4)
+
+@app.route('/ic5', methods=['get','post'])
+def ic5():
+    return ic(5)
+
+@app.route('/ic6', methods=['get','post'])
+def ic6():
+    return ic(6)
+
+@app.route('/ic7', methods=['get','post'])
+def ic7():
+    return ic(7)
+
+@app.route('/ic8', methods=['get','post'])
+def ic8():
+    return ic(8)
+
+@app.route('/ic9', methods=['get','post'])
+def ic9():
+    return ic(9)
+
+def ip(seq):
+    r = ''
+    seq = 'ip' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.seq == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        draw_web_plot.ic(symbol1, symbol2)
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+@app.route('/ip0', methods=['get','post'])
+def ip0():
+    return ip(0)
+
+@app.route('/ip1', methods=['get','post'])
+def ip1():
+    return ip(1)
+
+@app.route('/ip2', methods=['get','post'])
+def ip2():
+    return ip(2)
+
+@app.route('/ip3', methods=['get','post'])
+def ip3():
+    return ip(3)
+
+@app.route('/ip4', methods=['get','post'])
+def ip4():
+    return ip(4)
+
+@app.route('/ip5', methods=['get','post'])
+def ip5():
+    return ip(5)
+
+@app.route('/ip6', methods=['get','post'])
+def ip6():
+    return ip(6)
+
+@app.route('/ip7', methods=['get','post'])
+def ip7():
+    return ip(7)
+
+@app.route('/ip8', methods=['get','post'])
+def ip8():
+    return ip(8)
+
+@app.route('/ip9', methods=['get','post'])
+def ip9():
+    return ip(9)
+
 @app.route('/mates_config', methods=['get','post'])
 def mates_config():
     setting_dict = {}
     fn = 'mates.csv'
+
     if request.method == "POST":
         df = pd.read_csv(fn, dtype='str')
         kind = request.form.get('kind')
@@ -410,51 +770,6 @@ def mates_config():
         setting_dict[row.seq + '_mate2'] =  row.mate2
 
     return render_template("mates_config.html",title="mates_config",words=setting_dict)
-
-@app.route('/mates_show', methods=['get','post'])
-def mates_show():
-    setting_dict = {}
-    fn = 'mates.csv'
-
-    if request.method == "POST":
-        df = pd.read_csv(fn, dtype='str')
-        kind = request.form.get('kind')
-        if kind is not None:
-            if kind[:2] == 'ic':
-                return ic_show(kind[-1])
-            if kind[:2] == 'ip':
-                return ip_show(kind[-1])
-            if kind[:2] == 'ma':
-                symbol =  request.form.get( kind + '_mate1' )
-                draw_web.bar_ma(symbol)
-                fn2 = 'bar_ma.html'
-                time.sleep(1)
-                return app.send_static_file(fn2)
-            if kind[:3] == 'cci':
-                symbol =  request.form.get( kind + '_mate1' )
-                draw_web.bar_cci(symbol)
-                fn2 = 'bar_cci.html'
-                time.sleep(1)
-                return app.send_static_file(fn2)
-            if kind[:7] == 'dalicta':
-                symbol =  request.form.get( kind + '_mate1' )
-                draw_web.bar_dalicta(symbol)
-                fn2 = 'bar_dalicta.html'
-                time.sleep(1)
-                return app.send_static_file(fn2)
-            if kind[:10] == 'aberration':
-                symbol =  request.form.get( kind + '_mate1' )
-                draw_web.bar_aberration(symbol)
-                fn2 = 'bar_aberration.html'
-                time.sleep(1)
-                return app.send_static_file(fn2)
-
-    df = pd.read_csv(fn, dtype='str')
-    for i, row in df.iterrows():
-        setting_dict[row.seq + '_mate1'] =  row.mate1
-        setting_dict[row.seq + '_mate2'] =  row.mate2
-
-    return render_template("mates_show.html",title="mates_show",words=setting_dict)
 
 @app.route('/log')
 def show_log():

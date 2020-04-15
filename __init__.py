@@ -50,6 +50,7 @@ from nature.engine.fut.engine.fut_strategyAberration_Enhance import Fut_Aberrati
 from nature.engine.fut.engine.fut_strategyCci_Raw import Fut_Cci_RawPortfolio
 from nature.engine.fut.engine.fut_strategyCci_Enhance import Fut_Cci_EnhancePortfolio
 from nature.engine.fut.engine.fut_strategyIc import Fut_IcPortfolio
+from nature.engine.fut.engine.fut_strategyYue import Fut_YuePortfolio
 
 from nature.engine.fut.rd.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.rd.opt_short_put import Opt_Short_PutPortfolio
@@ -66,5 +67,8 @@ from nature.engine.fut.risk.pandian import pandian_run
 from nature.engine.fut.risk.book_opt import book_opt_run
 from nature.engine.fut.backtest.backtest_result import Backtest_Result
 
+from nature.web.check_web import del_blank
+from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
-from nature.web import draw_web_plot
+from nature.web.draw_web_plot import ic_show
+from nature.web.draw_web_plot import ip_show

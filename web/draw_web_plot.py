@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import time 
 from datetime import datetime, timedelta
 import talib
 
@@ -51,6 +52,40 @@ def ic(symbol1, symbol2):
 
     fn = 'static/ic_' + symbol1 + '_' + symbol2 + '.jpg'
     plt.savefig(fn)
+
+
+def ic_show(seq):
+    r = ''
+    seq = 'ic' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.seq == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def ip_show(seq):
+    r = ''
+    seq = 'ip' + str(seq)
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df[df.seq == seq]
+    if len(df) > 0:
+        rec = df.iloc[0,:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+        now = str(int(time.time()))
+        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
 
 if __name__ == '__main__':
     pass
