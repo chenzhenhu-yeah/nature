@@ -87,7 +87,10 @@ class Fut_YueSignal(Signal):
                 self.can_sell = True
 
 
-        r = [[self.bar.date,self.bar.time,self.bar.high,self.bar.low,self.can_buy,self.can_sell]]
+        if '_' in self.vtSymbol:
+            r = [[self.bar.date,self.bar.time,self.bar.high,self.bar.low,self.can_buy,self.can_sell]]
+        else:
+            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.can_buy,self.can_sell]]
         df = pd.DataFrame(r)
         filename = get_dss() +  'fut/engine/yue/bar_yue_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
