@@ -195,7 +195,7 @@ class Gateway_Ht_CTP(object):
             now = datetime.now()
             now = now.strftime('%H:%M')
             if now in ['10:14', '10:15', '10:16']:
-                time.sleep(909)
+                time.sleep(960)
 
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick

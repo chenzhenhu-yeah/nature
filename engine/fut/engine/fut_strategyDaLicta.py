@@ -185,7 +185,7 @@ class Fut_DaLictaSignal_Duo(Signal):
             df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
-    def close(self, price):
+    def close(self, price, change):
         self.unit = 0
         self.result.close(price)
 
