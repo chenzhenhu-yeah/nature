@@ -146,25 +146,6 @@ class HuQuote(CtpQuote):
         new_bar.low =  tick.LastPrice
         new_bar.close = tick.LastPrice
 
-        new_bar.volume = tick.Volume
-        new_bar.OpenInterest = tick.OpenInterest
-
-        new_bar.AskPrice = tick.AskPrice
-        new_bar.BidPrice = tick.BidPrice
-        new_bar.AskVolume = tick.AskVolume
-        new_bar.BidVolume = tick.BidVolume
-
-        new_bar.AveragePrice = tick.AveragePrice
-        new_bar.UpperLimitPrice = tick.UpperLimitPrice
-        new_bar.LowerLimitPrice = tick.LowerLimitPrice
-        new_bar.PreOpenInterest = tick.PreOpenInterest
-
-        new_bar.PreSettlementPrice = tick.PreSettlementPrice
-        new_bar.PreClosePrice = tick.PreClosePrice
-        new_bar.OpenPrice = tick.OpenPrice
-        new_bar.PreDelta = tick.PreDelta
-        new_bar.CurrDelta = tick.CurrDelta
-
         # 上一个bar存储在变量bar中，最新bar存储在变量new_bar中，
         id = new_bar.vtSymbol
         if id in self.bar_min1_dict:
@@ -191,6 +172,25 @@ class HuQuote(CtpQuote):
             if bar.low > new_bar.low:
                 bar.low =  new_bar.low
             bar.close = new_bar.close
+
+            bar.volume = tick.Volume
+            bar.OpenInterest = tick.OpenInterest
+
+            bar.AskPrice = tick.AskPrice
+            bar.BidPrice = tick.BidPrice
+            bar.AskVolume = tick.AskVolume
+            bar.BidVolume = tick.BidVolume
+
+            bar.AveragePrice = tick.AveragePrice
+            bar.UpperLimitPrice = tick.UpperLimitPrice
+            bar.LowerLimitPrice = tick.LowerLimitPrice
+            bar.PreOpenInterest = tick.PreOpenInterest
+
+            bar.PreSettlementPrice = tick.PreSettlementPrice
+            bar.PreClosePrice = tick.PreClosePrice
+            bar.OpenPrice = tick.OpenPrice
+            bar.PreDelta = tick.PreDelta
+            bar.CurrDelta = tick.CurrDelta
 
         self.bar_min1_dict[id] = bar
 

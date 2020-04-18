@@ -314,17 +314,17 @@ class Fut_DaLiSignal(Signal):
         g = self.gap
         cc = len(self.price_kong_list) - len(self.price_duo_list)
 
-        if cc >= 20:
+        if cc >= 15:
             g += self.gap_base
-        elif cc >= 16:
-            g += self.gap_base * 0.75
         elif cc >= 12:
+            g += self.gap_base * 0.75
+        elif cc >= 9:
             g += self.gap_base * 0.5
-        elif cc >= 8:
+        elif cc >= 6:
             g += self.gap_base * 0.25
 
-        if cc >= -1 and cc <= 1:
-            g = self.gap_min
+        # if cc >= -1 and cc <= 1:
+        #     g = self.gap_min
 
         return g
 
@@ -333,17 +333,17 @@ class Fut_DaLiSignal(Signal):
         g = self.gap
         cc = len(self.price_duo_list) - len(self.price_kong_list)
 
-        if cc >= 20:
+        if cc >= 15:
             g += self.gap_base
-        elif cc >= 16:
-            g += self.gap_base * 0.75
         elif cc >= 12:
+            g += self.gap_base * 0.75
+        elif cc >= 9:
             g += self.gap_base * 0.5
-        elif cc >= 8:
+        elif cc >= 6:
             g += self.gap_base * 0.25
 
-        if cc >= -1 and cc <= 1:
-            g = self.gap_min
+        # if cc >= -1 and cc <= 1:
+        #     g = self.gap_min
 
         return g
 
