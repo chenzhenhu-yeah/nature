@@ -157,7 +157,7 @@ def test_one(PortfolioClass, minx):
     end_date   = '20191231 00:00:00'
 
     signal_param = {}
-    signal_param = {vtSymbol:{'price_duo_list':[2742.0, 2782.0, 2800], 'price_kong_list':[2735, 2715, 2705]} }
+    signal_param = {vtSymbol:{'price_duo_list':[2742.0, 2782.0, 2800, 2815, 2830], 'price_kong_list':[2735, 2715, 2705, 2690, 2675]} }
 
     run_once(PortfolioClass,vtSymbol,start_date,end_date,signal_param,minx)
 

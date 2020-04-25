@@ -312,8 +312,8 @@ def start():
     print(u'期货交易引擎开始回放')
 
     # start_date = '2019-12-01 09:00:00'
-    start_date = '2020-04-03 09:00:00'
-    end_date   = '2020-04-03 15:00:00'
+    start_date = '2020-04-24 09:00:00'
+    end_date   = '2020-04-24 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)
