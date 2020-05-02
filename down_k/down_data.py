@@ -22,23 +22,23 @@ def down_data(dss):
         s = traceback.format_exc()
         to_log(s)
 
-    try:
-        down_stk_hfq_all(dss)
-    except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
-
-    try:
-        down_stk_bfq_all(dss)
-    except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
-
-    try:
-        down_daily_run(dss)
-    except Exception as e:
-        s = traceback.format_exc()
-        to_log(s)
+    # try:
+    #     down_stk_hfq_all(dss)
+    # except Exception as e:
+    #     s = traceback.format_exc()
+    #     to_log(s)
+    #
+    # try:
+    #     down_stk_bfq_all(dss)
+    # except Exception as e:
+    #     s = traceback.format_exc()
+    #     to_log(s)
+    #
+    # try:
+    #     down_daily_run(dss)
+    # except Exception as e:
+    #     s = traceback.format_exc()
+    #     to_log(s)
 
     # try:
     #     down_fut_all(dss)
