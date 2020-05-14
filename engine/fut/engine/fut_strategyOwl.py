@@ -71,12 +71,12 @@ class Fut_OwlSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
         r = []
-        self.can_buy = False
-        self.can_sell = False
-        self.can_short = False
-        self.can_cover = False
 
         for row in self.ins_list:
+            self.can_buy = False
+            self.can_sell = False
+            self.can_short = False
+            self.can_cover = False
 
             ins = row[0]
             price = row[1]
