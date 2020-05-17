@@ -14,7 +14,7 @@ zf = get_dss() + 'backtest/IO/' + year + '/202004.zip'
 with zipfile.ZipFile(zf) as z:
     file_list = sorted( z.namelist() )
     # print(file_list)
-    for fn in file_list:
+    for fn in file_list:  
          f = z.open(fn)
          print(fn)
 

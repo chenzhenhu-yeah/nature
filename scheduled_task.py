@@ -18,6 +18,7 @@ from nature.hu_signal.price_signal import price_signal
 from nature.down_k.down_data import down_data
 from nature.engine.fut.ctp_ht.tick2bar import tick2bar
 from nature.engine.fut.risk.examine import examine
+from nature.down_k.down_opt import down_opt
 
 dss = r'../data/'
 
@@ -132,9 +133,17 @@ def run_book_opt():
 def run_down_data():
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
-    if 2 <= weekday <= 6:
+    if 1 <= weekday <= 5:
         print('\n' + str(now) + " down_data begin...")
         down_data(dss)
+
+
+def run_down_opt():
+    now = datetime.datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 1 <= weekday <= 5:
+        print('\n' + str(now) + " down_opt begin...")
+        down_opt()
 
 def run_examine():
     pass
@@ -146,13 +155,15 @@ if __name__ == '__main__':
         '''
 
         # 盘中
+        schedule.every().day.at("12:05").do(run_down_opt)
         schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:10").do(run_book_opt)
         schedule.every().day.at("15:15").do(run_pandian)
-        schedule.every().day.at("15:16").do(mail_log)
+        schedule.every().day.at("15:16").do(run_down_opt)
+        schedule.every().day.at("15:18").do(mail_log)
 
         #盘后
-        # schedule.every().day.at("03:00").do(run_down_data)
+        schedule.every().day.at("19:00").do(run_down_data)
         # schedule.every().day.at("03:30").do(run_examine)
 
         print('schedule begin...')

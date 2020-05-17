@@ -7,7 +7,7 @@ import pandas as pd
 import schedule
 import threading
 from multiprocessing.connection import Client
-
+import traceback
 
 from nature import CtpTrade
 from nature import CtpQuote
@@ -42,7 +42,8 @@ def _Generate_Bar_MinOne(tick, temp_bar, r, today):
         temp_bar.append(bar)
         return
 
-    if bar.time[3:5] != new_bar.time[3:5] :
+    # if bar.time[3:5] != new_bar.time[3:5] :
+    if bar.time[:5] != new_bar.time[:5] :
         # 将 bar的分钟改为整点，推送并保存bar
         bar.date = new_bar.date
         bar.time = new_bar.time[:-2] + '00'
@@ -73,7 +74,7 @@ def proc_segment(df1,begin,end,num,symbol):
     begin_day = ''            # 该时段起始交易所在日期
     end_day = ''              # 该时段结束交易所在日期
     n = len(df1)
-    # 初加工，将tick转成bar_min1。(这段逻辑写得有点绕，应该还有改进的空间。)
+    # part1: 初加工，将tick转成bar_min1。(这段逻辑写得有点绕，应该还有改进的空间。)
     for k, tick in df1.iterrows():
         # 第一条记录，确定关键变量的初始值
         if k == 0:
@@ -105,20 +106,20 @@ def proc_segment(df1,begin,end,num,symbol):
                         dt1 = dt0 + datetime.timedelta(days=1)
 
                     end_day = dt1.strftime('%Y-%m-%d')
-            #print(begin_day,end_day)
 
         _Generate_Bar_MinOne(tick, temp_bar, r, tick.UpdateDate)
 
+        # 收尾处理
         if k == n-1:
-            # 收尾处理，将时间设为该时段的结束时间
+            # 将更新时间设为该时段的结束时间
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    # if num == 120:
-    #     print(r)
+    # if num == 240:
+    #     # print(r)
     #     print(len(r), num)
 
-    # 该时段内每个bar的时间是确定的，如果有数据缺失，补全。
+    # part2: 该时段内每个bar的时间是确定的，如果有数据缺失，补全。
     tm_begin = datetime.datetime.strptime(begin_day+' '+begin,'%Y-%m-%d %H:%M:%S')
     oneminute = datetime.timedelta(minutes=1)
     next = tm_begin + oneminute
@@ -147,38 +148,92 @@ def proc_segment(df1,begin,end,num,symbol):
         next = next + oneminute
         i += 1
 
-    # if num == 120:
-    #      print(r)
-    #      print(len(r), num)
-
-    #print(len(r), num)
     assert len(r) == num
     return r
 
+def save_bar(r1, symbol):
+    df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
+    fname = get_dss() + 'fut/bar/min1_' + symbol + '.csv'
+    if os.path.exists(fname):
+        df_symbol.to_csv(fname, index=False, mode='a', header=False)
+    else:
+        df_symbol.to_csv(fname, index=False, mode='a')
+
+    # 根据min1的结果集生成minx
+    g5 = BarGenerator('min5')
+    g15 = BarGenerator('min15')
+    g30 = BarGenerator('min30')
+    g_day = BarGenerator('day')
+    for row in r1:
+        new_bar = VtBarData()
+        new_bar.vtSymbol = symbol
+        new_bar.date = row[0]
+        new_bar.time = row[1]
+        new_bar.open = row[2]
+        new_bar.high = row[3]
+        new_bar.low =  row[4]
+        new_bar.close = row[5]
+        g5.update_bar(new_bar)
+        g15.update_bar(new_bar)
+        g30.update_bar(new_bar)
+        g_day.update_bar(new_bar)
+
+    # 保存min5
+    r5 = g5.r_dict[symbol]
+    df_symbol = pd.DataFrame(r5, columns=['date','time','open','high','low','close','volume'])
+    fname = get_dss() + 'fut/bar/min5_' + symbol + '.csv'
+    if os.path.exists(fname):
+        df_symbol.to_csv(fname, index=False, mode='a', header=False)
+    else:
+        df_symbol.to_csv(fname, index=False, mode='a')
+
+    # 保存min15
+    r15 = g15.r_dict[symbol]
+    df_symbol = pd.DataFrame(r15, columns=['date','time','open','high','low','close','volume'])
+    fname = get_dss() + 'fut/bar/min15_' + symbol + '.csv'
+    if os.path.exists(fname):
+        df_symbol.to_csv(fname, index=False, mode='a', header=False)
+    else:
+        df_symbol.to_csv(fname, index=False, mode='a')
+
+    # 保存min30
+    r30 = g30.r_dict[symbol]
+    df_symbol = pd.DataFrame(r30, columns=['date','time','open','high','low','close','volume'])
+    fname = get_dss() + 'fut/bar/min30_' + symbol + '.csv'
+    if os.path.exists(fname):
+        df_symbol.to_csv(fname, index=False, mode='a', header=False)
+    else:
+        df_symbol.to_csv(fname, index=False, mode='a')
+
+    # 保存day
+    r_day = g_day.r_dict[symbol]
+    df_symbol = pd.DataFrame(r_day, columns=['date','time','open','high','low','close','volume'])
+    fname = get_dss() + 'fut/bar/day_' + symbol + '.csv'
+    if os.path.exists(fname):
+        df_symbol.to_csv(fname, index=False, mode='a', header=False)
+    else:
+        df_symbol.to_csv(fname, index=False, mode='a')
+
 
 def tick2bar(tradeDay):
-
     #读取交易时段文件
     fn = get_dss() + 'fut/cfg/trade_time.csv'
     df_tm = pd.read_csv(fn)
 
-    # 加载配置，目前盯市哪些业务品种
-    # config = open(get_dss()+'fut/cfg/config.json')
-    # setting = json.load(config)
-    # symbols = setting['symbols_quote']
-    # symbol_list = symbols.split(',')
     symbol_list = get_symbols_quote()
-
     # symbol_list = ['ag1912']
 
-    # 逐一处理每个业务品种
+    # 逐个处理每个业务品种
     for symbol in symbol_list:
-        # 读取品种的tick文件
-        fn = get_dss() + 'fut/tick/tick_' + tradeDay + '_' + symbol + '.csv'
-        if os.path.exists(fn):
-            print(fn+' begin ... ')
+        try:
+            # 读取品种的tick文件
+            fn = get_dss() + 'fut/tick/tick_' + tradeDay + '_' + symbol + '.csv'
+            if os.path.exists(fn) == False:
+                # print(fn+' not exists')
+                continue
+
+            # print(fn+' begin ... ')
             df = pd.read_csv(fn)
-            # print(df.head(3))
 
             # 获取品种交易时段
             pz = get_contract(symbol).pz
@@ -186,7 +241,9 @@ def tick2bar(tradeDay):
             r1 = []
             # 逐个时段遍历处理
             for i,row in df2.iterrows():
+                # 组装该时段数据，进行数据清洗
                 if row.end > row.begin:
+                    # 非夜盘跨零点交易时段
                     df1 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<=row.end)]
                     if len(df1) > 0:
                         # 处理tick异常数据，删除盘后非交易时段推送的数据
@@ -195,12 +252,13 @@ def tick2bar(tradeDay):
                         dt = df1.at[0,'UpdateDate']
                         df1 = df1[df1.UpdateDate == dt]
                 else:
-                    # 夜盘跨零点交易品种，作特殊拼接处理
+                    # 夜盘跨零点交易时段，作特殊拼接处理
                     df11 = df[(df.UpdateTime>=row.begin) & (df.UpdateTime<='23:59:59')]
                     df12 = df[(df.UpdateTime>='00:00:00') & (df.UpdateTime<=row.end)]
                     df1 = pd.concat([df11, df12])
 
-                if len(df1) > 0:
+                # 加工生成该时段的 bar_min1 数据，至少有2根tick才能加工成bar
+                if len(df1) >= 2:
                     # 排序很重要，因为tick送过来的顺序可能是乱的
                     df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
                     df1 = df1.reset_index()
@@ -209,72 +267,13 @@ def tick2bar(tradeDay):
                 else:
                     to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
 
-
-            # 保存结果到文件中
-            df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/min1_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-
-            # 根据min1的结果集生成minx
-            g5 = BarGenerator('min5')
-            g15 = BarGenerator('min15')
-            g30 = BarGenerator('min30')
-            g_day = BarGenerator('day')
-            for row in r1:
-                new_bar = VtBarData()
-                new_bar.vtSymbol = symbol
-                new_bar.date = row[0]
-                new_bar.time = row[1]
-                new_bar.open = row[2]
-                new_bar.high = row[3]
-                new_bar.low =  row[4]
-                new_bar.close = row[5]
-                g5.update_bar(new_bar)
-                g15.update_bar(new_bar)
-                g30.update_bar(new_bar)
-                g_day.update_bar(new_bar)
-
-            # 保存min5
-            r5 = g5.r_dict[symbol]
-            df_symbol = pd.DataFrame(r5, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/min5_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-
-            # 保存min15
-            r15 = g15.r_dict[symbol]
-            df_symbol = pd.DataFrame(r15, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/min15_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-
-            # 保存min30
-            r30 = g30.r_dict[symbol]
-            df_symbol = pd.DataFrame(r30, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/min30_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-
-            # 保存day
-            r_day = g_day.r_dict[symbol]
-            df_symbol = pd.DataFrame(r_day, columns=['date','time','open','high','low','close','volume'])
-            fname = get_dss() + 'fut/bar/day_' + symbol + '.csv'
-            if os.path.exists(fname):
-                df_symbol.to_csv(fname, index=False, mode='a', header=False)
-            else:
-                df_symbol.to_csv(fname, index=False, mode='a')
-        else:
-            print(fn+' not exists')
+                # 保存结果到文件中
+                save_bar(r1, symbol)
+        except Exception as e:
+            s = traceback.format_exc()
+            to_log(s)
+            continue
 
 if __name__ == "__main__":
-    tradeDay = '20200106'
+    tradeDay = '20200515'
     tick2bar(tradeDay)

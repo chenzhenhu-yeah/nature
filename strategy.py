@@ -501,7 +501,8 @@ class DailyResult(object):
                     pnl = (close - previousClose) * pos * size
                     self.holdingPnl += pnl
                 else:
-                    to_log(vtSymbol + ' close value not in result')
+                    # to_log(vtSymbol + ' close value not in result')
+                    pass
 
         except Exception as e:
             s = traceback.format_exc()

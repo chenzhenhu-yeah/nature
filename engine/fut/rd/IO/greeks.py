@@ -1,6 +1,8 @@
 import datetime
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 import math
 from math import sqrt, log
 from scipy import stats
@@ -411,15 +413,56 @@ def die_forward_put(dt):
     fn = get_dss() + 'backtest/IO/d2.csv'
     df.to_csv(fn, index=False)
 
+
+def calc_hv():
+    df = get_inx('000300', '2019-01-01', '2020-05-15')
+    # df = df.sort_values('date')
+    df = df.set_index('date')
+    df = df.sort_index()
+
+    df['ln'] = np.log(df.close)
+    df['rt'] = df['ln'].diff(1)
+    df['hv'] = df['rt'].rolling(60).std()
+    df['hv'] *= np.sqrt(242)
+
+    df = df.iloc[-242:,:]
+    print(df.head())
+    print(df.tail())
+
+    plt.plot(df['hv'])
+    plt.grid()
+    plt.show()
+
+    cur = df.iloc[-1,:]
+    hv = cur['hv']
+    hv_rank = (hv - df['hv'].min()) / (df['hv'].max() - df['hv'].min())
+    print('hv: ', hv)
+    print('hv Rank: ', hv_rank)
+
+    # print('     均值：',df['hv'].mean())
+    print('0.2分位数:',np.percentile(df['hv'], 20))
+    print('0.5分位数:',np.percentile(df['hv'], 50))
+    print('0.8分位数:',np.percentile(df['hv'], 80))
+
+    hv_percentile = len(df[df.hv < hv]) / 242
+    print('hv percentile: ', hv_percentile)
+
+
+
+
+
+
 if __name__ == '__main__':
     year = '2020'
     dt = '2020-05-13'
+
+    calc_hv()
 
     # calc_greeks(year)
 
     # test_iv()
     # test_greeks()
-    export_data(dt)
+    # export_data(dt)
 
     # pcp()
     # die_forward_call(dt)

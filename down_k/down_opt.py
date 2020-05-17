@@ -14,22 +14,23 @@ from nature import VtBarData
 from nature import SOCKET_BAR
 from nature import get_dss
 
-year = '2020'
-dt = '20200506'
 
 def cffex():
-    fn = get_dss() + 'opt/' + year + '/day/cffex' + dt + '.csv'
+    fn = get_dss() + 'opt/cur_symbol/cffex.csv'
     df = pd.read_csv(fn, encoding='gbk', error_bad_lines = False,)
     df = df[df['合约代码'].str.startswith('IO')]
     df['合约代码'] = df['合约代码'].str.strip()
     symbol_set = set(df['合约代码'])
     # print(symbol_set)
     symbol_list = list(symbol_set)
+    obj_list = list( set([x[:6] for x in symbol_list]) )
+    # print(obj_list)
+    symbol_list += obj_list
 
     return symbol_list
 
 def czce():
-    fn = get_dss() + 'opt/' + year + '/day/czce' + dt + '.xls'
+    fn = get_dss() + 'opt/cur_symbol/czce.xls'
     df = pd.read_excel(fn, skiprows=1)
     df['品种代码'] = df['品种代码'].str.strip()
     symbol_set = set(df['品种代码'])
@@ -40,10 +41,14 @@ def czce():
     # print(symbol_list)
     # print(len(symbol_list))
 
+    obj_list = list( set([x[:5] for x in symbol_list]) )
+    # print(obj_list)
+    symbol_list += obj_list
+
     return symbol_list
 
 def dce():
-    fn = get_dss() + 'opt/' + year + '/day/dce' + dt + '.xls'
+    fn = get_dss() + 'opt/cur_symbol/dce.xls'
     df = pd.read_excel(fn)
     df['合约名称'] = df['合约名称'].str.strip()
     symbol_set = set(df['合约名称'])
@@ -54,10 +59,15 @@ def dce():
     # print(symbol_list)
     # print(len(symbol_list))
 
+    obj_list = list( set([x[:6] for x in symbol_list]) )
+    obj_list = list( set([x[:5] if x[-1]=='-' else x[:6] for x in obj_list]) )
+    # print(obj_list)
+    symbol_list += obj_list
+
     return symbol_list
 
 def shfe():
-    fn = get_dss() + 'opt/' + year + '/day/shfe' + dt + '.csv'
+    fn = get_dss() + 'opt/cur_symbol/shfe.csv'
     # df = pd.read_csv(fn, encoding='gbk', error_bad_lines = False,)
     df = pd.read_csv(fn, encoding='gbk',)
     # print(df.head())
@@ -68,6 +78,10 @@ def shfe():
     symbol_list = [s for s in symbol_set if 'C' in s or 'P' in s]
     # print(symbol_list)
     # print(len(symbol_list))
+
+    obj_list = list( set([x[:6] for x in symbol_list]) )
+    # print(obj_list)
+    symbol_list += obj_list
 
     return symbol_list
 
@@ -131,7 +145,7 @@ class HuQuote(CtpQuote):
                 'AskPrice','AskVolume','BidPrice','BidVolume',]
         df = df[cols]
 
-        fn = get_dss() + 'opt/' + year + '/' + now[:7] + '.csv'
+        fn = get_dss() + 'opt/' + now[:7] + '.csv'
         if os.path.exists(fn):
             df.to_csv(fn, index=False, mode='a', header=False)
         else:
@@ -162,21 +176,25 @@ class TestQuote(object):
     def release(self):
         self.q.ReqUserLogout()
 
-if __name__ == "__main__":
+def down_opt():
     # 加载配置
     config = open(get_dss()+'fut/cfg/config.json')
     setting = json.load(config)
-    front_trade = setting['front_trade']
-    front_quote = setting['front_quote']
+
+    # front_quote = setting['front_quote']
+    front_quote = 'tcp://180.168.212.70:41313'
     broker = setting['broker']
 
     investor = ''
     pwd = ''
 
-    print('here')
+    # print('here')
     qq = TestQuote(front_quote, broker, investor, pwd)
 
     qq.run()
-    input()
+    time.sleep(60)
     qq.release()
-    input()
+
+
+if __name__ == "__main__":
+    down_opt()

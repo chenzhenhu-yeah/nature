@@ -192,7 +192,7 @@ def fresh_daliopt():
         pos_dict = eval(rec.posDict)
         value = rec.portfolioValue
         net_pnl = 0
-        book_list = pos_dict.keys()
+        book_list = list( pos_dict.keys() )
         for book in book_list:
             fn = dss + 'fut/engine/opt/' + book + '.csv'
             if os.path.exists(fn):

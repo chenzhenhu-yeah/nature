@@ -16,15 +16,20 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_m
 
 import sys
 
-# 加载配置
-config = open(get_dss()+'csv/config.json')
-setting = json.load(config)
-pro_id = setting['pro_id']
-pro = ts.pro_api(pro_id)
+t_dict = {'a':1, 'b':2}
+k = list( t_dict.keys() ) 
 
+print(type(k))
 
-df = pro.index_daily(ts_code='000300.SH', start_date='20200401', end_date='20200430')
-print(df)
+# # 加载配置
+# config = open(get_dss()+'csv/config.json')
+# setting = json.load(config)
+# pro_id = setting['pro_id']
+# pro = ts.pro_api(pro_id)
+#
+#
+# df = pro.index_daily(ts_code='000300.SH', start_date='20200401', end_date='20200430')
+# print(df)
 
 
 # duo  = [1749.0, 1799.0, 1849.0, 1899.0, 1900, 1900, 1949.0, 1999.0, 2049.0, 2099.0, 2149.0, 2199.0, 2249.0, 2299.0, 2349.0, 2399.0, 2399.0, 2449.0, 2479.0, 2499.0, 2549.0, 2599.0, 2649.0]
