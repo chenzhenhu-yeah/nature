@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import time 
+import os
+import time
 from datetime import datetime, timedelta
 import talib
 
@@ -87,5 +88,63 @@ def ip_show(seq):
     return r
 
 
+def yue():
+
+    fn = get_dss() +  'fut/engine/yue/portfolio_yue_param.csv'
+    df = pd.read_csv(fn)
+    for i, row in df.iterrows():
+        # print( row.symbol_dual )
+        fn = get_dss() +  'fut/engine/yue/bar_yue_mix_' + row.symbol_dual +  '.csv'
+        if os.path.exists(fn) == False:
+            continue
+        df2 = pd.read_csv(fn)
+        df2.columns = ['date', 'time', 'sell_price', 'buy_price', 'f1', 'f2']
+        df2 = df2[ (df2['date'] > '2020-05-01') & (df2['time'] == '14:59:00') ]
+        df2 = df2.set_index('date')
+        del df2['time']
+        del df2['f1']
+        del df2['f2']
+        # print(df2.head())
+
+        plt.figure(figsize=(12,7))
+        plt.plot(df2.sell_price)
+        plt.plot(df2.buy_price)
+
+        plt.title(row.symbol_dual)
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y')
+        ax = plt.gca()
+
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+        for label in ax.get_xticklabels()[1::5]:
+            label.set_visible(True)
+        for label in ax.get_xticklabels()[-1:]:
+            label.set_visible(True)
+
+        plt.legend()
+        # plt.show()
+        fn = 'static/yue_' + row.symbol_dual + '.jpg'
+        plt.savefig(fn)
+
+
+def dali():
+    pz_list = ['m', 'RM', 'MA']
+    for pz in pz_list:
+
+        fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
+        df = pd.read_csv(fn)
+        df['date'] = df.datetime.str.slice(0,10)
+        df['time'] = df.datetime.str.slice(11,19)
+        df = df[df.time.isin(['14:59:00', '15:00:00'])]
+        print(df.head(3))
+        # print(df.pnl_net)
+
+        # break
+
+
+
 if __name__ == '__main__':
     pass
+    # yue()
+    dali()

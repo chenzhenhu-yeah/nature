@@ -90,8 +90,8 @@ class Gateway_Ht_CTP(object):
         fn = get_dss() +  'fut/engine/gateway_order.csv'
         df1 = pd.read_csv(fn)
         df1 = df1[self.file_order_length:]
-        #print('in check_trade')
-        #print(df1)
+
+        # 读取发单文件，获得最新的发单记录，按合约、多空、开平字段进行汇总
         if len(df1) > 0:
             g1 = df1.groupby(by=['symbol','direction','offset'])
             r1 = g1.agg({'volume':np.sum})
@@ -101,7 +101,8 @@ class Gateway_Ht_CTP(object):
         fn = get_dss() +  'fut/engine/gateway_trade.csv'
         df2 = pd.read_csv(fn)
         df2 = df2[self.file_trade_length:]
-        #print(df2)
+
+        # 读取成交文件，获得最新的成交记录，按合约、多空、开平字段进行汇总
         if len(df2) > 0:
             # 处理路由记录存在重复的情况
             df2 = df2.drop_duplicates()
@@ -118,11 +119,13 @@ class Gateway_Ht_CTP(object):
                 result = result[result._merge == 'left_only']
                 #print(result)
                 if len(result) > 0:
+                    # symbol_name = str(set(result.symbol))
+                    # send_email(get_dss(), 'Alert: 发单未成交：' + symbol_name, '')
                     send_email(get_dss(), 'Alert: 发单未成交', '')
                 else:
                     to_log('all order dealed')
             else:
-                send_email(get_dss(), 'Alert: 发单未成交', '')
+                send_email(get_dss(), 'Alert: 发单全部未成交', '')
 
     #----------------------------------------------------------------------
     def on_connect(self, obj):

@@ -223,7 +223,7 @@ def tick2bar(tradeDay):
     symbol_list = get_symbols_quote()
     # symbol_list = ['ag1912']
 
-    # 逐个处理每个业务品种
+    # 逐个处理每个合约
     for symbol in symbol_list:
         try:
             # 读取品种的tick文件
@@ -267,8 +267,8 @@ def tick2bar(tradeDay):
                 else:
                     to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
 
-                # 保存结果到文件中
-                save_bar(r1, symbol)
+            # 该合约处理完毕，保存各周期bar到文件
+            save_bar(r1, symbol)
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)

@@ -16,10 +16,13 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_m
 
 import sys
 
-t_dict = {'a':1, 'b':2}
-k = list( t_dict.keys() ) 
 
-print(type(k))
+import pdfkit
+
+# url页面转化为pdf
+url = 'http://114.116.190.167:5000/fut'
+fn = 'out.pdf'
+pdfkit.from_url(url, fn)
 
 # # 加载配置
 # config = open(get_dss()+'csv/config.json')
