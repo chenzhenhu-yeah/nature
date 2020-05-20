@@ -145,6 +145,11 @@ class Gateway_Ht_CTP(object):
             print('gateway not connected.')
 
     def open(self):
+        print(self.state)
+        if self.state == 'INITED':
+            self.t.ReqConnect(self.front)
+
+        time.sleep(9)
         fn = get_dss() +  'fut/engine/gateway_order.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
@@ -154,10 +159,6 @@ class Gateway_Ht_CTP(object):
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             self.file_trade_length = len(df)
-
-        print(self.state)
-        if self.state == 'INITED':
-            self.t.ReqConnect(self.front)
 
     def release(self):
         if self.state == 'OPEN':

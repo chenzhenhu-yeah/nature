@@ -23,7 +23,7 @@ def cffex():
     symbol_set = set(df['合约代码'])
     # print(symbol_set)
     symbol_list = list(symbol_set)
-    obj_list = list( set([x[:6] for x in symbol_list]) )
+    obj_list = list( set(['IF'+x[2:6] for x in symbol_list]) )
     # print(obj_list)
     symbol_list += obj_list
 
@@ -197,4 +197,6 @@ def down_opt():
 
 
 if __name__ == "__main__":
-    down_opt()
+    # down_opt()
+
+    cffex()

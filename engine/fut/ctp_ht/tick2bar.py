@@ -268,7 +268,9 @@ def tick2bar(tradeDay):
                     to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
 
             # 该合约处理完毕，保存各周期bar到文件
-            save_bar(r1, symbol)
+            if len(r1) > 0:
+                save_bar(r1, symbol)
+                
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)

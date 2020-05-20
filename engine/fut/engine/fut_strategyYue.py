@@ -210,11 +210,11 @@ class Fut_YuePortfolio(Portfolio):
         if self.got_dict[self.symbol_a] == True and self.got_dict[self.symbol_b] == True:
             for signal in self.signalDict[self.dual_name]:
                 for s_a in self.signalDict[self.symbol_a]:
-                    ask_price_a = s_a.bar.AskPrice           # 挂卖价
-                    bid_price_a = s_a.bar.BidPrice           # 挂买价
+                    ask_price_a = float(s_a.bar.AskPrice)           # 挂卖价
+                    bid_price_a = float(s_a.bar.BidPrice)           # 挂买价
                 for s_b in self.signalDict[self.symbol_b]:
-                    ask_price_b = s_b.bar.AskPrice           # 挂卖价
-                    bid_price_b = s_b.bar.BidPrice           # 挂买价
+                    ask_price_b = float(s_b.bar.AskPrice)           # 挂卖价
+                    bid_price_b = float(s_b.bar.BidPrice)           # 挂买价
 
                 long_price  = ask_price_a - bid_price_b
                 short_price = bid_price_a - ask_price_b

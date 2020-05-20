@@ -232,42 +232,11 @@ def fut_signal_pause():
 
     return render_template("fut_signal_pause.html",tip=tips,rows=r)
 
-@app.route('/fut_signal_atrrsi', methods=['get','post'])
-def fut_signal_atrrsi():
-    filename = get_dss() + 'fut/cfg/signal_atrrsi_param.csv'
-    if request.method == "POST":
-        pz = request.form.get('pz')
-        rsiLength = request.form.get('rsiLength')
-        trailingPercent = request.form.get('trailingPercent')
-        victoryPercent = request.form.get('victoryPercent')
+@app.route('/fut_owl', methods=['get','post'])
+def fut_owl():
 
-        kind = request.form.get('kind')
-
-        r = [[pz,rsiLength,trailingPercent,victoryPercent]]
-        cols = ['pz','rsiLength','trailingPercent','victoryPercent']
-        if kind == 'add':
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
-        if kind == 'del':
-            df = pd.read_csv(filename, dtype='str')
-            df = df[df.pz != pz ]
-            df.to_csv(filename,  index=False)
-        if kind == 'alter':
-            # 删
-            df = pd.read_csv(filename,  dtype='str')
-            df = df[df.pz != pz ]
-            df.to_csv(filename, index=False)
-            # 增
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
-
-    df = pd.read_csv(filename, dtype='str')
-    r = [ list(df.columns) ]
-    for i, row in df.iterrows():
-        r.append( list(row) )
-
-    #return str(r)
-    return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
+    return ''
+    # return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
 
 
 @app.route('/value_p_csv', methods=['get','post'])

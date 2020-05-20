@@ -129,22 +129,114 @@ def yue():
 
 
 def dali():
-    pz_list = ['m', 'RM', 'MA']
+    # pz_list = ['m', 'RM', 'MA']
+    pz_list = ['m']
     for pz in pz_list:
-
+        # 读取品种每日盈亏情况，清洗数据为每日一个记录
         fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
-        df = pd.read_csv(fn)
-        df['date'] = df.datetime.str.slice(0,10)
-        df['time'] = df.datetime.str.slice(11,19)
-        df = df[df.time.isin(['14:59:00', '15:00:00'])]
-        print(df.head(3))
-        # print(df.pnl_net)
+        df1 = pd.read_csv(fn)
+        df1['date'] = df1.datetime.str.slice(0,10)
+        df1['time'] = df1.datetime.str.slice(11,19)
+        df1 = df1[df1.time.isin(['14:59:00', '15:00:00'])]
+        df1 = df1.drop_duplicates(subset=['date'],keep='last')
+        df1['dali'] = df1['pnl_net']
+        df1 = df1.loc[:, ['date', 'dali']]
+        df1 = df1.set_index('date')
+        # print(df1.head(3))
+
+        fn = get_dss() + 'fut/engine/daliopt/portfolio_daliopt_' + pz + '_var.csv'
+        df2 = pd.read_csv(fn)
+        df2['date'] = df2.datetime.str.slice(0,10)
+        df2['time'] = df2.datetime.str.slice(11,19)
+        df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
+        df2 = df2.drop_duplicates(subset=['date'],keep='last')
+        df2['daliopt'] = df2['netPnl']
+        df2 = df2.loc[:, ['date', 'daliopt']]
+        df2 = df2.set_index('date')
+        # print(df2.head(3))
+
+        fn = get_dss() + 'fut/engine/dalicta/portfolio_dalicta_' + pz + '_var.csv'
+        df3 = pd.read_csv(fn)
+        df3['date'] = df3.datetime.str.slice(0,10)
+        df3['time'] = df3.datetime.str.slice(11,19)
+        df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+        df3 = df3.drop_duplicates(subset=['date'],keep='last')
+        df3['dalicta'] = df3['netPnl']
+        df3 = df3.loc[:, ['date', 'dalicta']]
+        df3 = df3.set_index('date')
+        # print(df3.head(3))
+
+        df = df1.join(df2)
+        df = df.join(df3)
+        df['total'] = df['dali'] + df['daliopt'] + df['dalicta']
+        # print(df)
+
+        plt.figure(figsize=(12,7))
+        plt.plot(df.dali)
+        plt.plot(df.daliopt)
+        plt.plot(df.dalicta)
+        plt.plot(df.total)
+
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y')
+        ax = plt.gca()
+
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+        for label in ax.get_xticklabels()[1::25]:
+            label.set_visible(True)
+        for label in ax.get_xticklabels()[-1:]:
+            label.set_visible(True)
+
+        plt.legend()
+        fn = 'static/dali_' + pz + '.jpg'
+        plt.savefig(fn)
+        # plt.show()
 
         # break
 
+        # print(df.head(3))
+        # # print(df.pnl_net)
+        # flag = df.date.duplicated()
+        # print(flag.any())
+        # print(flag.all())
+        # print(len(df))
 
+def opt():
+    dirname = get_dss() + 'fut/engine/opt/'
+    listfile = os.listdir(dirname)
+
+    for filename in listfile:
+        if filename[:7] == 'booking':
+            print(filename)
+            fn = dirname + filename
+            df = pd.read_csv(fn)
+            df = df.set_index('date')
+            # print(df.head())
+
+            plt.figure(figsize=(12,7))
+            plt.title(filename)
+            plt.plot(df.netPnl)
+            plt.xticks(rotation=45)
+            plt.grid(True, axis='y')
+            ax = plt.gca()
+
+            for label in ax.get_xticklabels():
+                label.set_visible(False)
+            for label in ax.get_xticklabels()[1::25]:
+                label.set_visible(True)
+            for label in ax.get_xticklabels()[-1:]:
+                label.set_visible(True)
+
+            # plt.legend()
+            fn = 'static/opt_' + filename + '.jpg'
+            plt.savefig(fn)
+            # plt.show()
+
+            # break
 
 if __name__ == '__main__':
     pass
     # yue()
-    dali()
+    # dali()
+    opt()

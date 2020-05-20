@@ -156,10 +156,10 @@ if __name__ == '__main__':
 
         # 盘中
         schedule.every().day.at("12:05").do(run_down_opt)
+        schedule.every().day.at("15:03").do(run_down_opt)
         schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:10").do(run_book_opt)
         schedule.every().day.at("15:15").do(run_pandian)
-        schedule.every().day.at("15:16").do(run_down_opt)
         schedule.every().day.at("15:18").do(mail_log)
 
         #盘后

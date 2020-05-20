@@ -12,6 +12,23 @@ from csv import DictReader
 from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, get_contract, to_log
 from nature import get_symbols_quote
 
+
+def update_date():
+    dirname = get_dss() + 'fut/engine/opt/'
+    listfile = os.listdir(dirname)
+
+    for filename in listfile:
+        if filename[:4] == 'book':
+            print(filename)
+            fn = dirname + filename
+            df = pd.read_csv(fn)
+            date_list = list(df.date.astype('str'))
+            date_list = [x[:4]+'-'+x[4:6]+'-'+x[6:8] for x in date_list]
+            df['date'] = date_list
+            # print(df)
+            df.to_csv(fn, index=False)
+            # break
+
 def update_rec_price(rec):
     dss = get_dss()
     net_pnl = rec.netPnl
@@ -19,23 +36,25 @@ def update_rec_price(rec):
     close_dict = eval(rec.closeDict)
 
     now = datetime.now()
-    today = now.strftime('%Y%m%d')
+    today = now.strftime('%Y-%m-%d')
     rec.date = today
 
     for symbol in pos_dict:
         # 读 day_symbol.csv 文件，获取最新收盘价，再做其他处理
         size = int(get_contract(symbol).size)
-        fn = dss + 'fut/bar/day_' + symbol + '.csv'
+        fn = dss + 'opt/' + today[:7] + '.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
+            df = df[df.Instrument == symbol]
             row = df.iloc[-1,:]
-            net_pnl += (row.close - close_dict[symbol]) * pos_dict[symbol] * size
-            close_dict[symbol] = row.close
+            net_pnl += (row.LastPrice - close_dict[symbol]) * pos_dict[symbol] * size
+            close_dict[symbol] = row.LastPrice
 
     rec.netPnl = net_pnl
     rec.closeDict = str(close_dict)
 
 def fresh_book():
+    """更新booking文件，计算当日盈亏"""
 
     # 获取opt目录下全部booking文件
     dirname = get_dss() + 'fut/engine/opt/'
@@ -53,9 +72,9 @@ def fresh_book():
             df = pd.DataFrame([rec])
             df.to_csv(fn, index=False, header=None, mode='a')
 
-
-# 分析opt_trade文件，生成新的booking文件，或转成booked文件
 def new_book():
+    """分析opt_trade文件，生成新的booking文件，或转成booked文件"""
+
     dss = get_dss()
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
@@ -154,12 +173,11 @@ def new_book():
         df = pd.DataFrame(r)
     df.to_csv(fn, index=False)
 
-
-# 从成交反馈文件中提取期权成交记录，追加到opt_trade文件中
 def get_trade():
+    """从成交反馈文件中提取期权成交记录，追加到opt_trade文件中"""
+
     now = datetime.now()
     today = int( now.strftime('%Y%m%d') )
-    # today =  int('20200409')
 
     fn = get_dss() +  'fut/engine/gateway_trade.csv'
     df = pd.read_csv(fn)
@@ -173,6 +191,9 @@ def get_trade():
         df['book'] = ''
         df['portfolio'] = ''
         df['margin'] = 0
+        date_list = list(df.date.astype('str'))
+        date_list = [x[:4]+'-'+x[4:6]+'-'+x[6:8] for x in date_list]
+        df['TradingDay'] = date_list
         # print(df)
         fn = get_dss() + 'fut/engine/opt/opt_trade.csv'
         if os.path.exists(fn):
@@ -226,3 +247,5 @@ def book_opt_run():
 
 if __name__ == '__main__':
     book_opt_run()
+
+    # update_date()
