@@ -234,9 +234,23 @@ def fut_signal_pause():
 
 @app.route('/fut_owl', methods=['get','post'])
 def fut_owl():
+    tips = ''
+    if request.method == "POST":
+        if request.form.get('token') != '9999':
+            tips = 'token error'
+        else:
+            code = del_blank( request.form.get('code') )
+            ins_type = del_blank( request.form.get('ins_type') )
+            price = del_blank( float(request.form.get('price')) )
+            num = del_blank( int(request.form.get('num')) )
 
-    return ''
-    # return render_template("fut_signal_atrrsi.html",title="fut_signal_atrrsi",rows=r)
+            ins = str({'ins':ins_type,'price':price,'num':num})
+            fn = 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
+            # fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
+            a_file(fn,ins)
+            tips = 'append success'
+
+    return render_template("owl.html",tip=tips)
 
 
 @app.route('/value_p_csv', methods=['get','post'])

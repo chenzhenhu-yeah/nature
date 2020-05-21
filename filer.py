@@ -52,6 +52,7 @@ def a_file(filename, content):
 def deal_file(ins):
     r = []
     filename = dss + ins['filename']
+    # filename = ins['filename']
 
     if ins['ins']=='r':
         with open(filename, 'r', encoding='utf-8') as f:

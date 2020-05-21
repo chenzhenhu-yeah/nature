@@ -8,21 +8,33 @@ import os
 import re
 import datetime
 import time
-
+import sys
 import json
 import tushare as ts
 
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
-
-import sys
+from nature import rc_file
 
 
 import pdfkit
-
 # url页面转化为pdf
-url = 'http://114.116.190.167:5000/fut'
-fn = 'out.pdf'
-pdfkit.from_url(url, fn)
+# url = 'http://114.116.190.167:5000/fut'
+# fn = 'out.pdf'
+# pdfkit.from_url(url, fn)
+
+code = 'm2009'
+fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
+ins_list = rc_file(fn)
+
+for ins in ins_list:
+    print(float(ins['price']))
+    print(type(ins))
+    # ins_dict = eval(ins)
+    # print(ins_dict.price, ins_dict.num)
+
+
+
+
 
 # # 加载配置
 # config = open(get_dss()+'csv/config.json')

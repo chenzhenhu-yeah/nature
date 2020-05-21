@@ -9,6 +9,8 @@ from nature import to_log, get_dss, get_contract, send_email
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
+from nature import a_file, rc_file
+
 
 ########################################################################
 class Fut_OwlSignal(Signal):
@@ -71,6 +73,9 @@ class Fut_OwlSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
         r = []
+        fn = 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        self.ins_list += rc_file(fn)
 
         for row in self.ins_list:
             self.can_buy = False
@@ -78,9 +83,9 @@ class Fut_OwlSignal(Signal):
             self.can_short = False
             self.can_cover = False
 
-            ins = row[0]
-            price = row[1]
-            self.fixedSize = row[2]
+            ins = row['ins']
+            price = float( row['price'] )
+            self.fixedSize = int( row['num'] )
             # print(ins, price, self.fixedSize)
 
             if ins == 'up_buy' and self.bar.close >= price:
@@ -134,19 +139,14 @@ class Fut_OwlSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        filename = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            for i, row in df.iterrows():
-                self.ins_list.append([row.ins, row.price, row.num])
+        pass
 
     #----------------------------------------------------------------------
     def save_var(self):
-        filename = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        df = pd.DataFrame(self.ins_list, columns=['ins','price','num'])
-        df.to_csv(filename, index=False)
-
-        # print('here in owl.save_var !!!')
+        fn = 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        for ins in self.ins_list:
+            a_file(fn, str(ins))
 
     #----------------------------------------------------------------------
     def open(self, price, change):
