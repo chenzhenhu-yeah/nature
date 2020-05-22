@@ -22,16 +22,49 @@ import pdfkit
 # fn = 'out.pdf'
 # pdfkit.from_url(url, fn)
 
-code = 'm2009'
-fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
-ins_list = rc_file(fn)
 
-for ins in ins_list:
-    print(float(ins['price']))
-    print(type(ins))
-    # ins_dict = eval(ins)
-    # print(ins_dict.price, ins_dict.num)
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
+# 第三方 SMTP 服务
+mail_host = 'smtp.yeah.net'              # 设置服务器
+mail_user = 'chenzhenhu@yeah.net'    # 用户名
+mail_pass = "852299"                     # 授权密码
+
+sender = 'chenzhenhu@yeah.net'
+receivers = 'chenzhenhu@yeah.net'
+
+content = MIMEText('test')
+message = MIMEMultipart()
+message.attach(content)
+
+message['From'] = sender
+message['To'] =  receivers
+message['Subject'] = 's1'
+
+# 构造附件
+att = MIMEText(open('out.pdf', "rb").read(), "base64", "utf-8")
+att["Content-Type"] = "application/octet-stream"
+att["Content-Disposition"] = 'attachment; filename="o1.pdf")'
+message.attach(att)
+
+# xlsx = MIMEApplication(open('test.xlsx', 'rb').read())
+# xlsx["Content-Type"] = 'application/octet-stream'
+# xlsx.add_header('Content-Disposition', 'attachment', filename='test.xlsx')
+# message.attach(xlsx)
+# try:
+
+smtpObj = smtplib.SMTP()
+smtpObj.connect(mail_host, 25)  # 25 为 SMTP 端口号
+smtpObj.login(mail_user, mail_pass)
+smtpObj.sendmail(sender, receivers, message.as_string())
+print("邮件发送成功")
+
+# except  Exception as e:
+    # print(e)
 
 
 
