@@ -10,7 +10,7 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show
+from nature import draw_web, ic_show, ip_show, smile
 from nature import del_blank, check_symbols_p
 
 
@@ -439,6 +439,15 @@ def mates_show():
 
     return render_template("mates_show.html",title="mates_show",words=setting_dict)
 
+@app.route('/show_smile', methods=['get'])
+def show_smile():    
+    # # r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    # r = ''
+    # r += '<img src=\"static/smile_CF007.jpg' +  '\" />'
+    # r += '<img src=\"static/smile_CF009.jpg' +  '\" />'
+    # return r
+    return render_template("show_smile.html",title="show_smile")
+
 @app.route('/log')
 def show_log():
     items = read_log_today()
@@ -478,6 +487,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

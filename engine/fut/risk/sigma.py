@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import os
+from datetime import datetime
+
 import zipfile
 import os
 
@@ -19,55 +22,6 @@ def calc_hv(date):
 
     cur = df.iloc[-1,:]
     return float(cur.hv), float(cur.close)
-
-def IO(date):
-    year = date[:4]
-    hv, obj_price = calc_hv(date)
-    # print(hv, obj_price)
-
-    fn = get_dss() + 'backtest/IO/' + 'IO' + year + '_greeks.csv'
-    df = pd.read_csv(fn)
-    df = df[(df.date == date) & (df.symbol.str.startswith('IO'))]
-    # print(df.head())
-    # print( len(df) )
-    term_list = sorted( list(set([ x[:6] for x in df.symbol ])) )
-    # print(term_list)
-
-    r = []
-    for term in term_list:
-        df1 = df[df.symbol.str.startswith(term)]
-        strike_list = sorted( list(set([ x[-4:] for x in df1.symbol ])) )
-        # print(term, strike_list)
-        df1 = df1.set_index('symbol')
-        i = 0
-        c_iv = 0
-        p_iv = 0
-        c_curve_dict = {}
-        p_curve_dict = {}
-        for strike in strike_list:
-            symbol_c = term + '-C-' + strike
-            symbol_p = term + '-P-' + strike
-            c_curve_dict[strike] = df1.at[symbol_c, 'iv']
-            p_curve_dict[strike] = df1.at[symbol_p, 'iv']
-
-            if float(strike) >= obj_price-100 and float(strike) <= obj_price+100:
-                i += 1
-                c_iv += df1.at[symbol_c, 'iv']
-                p_iv += df1.at[symbol_p, 'iv']
-        c_iv = c_iv / i
-        p_iv = p_iv / i
-        iv = c_iv*0.5 + p_iv*0.5
-        r.append( [date, term, iv, c_iv, p_iv, hv, obj_price, str(c_curve_dict), str(p_curve_dict)] )
-
-    fn = get_dss() + 'backtest/IO/' + 'IO' + year + '_sigma.csv'
-    df = pd.DataFrame(r, columns=['date', 'term', 'iv', 'c_iv', 'p_iv', 'hv', 'obj_price', 'c_curve', 'p_curve'])
-    if os.path.exists(fn):
-        df.to_csv(fn, index=False, mode='a', header=False)
-    else:
-        df.to_csv(fn, index=False)
-
-
-
 
 def term_structure(date):
     year = date[:4]
@@ -94,25 +48,6 @@ def term_structure(date):
     # plt.show()
     plt.savefig('fig1.jpg')
 
-def smile(date):
-    """期权微笑曲线"""
-    year = date[:4]
-    fn = get_dss() + 'backtest/IO/' + 'IO' + year + '_sigma.csv'
-    df = pd.read_csv(fn)
-    df = df[df.date == date]
-    # df = df.reset_index()
-    row = df.iloc[0,:]
-    print(row)
-    c_curve_dict = eval(row.c_curve)
-    p_curve_dict = eval(row.p_curve)
-
-    df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
-    df1 = df1.T
-    # print(df1)
-    df1.plot()
-    # plt.show()
-    plt.savefig('fig2.jpg')
-
 def iv_ts(date):
     year = date[:4]
     fn = get_dss() + 'backtest/IO/' + 'IO' + year + '_sigma.csv'
@@ -128,12 +63,119 @@ def iv_ts(date):
     plt.savefig('fig3.jpg')
 
 
-if __name__ == '__main__':
-    # dates = ['2020-04-29', '2020-04-30', '2020-05-06', '2020-05-07', '2020-05-08', '2020-05-11', '2020-05-12', '2020-05-13']
-    # for date in dates:
-    #     IO(date)
+def calc_sigma_common(df, today, term_list, strike_pos, gap, dash):
+    r = []
+    for term in term_list:
+        df1 = df[df.index.str.startswith(term)]
+        strike_list = sorted( list(set([ x[strike_pos:] for x in df1.index ])) )
+        # print(term, strike_list)
+        # df1 = df1.set_index('symbol')
+        i = 0
+        c_iv = 0
+        p_iv = 0
+        c_curve_dict = {}
+        p_curve_dict = {}
+        for strike in strike_list:
+            symbol_c = term + dash + 'C' + dash + strike
+            symbol_p = term + dash + 'P' + dash + strike
+            c_curve_dict[strike] = df1.at[symbol_c, 'iv']
+            p_curve_dict[strike] = df1.at[symbol_p, 'iv']
 
-    date = '2020-05-12'
-    term_structure(date)
-    smile(date)
-    iv_ts(date)
+            obj_price = df1.at[symbol_c, 'obj']
+            # print(symbol_c, obj_price)
+
+            if float(strike) >= obj_price-gap*2 and float(strike) <= obj_price+gap*2:
+                i += 1
+                c_iv += df1.at[symbol_c, 'iv']
+                p_iv += df1.at[symbol_p, 'iv']
+        c_iv = c_iv / i
+        p_iv = p_iv / i
+        iv = c_iv*0.5 + p_iv*0.5
+        r.append( [today, term, iv, c_iv, p_iv, obj_price, str(c_curve_dict), str(p_curve_dict)] )
+
+        # break
+
+    fn = get_dss() + 'opt/' + today[:7] + '_sigma.csv'
+    df = pd.DataFrame(r, columns=['date', 'term', 'iv', 'c_iv', 'p_iv', 'obj_price', 'c_curve', 'p_curve'])
+    if os.path.exists(fn):
+        df.to_csv(fn, index=False, mode='a', header=False)
+    else:
+        df.to_csv(fn, index=False)
+
+
+def calc_sigma_IO(df_all, today):
+    df = df_all[df_all.index.str.startswith('IO')]
+    term_list = sorted( list(set([ x[:6] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 9
+    gap = 50
+    dash = '-'
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
+
+def calc_sigma_m(df_all, today):
+    df = df_all[df_all.index.str.startswith('m')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 8
+    gap = 50
+    dash = '-'
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
+
+def calc_sigma_RM(df_all, today):
+    df = df_all[df_all.index.str.startswith('RM')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 6
+    gap = 25
+    dash = ''
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
+
+def calc_sigma_MA(df_all, today):
+    df = df_all[df_all.index.str.startswith('MA')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 6
+    gap = 25
+    dash = ''
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
+
+def calc_sigma_CF(df_all, today):
+    df = df_all[df_all.index.str.startswith('CF')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 6
+    gap = 200
+    dash = ''
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
+def calc_sigma():
+
+    now = datetime.now()
+    # today = now.strftime('%Y-%m-%d %H:%M:%S')
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-05-22'
+
+    fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
+    df = pd.read_csv(fn)
+    df = df[df.Localtime > today+' 15:00:00']
+    df = df.set_index('Instrument')
+    # print(df.head())
+
+    calc_sigma_IO(df, today)
+    calc_sigma_m(df, today)
+    calc_sigma_RM(df, today)
+    calc_sigma_MA(df, today)
+    calc_sigma_CF(df, today)
+
+
+if __name__ == '__main__':
+
+    calc_sigma()
+    # smile()
+
+    # term_structure(date)
+    # iv_ts(date)

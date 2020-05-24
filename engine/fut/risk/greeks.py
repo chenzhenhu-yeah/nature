@@ -1,7 +1,9 @@
-import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+import os
+from datetime import datetime
 
 import math
 from math import sqrt, log
@@ -126,7 +128,8 @@ def theta(s,k,r,T,sigma,n):
     theta = (-1 * (s * si.norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - n * r * k * np.exp(-r * T) * si.norm.cdf(n * d2)) / 100
     return theta
 
-def calc_greeks(year):
+
+def calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K):
     """
     计算新下载数据的希腊字母值，保存到yyyy-dd_greeks.csv文件
     Parameters:
@@ -137,177 +140,180 @@ def calc_greeks(year):
     C0：期权价格
     """
 
-    c = input('请确认波指已维护最新值，press y to continue: ')
-    if c != 'y':
-        return
+    C0 = float( row['LastPrice'] )                                 # 期权价格
+    date_mature = mature_dict[ term ]
+    date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+    td = datetime.strptime(today, '%Y-%m-%d')
+    T = float((date_mature - td).days) / 365                       # 剩余期限
+    # print(S0, K, C0, T)
 
-    fn_sigma = get_dss() + 'backtest/IO/hs300波指.csv'
-    df_sigma = pd.read_csv(fn_sigma)
-    df_sigma = df_sigma.set_index('date')
+    if T > 0:
+        if is_call == True:
+            n = 1
+            iv = bsm_call_imp_vol(S0, K, T, r, C0)
+        else:
+            n = -1
+            iv = bsm_put_imp_vol(S0, K, T, r, C0)
+
+        row['obj'] = S0
+        row['delta'] = delta(S0,K,r,T,iv,n)
+        row['gamma'] = gamma(S0,K,r,T,iv)
+        row['theta'] = theta(S0,K,r,T,iv,n)
+        row['vega'] = vega(S0,K,r,T,iv)
+        row['iv'] = iv
+    else:
+        row['obj'] = S0
+        row['delta'] = 0
+        row['gamma'] = 0
+        row['theta'] = 0
+        row['vega'] = 0
+        row['iv'] = 0
+
+    df2 = pd.DataFrame([row])
+    df2.index.name = 'Instrument'
+    fn2 = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
+    if os.path.exists(fn2):
+        df2.to_csv(fn2, mode='a', header=None)
+    else:
+        df2.to_csv(fn2)
+
+
+def calc_greeks_IO(df, today, r):
+    df1 = df[df.index.str.startswith('IO')]
+    # print(df1.head())
 
     mature_dict = {'IO2002':'2020-02-21','IO2003':'2020-03-20','IO2004':'2020-04-17','IO2005':'2020-05-15','IO2006':'2020-06-19',
                    'IO2007':'2020-07-17','IO2009':'2020-09-18','IO2012':'2020-12-18','IO2103':'2021-03-19'}
 
-    fn1 = get_dss() + 'backtest/IO/' + 'IO' + year + '.csv'
-    fn2 = get_dss() + 'backtest/IO/' + 'IO' + year + '_greeks.csv'
+    for symbol, row in df1.iterrows():
+        if symbol[:6] not in mature_dict.keys():
+            continue
+        symbol_obj = 'IF' + symbol[2:6]
+        df_obj = df[df.index == symbol_obj]
+        term = symbol[:6]
+        if len(df_obj) == 1:
+            K = float( symbol[9:] )                                       # 行权价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            is_call = True if symbol[7] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
-    df1 = pd.read_csv(fn1)
-    df2 = pd.read_csv(fn2)
-    df1 = df1.loc[len(df2):,:]
-    # print(df1.head(3))
+        # break
 
-    for i, row in df1.iterrows():
-        df_index = get_inx('000300', row.date, row.date)
-        if len(df_index) == 0:
-            print('缺少沪深300日线数据')
-            assert False
-        S0 = df_index.iat[0,3]
-        # S0 = 3912.57
 
-        call = True if row['symbol'][7] == 'C' else False
-        K = float( row['symbol'][-4:] )
-        r = 0.03
-        C0 = float( row['close'] )
+def calc_greeks_m(df, today, r):
+    df1 = df[df.index.str.startswith('m')]
+    # print(df1.head())
 
-        sa = float( df_sigma.at[row.date, 'close'] ) / 100
-        # sa = 0.2178
-        # print(sa)
+    mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
+                   'm2101':'2020-12-07','m2103':'2021-02-05','m2105':'2021-04-07',}
 
-        if row['symbol'][:6] not in mature_dict.keys():
-            assert False
+    for symbol, row in df1.iterrows():
+        term = symbol[:5]
+        if term not in mature_dict.keys():
+            continue
+        if len(symbol) <= 5:
+            continue
+        symbol_obj = term
+        df_obj = df[df.index == symbol_obj]
 
-        date_mature = mature_dict[ row['symbol'][:6] ]
-        date_mature = datetime.datetime.strptime(date_mature, '%Y-%m-%d')
-        today = datetime.datetime.strptime(row.date, '%Y-%m-%d')
-        T = float((date_mature - today).days) / 365
+        if len(df_obj) == 1:
+            K = float( symbol[8:] )                                       # 行权价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            is_call = True if symbol[6] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
-        if T > 0:
-            if call == True:
-                n = 1
-                iv = bsm_call_imp_vol(S0, K, T, r, C0)
-            else:
-                n = -1
-                iv = bsm_put_imp_vol(S0, K, T, r, C0)
+        # break
 
-            row['hs300'] = S0
-            row['sigma'] = sa
-            row['delta9'] = delta(S0,K,r,T,sa,n)
-            row['gamma'] = gamma(S0,K,r,T,sa)
-            row['theta'] = theta(S0,K,r,T,sa,n)
-            row['vega'] = vega(S0,K,r,T,sa)
-            row['iv'] = iv
-        else:
-            row['hs300'] = S0
-            row['delta9'] = 0
-            row['gamma'] = 0
-            row['theta'] = 0
-            row['vega'] = 0
-            row['sigma'] = 0
+def calc_greeks_RM(df, today, r):
+    df1 = df[df.index.str.startswith('RM')]
+    # print(df1.head())
 
-        df = pd.DataFrame([row])
-        df.to_csv(fn2, index=False, mode='a', header=None)
+    mature_dict = {'RM007':'2020-06-03','RM009':'2020-08-05','RM011':'2020-10-13',
+                   'RM101':'2020-12-03','RM103':'2021-02-03',}
 
-def test_iv():
+    for symbol, row in df1.iterrows():
+        term = symbol[:5]
+        if term not in mature_dict.keys():
+            continue
+        if len(symbol) <= 5:
+            continue
+        symbol_obj = term
+        df_obj = df[df.index == symbol_obj]
+
+        if len(df_obj) == 1:
+            K = float( symbol[6:] )                                       # 行权价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            is_call = True if symbol[5] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
+
+        # break
+
+def calc_greeks_MA(df, today, r):
+    df1 = df[df.index.str.startswith('MA')]
+    # print(df1.head())
+
+    mature_dict = {'MA007':'2020-06-03','MA009':'2020-08-05','MA011':'2020-10-13',
+                   'MA101':'2020-12-03','MA103':'2021-02-03',}
+
+    for symbol, row in df1.iterrows():
+        term = symbol[:5]
+        if term not in mature_dict.keys():
+            continue
+        if len(symbol) <= 5:
+            continue
+        symbol_obj = term
+        df_obj = df[df.index == symbol_obj]
+
+        if len(df_obj) == 1:
+            K = float( symbol[6:] )                                       # 行权价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            is_call = True if symbol[5] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
+
+        # break
+
+def calc_greeks_CF(df, today, r):
+    df1 = df[df.index.str.startswith('CF')]
+    # print(df1.head())
+
+    mature_dict = {'CF007':'2020-06-03','CF009':'2020-08-05','CF011':'2020-10-13',
+                   'CF101':'2020-12-03','CF103':'2021-02-03',}
+
+    for symbol, row in df1.iterrows():
+        term = symbol[:5]
+        if term not in mature_dict.keys():
+            continue
+        if len(symbol) <= 5:
+            continue
+        symbol_obj = term
+        df_obj = df[df.index == symbol_obj]
+
+        if len(df_obj) == 1:
+            K = float( symbol[6:] )                                       # 行权价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            is_call = True if symbol[5] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
+
+        # break
+
+def calc_greeks():
     r = 0.03
-    S0 = 3912.577
+    now = datetime.now()
+    # today = now.strftime('%Y-%m-%d %H:%M:%S')
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-05-22'
 
-    K = 3900
-    T = 12/365
-
-    C0 = 71.8
-    sa = bsm_call_imp_vol(S0, K, T, r, C0)
-
-    # C0 = 71.4
-    # sa =  bsm_put_imp_vol(S0, K, T, r, C0)
-
-    print(sa)
-
-def test_greeks():
-    S0 = 2.8
-    K = 2.65
-    T = 30/365
-    r = 0.03
-    sigma = 0.2
-    sa = sigma
-    C0 = 213.6
-
-    bsm = bsm_call_value(S0, K, T, r, C0)
-    print(bsm)
-
-    n = 1
-    print( delta(S0,K,r,T,sa,n) )
-    print( gamma(S0,K,r,T,sa) )
-    print( theta(S0,K,r,T,sa,n) )
-    print( vega(S0,K,r,T,sa) )
-
-def export_data(dt):
-    r = []
-    symbol_list = ['IO2005-C-3700', 'IO2005-P-3700', 'IO2005-C-3800', 'IO2005-P-3800', 'IO2005-C-3900', 'IO2005-P-3900', 'IO2005-C-4000', 'IO2005-P-4000', 'IO2005-C-4100', 'IO2005-P-4100', 'IO2006-C-3900', 'IO2006-P-3900']
-    # symbol_list = []
-
-    fn = get_dss() + 'backtest/IO/' + 'IO' + year + '_greeks.csv'
+    fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
+    df = df[df.Localtime > today+' 15:00:00']
+    df = df.set_index('Instrument')
+    # print(df.head())
 
-    for symbol in symbol_list:
-        df1 = df[ (df.date == dt) & (df.symbol == symbol) ]
-        row = df1.iloc[0,:]
-        r += [row.close, row.delta9, row.gamma, 100*row.theta, 100*row.vega, 100*row.iv]
-
-    # df = pd.DataFrame(r, columns=['date', 'symbol', 'close', 'delta9', 'gamma', 'theta', 'vega', 'iv'])
-    df = pd.DataFrame([r])
-    fn = get_dss() + 'backtest/IO/a3.csv'
-    df.to_csv(fn, index=False)
-
-def calc_hv():
-    df = get_inx('000300', '2019-01-01', '2020-05-15')
-    # df = df.sort_values('date')
-    df = df.set_index('date')
-    df = df.sort_index()
-
-    df['ln'] = np.log(df.close)
-    df['rt'] = df['ln'].diff(1)
-    df['hv'] = df['rt'].rolling(60).std()
-    df['hv'] *= np.sqrt(242)
-
-    df = df.iloc[-242:,:]
-    print(df.head())
-    print(df.tail())
-
-    plt.plot(df['hv'])
-    plt.grid()
-    plt.show()
-
-    cur = df.iloc[-1,:]
-    hv = cur['hv']
-    hv_rank = (hv - df['hv'].min()) / (df['hv'].max() - df['hv'].min())
-    print('hv: ', hv)
-    print('hv Rank: ', hv_rank)
-
-    # print('     均值：',df['hv'].mean())
-    print('0.2分位数:',np.percentile(df['hv'], 20))
-    print('0.5分位数:',np.percentile(df['hv'], 50))
-    print('0.8分位数:',np.percentile(df['hv'], 80))
-
-    hv_percentile = len(df[df.hv < hv]) / 242
-    print('hv percentile: ', hv_percentile)
-
-
-
-
-
+    calc_greeks_IO(df, today, r)
+    calc_greeks_m(df, today, r)
+    calc_greeks_RM(df, today, r)
+    calc_greeks_MA(df, today, r)
+    calc_greeks_CF(df, today, r)
 
 if __name__ == '__main__':
-    year = '2020'
-    dt = '2020-05-13'
-
-    calc_hv()
-
-    # calc_greeks(year)
-
-    # test_iv()
-    # test_greeks()
-    # export_data(dt)
-
-    # pcp()
-    # die_forward_call(dt)
-    # die_forward_put(dt)
+    calc_greeks()

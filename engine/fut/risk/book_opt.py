@@ -191,7 +191,7 @@ def get_trade():
         df['book'] = ''
         df['portfolio'] = ''
         df['margin'] = 0
-        date_list = list(df.date.astype('str'))
+        date_list = list(df.TradingDay.astype('str'))
         date_list = [x[:4]+'-'+x[4:6]+'-'+x[6:8] for x in date_list]
         df['TradingDay'] = date_list
         # print(df)
@@ -246,6 +246,6 @@ def book_opt_run():
 
 
 if __name__ == '__main__':
-    book_opt_run()
+    # book_opt_run()
 
-    # update_date()
+    update_date()

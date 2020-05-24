@@ -8,7 +8,7 @@ import datetime
 from multiprocessing.connection import Client
 import traceback
 
-from nature import to_log, pandian_run, book_opt_run
+from nature import to_log, pandian_run, book_opt_run, smile
 from nature import get_trading_dates, send_email
 
 from nature.engine.stk.nearboll.use_ma import use_ma
@@ -16,9 +16,13 @@ from nature import has_factor, stk_report
 from nature.hu_signal.price_signal import price_signal
 
 from nature.down_k.down_data import down_data
+from nature.down_k.down_opt import down_opt
 from nature.engine.fut.ctp_ht.tick2bar import tick2bar
 from nature.engine.fut.risk.examine import examine
-from nature.down_k.down_opt import down_opt
+from nature.engine.fut.risk.greeks import calc_greeks
+from nature.engine.fut.risk.sigma import calc_sigma
+from nature.engine.fut.risk.arbitrage import calc_pcp
+
 
 dss = r'../data/'
 
@@ -139,11 +143,62 @@ def run_down_data():
 
 
 def run_down_opt():
-    now = datetime.datetime.now()
-    weekday = int(now.strftime('%w'))
-    if 1 <= weekday <= 5:
-        print('\n' + str(now) + " down_opt begin...")
-        down_opt()
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            print('\n' + str(now) + " down_opt begin...")
+            down_opt()
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+def run_arbitrage():
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            print('\n' + str(now) + " calc_pcp begin...")
+            calc_pcp()
+
+
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+
+def run_smile():
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            print('\n' + str(now) + " calc_greeks begin...")
+            calc_greeks()
+            print('\n' + str(now) + " calc_sigma begin...")
+            calc_sigma()
+            print('\n' + str(now) + " smile begin...")
+            smile()
+
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+
+def mail_pdf():
+    try:
+        now = datetime.datetime.now()
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            import pdfkit
+            # url页面转化为pdf
+            # url = 'http://114.116.190.167:5000/fut'
+            url = 'http://127.0.0.1:5000/show_smile'
+            fn = 'out3.pdf'
+            pdfkit.from_url(url, fn)
+
+    except Exception as e:
+        print(now, '-'*30)
+        traceback.print_exc()
 
 def run_examine():
     pass
@@ -157,10 +212,15 @@ if __name__ == '__main__':
         # 盘中
         schedule.every().day.at("12:05").do(run_down_opt)
         schedule.every().day.at("15:03").do(run_down_opt)
-        schedule.every().day.at("15:05").do(run_tick2bar)
-        schedule.every().day.at("15:10").do(run_book_opt)
-        schedule.every().day.at("15:15").do(run_pandian)
-        schedule.every().day.at("15:18").do(mail_log)
+        schedule.every().day.at("15:05").do(run_smile)
+
+        schedule.every().day.at("15:15").do(run_tick2bar)
+        schedule.every().day.at("15:20").do(run_book_opt)
+        schedule.every().day.at("15:25").do(run_pandian)
+
+        schedule.every().day.at("15:26").do(run_arbitrage)
+        # schedule.every().day.at("15:28").do(mail_pdf)
+        schedule.every().day.at("15:30").do(mail_log)
 
         #盘后
         schedule.every().day.at("19:00").do(run_down_data)

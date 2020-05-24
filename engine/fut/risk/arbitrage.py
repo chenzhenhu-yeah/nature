@@ -1,7 +1,11 @@
-import datetime
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+
+import os
+from datetime import datetime
 
 import sys
 import math
@@ -123,59 +127,122 @@ def die_RM(df):
     df2.to_csv(fn, index=False)
 
 
-def pcp(df, term):
-    r = 0.03
-    T = 15/365
-    S = 3912
-
+def pcp(df_all, term_list, mature_dict, today):
     result = []
-    df = df.set_index('strike')
-    x_list = sorted(list(set(df.index)))
-    # print(x_list)
-    n = len(x_list)
-
-    for x in x_list:
-        df_c = df[df.type == 'C']
-        df_p = df[df.type == 'P']
-
-        row_c = df_c.loc[x,:]
-        row_p = df_p.loc[x,:]
-
-        pSc = int( row_p.LastPrice + S -row_c.LastPrice )
-        pSc_final = int( pSc * (1 + r*T) )
-        result.append( [S, row_c.LastPrice, row_p.LastPrice, x, pSc, pSc_final, float(x)-pSc_final] )
-
-    return result
-
-def pcp_m(df):
-    r = []
-    gap = 50
-    term_list = ['m2007']
     for term in term_list:
-        df1 = df[df.Instrument.str.startswith(term)]
-        df1 = df1.set_index('Instrument')
-        obj_price = df1.at[term, 'LastPrice']
-        print(obj_price)
-        df1 = df1.drop(index=[term])
-        df1['strike'] = df1.index.str.slice(8,12)
-        df1['type'] = df1.index.str.slice(6,7)
+        df = df_all[df_all.index.str.startswith(term)]
+        # print(df1)
 
-        r += pcp(df1, term)
+        r = 0.03
+        date_mature = mature_dict[ term ]
+        date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+        td = datetime.strptime(today, '%Y-%m-%d')
+        T = float((date_mature - td).days) / 365                       # 剩余期限
+        if T == 0 :
+            break
+
+        df = df.set_index('strike')
+        x_list = sorted(list(set(df.index)))
+        # print(x_list)
+        # n = len(x_list)
+
+        for x in x_list:
+            df_c = df[df.type == 'C']
+            df_p = df[df.type == 'P']
+
+            row_c = df_c.loc[x,:]
+            row_p = df_p.loc[x,:]
+
+            S = float(row_c.obj)
+            pSc = int( row_p.LastPrice + S -row_c.LastPrice )
+            pSc_final = int( pSc * (1 + r*T) )
+            diff = float(x)-pSc_final
+            rt = diff/(S*2*0.1)/T
+            if abs(rt) > 0.3:
+                result.append( [today, term, x, S, row_c.LastPrice, row_p.LastPrice, pSc, pSc_final, diff, rt] )
 
         # break
 
-    df2 = pd.DataFrame(r, columns=['S', 'call', 'put', 'X', 'pSc', 'pSc_final', 'diff'])
-    fn = get_dss() + 'opt/pcp_m.csv'
-    df2.to_csv(fn, index=False)
+    fn = get_dss() + 'opt/pcp.csv'
+    df2 = pd.DataFrame(result, columns=['date', 'term', 'X', 'S', 'call', 'put', 'pSc', 'pSc_final', 'diff', 'rt'])
+    if os.path.exists(fn):
+        df2.to_csv(fn, index=False, mode='a', header=False)
+    else:
+        df2.to_csv(fn, index=False)
+
+
+def pcp_m(df_all, today):
+    mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
+                   'm2101':'2020-12-07','m2103':'2021-02-05','m2105':'2021-04-07',}
+
+    df = df_all[df_all.index.str.startswith('m')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    df['strike'] = df.index.str.slice(8)
+    df['type'] = df.index.str.get(6)
+    # print(df.head())
+    # print(term_list)
+    pcp(df, term_list, mature_dict, today)
+
+
+def pcp_RM(df_all, today):
+    mature_dict = {'RM007':'2020-06-03','RM009':'2020-08-05','RM011':'2020-10-13',
+                   'RM101':'2020-12-03','RM103':'2021-02-03',}
+
+    df = df_all[df_all.index.str.startswith('RM')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    df['strike'] = df.index.str.slice(6)
+    df['type'] = df.index.str.get(5)
+    # print(df.head())
+    # print(term_list)
+    pcp(df, term_list, mature_dict, today)
+
+
+def pcp_MA(df_all, today):
+    mature_dict = {'MA007':'2020-06-03','MA009':'2020-08-05','MA011':'2020-10-13',
+                   'MA101':'2020-12-03','MA103':'2021-02-03',}
+
+    df = df_all[df_all.index.str.startswith('MA')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    df['strike'] = df.index.str.slice(6)
+    df['type'] = df.index.str.get(5)
+    # print(df.head())
+    # print(term_list)
+    pcp(df, term_list, mature_dict, today)
+
+
+def pcp_CF(df_all, today):
+    mature_dict = {'CF007':'2020-06-03','CF009':'2020-08-05','CF011':'2020-10-13',
+                   'CF101':'2020-12-03','CF103':'2021-02-03',}
+
+    df = df_all[df_all.index.str.startswith('CF')]
+    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+    df['strike'] = df.index.str.slice(6)
+    df['type'] = df.index.str.get(5)
+    # print(df.head())
+    # print(term_list)
+    pcp(df, term_list, mature_dict, today)
+
+
+def calc_pcp():
+
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-05-22'
+
+    fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
+    df = pd.read_csv(fn)
+    df = df[df.Localtime > today+' 15:00:00']
+    df = df.set_index('Instrument')
+
+    pcp_m(df, today)
+    pcp_RM(df, today)
+    pcp_MA(df, today)
+    pcp_CF(df, today)
+
 
 if __name__ == '__main__':
-    year = '2020'
-    dt = '2020-05-19'
 
-    fn = get_dss() + 'opt/' + dt[:7] + '.csv'
-    df = pd.read_csv(fn)
-    df = df[df.Localtime.str.slice(0,10) == dt]
+    calc_pcp()
+
     # die_m(df)
     # die_RM(df)
-
-    pcp_m(df)

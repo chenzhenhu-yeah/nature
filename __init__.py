@@ -72,3 +72,4 @@ from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
 from nature.web.draw_web_plot import ic_show
 from nature.web.draw_web_plot import ip_show
+from nature.web.draw_web_plot import smile 

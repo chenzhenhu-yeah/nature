@@ -235,6 +235,32 @@ def opt():
 
             # break
 
+def smile():
+    """期权微笑曲线"""
+    now = datetime.now()
+    # today = now.strftime('%Y-%m-%d %H:%M:%S')
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-05-22'
+
+    fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date == today]
+    # print(df.head())
+
+    for i, row in df.iterrows():
+        c_curve_dict = eval(row.c_curve)
+        p_curve_dict = eval(row.p_curve)
+
+        df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
+        df1 = df1.T
+        df1.columns = ['call', 'put']
+
+        df1.plot()
+        plt.title(today + '_' + row.term)
+
+        fn = 'static/smile_' + row.term + '.jpg'
+        plt.savefig(fn)
+
 if __name__ == '__main__':
     pass
     # yue()
