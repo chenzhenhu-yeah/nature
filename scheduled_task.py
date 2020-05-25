@@ -8,7 +8,7 @@ import datetime
 from multiprocessing.connection import Client
 import traceback
 
-from nature import to_log, pandian_run, book_opt_run, smile
+from nature import to_log, pandian_run, book_opt_run
 from nature import get_trading_dates, send_email
 
 from nature.engine.stk.nearboll.use_ma import use_ma
@@ -167,7 +167,7 @@ def run_arbitrage():
         to_log(s)
 
 
-def run_smile():
+def run_sigma():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
@@ -176,8 +176,6 @@ def run_smile():
             calc_greeks()
             print('\n' + str(now) + " calc_sigma begin...")
             calc_sigma()
-            print('\n' + str(now) + " smile begin...")
-            smile()
 
     except Exception as e:
         s = traceback.format_exc()
@@ -212,7 +210,7 @@ if __name__ == '__main__':
         # 盘中
         schedule.every().day.at("12:05").do(run_down_opt)
         schedule.every().day.at("15:03").do(run_down_opt)
-        schedule.every().day.at("15:05").do(run_smile)
+        schedule.every().day.at("15:05").do(run_sigma)
 
         schedule.every().day.at("15:15").do(run_tick2bar)
         schedule.every().day.at("15:20").do(run_book_opt)

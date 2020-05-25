@@ -440,7 +440,7 @@ def mates_show():
     return render_template("mates_show.html",title="mates_show",words=setting_dict)
 
 @app.route('/show_smile', methods=['get'])
-def show_smile():    
+def show_smile():
     # # r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     # r = ''
     # r += '<img src=\"static/smile_CF007.jpg' +  '\" />'
@@ -487,6 +487,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
 
-    # app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
