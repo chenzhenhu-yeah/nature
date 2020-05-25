@@ -126,7 +126,7 @@ def die_RM(df):
     fn = get_dss() + 'opt/die_RM.csv'
     df2.to_csv(fn, index=False)
 
-
+# 正向套利
 def pcp(df_all, term_list, mature_dict, today):
     result = []
     for term in term_list:
@@ -154,12 +154,20 @@ def pcp(df_all, term_list, mature_dict, today):
             row_p = df_p.loc[x,:]
 
             S = float(row_c.obj)
-            pSc = int( row_p.LastPrice + S -row_c.LastPrice )
-            pSc_final = int( pSc * (1 + r*T) )
+            p = float(row_p.AskPrice)
+            c = float(row_c.BidPrice)
+            # print(p, c, float("inf"))
+            if p > 1E8 or p == 0:
+                continue
+            if c > 1E8 or c == 0:
+                continue
+            pSc = int( p + S - c )
+            # pSc_final = int( pSc * (1 + r*T) )
+            pSc_final = pSc
             diff = float(x)-pSc_final
             rt = diff/(S*2*0.1)/T
-            if abs(rt) > 0.3:
-                result.append( [today, term, x, S, row_c.LastPrice, row_p.LastPrice, pSc, pSc_final, diff, rt] )
+            if rt > 0.01:
+                result.append( [today, term, x, S, c, p, pSc, pSc_final, diff, rt] )
 
         # break
 
@@ -169,6 +177,58 @@ def pcp(df_all, term_list, mature_dict, today):
         df2.to_csv(fn, index=False, mode='a', header=False)
     else:
         df2.to_csv(fn, index=False)
+
+
+# 反向套利
+# def pcp(df_all, term_list, mature_dict, today):
+#     result = []
+#     for term in term_list:
+#         df = df_all[df_all.index.str.startswith(term)]
+#         # print(df1)
+#
+#         r = 0.03
+#         date_mature = mature_dict[ term ]
+#         date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+#         td = datetime.strptime(today, '%Y-%m-%d')
+#         T = float((date_mature - td).days) / 365                       # 剩余期限
+#         if T == 0 :
+#             break
+#
+#         df = df.set_index('strike')
+#         x_list = sorted(list(set(df.index)))
+#         # print(x_list)
+#         # n = len(x_list)
+#
+#         for x in x_list:
+#             df_c = df[df.type == 'C']
+#             df_p = df[df.type == 'P']
+#
+#             row_c = df_c.loc[x,:]
+#             row_p = df_p.loc[x,:]
+#
+#             S = float(row_c.obj)
+#             p = float(row_p.BidPrice)
+#             c = float(row_c.AskPrice)
+#             # print(p, c, float("inf"))
+#             if p > 1E8 or p == 0:
+#                 continue
+#             if c > 1E8 or c == 0:
+#                 continue
+#             pSc = int( p + S - c )
+#             pSc_final = int( pSc * (1 + r*T) )
+#             diff = float(x)-pSc_final
+#             rt = diff/(S*2*0.1)/T
+#             if rt < -0.05:
+#                 result.append( [today, term, x, S, c, p, pSc, pSc_final, diff, rt] )
+#
+#         # break
+#
+#     fn = get_dss() + 'opt/pcp.csv'
+#     df2 = pd.DataFrame(result, columns=['date', 'term', 'X', 'S', 'call', 'put', 'pSc', 'pSc_final', 'diff', 'rt'])
+#     if os.path.exists(fn):
+#         df2.to_csv(fn, index=False, mode='a', header=False)
+#     else:
+#         df2.to_csv(fn, index=False)
 
 
 def pcp_m(df_all, today):
