@@ -1,5 +1,5 @@
 import time
-import datetime
+from datetime import datetime
 import numpy as np
 import scipy.stats as si
 
@@ -56,8 +56,6 @@ import scipy.stats as si
 # d2 = time.strptime('2020-04-03','%Y-%m-%d')
 # d1 = time.strptime('2020-04-01','%Y-%m-%d')
 
-d1 = datetime.datetime.strptime('2020-04-01','%Y-%m-%d')
-d2 = datetime.datetime.strptime('2020-04-03','%Y-%m-%d')
-
-n = (d2 -d1).days
-print(n)
+now = datetime.now()
+today = now.strftime('%Y-%m-%d %H:%M:%S')
+print( str(today) )

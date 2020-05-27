@@ -10,7 +10,7 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show, smile
+from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates
 from nature import del_blank, check_symbols_p
 
 
@@ -248,6 +248,14 @@ def fut_owl():
             fn = 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
             # fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
             a_file(fn,ins)
+
+            # 历史维护记录
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d %H:%M:%S')
+            ins = str({'date':today,'ins':ins_type,'price':price,'num':num})
+            fn = 'fut/engine/owl/history.csv'
+            a_file(fn,ins)
+
             tips = 'append success'
 
     return render_template("owl.html",tip=tips)
@@ -404,9 +412,14 @@ def mates_show():
         kind = request.form.get('kind')
         if kind is not None:
             if kind[:2] == 'ic':
-                return ic_show(kind[-1])
+                mate1 = del_blank( request.form.get(kind + '_mate1') )
+                mate2 = del_blank( request.form.get(kind + '_mate2') )
+                return ic_show(mate1, mate2)
             if kind[:2] == 'ip':
-                return ip_show(kind[-1])
+                mate1 = del_blank( request.form.get(kind + '_mate1') )
+                mate2 = del_blank( request.form.get(kind + '_mate2') )
+                return ic_show(mate1, mate2)
+                # return request.form.get(kind + '_mate2')
             if kind[:2] == 'ma':
                 symbol =  request.form.get( kind + '_mate1' )
                 draw_web.bar_ma(symbol)
@@ -441,12 +454,68 @@ def mates_show():
 
 @app.route('/show_smile', methods=['get'])
 def show_smile():
-    # # r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
-    # r = ''
-    # r += '<img src=\"static/smile_CF007.jpg' +  '\" />'
-    # r += '<img src=\"static/smile_CF009.jpg' +  '\" />'
-    # return r
-    return render_template("show_smile.html",title="show_smile")
+    smile()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('smile'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="smile",items=r)
+
+@app.route('/show_opt', methods=['get'])
+def show_opt():
+    opt()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('opt'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="opt",items=r)
+
+@app.route('/show_dali', methods=['get'])
+def show_dali():
+    # dali()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('dali'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="dali",items=r)
+
+@app.route('/show_yue', methods=['get'])
+def show_yue():
+    yue()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('yue'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="yue",items=r)
+
+@app.route('/show_mates', methods=['get'])
+def show_mates():
+    mates()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('ic'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="ic",items=r)
 
 @app.route('/log')
 def show_log():
@@ -487,6 +556,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

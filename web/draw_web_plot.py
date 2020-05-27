@@ -54,21 +54,12 @@ def ic(symbol1, symbol2):
     fn = 'static/ic_' + symbol1 + '_' + symbol2 + '.jpg'
     plt.savefig(fn)
 
-
-def ic_show(seq):
+def ic_show(symbol1, symbol2):
     r = ''
-    seq = 'ic' + str(seq)
-    fn = 'mates.csv'
-    df = pd.read_csv(fn)
-    df = df[df.seq == seq]
-    if len(df) > 0:
-        rec = df.iloc[0,:]
-        symbol1 = rec.mate1
-        symbol2 = rec.mate2
-        ic(symbol1, symbol2)
-        fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
-        now = str(int(time.time()))
-        r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    ic(symbol1, symbol2)
+    fn = 'ic_' + symbol1 + '_'+ symbol2+ '.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
 def ip_show(seq):
@@ -129,8 +120,8 @@ def yue():
 
 
 def dali():
-    # pz_list = ['m', 'RM', 'MA']
-    pz_list = ['m']
+    pz_list = ['m', 'RM', 'MA']
+    # pz_list = ['m']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
         fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
@@ -172,6 +163,7 @@ def dali():
         # print(df)
 
         plt.figure(figsize=(12,7))
+        plt.title(pz)
         plt.plot(df.dali)
         plt.plot(df.daliopt)
         plt.plot(df.dalicta)
@@ -194,13 +186,6 @@ def dali():
         # plt.show()
 
         # break
-
-        # print(df.head(3))
-        # # print(df.pnl_net)
-        # flag = df.date.duplicated()
-        # print(flag.any())
-        # print(flag.all())
-        # print(len(df))
 
 def opt():
     dirname = get_dss() + 'fut/engine/opt/'
@@ -240,7 +225,7 @@ def smile():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-22'
+    # today = '2020-05-26'
 
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df = pd.read_csv(fn)
@@ -261,8 +246,28 @@ def smile():
         fn = 'static/smile_' + row.term + '.jpg'
         plt.savefig(fn)
 
+
+def mates():
+
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df.set_index('seq')
+    # print(df)
+    for i in range(10):
+        rec = df.loc['ic'+str(i),:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+
+        rec = df.loc['ip'+str(i),:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+
+
 if __name__ == '__main__':
     pass
     # yue()
     # dali()
-    opt()
+    # opt()
+    # mates()

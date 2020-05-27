@@ -11,14 +11,11 @@ import os
 
 from nature import get_dss
 
-
-
 def del_blank(c):
     s = str(c).strip()
     s = s.replace('\t','')
     s = s.replace(' ','')
     return s
-
 
 def check_symbols_p(key, value):
     r = ''

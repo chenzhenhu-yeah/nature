@@ -145,7 +145,7 @@ class HuQuote(CtpQuote):
                 'AskPrice','AskVolume','BidPrice','BidVolume',]
         df = df[cols]
 
-        fn = get_dss() + 'opt/' + now[:7] + '.csv'
+        fn = get_dss() + 'opt/temp_' + now[:10] + '.csv'
         if os.path.exists(fn):
             df.to_csv(fn, index=False, mode='a', header=False)
         else:
@@ -176,6 +176,28 @@ class TestQuote(object):
     def release(self):
         self.q.ReqUserLogout()
 
+def proc_data():
+    now = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+    fn = get_dss() + 'opt/temp_' + now[:10] + '.csv'
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+
+        print(df.head(3))
+        # # print(df.pnl_net)
+        flag = df.date.duplicated()
+        print(flag.any())
+        print(flag.all())
+        print(len(df))
+
+        fn2 = get_dss() + 'opt/' + now[:7] + '.csv'
+        if os.path.exists(fn2):
+            df.to_csv(fn2, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn2, index=False, mode='a')
+
+        # os.remove(fn)
+
+
 def down_opt():
     # 加载配置
     config = open(get_dss()+'fut/cfg/config.json')
@@ -194,9 +216,8 @@ def down_opt():
     qq.run()
     time.sleep(60)
     qq.release()
-
+    time.sleep(3)
+    proc_data()
 
 if __name__ == "__main__":
-    # down_opt()
-
-    cffex()
+    down_opt()

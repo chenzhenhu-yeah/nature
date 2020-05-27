@@ -301,7 +301,7 @@ def calc_greeks():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-22'
+    # today = '2020-05-25'
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
