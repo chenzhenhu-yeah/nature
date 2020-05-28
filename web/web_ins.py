@@ -260,6 +260,55 @@ def fut_owl():
 
     return render_template("owl.html",tip=tips)
 
+@app.route('/opt_trade', methods=['get','post'])
+def opt_trade():
+    tips = '提示：'
+    fn = get_dss() + 'fut/engine/opt/opt_trade.csv'
+    if request.method == "POST":
+        index = int( del_blank(request.form.get('index')) )
+        book = del_blank( request.form.get('book') )
+        portfolio = del_blank( request.form.get('portfolio') )
+        margin = del_blank( request.form.get('margin') )
+        kind = request.form.get('kind')
+
+        if kind == 'alter':
+            df = pd.read_csv(fn, dtype='str')
+            df.at[index, 'book'] = book
+            df.at[index, 'portfolio'] = portfolio
+            df.at[index, 'margin'] = margin
+            df.to_csv(fn, index=False)
+
+    # 显示文件的内容
+    df = pd.read_csv(fn, dtype='str')
+    df = df.reset_index()
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("opt_trade.html",tip=tips,rows=r)
+
+@app.route('/opt_book', methods=['get','post'])
+def opt_book():
+    tips = '提示：'
+    dirname = get_dss() + 'fut/engine/opt/'
+    if request.method == "POST":
+        index = int( del_blank(request.form.get('index')) )
+
+        if kind == 'close':
+            # 将booking文件关仓为booked文件
+            # 逻辑很复杂，暂时没有思路，先放一放
+            pass
+
+    # 显示文件列表
+    r = [ ['index', 'fn'] ]
+    listfile = os.listdir(dirname)
+    i = 0
+    for filename in listfile:
+        if filename[:7] == 'booking':
+            r.append( [i,filename] )
+            i += 1
+
+    return render_template("opt_book.html",tip=tips,rows=r)
 
 @app.route('/value_p_csv', methods=['get','post'])
 def value_p_csv():

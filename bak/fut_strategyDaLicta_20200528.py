@@ -165,7 +165,42 @@ class Fut_DaLictaSignal_Duo(Signal):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
             df.to_csv(filename, index=False)
-    
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        self.unit += change
+
+        if not self.result:
+            self.result = SignalResult()
+        self.result.open(price, change)
+
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0, self.vtSymbol ] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl', 'symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def close(self, price, change):
+        self.unit = 0
+        self.result.close(price)
+
+        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
+               0, price, self.result.pnl, self.vtSymbol] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+        self.result = None
+
 
 ########################################################################
 class Fut_DaLictaSignal_Kong(Signal):
@@ -321,6 +356,41 @@ class Fut_DaLictaSignal_Kong(Signal):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
             df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def open(self, price, change):
+        self.unit += change
+
+        if not self.result:
+            self.result = SignalResult()
+        self.result.open(price, change)
+
+        r = [ [self.bar.date+' '+self.bar.time, '多' if change>0 else '空', '开',  \
+               abs(change), price, 0, self.vtSymbol ] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl', 'symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+    #----------------------------------------------------------------------
+    def close(self, price):
+        self.unit = 0
+        self.result.close(price)
+
+        r = [ [self.bar.date+' '+self.bar.time, '', '平',  \
+               0, price, self.result.pnl, self.vtSymbol] ]
+        df = pd.DataFrame(r, columns=['datetime','direction','offset','volume','price','pnl','symbol'])
+        pz = str(get_contract(self.vtSymbol).pz)
+        filename = get_dss() +  'fut/engine/dalicta/signal_dalicta_'+self.type+ '_deal_' + pz + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
+        self.result = None
 
 ########################################################################
 class Fut_DaLictaPortfolio(Portfolio):

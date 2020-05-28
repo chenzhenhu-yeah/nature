@@ -181,22 +181,16 @@ def proc_data():
     fn = get_dss() + 'opt/temp_' + now[:10] + '.csv'
     if os.path.exists(fn):
         df = pd.read_csv(fn)
-
-        print(df.head(3))
-        # # print(df.pnl_net)
-        flag = df.date.duplicated()
-        print(flag.any())
-        print(flag.all())
-        print(len(df))
-
+        # print(len(df))
+        df = df.drop_duplicates(subset = ['Instrument'], keep='first')
+        # print(len(df))
         fn2 = get_dss() + 'opt/' + now[:7] + '.csv'
         if os.path.exists(fn2):
             df.to_csv(fn2, index=False, mode='a', header=False)
         else:
             df.to_csv(fn2, index=False, mode='a')
 
-        # os.remove(fn)
-
+        os.remove(fn)
 
 def down_opt():
     # 加载配置
