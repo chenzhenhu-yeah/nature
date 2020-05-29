@@ -245,7 +245,49 @@ def book_opt_run():
     fresh_daliopt()
 
 
+def fresh_star():
+    dss = get_dss()
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    pz_list = ['CF']
+    for pz in pz_list:
+        fn_p = dss + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
+        df_p = pd.read_csv(fn_p)
+        rec = df_p.iloc[-1,:]
+        pos_dict = eval(rec.posDict)
+        value = rec.portfolioValue
+        net_pnl = 0
+        book_list = list( pos_dict.keys() )
+        book_list = [x for x in book_list if x.startswith('booking')]
+        # print(book_list)
+
+        # booking文件的内部逻辑尚未理清
+        # for book in book_list:
+        #     fn = dss + 'fut/engine/opt/' + book + '.csv'
+        #     if os.path.exists(fn):
+        #         # 读取booking文件
+        #         df = pd.read_csv(fn)
+        #         row = df.iloc[-1,:]
+        #         net_pnl += row.netPnl
+        #     else:
+        #         # 读取booked文件
+        #         fn = fn.replace('booking', 'booked')
+        #         df = pd.read_csv(fn)
+        #         row = df.iloc[-1,:]
+        #         value += row.netPnl
+        #         pos_dict.pop(book)
+        #
+        # rec.datetime = today + ' 15:00:00'
+        # rec.portfolioValue = value
+        # rec.netPnl = net_pnl
+        # rec.posDict = str(pos_dict)
+        # df_p = pd.DataFrame([rec])
+        # df_p.to_csv(fn_p, index=False, header=None, mode='a')
+
+
 if __name__ == '__main__':
     # book_opt_run()
 
-    update_date()
+    # update_date()
+
+    fresh_star()

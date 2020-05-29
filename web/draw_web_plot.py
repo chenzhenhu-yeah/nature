@@ -220,6 +220,23 @@ def opt():
 
             # break
 
+def mates():
+
+    fn = 'mates.csv'
+    df = pd.read_csv(fn)
+    df = df.set_index('seq')
+    # print(df)
+    for i in range(10):
+        rec = df.loc['ic'+str(i),:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+
+        rec = df.loc['ip'+str(i),:]
+        symbol1 = rec.mate1
+        symbol2 = rec.mate2
+        ic(symbol1, symbol2)
+
 def smile():
     """期权微笑曲线"""
     now = datetime.now()
@@ -246,28 +263,53 @@ def smile():
         fn = 'static/smile_' + row.term + '.jpg'
         plt.savefig(fn)
 
+def iv_ts():
+    """隐波时序图"""
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-05-26'
 
-def mates():
-
-    fn = 'mates.csv'
+    fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
     df = pd.read_csv(fn)
-    df = df.set_index('seq')
-    # print(df)
-    for i in range(10):
-        rec = df.loc['ic'+str(i),:]
-        symbol1 = rec.mate1
-        symbol2 = rec.mate2
-        ic(symbol1, symbol2)
 
-        rec = df.loc['ip'+str(i),:]
-        symbol1 = rec.mate1
-        symbol2 = rec.mate2
-        ic(symbol1, symbol2)
+    term_dict = {'IO2006-':['-3800', '-3900'],
+                 'm2009-': ['-2800', '-2750'],
+                 'RM009':['2300', '2350'],
+                 'MA009':['1800', '1850'],
+                 'CF009':['11800', '11200'],
+                }
+                
+    for term in term_dict.keys():
+        for strike in term_dict[term]:
+            symbol = term + 'C' + strike
+            # print(symbol)
+            df1 = df[df.Instrument == symbol]
+            df1['iv_call'] = df1.iv
+            df1 = df1.reset_index()
+            # print(df1)
 
+            symbol = term + 'P' + strike
+            # print(symbol)
+            df2 = df[df.Instrument == symbol]
+            df2['iv_put'] = df2.iv
+            df2 = df2.reset_index()
+            # print(df2)
+
+            if len(df1) > 0 and len(df2) > 0:
+                plt.figure(figsize=(12,7))
+                plt.plot(df1.iv_call)
+                plt.plot(df2.iv_put)
+                plt.title(today + '_iv_ts')
+
+                plt.legend()
+                # plt.show()
+                fn = 'static/iv_ts_' + term + strike + '.jpg'
+                plt.savefig(fn)
 
 if __name__ == '__main__':
-    pass
+    # pass
     # yue()
     # dali()
     # opt()
     # mates()
+    iv_ts()

@@ -501,19 +501,6 @@ def mates_show():
 
     return render_template("mates_show.html",title="mates_show",words=setting_dict)
 
-@app.route('/show_smile', methods=['get'])
-def show_smile():
-    smile()
-    r = []
-    dirname = 'static/'
-    file_list = os.listdir(dirname)
-    for fn in file_list:
-        if fn.startswith('smile'):
-            r.append(dirname + fn)
-
-    # return str(r)
-    return render_template("show_jpg.html",header="smile",items=r)
-
 @app.route('/show_opt', methods=['get'])
 def show_opt():
     opt()
@@ -565,6 +552,32 @@ def show_mates():
 
     # return str(r)
     return render_template("show_jpg.html",header="ic",items=r)
+
+@app.route('/show_smile', methods=['get'])
+def show_smile():
+    smile()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('smile'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="smile",items=r)
+
+@app.route('/show_smile', methods=['get'])
+def show_iv_ts():
+    iv_ts()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('iv_ts'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="iv_ts",items=r)
 
 @app.route('/log')
 def show_log():
