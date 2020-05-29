@@ -161,15 +161,16 @@ def calc_sigma():
 
     fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 15:00:00']
+    df = df[df.Localtime > today+' 14:00:00']
     df = df.set_index('Instrument')
     # print(df.head())
 
-    calc_sigma_IO(df, today)
-    calc_sigma_m(df, today)
-    calc_sigma_RM(df, today)
-    calc_sigma_MA(df, today)
-    calc_sigma_CF(df, today)
+    if len(df) > 0:
+        calc_sigma_IO(df, today)
+        calc_sigma_m(df, today)
+        calc_sigma_RM(df, today)
+        calc_sigma_MA(df, today)
+        calc_sigma_CF(df, today)
 
 
 if __name__ == '__main__':

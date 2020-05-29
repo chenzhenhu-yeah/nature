@@ -305,15 +305,16 @@ def calc_greeks():
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 15:00:00']
+    df = df[df.Localtime > today+' 14:00:00']
     df = df.set_index('Instrument')
     # print(df.head())
 
-    calc_greeks_IO(df, today, r)
-    calc_greeks_m(df, today, r)
-    calc_greeks_RM(df, today, r)
-    calc_greeks_MA(df, today, r)
-    calc_greeks_CF(df, today, r)
+    if len(df) > 0:
+        calc_greeks_IO(df, today, r)
+        calc_greeks_m(df, today, r)
+        calc_greeks_RM(df, today, r)
+        calc_greeks_MA(df, today, r)
+        calc_greeks_CF(df, today, r)
 
 if __name__ == '__main__':
     calc_greeks()
