@@ -179,8 +179,8 @@ def calc_pcp():
     # fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 12:00:00']
-    df = df[df.Localtime < today+' 15:00:00']
+    df = df[df.Localtime > today+' 11:00:00']
+    df = df[df.Localtime < today+' 12:00:00']
     df = df.set_index('Instrument')
 
     r = []
@@ -402,8 +402,8 @@ def calc_die():
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 12:00:00']
-    df = df[df.Localtime < today+' 15:00:00']
+    df = df[df.Localtime > today+' 11:00:00']
+    df = df[df.Localtime < today+' 12:00:00']
     df = df.set_index('Instrument')
 
     r = []

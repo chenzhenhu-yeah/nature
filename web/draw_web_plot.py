@@ -242,12 +242,12 @@ def smile():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-26'
+    # today = '2020-05-29'
 
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df = pd.read_csv(fn)
     df = df[df.date == today]
-    # print(df.head())
+    print(df.head())
 
     for i, row in df.iterrows():
         c_curve_dict = eval(row.c_curve)
@@ -267,7 +267,7 @@ def iv_ts():
     """隐波时序图"""
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-26'
+    # today = '2020-05-29'
 
     fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
     df = pd.read_csv(fn)
@@ -278,7 +278,7 @@ def iv_ts():
                  'MA009':['1800', '1850'],
                  'CF009':['11800', '11200'],
                 }
-                
+
     for term in term_dict.keys():
         for strike in term_dict[term]:
             symbol = term + 'C' + strike
@@ -307,9 +307,10 @@ def iv_ts():
                 plt.savefig(fn)
 
 if __name__ == '__main__':
-    # pass
+    pass
     # yue()
     # dali()
     # opt()
     # mates()
-    iv_ts()
+    # smile()
+    # iv_ts()

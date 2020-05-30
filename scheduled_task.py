@@ -193,16 +193,16 @@ def mail_pdf():
         weekday = int(now.strftime('%w'))
         if 1 <= weekday <= 5:
             import pdfkit
-            url_list = ['http://127.0.0.1:5000/show_dali',
-                        'http://127.0.0.1:5000/show_opt',
-                        'http://127.0.0.1:5000/show_yue',
-                        'http://127.0.0.1:5000/show_mates',
-                        'http://127.0.0.1:5000/show_smile' ]
+            url_list = ['http://114.116.190.167:5000/show_dali',
+                        'http://114.116.190.167:5000/show_opt',
+                        'http://114.116.190.167:5000/show_yue',
+                        'http://114.116.190.167:5000/show_mates',
+                        'http://114.116.190.167:5000/show_smile' ]
             for url in url_list:
                 # url页面转化为pdf
                 fn = 'web/static/out3.pdf'
                 pdfkit.from_url(url, fn)
-                send_email(dss, url[27:], '', [fn])
+                send_email(dss, url[33:], '', [fn])
 
     except Exception as e:
         print(now, '-'*30)
@@ -228,7 +228,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:15").do(run_tick2bar)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
-        schedule.every().day.at("15:28").do(mail_pdf)
+        # schedule.every().day.at("15:28").do(mail_pdf)
         schedule.every().day.at("15:30").do(mail_log)
 
         #盘后

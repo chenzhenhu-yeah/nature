@@ -516,7 +516,7 @@ def show_opt():
 
 @app.route('/show_dali', methods=['get'])
 def show_dali():
-    # dali()
+    dali()
     r = []
     dirname = 'static/'
     file_list = os.listdir(dirname)
