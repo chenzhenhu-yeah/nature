@@ -312,5 +312,5 @@ if __name__ == '__main__':
     # dali()
     # opt()
     # mates()
-    # smile()
+    smile()
     # iv_ts()
