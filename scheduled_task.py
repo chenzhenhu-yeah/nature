@@ -7,6 +7,7 @@ import time
 import datetime
 from multiprocessing.connection import Client
 import traceback
+import pdfkit
 
 from nature import to_log, pandian_run, book_opt_run, get_dss
 from nature import get_trading_dates, send_email
@@ -149,6 +150,11 @@ def run_down_opt():
         if 1 <= weekday <= 5:
             print('\n' + str(now) + " down_opt begin...")
             down_opt()
+            time.sleep(180)
+            print('\n' + str(now) + " calc_greeks begin...")
+            calc_greeks()
+            print('\n' + str(now) + " calc_sigma begin...")
+            calc_sigma()
 
     except Exception as e:
         s = traceback.format_exc()
@@ -171,43 +177,26 @@ def run_arbitrage():
         s = traceback.format_exc()
         to_log(s)
 
-
-def run_sigma():
+def mail_pdf(s):
     try:
-        now = datetime.datetime.now()
-        weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
-            print('\n' + str(now) + " calc_greeks begin...")
-            calc_greeks()
-            print('\n' + str(now) + " calc_sigma begin...")
-            calc_sigma()
+        # 将url页面转化为pdf
+        url = 'http://114.116.190.167:5000/show_' + s
+        fn = 'web/static/out3.pdf'
+        pdfkit.from_url(url, fn)
+        send_email(dss, url[33:], '', [fn])
 
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
 
 
-def mail_pdf():
-    try:
-        now = datetime.datetime.now()
-        weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 6:
-            import pdfkit
-            url_list = ['http://114.116.190.167:5000/show_dali',
-                        'http://114.116.190.167:5000/show_opt',
-                        'http://114.116.190.167:5000/show_yue',
-                        'http://114.116.190.167:5000/show_mates',
-                        'http://114.116.190.167:5000/show_smile',
-                        ]
-            for url in url_list:
-                # url页面转化为pdf
-                fn = 'web/static/out3.pdf'
-                pdfkit.from_url(url, fn)
-                send_email(dss, url[33:], '', [fn])
-
-    except Exception as e:
-        print(now, '-'*30)
-        traceback.print_exc()
+def run_mail_pdf():
+    now = datetime.datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 1 <= weekday <= 5:
+        s_list = ['dali', 'opt', 'yue', 'mates', 'smile']
+        for s in s_list:
+            mail_pdf(s)
 
 def run_examine():
     pass
@@ -224,12 +213,11 @@ if __name__ == '__main__':
         schedule.every().day.at("11:27").do(run_down_opt)
         schedule.every().day.at("11:35").do(run_arbitrage)
         schedule.every().day.at("14:57").do(run_down_opt)
-        schedule.every().day.at("15:05").do(run_sigma)
 
         schedule.every().day.at("15:15").do(run_tick2bar)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
-        schedule.every().day.at("15:28").do(mail_pdf)
+        schedule.every().day.at("15:28").do(run_mail_pdf)
         schedule.every().day.at("15:30").do(mail_log)
 
         #盘后

@@ -16,7 +16,7 @@ from nature import get_dss, get_inx
 # warnings.filterwarnings('error')
 
 
-# 欧式期权BSM定价公式
+# 欧式看涨期权BSM定价公式
 def bsm_call_value(S0, K, T, r, sigma):
     """
     Parameters:
@@ -35,11 +35,19 @@ def bsm_call_value(S0, K, T, r, sigma):
     ==========
     value: float
     """
-    S0 = float(S0)
-    d1 = (np.log(S0 /K) + (r + 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
-    d2 = (np.log(S0 /K) + (r - 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
-    value = (S0 * stats.norm.cdf(d1, 0, 1) - K * np.exp(-r * T) * stats.norm.cdf(d2, 0, 1))
+    # 为避免divide by zero，K T sigma 三个参数不能为零。
+    try:
+        S0 = float(S0)
+        d1 = (np.log(S0 /K) + (r + 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+        d2 = (np.log(S0 /K) + (r - 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+        value = (S0 * stats.norm.cdf(d1, 0, 1) - K * np.exp(-r * T) * stats.norm.cdf(d2, 0, 1))
+    except:
+        value = float('nan')
+        # print('divide by zero')
+
     return value
+
+# print( bsm_call_value(3800, 3900, 30/365, 0.01, 0.18) )
 
 # 欧式看跌期权BSM定价公式
 def bsm_put_value(S0, K, T, r, sigma):
@@ -52,14 +60,20 @@ def bsm_put_value(S0, K, T, r, sigma):
     # value = K * np.exp(-r * T) * stats.norm.cdf(-d2, 0, 1) - S0 * stats.norm.cdf(-d1, 0, 1)
     # return value
 
+# print( bsm_put_value(3800, 3900, 30/365, 0.01, 0.18) )
+
 
 def bsm_vega(S0, K, T, r, sigma):
     """
     Vega 计算
     """
-    S0 = float(S0)
-    d1 = (np.log(S0/K)) + (r+0.5*sigma**2)*T /(sigma*sqrt(T))
-    vega = S0 * stats.norm.cdf(d1, 0, 1) * np.sqrt(T)
+    try:
+        S0 = float(S0)
+        d1 = (np.log(S0/K)) + (r+0.5*sigma**2)*T /(sigma*sqrt(T))
+        vega = S0 * stats.norm.cdf(d1, 0, 1) * np.sqrt(T)
+    except:
+        vega = float('nan')
+
     return vega
 
 # 网上的算法，有些数据下易出错-------------------------------------------------------------------------
@@ -77,8 +91,8 @@ def bsm_vega(S0, K, T, r, sigma):
 
 # 自己设计的新算法------------------------------------------------------------------------------------
 def bsm_call_imp_vol(S0, K, T, r, C0):
-    sigma = 0
-    for i in range(100, 10000, 1):
+    sigma = 0.1
+    for i in range(100, 10000, 10):
         sigma = i / 1E4
         bsm = bsm_call_value(S0, K, T, r, sigma)
         if bsm >= C0:
@@ -87,8 +101,8 @@ def bsm_call_imp_vol(S0, K, T, r, C0):
     return sigma
 
 def bsm_put_imp_vol(S0, K, T, r, C0):
-    sigma = 0
-    for i in range(100, 10000, 1):
+    sigma = 0.1
+    for i in range(100, 10000, 10):
         sigma = i / 1E4
         bsm = bsm_put_value(S0, K, T, r, sigma)
         if bsm >= C0:
@@ -105,28 +119,42 @@ def d(s,k,r,T,sigma):
     return (d1,d2)
 
 def delta(s,k,r,T,sigma,n):
-    d1 = d(s,k,r,T,sigma)[0]
-    delta0 = n * si.norm.cdf(n * d1)
+    try:
+        d1 = d(s,k,r,T,sigma)[0]
+        delta0 = n * si.norm.cdf(n * d1)
+    except:
+        delta0 = float('nan')
+
     return delta0
 
 
 def gamma(s,k,r,T,sigma):
-    d1 = d(s,k,r,T,sigma)[0]
-    gamma = si.norm.pdf(d1) / (s * sigma * np.sqrt(T))
-    return gamma
+    try:
+        d1 = d(s,k,r,T,sigma)[0]
+        gamma0 = si.norm.pdf(d1) / (s * sigma * np.sqrt(T))
+    except:
+        gamma0 = float('nan')
+
+    return gamma0
 
 def vega(s,k,r,T,sigma):
-    d1 = d(s,k,r,T,sigma)[0]
-    vega = (s * si.norm.pdf(d1) * np.sqrt(T)) / 100
-    return vega
+    try:
+        d1 = d(s,k,r,T,sigma)[0]
+        vega0 = (s * si.norm.pdf(d1) * np.sqrt(T)) / 100
+    except:
+        vega0 = float('nan')
+    return vega0
 
 def theta(s,k,r,T,sigma,n):
-    d1 = d(s,k,r,T,sigma)[0]
-    d2 = d(s,k,r,T,sigma)[1]
+    try:
+        d1 = d(s,k,r,T,sigma)[0]
+        d2 = d(s,k,r,T,sigma)[1]
+        # theta0 = (-1 * (s * si.norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - n * r * k * np.exp(-r * T) * si.norm.cdf(n * d2)) / 365
+        theta0 = (-1 * (s * si.norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - n * r * k * np.exp(-r * T) * si.norm.cdf(n * d2)) / 100
+    except:
+        theta0 = float('nan')
 
-    # theta = (-1 * (s * si.norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - n * r * k * np.exp(-r * T) * si.norm.cdf(n * d2)) / 365
-    theta = (-1 * (s * si.norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - n * r * k * np.exp(-r * T) * si.norm.cdf(n * d2)) / 100
-    return theta
+    return theta0
 
 
 def calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K):
@@ -147,27 +175,19 @@ def calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
     T = float((date_mature - td).days) / 365                       # 剩余期限
     # print(S0, K, C0, T)
 
-    if T > 0:
-        if is_call == True:
-            n = 1
-            iv = bsm_call_imp_vol(S0, K, T, r, C0)
-        else:
-            n = -1
-            iv = bsm_put_imp_vol(S0, K, T, r, C0)
-
-        row['obj'] = S0
-        row['delta'] = delta(S0,K,r,T,iv,n)
-        row['gamma'] = gamma(S0,K,r,T,iv)
-        row['theta'] = theta(S0,K,r,T,iv,n)
-        row['vega'] = vega(S0,K,r,T,iv)
-        row['iv'] = iv
+    if is_call == True:
+        n = 1
+        iv = bsm_call_imp_vol(S0, K, T, r, C0)
     else:
-        row['obj'] = S0
-        row['delta'] = 0
-        row['gamma'] = 0
-        row['theta'] = 0
-        row['vega'] = 0
-        row['iv'] = 0
+        n = -1
+        iv = bsm_put_imp_vol(S0, K, T, r, C0)
+
+    row['obj'] = S0
+    row['delta'] = delta(S0,K,r,T,iv,n)
+    row['gamma'] = gamma(S0,K,r,T,iv)
+    row['theta'] = theta(S0,K,r,T,iv,n)
+    row['vega'] = vega(S0,K,r,T,iv)
+    row['iv'] = iv
 
     df2 = pd.DataFrame([row])
     df2.index.name = 'Instrument'
@@ -176,7 +196,6 @@ def calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
         df2.to_csv(fn2, mode='a', header=None)
     else:
         df2.to_csv(fn2)
-
 
 def calc_greeks_IO(df, today, r):
     df1 = df[df.index.str.startswith('IO')]
@@ -301,11 +320,11 @@ def calc_greeks():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-29' 
+    # today = '2020-05-29'
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 14:00:00']
+    df = df.drop_duplicates(subset=['Instrument'], keep='last')
     df = df.set_index('Instrument')
     # print(df.head())
 
@@ -318,3 +337,4 @@ def calc_greeks():
 
 if __name__ == '__main__':
     calc_greeks()
+    # pass

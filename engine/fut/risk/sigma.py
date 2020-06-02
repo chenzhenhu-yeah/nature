@@ -64,36 +64,50 @@ def iv_ts(date):
 
 
 def calc_sigma_common(df, today, term_list, strike_pos, gap, dash):
+    """
+    参数
+    df：来源于_greeks，当前只包含一个期权品种某天的数据
+    today:
+    term_list:合约月份
+    strike_pos:价格从第几位开始取值
+    gap:行权价的间隔
+    dash:'-'和''两种
+
+    逻辑：每个term生成一条记录，包含该term的微笑曲线
+    """
     r = []
     for term in term_list:
-        df1 = df[df.index.str.startswith(term)]
-        strike_list = sorted( list(set([ x[strike_pos:] for x in df1.index ])) )
-        # print(term, strike_list)
-        # df1 = df1.set_index('symbol')
-        i = 0
-        c_iv = 0
-        p_iv = 0
-        c_curve_dict = {}
-        p_curve_dict = {}
-        for strike in strike_list:
-            symbol_c = term + dash + 'C' + dash + strike
-            symbol_p = term + dash + 'P' + dash + strike
-            c_curve_dict[strike] = df1.at[symbol_c, 'iv']
-            p_curve_dict[strike] = df1.at[symbol_p, 'iv']
+        try:
+            df1 = df[df.index.str.startswith(term)]
+            strike_list = sorted( list(set([ x[strike_pos:] for x in df1.index ])) )
+            # print(term, strike_list)
+            # df1 = df1.set_index('symbol')
+            i = 0
+            c_iv = 0
+            p_iv = 0
+            c_curve_dict = {}
+            p_curve_dict = {}
+            for strike in strike_list:
+                symbol_c = term + dash + 'C' + dash + strike
+                symbol_p = term + dash + 'P' + dash + strike
+                c_curve_dict[strike] = df1.at[symbol_c, 'iv']
+                p_curve_dict[strike] = df1.at[symbol_p, 'iv']
 
-            obj_price = df1.at[symbol_c, 'obj']
-            # print(symbol_c, obj_price)
+                obj_price = float( df1.at[symbol_c, 'obj'] )
+                # print(symbol_c, obj_price)
 
-            if float(strike) >= obj_price-gap*2 and float(strike) <= obj_price+gap*2:
-                i += 1
-                c_iv += df1.at[symbol_c, 'iv']
-                p_iv += df1.at[symbol_p, 'iv']
-        c_iv = c_iv / i
-        p_iv = p_iv / i
-        iv = c_iv*0.5 + p_iv*0.5
-        r.append( [today, term, iv, c_iv, p_iv, obj_price, str(c_curve_dict), str(p_curve_dict)] )
+                # 只计算标的价格附近的行权价对应的iv
+                if float(strike) >= obj_price-gap*2 and float(strike) <= obj_price+gap*2:
+                    i += 1
+                    c_iv += df1.at[symbol_c, 'iv']
+                    p_iv += df1.at[symbol_p, 'iv']
+            c_iv = c_iv / i
+            p_iv = p_iv / i
+            iv = c_iv*0.5 + p_iv*0.5
+            r.append( [today, term, iv, c_iv, p_iv, obj_price, str(c_curve_dict), str(p_curve_dict)] )
 
-        # break
+        except:
+            continue
 
     fn = get_dss() + 'opt/' + today[:7] + '_sigma.csv'
     df = pd.DataFrame(r, columns=['date', 'term', 'iv', 'c_iv', 'p_iv', 'obj_price', 'c_curve', 'p_curve'])
@@ -153,7 +167,6 @@ def calc_sigma_CF(df_all, today):
     calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
 
 def calc_sigma():
-
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
@@ -161,7 +174,7 @@ def calc_sigma():
 
     fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
     df = pd.read_csv(fn)
-    df = df[df.Localtime > today+' 14:00:00']
+    df = df.drop_duplicates(subset=['Instrument'], keep='last')
     df = df.set_index('Instrument')
     # print(df.head())
 
@@ -171,7 +184,6 @@ def calc_sigma():
         calc_sigma_RM(df, today)
         calc_sigma_MA(df, today)
         calc_sigma_CF(df, today)
-
 
 if __name__ == '__main__':
     calc_sigma()

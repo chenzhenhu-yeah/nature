@@ -247,7 +247,8 @@ def smile():
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df = pd.read_csv(fn)
     df = df[df.date == today]
-    print(df.head())
+    df = df.drop_duplicates(subset=['term'], keep='last')
+    # print(df.head())
 
     for i, row in df.iterrows():
         c_curve_dict = eval(row.c_curve)
@@ -266,11 +267,27 @@ def smile():
 def iv_ts():
     """隐波时序图"""
     now = datetime.now()
+
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    # print(first_day)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    # print(pre_month)
     today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
     # today = '2020-05-29'
 
+    fn = get_dss() + 'opt/' +  pre[:7] + '_greeks.csv'
+    df_pre = pd.read_csv(fn)
     fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
-    df = pd.read_csv(fn)
+    df_today = pd.read_csv(fn)
+
+    df = pd.concat([df_pre, df_today])
+    df['dt'] = df.Localtime.str.slice(0,13)
+    df = df.set_index('dt')
+    print(df.head())
+    print(df.tail())
 
     term_dict = {'IO2006-':['-3800', '-3900'],
                  'm2009-': ['-2800', '-2750'],
@@ -285,14 +302,14 @@ def iv_ts():
             # print(symbol)
             df1 = df[df.Instrument == symbol]
             df1['iv_call'] = df1.iv
-            df1 = df1.reset_index()
+            # df1 = df1.reset_index()
             # print(df1)
 
             symbol = term + 'P' + strike
             # print(symbol)
             df2 = df[df.Instrument == symbol]
             df2['iv_put'] = df2.iv
-            df2 = df2.reset_index()
+            # df2 = df2.reset_index()
             # print(df2)
 
             if len(df1) > 0 and len(df2) > 0:
@@ -312,5 +329,5 @@ if __name__ == '__main__':
     # dali()
     # opt()
     # mates()
-    smile()
+    # smile()
     # iv_ts()

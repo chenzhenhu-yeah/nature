@@ -80,10 +80,10 @@ class Fut_YueSignal(Signal):
 
         if '_' in self.vtSymbol:
             # 此处对价差进行分析，产生交易信号
-            if self.bar.low <= -200 and self.unit == 0:
+            if self.unit == 0 and self.bar.low <= -200 and self.bar.low >= -1000:  # 要考虑数据异常
                 self.can_buy = True
 
-            if self.bar.high >= 0 and self.unit > 0:
+            if self.unit > 0 and self.bar.high >= 0 and self.bar.high <= 1000:     # 要考虑数据异常
                 self.can_sell = True
 
 
@@ -249,14 +249,14 @@ class Fut_YuePortfolio(Portfolio):
 
         # 此处应使用挂买、挂卖价
         if direction == DIRECTION_LONG and offset == OFFSET_OPEN:
-            signal_a.buy(signal_a.bar.AskPrice, volume)
-            signal_b.short(signal_b.bar.BidPrice, volume)
+            signal_a.buy(float(signal_a.bar.AskPrice), volume)
+            signal_b.short(float(signal_b.bar.BidPrice), volume)
         if direction == DIRECTION_SHORT and offset == OFFSET_OPEN:
-            signal_a.short(signal_a.bar.BidPrice, volume)
-            signal_b.buy(signal_b.bar.AskPrice, volume)
+            signal_a.short(float(signal_a.bar.BidPrice), volume)
+            signal_b.buy(float(signal_b.bar.AskPrice), volume)
         if direction == DIRECTION_LONG and offset == OFFSET_CLOSE:
-            signal_a.cover(signal_a.bar.AskPrice, volume)
-            signal_b.sell(signal_b.bar.BidPrice, volume)
+            signal_a.cover(float(signal_a.bar.AskPrice), volume)
+            signal_b.sell(float(signal_b.bar.BidPrice), volume)
         if direction == DIRECTION_SHORT and offset == OFFSET_CLOSE:
-            signal_a.sell(signal_a.bar.BidPrice, volume)
-            signal_b.cover(signal_b.bar.AskPrice, volume)
+            signal_a.sell(float(signal_a.bar.BidPrice), volume)
+            signal_b.cover(float(signal_b.bar.AskPrice), volume)
