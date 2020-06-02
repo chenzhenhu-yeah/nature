@@ -566,7 +566,7 @@ def show_smile():
     # return str(r)
     return render_template("show_jpg.html",header="smile",items=r)
 
-@app.route('/show_smile', methods=['get'])
+@app.route('/show_iv_ts', methods=['get'])
 def show_iv_ts():
     iv_ts()
     r = []
