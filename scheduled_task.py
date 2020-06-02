@@ -221,9 +221,9 @@ if __name__ == '__main__':
         '''
 
         # 盘中
-        schedule.every().day.at("11:28").do(run_down_opt)
-        schedule.every().day.at("12:10").do(run_arbitrage)
-        schedule.every().day.at("14:58").do(run_down_opt)
+        schedule.every().day.at("11:27").do(run_down_opt)
+        schedule.every().day.at("11:35").do(run_arbitrage)
+        schedule.every().day.at("14:57").do(run_down_opt)
         schedule.every().day.at("15:05").do(run_sigma)
 
         schedule.every().day.at("15:15").do(run_tick2bar)
