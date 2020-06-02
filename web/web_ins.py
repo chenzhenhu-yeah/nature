@@ -10,7 +10,7 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates
+from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates, iv_ts
 from nature import del_blank, check_symbols_p
 
 
