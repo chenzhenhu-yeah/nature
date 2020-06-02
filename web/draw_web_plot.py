@@ -316,7 +316,7 @@ def iv_ts():
                 plt.figure(figsize=(12,7))
                 plt.plot(df1.iv_call)
                 plt.plot(df2.iv_put)
-                plt.title(today + '_iv_ts')
+                plt.title(today + '_iv_ts_' + term + strike)
 
                 plt.legend()
                 # plt.show()
