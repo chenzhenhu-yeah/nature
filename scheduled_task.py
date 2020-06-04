@@ -1,4 +1,6 @@
 #  -*- coding: utf-8 -*-
+
+import os
 import pandas as pd
 import smtplib
 from email.mime.text import MIMEText
@@ -9,7 +11,7 @@ from multiprocessing.connection import Client
 import traceback
 import pdfkit
 
-from nature import to_log, pandian_run, book_opt_run, get_dss
+from nature import to_log, pandian_run, book_opt_run, get_dss, get_repo
 from nature import get_trading_dates, send_email
 
 from nature.engine.stk.nearboll.use_ma import use_ma
@@ -189,11 +191,19 @@ def mail_pdf(s):
         s = traceback.format_exc()
         to_log(s)
 
-
 def run_mail_pdf():
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
     if 1 <= weekday <= 5:
+        # 先清空static目录下的文件
+        repo = get_repo()
+        dirname = repo + 'nature/web/static/'
+        listfile = os.listdir(dirname)
+        for fn in listfile:
+            os.remove(dirname+fn)
+            # print(dirname+fn)
+
+        # 分主题发送邮件
         s_list = ['dali', 'opt', 'yue', 'mates', 'smile']
         for s in s_list:
             mail_pdf(s)
@@ -202,7 +212,7 @@ def run_examine():
     pass
 
 if __name__ == '__main__':
-    # mail_pdf()
+    # run_mail_pdf()
 
     try:
         '''

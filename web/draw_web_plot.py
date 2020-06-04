@@ -118,7 +118,6 @@ def yue():
         fn = 'static/yue_' + row.symbol_dual + '.jpg'
         plt.savefig(fn)
 
-
 def dali():
     pz_list = ['m', 'RM', 'MA']
     # pz_list = ['m']
@@ -130,7 +129,7 @@ def dali():
         df1['time'] = df1.datetime.str.slice(11,19)
         df1 = df1[df1.time.isin(['14:59:00', '15:00:00'])]
         df1 = df1.drop_duplicates(subset=['date'],keep='last')
-        df1['dali'] = df1['pnl_net']
+        df1['dali'] = df1['net_pnl']
         df1 = df1.loc[:, ['date', 'dali']]
         df1 = df1.set_index('date')
         # print(df1.head(3))
@@ -141,32 +140,32 @@ def dali():
         df2['time'] = df2.datetime.str.slice(11,19)
         df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
         df2 = df2.drop_duplicates(subset=['date'],keep='last')
-        df2['daliopt'] = df2['netPnl']
+        df2['daliopt'] = df2['portfolioValue'] + df1['netPnl']
         df2 = df2.loc[:, ['date', 'daliopt']]
         df2 = df2.set_index('date')
         # print(df2.head(3))
 
-        fn = get_dss() + 'fut/engine/dalicta/portfolio_dalicta_' + pz + '_var.csv'
+        fn = get_dss() + 'fut/engine/dalicta/portfolio_mutual_' + pz + '_var.csv'
         df3 = pd.read_csv(fn)
         df3['date'] = df3.datetime.str.slice(0,10)
         df3['time'] = df3.datetime.str.slice(11,19)
         df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
         df3 = df3.drop_duplicates(subset=['date'],keep='last')
-        df3['dalicta'] = df3['netPnl']
-        df3 = df3.loc[:, ['date', 'dalicta']]
+        df3['mutual'] = df3['portfolioValue'] + df3['netPnl']
+        df3 = df3.loc[:, ['date', 'mutual']]
         df3 = df3.set_index('date')
         # print(df3.head(3))
 
         df = df1.join(df2)
         df = df.join(df3)
-        df['total'] = df['dali'] + df['daliopt'] + df['dalicta']
+        df['total'] = df['dali'] + df['daliopt'] + df['mutual']
         # print(df)
 
         plt.figure(figsize=(12,7))
         plt.title(pz)
         plt.plot(df.dali)
         plt.plot(df.daliopt)
-        plt.plot(df.dalicta)
+        plt.plot(df.mutual)
         plt.plot(df.total)
 
         plt.xticks(rotation=45)
@@ -182,6 +181,62 @@ def dali():
 
         plt.legend()
         fn = 'static/dali_' + pz + '.jpg'
+        plt.savefig(fn)
+        # plt.show()
+
+        # break
+
+
+def star():
+    pz_list = ['CF', 'SR', 'IO']
+    for pz in pz_list:
+        # 读取品种每日盈亏情况，清洗数据为每日一个记录
+        fn = get_dss() + 'fut/engine/daliopt/portfolio_star_' + pz + '_var.csv'
+        df2 = pd.read_csv(fn)
+        df2['date'] = df2.datetime.str.slice(0,10)
+        df2['time'] = df2.datetime.str.slice(11,19)
+        df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
+        df2 = df2.drop_duplicates(subset=['date'],keep='last')
+        df2['star'] = df2['portfolioValue'] + df2['netPnl']
+        df2 = df2.loc[:, ['date', 'star']]
+        df2 = df2.set_index('date')
+        # print(df2.head(3))
+
+        fn = get_dss() + 'fut/engine/dalicta/portfolio_mutual_' + pz + '_var.csv'
+        df3 = pd.read_csv(fn)
+        df3['date'] = df3.datetime.str.slice(0,10)
+        df3['time'] = df3.datetime.str.slice(11,19)
+        df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+        df3 = df3.drop_duplicates(subset=['date'],keep='last')
+        df3['mutual'] = df3['portfolioValue'] + df3['netPnl']
+        df3 = df3.loc[:, ['date', 'mutual']]
+        df3 = df3.set_index('date')
+        # print(df3.head(3))
+
+        df = df1.join(df2)
+        df = df.join(df3)
+        df['total'] = df['star'] + df['mutual']
+        # print(df)
+
+        plt.figure(figsize=(12,7))
+        plt.title(pz)
+        plt.plot(df.star)
+        plt.plot(df.mutual)
+        plt.plot(df.total)
+
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y')
+        ax = plt.gca()
+
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+        for label in ax.get_xticklabels()[1::25]:
+            label.set_visible(True)
+        for label in ax.get_xticklabels()[-1:]:
+            label.set_visible(True)
+
+        plt.legend()
+        fn = 'static/star_' + pz + '.jpg'
         plt.savefig(fn)
         # plt.show()
 
@@ -331,3 +386,4 @@ if __name__ == '__main__':
     # mates()
     # smile()
     # iv_ts()
+    # star()

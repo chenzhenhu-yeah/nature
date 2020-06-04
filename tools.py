@@ -247,6 +247,13 @@ def get_dss():
     return path[:i] + 'repo\\data\\'
 
 #----------------------------------------------------------------------
+def get_repo():
+    path = os.getcwd()
+    i = path.find('repo')
+    #print(path[:i])
+    return path[:i] + 'repo\\' 
+
+#----------------------------------------------------------------------
 def get_ts_code(code):
     if code[0] == '6':
         code += '.SH'

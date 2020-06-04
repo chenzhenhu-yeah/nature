@@ -9,7 +9,7 @@ SOCKET_KQ_HT  = 9005
 from nature.logger import to_log, read_log_today
 
 from nature.tools import send_email, is_trade_time, is_price_time,is_trade_day, get_symbols_quote
-from nature.tools import get_ts_code, get_dss, get_nature_day, get_contract, is_market_date
+from nature.tools import get_ts_code, get_dss, get_repo, get_nature_day, get_contract, is_market_date
 
 from nature.down_k.get_trading_dates import get_trading_dates
 from nature.down_k.get_stk import get_stk_hfq, get_stk_bfq, get_adj_factor, get_hfq_factor
@@ -72,4 +72,4 @@ from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
 from nature.web.draw_web_plot import ic_show
 from nature.web.draw_web_plot import ip_show
-from nature.web.draw_web_plot import smile, opt, dali, yue, mates, iv_ts
+from nature.web.draw_web_plot import smile, opt, dali, yue, mates, iv_ts, star

@@ -19,60 +19,87 @@ from nature import get_dss, get_inx
 def pcp(df_all, term_list, mature_dict, today, obj_dict):
     result = []
     for term in term_list:
-        if term not in mature_dict:
+        try:
+            if term not in mature_dict:
+                continue
+            if term not in obj_dict:
+                continue
+
+            S = float( obj_dict[term] )
+            df = df_all[df_all.index.str.startswith(term)]
+
+            date_mature = mature_dict[ term ]
+            date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+            td = datetime.strptime(today, '%Y-%m-%d')
+            T = float((date_mature - td).days) / 365                       # 剩余期限
+            if T == 0 or T >= 0.2:
+                break
+
+            df = df.set_index('strike')
+            x_list = sorted(list(set(df.index)))
+            # print(x_list)
+            # n = len(x_list)
+
+            for x in x_list:
+                df_c = df[df.type == 'C']
+                df_p = df[df.type == 'P']
+
+                row_c = df_c.loc[x,:]
+                row_p = df_p.loc[x,:]
+
+                # 正向套利
+                cb = float(row_c.BidPrice)
+                pa = float(row_p.AskPrice)
+                if cb > 1E8 or cb == 0 or pa > 1E8 or pa == 0:
+                    pass
+                else:
+                    pSc_forward = int( pa + S - cb )
+                    diff_forward = float(x) - pSc_forward
+                    rt_forward = round( diff_forward/(S*2*0.1)/T, 2 )
+                    if rt_forward > 0.01:
+                        result.append( [today, 'forward', term, x, S, cb, pa, pSc_forward, diff_forward, rt_forward] )
+
+                # 反向套利
+                ca = float(row_c.AskPrice)
+                pb = float(row_p.BidPrice)
+                if ca > 1E8 or ca == 0 or pb > 1E8 or pb == 0:
+                    pass
+                else:
+                    pSc_back = int( pb + S - ca )
+                    diff_back = float(x) - pSc_back
+                    rt_back = round( diff_back/(S*2*0.1)/T, 2 )
+                    if rt_back < -0.01:
+                        result.append( [today, 'back', term, x, S, ca, pb, pSc_back, diff_back, rt_back] )
+
+        except:
             continue
-        if term not in obj_dict:
-            continue
-
-        S = float( obj_dict[term] )
-        df = df_all[df_all.index.str.startswith(term)]
-
-        date_mature = mature_dict[ term ]
-        date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
-        td = datetime.strptime(today, '%Y-%m-%d')
-        T = float((date_mature - td).days) / 365                       # 剩余期限
-        if T == 0 or T >= 0.2:
-            break
-
-        df = df.set_index('strike')
-        x_list = sorted(list(set(df.index)))
-        # print(x_list)
-        # n = len(x_list)
-
-        for x in x_list:
-            df_c = df[df.type == 'C']
-            df_p = df[df.type == 'P']
-
-            row_c = df_c.loc[x,:]
-            row_p = df_p.loc[x,:]
-
-            # 正向套利
-            cb = float(row_c.BidPrice)
-            pa = float(row_p.AskPrice)
-            if cb > 1E8 or cb == 0 or pa > 1E8 or pa == 0:
-                pass
-            else:
-                pSc_forward = int( pa + S - cb )
-                diff_forward = float(x) - pSc_forward
-                rt_forward = round( diff_forward/(S*2*0.1)/T, 2 )
-                if rt_forward > 0.01:
-                    result.append( [today, 'forward', term, x, S, cb, pa, pSc_forward, diff_forward, rt_forward] )
-
-            # 反向套利
-            ca = float(row_c.AskPrice)
-            pb = float(row_p.BidPrice)
-            if ca > 1E8 or ca == 0 or pb > 1E8 or pb == 0:
-                pass
-            else:
-                pSc_back = int( pb + S - ca )
-                diff_back = float(x) - pSc_back
-                rt_back = round( diff_back/(S*2*0.1)/T, 2 )
-                if rt_back < -0.01:
-                    result.append( [today, 'back', term, x, S, ca, pb, pSc_back, diff_back, rt_back] )
-
-        # break
 
     return result
+
+
+# 这段代码已编写完毕，待测试！！！
+# def pcp_IO(df_all, today):
+#     mature_dict = {'IO2006':'2020-06-19','IO2007':'2020-07-17','IO2009':'2020-09-18',
+#                    'IO2012':'2020-12-18','IO2103':'2021-03-19'}
+#
+#     df = df_all[df_all.index.str.startswith('IO') ]
+#     term_list = sorted( list(set([ x[:5] for x in df.index ])) )
+#     # print(term_list)
+#     obj_dict = {}
+#     for term in term_list:
+#         # print( term, df.at[term, 'LastPrice'] )
+#         if term in df.index:
+#             obj_dict[term] = df.at[term, 'LastPrice']
+#     # print(obj_dict)
+#
+#     # 删除期货合约
+#     df = df[df.index.str.len() > 6]
+#     df['strike'] = df.index.str.slice(8)
+#     df['type'] = df.index.str.get(6)
+#     # print(df.head())
+#     # print(len(df))
+#
+#     return pcp(df, term_list, mature_dict, today, obj_dict)
 
 def pcp_m(df_all, today):
     mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
