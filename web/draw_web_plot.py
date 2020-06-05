@@ -129,7 +129,7 @@ def dali():
         df1['time'] = df1.datetime.str.slice(11,19)
         df1 = df1[df1.time.isin(['14:59:00', '15:00:00'])]
         df1 = df1.drop_duplicates(subset=['date'],keep='last')
-        df1['dali'] = df1['net_pnl']
+        df1['dali'] = df1['pnl_net']
         df1 = df1.loc[:, ['date', 'dali']]
         df1 = df1.set_index('date')
         # print(df1.head(3))
@@ -140,12 +140,12 @@ def dali():
         df2['time'] = df2.datetime.str.slice(11,19)
         df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
         df2 = df2.drop_duplicates(subset=['date'],keep='last')
-        df2['daliopt'] = df2['portfolioValue'] + df1['netPnl']
+        df2['daliopt'] = df2['portfolioValue'] + df2['netPnl']
         df2 = df2.loc[:, ['date', 'daliopt']]
         df2 = df2.set_index('date')
         # print(df2.head(3))
 
-        fn = get_dss() + 'fut/engine/dalicta/portfolio_mutual_' + pz + '_var.csv'
+        fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
         df3 = pd.read_csv(fn)
         df3['date'] = df3.datetime.str.slice(0,10)
         df3['time'] = df3.datetime.str.slice(11,19)
@@ -385,4 +385,4 @@ if __name__ == '__main__':
     # mates()
     # smile()
     # iv_ts()
-    star()
+    # star()

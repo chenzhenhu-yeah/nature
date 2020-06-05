@@ -206,7 +206,11 @@ def run_mail_pdf():
         # 分主题发送邮件
         s_list = ['dali', 'opt', 'yue', 'mates', 'smile', 'star']
         for s in s_list:
-            mail_pdf(s)
+            try:
+                time.sleep(3)
+                mail_pdf(s)
+            except:
+                continue
 
 def run_examine():
     pass
