@@ -191,7 +191,7 @@ def star():
     pz_list = ['CF', 'SR', 'IO']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
-        fn = get_dss() + 'fut/engine/daliopt/portfolio_star_' + pz + '_var.csv'
+        fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
         df2 = pd.read_csv(fn)
         df2['date'] = df2.datetime.str.slice(0,10)
         df2['time'] = df2.datetime.str.slice(11,19)
@@ -202,7 +202,7 @@ def star():
         df2 = df2.set_index('date')
         # print(df2.head(3))
 
-        fn = get_dss() + 'fut/engine/dalicta/portfolio_mutual_' + pz + '_var.csv'
+        fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
         df3 = pd.read_csv(fn)
         df3['date'] = df3.datetime.str.slice(0,10)
         df3['time'] = df3.datetime.str.slice(11,19)
@@ -213,8 +213,7 @@ def star():
         df3 = df3.set_index('date')
         # print(df3.head(3))
 
-        df = df1.join(df2)
-        df = df.join(df3)
+        df = df2.join(df3)
         df['total'] = df['star'] + df['mutual']
         # print(df)
 
@@ -386,4 +385,4 @@ if __name__ == '__main__':
     # mates()
     # smile()
     # iv_ts()
-    # star()
+    star()

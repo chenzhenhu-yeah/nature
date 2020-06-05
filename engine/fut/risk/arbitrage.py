@@ -15,7 +15,6 @@ import scipy.stats as si
 
 from nature import get_dss, get_inx
 
-
 def pcp(df_all, term_list, mature_dict, today, obj_dict):
     result = []
     for term in term_list:

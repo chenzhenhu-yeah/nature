@@ -204,7 +204,7 @@ def run_mail_pdf():
             # print(dirname+fn)
 
         # 分主题发送邮件
-        s_list = ['dali', 'opt', 'yue', 'mates', 'smile']
+        s_list = ['dali', 'opt', 'yue', 'mates', 'smile', 'star']
         for s in s_list:
             mail_pdf(s)
 
@@ -220,9 +220,9 @@ if __name__ == '__main__':
         '''
 
         # 盘中
-        schedule.every().day.at("11:27").do(run_down_opt)
+        schedule.every().day.at("11:26").do(run_down_opt)
         schedule.every().day.at("11:35").do(run_arbitrage)
-        schedule.every().day.at("14:57").do(run_down_opt)
+        schedule.every().day.at("14:56").do(run_down_opt)
 
         schedule.every().day.at("15:15").do(run_tick2bar)
         schedule.every().day.at("15:20").do(run_book_opt)

@@ -295,90 +295,80 @@ def pandian_dali_MA(today):
     fn = dss + 'fut/engine/value_dali_MA.csv'
     df.to_csv(fn, index=False, mode='a', header=None)
 
+def fresh_p(today, fn_p):
+    print(today, fn_p)
+
+    df_p = pd.read_csv(fn_p)
+    rec = df_p.iloc[-1,:]
+    pos_dict = eval(rec.posDict)
+    close_dict = eval(rec.closeDict)
+    value = rec.portfolioValue
+    net_pnl = 0
+    item_list = list( pos_dict.keys() )
+    book_list = [x for x in item_list if x.startswith('booking')]
+    fut_list =  [x for x in item_list if x not in book_list]
+
+    # 处理期权项
+    for book in book_list:
+        fn = get_dss() + 'fut/engine/opt/' + book + '.csv'
+        if os.path.exists(fn):
+            # 读取booking文件
+            df = pd.read_csv(fn)
+            row = df.iloc[-1,:]
+            net_pnl += row.netPnl
+        else:
+            # 读取booked文件
+            fn = fn.replace('booking', 'booked')
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                row = df.iloc[-1,:]
+                value += row.netPnl
+            pos_dict.pop(book)
+
+    # 处理期货项
+    for fut in fut_list:
+        fn = get_dss() + 'fut/bar/day_' + fut + '.csv'
+        if os.path.exists(fn):
+            # 读取bar文件
+            df = pd.read_csv(fn)
+            row = df.iloc[-1,:]
+            price_new = row.close
+            price_last = close_dict[fut]
+            size = int(get_contract(fut).size)
+            value += (price_new - price_last) * pos_dict[fut] * size
+            close_dict[fut] = price_new
+
+    rec.datetime = today + ' 15:00:00'
+    rec.portfolioValue = value
+    rec.netPnl = net_pnl
+    rec.posDict = str(pos_dict)
+    rec.closeDict = str(close_dict)
+    df_p = pd.DataFrame([rec])
+    df_p.to_csv(fn_p, index=False, header=None, mode='a')
 
 def fresh_star():
-    dss = get_dss()
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    pz_list = ['CF']
+    pz_list = ['CF','IO']
     for pz in pz_list:
-        fn_p = dss + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
-        df_p = pd.read_csv(fn_p)
-        rec = df_p.iloc[-1,:]
-        pos_dict = eval(rec.posDict)
-        value = rec.portfolioValue
-        net_pnl = 0
-        book_list = list( pos_dict.keys() )
-        book_list = [x for x in book_list if x.startswith('booking')]
-        # print(book_list)
-
-        # booking文件的内部逻辑尚未理清
-        # for book in book_list:
-        #     fn = dss + 'fut/engine/opt/' + book + '.csv'
-        #     if os.path.exists(fn):
-        #         # 读取booking文件
-        #         df = pd.read_csv(fn)
-        #         row = df.iloc[-1,:]
-        #         net_pnl += row.netPnl
-        #     else:
-        #         # 读取booked文件
-        #         fn = fn.replace('booking', 'booked')
-        #         df = pd.read_csv(fn)
-        #         row = df.iloc[-1,:]
-        #         value += row.netPnl
-        #         pos_dict.pop(book)
-        #
-        # rec.datetime = today + ' 15:00:00'
-        # rec.portfolioValue = value
-        # rec.netPnl = net_pnl
-        # rec.posDict = str(pos_dict)
-        # df_p = pd.DataFrame([rec])
-        # df_p.to_csv(fn_p, index=False, header=None, mode='a')
-
+        fn_p = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
+        fresh_p(today, fn_p)
 
 def fresh_daliopt():
-    dss = get_dss()
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     pz_list = ['m','RM','MA']
     for pz in pz_list:
-        fn_p = dss + 'fut/engine/daliopt/portfolio_daliopt_' + pz + '_var.csv'
-        df_p = pd.read_csv(fn_p)
-        rec = df_p.iloc[-1,:]
-        pos_dict = eval(rec.posDict)
-        value = rec.portfolioValue
-        net_pnl = 0
-        book_list = list( pos_dict.keys() )
-        for book in book_list:
-            fn = dss + 'fut/engine/opt/' + book + '.csv'
-            if os.path.exists(fn):
-                # 读取booking文件
-                df = pd.read_csv(fn)
-                row = df.iloc[-1,:]
-                net_pnl += row.netPnl
-            else:
-                # 读取booked文件
-                fn = fn.replace('booking', 'booked')
-                df = pd.read_csv(fn)
-                row = df.iloc[-1,:]
-                value += row.netPnl
-                pos_dict.pop(book)
-
-        rec.datetime = today + ' 15:00:00'
-        rec.portfolioValue = value
-        rec.netPnl = net_pnl
-        rec.posDict = str(pos_dict)
-        df_p = pd.DataFrame([rec])
-        df_p.to_csv(fn_p, index=False, header=None, mode='a')
+        fn_p = get_dss() + 'fut/engine/daliopt/portfolio_daliopt_' + pz + '_var.csv'
+        fresh_p(today, fn_p)
 
 def fresh_mutual():
-    pass
-
-def fresh_p():
-    fresh_daliopt()
-    fresh_mutual()
-    fresh_star()
-
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    pz_list = ['m','RM','MA','CF','IO']
+    for pz in pz_list:
+        fn_p = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
+        fresh_p(today, fn_p)
 
 def pandian_run():
     try:
@@ -392,7 +382,9 @@ def pandian_run():
         pandian_dali_RM(today)
         pandian_dali_MA(today)
 
-        fresh_p()
+        fresh_daliopt()
+        fresh_mutual()
+        fresh_star()
 
     except Exception as e:
         s = traceback.format_exc()
