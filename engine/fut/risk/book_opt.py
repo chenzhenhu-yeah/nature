@@ -55,24 +55,84 @@ def update_rec_price(rec):
 
 def fresh_book():
     """更新booking文件，计算当日盈亏"""
+    """booking文件转成booked文件"""
 
     # 获取opt目录下全部booking文件
     dirname = get_dss() + 'fut/engine/opt/'
     listfile = os.listdir(dirname)
 
     for filename in listfile:
-        # print(filename)
         # 逐个文件更新收盘价，并计算当日盈亏
         if filename[:7] == 'booking':
             fn = dirname + filename
-            # print(fn)
             df = pd.read_csv(fn)
             rec = df.iloc[-1,:]
-            update_rec_price(rec)
-            df = pd.DataFrame([rec])
-            df.to_csv(fn, index=False, header=None, mode='a')
 
-def new_book():
+            # 如果已结清，转成booked文件，否则更新价格
+            booked = True
+            pos_dict = eval(rec.posDict)
+            for symbol in pos_dict:
+                if pos_dict[symbol] != 0:
+                    booked = False
+
+            if booked == True:
+                fn_booked = fn_book.replace('booking', 'booked')
+                os.rename(fn_book,fn_booked)
+            else:
+                update_rec_price(rec)
+                df = pd.DataFrame([rec])
+                df.to_csv(fn, index=False, header=None, mode='a')
+
+def alter_book_by_rec(row):
+    margin = 0
+    net_pnl = 0
+    pos_dict = {}
+    close_dict = {}
+    size = int(get_contract(row.Instrument).size)
+
+    fn_book = dss + 'fut/engine/opt/' + row.book + '.csv'
+    if os.path.exists(fn_book):
+        df_book = pd.read_csv(fn_book)
+        rec = df_book.iloc[-1,:]
+        margin = rec.margin
+        net_pnl = rec.netPnl
+        pos_dict = eval(rec.posDict)
+        close_dict = eval(rec.closeDict)
+
+    margin += row.margin
+
+    # 如果是book中不存在的新合约
+    if row.InstrumentID not in pos_dict:
+        pos_dict[row.InstrumentID] = 0
+        close_dict[row.InstrumentID] = row.Price
+
+    # 更新pos_dict
+    if row.Direction == 'Buy':
+        pos_dict[row.InstrumentID] += row.Volume
+    if row.Direction == 'Sell':
+        pos_dict[row.InstrumentID] += -row.Volume
+
+    # 更新net_pnl
+    if row.Offset == 'Open':
+        if row.Direction == 'Buy':
+            net_pnl += (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+        if row.Direction == 'Sell':
+            net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+
+    if row.Offset == 'Close':
+        if row.Direction == 'Buy':
+            net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+        if row.Direction == 'Sell':
+            net_pnl += (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+
+    df_book = pd.DataFrame([[row.TradingDay,margin,net_pnl,str(pos_dict),str(close_dict)]], columns=['date','margin','netPnl','posDict','closeDict'])
+    if os.path.exists(fn_book):
+        df_book.to_csv(fn_book, index=False, header=None, mode='a')
+    else:
+        df_book.to_csv(fn_book, index=False)
+
+
+def trade2book():
     """分析opt_trade文件，生成新的booking文件，或转成booked文件"""
 
     dss = get_dss()
@@ -82,91 +142,37 @@ def new_book():
     fn = dss + 'fut/engine/opt/opt_trade.csv'
     df = pd.read_csv(fn)
     for i, row in df.iterrows():
-        # print( row.book, type(row.book), row.InstrumentID )
         if row.book != row.book:           # 值为nan
-            r.append(row)
+            r.append(row)                  # 此记录无需处理，回写文件即可
+            continue
+
+        alter_book_by_rec(row)
+
+        # 设置p与booking的关系
+        p = row.portfolio
+        if p != p:           # 值为nan
+            pass
         else:
-            # 设置daliopt等策略与booking的关系
-            p = row.portfolio
-            if p != p:           # 值为nan
-                pass
-            else:
-                if p[:7] == 'daliopt':
-                    fn_p = dss + 'fut/engine/daliopt/portfolio_' + p + '_var.csv'
-                    df_p = pd.read_csv(fn_p)
-                    rec = df_p.iloc[-1,:]
-                    pos_dict = eval(rec.posDict)
-                    if row.book not in pos_dict:
-                        pos_dict[row.book] = 1
-                        rec.posDict = str(pos_dict)
-                        rec.datetime = today + ' 15:00:00'
-                        df_p = pd.DataFrame([rec])
-                        df_p.to_csv(fn_p, index=False, header=None, mode='a')
-
-            fn_book = dss + 'fut/engine/opt/' + row.book + '.csv'
-            if row.Offset == 'Open':
-                margin = 0
-                net_pnl = 0
-                pos_dict = {}
-                close_dict = {}
-                if os.path.exists(fn_book):
-                    df_book = pd.read_csv(fn_book)
-                    rec = df_book.iloc[-1,:]
-                    margin = rec.margin
-                    net_pnl = rec.netPnl
-                    pos_dict = eval(rec.posDict)
-                    close_dict = eval(rec.closeDict)
-
-                margin += row.margin
-                close_dict[row.InstrumentID] = row.Price
-                if row.InstrumentID not in pos_dict:
-                    if row.Direction == 'Buy':
-                        pos_dict[row.InstrumentID] = row.Volume
-                    if row.Direction == 'Sell':
-                        pos_dict[row.InstrumentID] = -row.Volume
-                else:
-                    if row.Direction == 'Buy':
-                        pos_dict[row.InstrumentID] += row.Volume
-                    if row.Direction == 'Sell':
-                        pos_dict[row.InstrumentID] += -row.Volume
-
-                df_book = pd.DataFrame([[row.TradingDay,margin,net_pnl,str(pos_dict),str(close_dict)]], columns=['date','margin','netPnl','posDict','closeDict'])
-                if os.path.exists(fn_book):
-                    df_book.to_csv(fn_book, index=False, header=None, mode='a')
-                else:
-                    df_book.to_csv(fn_book, index=False)
-
-            if row.Offset == 'Close':
-                df_book = pd.read_csv(fn_book)
-                rec = df_book.iloc[-1,:]
-                margin = rec.margin
-                net_pnl = rec.netPnl
+            fn_p = ''
+            pz = str(get_contract(row.Instrument).pz)
+            if p[:7] == 'daliopt':
+                fn_p = dss + 'fut/engine/daliopt/portfolio_' + p + '_' + pz + '_var.csv'
+            if p[:4] == 'star':
+                fn_p = dss + 'fut/engine/star/portfolio_' + p + '_' + pz + '_var.csv'
+            if p[:6] == 'mutual':
+                fn_p = dss + 'fut/engine/mutual/portfolio_' + p + '_' + pz + '_var.csv'
+            if fn_p != '':
+                df_p = pd.read_csv(fn_p)
+                rec = df_p.iloc[-1,:]
                 pos_dict = eval(rec.posDict)
-                close_dict = eval(rec.closeDict)
+                if row.book not in pos_dict:
+                    pos_dict[row.book] = 1
+                    rec.posDict = str(pos_dict)
+                    rec.datetime = today + ' 15:00:00'
+                    df_p = pd.DataFrame([rec])
+                    df_p.to_csv(fn_p, index=False, header=None, mode='a')
 
-                net_pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID]
-                close_dict[row.InstrumentID] = row.Price
-                if row.Direction == 'Buy':
-                    pos_dict[row.InstrumentID] += row.Volume
-                if row.Direction == 'Sell':
-                    pos_dict[row.InstrumentID] += -row.Volume
-
-                df_book = pd.DataFrame([[row.TradingDay,margin,net_pnl,str(pos_dict),str(close_dict)]], columns=['date','margin','netPnl','posDict','closeDict'])
-                df_book.to_csv(fn_book, index=False, header=None, mode='a')
-
-            # 如果已结清，转成booked文件
-            booked = True
-            df_book = pd.read_csv(fn_book)
-            rec = df_book.iloc[-1,:]
-            pos_dict = eval(rec.posDict)
-            for symbol in pos_dict:
-                if pos_dict[symbol] != 0:
-                    booked = False
-
-            if booked == True:
-                fn_booked = fn_book.replace('booking', 'booked')
-                os.rename(fn_book,fn_booked)
-
+    # 回写文件
     if r == []:
         df = pd.DataFrame([], columns=['Direction','ExchangeID','InstrumentID','Offset','Price','TradeID','TradeTime','TradingDay','Volume','book','portfolio','margin'])
     else:
@@ -203,14 +209,11 @@ def get_trade():
 
 def book_opt_run():
     # 以下调用顺序不能乱！
-
     fresh_book()
-    new_book()
+    trade2book()
     get_trade()
-
-
 
 if __name__ == '__main__':
     # book_opt_run()
     # update_date()
-    pass 
+    pass
