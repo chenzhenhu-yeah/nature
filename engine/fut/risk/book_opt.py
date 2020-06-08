@@ -88,9 +88,9 @@ def alter_book_by_rec(row):
     net_pnl = 0
     pos_dict = {}
     close_dict = {}
-    size = int(get_contract(row.Instrument).size)
+    size = int(get_contract(row.InstrumentID).size)
 
-    fn_book = dss + 'fut/engine/opt/' + row.book + '.csv'
+    fn_book = get_dss() + 'fut/engine/opt/' + row.book + '.csv'
     if os.path.exists(fn_book):
         df_book = pd.read_csv(fn_book)
         rec = df_book.iloc[-1,:]
@@ -154,7 +154,7 @@ def trade2book():
             pass
         else:
             fn_p = ''
-            pz = str(get_contract(row.Instrument).pz)
+            pz = str(get_contract(row.InstrumentID).pz)
             if p[:7] == 'daliopt':
                 fn_p = dss + 'fut/engine/daliopt/portfolio_' + p + '_' + pz + '_var.csv'
             if p[:4] == 'star':
@@ -214,6 +214,6 @@ def book_opt_run():
     get_trade()
 
 if __name__ == '__main__':
-    # book_opt_run()
+    book_opt_run()
     # update_date()
     pass
