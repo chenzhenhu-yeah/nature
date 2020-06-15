@@ -77,28 +77,29 @@ def pcp(df_all, term_list, mature_dict, today, obj_dict):
 
 
 # 这段代码已编写完毕，待测试！！！
-# def pcp_IO(df_all, today):
-#     mature_dict = {'IO2006':'2020-06-19','IO2007':'2020-07-17','IO2009':'2020-09-18',
-#                    'IO2012':'2020-12-18','IO2103':'2021-03-19'}
-#
-#     df = df_all[df_all.index.str.startswith('IO') ]
-#     term_list = sorted( list(set([ x[:5] for x in df.index ])) )
-#     # print(term_list)
-#     obj_dict = {}
-#     for term in term_list:
-#         # print( term, df.at[term, 'LastPrice'] )
-#         if term in df.index:
-#             obj_dict[term] = df.at[term, 'LastPrice']
-#     # print(obj_dict)
-#
-#     # 删除期货合约
-#     df = df[df.index.str.len() > 6]
-#     df['strike'] = df.index.str.slice(8)
-#     df['type'] = df.index.str.get(6)
-#     # print(df.head())
-#     # print(len(df))
-#
-#     return pcp(df, term_list, mature_dict, today, obj_dict)
+def pcp_IO(df_all, today):
+    mature_dict = {'IO2006':'2020-06-19','IO2007':'2020-07-17','IO2009':'2020-09-18',
+                   'IO2012':'2020-12-18','IO2103':'2021-03-19'}
+
+    df = df_all[df_all.index.str.startswith('IO') ]
+    term_list = sorted( list(set([ x[:6] for x in df.index ])) )
+    # print(term_list)
+    obj_dict = {}
+    for term in term_list:
+        obj = 'IF' + term[2:]
+        if obj in df_all.index:
+            # print( term, df_all.at[obj, 'LastPrice'] )
+            obj_dict[term] = df_all.at[obj, 'LastPrice']
+    # print(obj_dict)
+
+    # 删除期货合约
+    df = df[df.index.str.len() > 7]
+    df['strike'] = df.index.str.slice(9)
+    df['type'] = df.index.str.get(7)
+    # print(df.head())
+    # print(len(df))
+
+    return pcp(df, term_list, mature_dict, today, obj_dict)
 
 def pcp_m(df_all, today):
     mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
@@ -200,7 +201,7 @@ def pcp_CF(df_all, today):
 def calc_pcp():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-20'
+    # today = '2020-06-12'
 
     # fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
@@ -211,6 +212,7 @@ def calc_pcp():
 
     r = []
     if len(df) > 0:
+        r += pcp_IO(df, today)
         r += pcp_m(df, today)
         r += pcp_RM(df, today)
         r += pcp_MA(df, today)
@@ -286,6 +288,31 @@ def die_forward(df, term, type, today):
         result.append( [today, term, type, s1, c1, s2, c2, s3, c3, cost] )
 
     return result
+
+def die_IO(df_all, today):
+    r = []
+
+    df = df_all[df_all.index.str.startswith('IO')]
+    term_list = sorted( list(set([ x[:6] for x in df.index ])) )
+    print(term_list)
+
+    # 删除期货合约
+    df = df[df.index.str.len() > 7]
+    df['strike'] = df.index.str.slice(9)
+    df['type'] = df.index.str.get(7)
+    # print(df.head())
+
+    for term in term_list:
+        df1 = df[df.index.str.startswith(term)]
+        df1_c = df1[df1.type == 'C']
+        df1_p = df1[df1.type == 'P']
+
+        r += die_forward(df1_c, term, 'call', today)
+        r += die_forward(df1_p, term, 'put', today)
+
+        # break
+
+    return r
 
 def die_m(df_all, today):
     r = []
@@ -424,7 +451,7 @@ def die_CF(df_all, today):
 def calc_die():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-26'
+    today = '2020-06-12'
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
@@ -434,12 +461,13 @@ def calc_die():
 
     r = []
     if len(df) > 0:
+        r += die_IO(df, today)
         r += die_m(df, today)
         r += die_RM(df, today)
         r += die_MA(df, today)
         r += die_CF(df, today)
         df2 = pd.DataFrame(r, columns=['date', 'term', 'c/p', 's1', 'c1', 's2', 'c2', 's3', 'c3', 'cost'])
-        df2 = df2[(df2.cost < 3) & (df2.cost != float('-inf'))]
+        df2 = df2[(df2.cost < 0) & (df2.cost != float('-inf'))]
         fn = get_dss() + 'opt/die.csv'
         df2.to_csv(fn, index=False)
         return True
@@ -448,5 +476,5 @@ def calc_die():
 
 
 if __name__ == '__main__':
-    calc_pcp()
+    # calc_pcp()
     calc_die()

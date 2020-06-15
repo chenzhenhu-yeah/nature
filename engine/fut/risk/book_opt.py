@@ -148,6 +148,9 @@ def trade2book():
 
         alter_book_by_rec(row)
 
+        if row.Offset == 'Close':
+            continue
+
         # 设置p与booking的关系
         p = row.portfolio
         if p != p:           # 值为nan
