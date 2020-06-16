@@ -24,7 +24,7 @@ def index():
 
 @app.route('/fut')
 def fut():
-    symbol = 'ag2012'
+    symbol = 'ag2006'
     filename = get_dss() + 'fut/put/min1_' + symbol + '.csv'
     df = pd.read_csv(filename, dtype='str')
     r_q = [ list(df.columns) ]
