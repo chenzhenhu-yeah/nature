@@ -76,8 +76,8 @@ def fresh_book():
                     booked = False
 
             if booked == True:
-                fn_booked = fn_book.replace('booking', 'booked')
-                os.rename(fn_book,fn_booked)
+                fn_booked = fn.replace('booking', 'booked')
+                os.rename(fn, fn_booked)
             else:
                 update_rec_price(rec)
                 df = pd.DataFrame([rec])
