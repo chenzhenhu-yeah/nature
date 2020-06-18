@@ -101,16 +101,12 @@ def alter_book_by_rec(row):
 
     margin += row.margin
 
-    # 如果是book中不存在的新合约
+    # 更新为交易价
+    close_dict[row.InstrumentID] = row.Price
+
+    # 如果是book中不存在的新合约，赋初始值
     if row.InstrumentID not in pos_dict:
         pos_dict[row.InstrumentID] = 0
-        close_dict[row.InstrumentID] = row.Price
-
-    # 更新pos_dict
-    if row.Direction == 'Buy':
-        pos_dict[row.InstrumentID] += row.Volume
-    if row.Direction == 'Sell':
-        pos_dict[row.InstrumentID] += -row.Volume
 
     # 更新net_pnl
     if row.Offset == 'Open':
@@ -120,10 +116,13 @@ def alter_book_by_rec(row):
             net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
 
     if row.Offset == 'Close':
-        if row.Direction == 'Buy':
-            net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
-        if row.Direction == 'Sell':
-            net_pnl += (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+            net_pnl -= (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
+
+    # 更新pos_dict
+    if row.Direction == 'Buy':
+        pos_dict[row.InstrumentID] += row.Volume
+    if row.Direction == 'Sell':
+        pos_dict[row.InstrumentID] += -row.Volume
 
     df_book = pd.DataFrame([[row.TradingDay,margin,net_pnl,str(pos_dict),str(close_dict)]], columns=['date','margin','netPnl','posDict','closeDict'])
     if os.path.exists(fn_book):
