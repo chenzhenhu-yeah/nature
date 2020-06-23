@@ -187,7 +187,6 @@ def calc_sigma():
 
 if __name__ == '__main__':
     calc_sigma()
-    # smile()
 
     # term_structure(date)
     # iv_ts(date)

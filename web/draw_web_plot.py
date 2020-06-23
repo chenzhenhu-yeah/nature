@@ -296,7 +296,7 @@ def smile():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-29'
+    today = '2020-06-22'
 
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df = pd.read_csv(fn)
@@ -304,19 +304,25 @@ def smile():
     df = df.drop_duplicates(subset=['term'], keep='last')
     # print(df.head())
 
-    for i, row in df.iterrows():
-        c_curve_dict = eval(row.c_curve)
-        p_curve_dict = eval(row.p_curve)
+    fn = get_dss() + 'fut/cfg/IO_mature.csv'
+    df_IO = pd.read_csv(fn)
+    df_IO = df_IO[df_IO.flag == df_IO.flag]                 # 筛选出不为空的记录
+    df = df[df.term.isin(list(df_IO.symbol))]
+    print(df.term)
 
-        df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
-        df1 = df1.T
-        df1.columns = ['call', 'put']
-
-        df1.plot()
-        plt.title(today + '_' + row.term)
-
-        fn = 'static/smile_' + row.term + '.jpg'
-        plt.savefig(fn)
+    # for i, row in df.iterrows():
+    #     c_curve_dict = eval(row.c_curve)
+    #     p_curve_dict = eval(row.p_curve)
+    #
+    #     df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
+    #     df1 = df1.T
+    #     df1.columns = ['call', 'put']
+    #
+    #     df1.plot()
+    #     plt.title(today + '_' + row.term)
+    #
+    #     fn = 'static/smile_' + row.term + '.jpg'
+    #     plt.savefig(fn)
 
 def iv_ts():
     """隐波时序图"""
@@ -343,7 +349,7 @@ def iv_ts():
     print(df.head())
     print(df.tail())
 
-    term_dict = {'IO2006-':['-3800', '-3900'],
+    term_dict = {'IO2007-':['-4200', '-4100', '-4000', '-3900', '-3800'],
                  'm2009-': ['-2800', '-2750'],
                  'RM009':['2300', '2350'],
                  'MA009':['1800', '1850'],
@@ -383,6 +389,6 @@ if __name__ == '__main__':
     # dali()
     # opt()
     # mates()
-    # smile()
+    smile()
     # iv_ts()
     # star()

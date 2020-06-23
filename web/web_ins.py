@@ -232,6 +232,54 @@ def fut_signal_pause():
 
     return render_template("fut_signal_pause.html",tip=tips,rows=r)
 
+@app.route('/opt_mature', methods=['get','post'])
+def opt_mature():
+    pz = ''
+    tips = '提示：'
+    setting_dict = {'pz':'','symbol':'','mature':'','flag':'',}
+    filename = get_dss() + 'fut/cfg/opt_mature.csv'
+    if request.method == "POST":
+        pz = del_blank( request.form.get('pz') )
+        symbol = del_blank( request.form.get('symbol') )
+        mature = del_blank( request.form.get('mature') )
+        flag = del_blank( request.form.get('flag') )
+        kind = request.form.get('kind')
+
+        r = [[pz,symbol,mature,flag]]
+        cols = ['pz','symbol','mature','flag']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol != symbol ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'query':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol == symbol ]
+            if len(df) > 0:
+                rec = df.iloc[0,:]
+                setting_dict = dict(rec)
+                pz = rec.pz 
+
+    # 显示配置文件的内容
+    df = pd.read_csv(filename, dtype='str')
+    df = df[df.pz == pz]
+    df = df.sort_values(by='symbol', ascending=False)
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("opt_mature.html",tip=tips,rows=r,words=setting_dict)
+
 @app.route('/fut_owl', methods=['get','post'])
 def fut_owl():
     tips = ''
@@ -631,6 +679,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

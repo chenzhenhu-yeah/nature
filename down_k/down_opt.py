@@ -214,4 +214,6 @@ def down_opt():
     proc_data()
 
 if __name__ == "__main__":
-    down_opt()
+    # down_opt()
+    symbol_list = cffex() + czce() + dce() + shfe()
+    print(symbol_list)

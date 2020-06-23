@@ -201,8 +201,15 @@ def calc_greeks_IO(df, today, r):
     df1 = df[df.index.str.startswith('IO')]
     # print(df1.head())
 
-    mature_dict = {'IO2002':'2020-02-21','IO2003':'2020-03-20','IO2004':'2020-04-17','IO2005':'2020-05-15','IO2006':'2020-06-19',
-                   'IO2007':'2020-07-17','IO2009':'2020-09-18','IO2012':'2020-12-18','IO2103':'2021-03-19'}
+    # mature_dict = {'IO2002':'2020-02-21','IO2003':'2020-03-20','IO2004':'2020-04-17','IO2005':'2020-05-15','IO2006':'2020-06-19',
+    #                'IO2007':'2020-07-17','IO2009':'2020-09-18','IO2012':'2020-12-18','IO2103':'2021-03-19'}
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'IO']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
 
     for symbol, row in df1.iterrows():
         if symbol[:6] not in mature_dict.keys():
@@ -218,13 +225,19 @@ def calc_greeks_IO(df, today, r):
 
         # break
 
-
 def calc_greeks_m(df, today, r):
     df1 = df[df.index.str.startswith('m')]
     # print(df1.head())
 
-    mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
-                   'm2101':'2020-12-07','m2103':'2021-02-05','m2105':'2021-04-07',}
+    # mature_dict = {'m2007':'2020-06-05','m2009':'2020-08-07','m2011':'2020-10-15',
+    #                'm2101':'2020-12-07','m2103':'2021-02-05','m2105':'2021-04-07',}
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'm']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
 
     for symbol, row in df1.iterrows():
         term = symbol[:5]
@@ -247,8 +260,14 @@ def calc_greeks_RM(df, today, r):
     df1 = df[df.index.str.startswith('RM')]
     # print(df1.head())
 
-    mature_dict = {'RM007':'2020-06-03','RM009':'2020-08-05','RM011':'2020-10-13',
-                   'RM101':'2020-12-03','RM103':'2021-02-03',}
+    # mature_dict = {'RM007':'2020-06-03','RM009':'2020-08-05','RM011':'2020-10-13',
+    #                'RM101':'2020-12-03','RM103':'2021-02-03',}
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'RM']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
 
     for symbol, row in df1.iterrows():
         term = symbol[:5]
@@ -271,8 +290,14 @@ def calc_greeks_MA(df, today, r):
     df1 = df[df.index.str.startswith('MA')]
     # print(df1.head())
 
-    mature_dict = {'MA007':'2020-06-03','MA009':'2020-08-05','MA011':'2020-10-13',
-                   'MA101':'2020-12-03','MA103':'2021-02-03',}
+    # mature_dict = {'MA007':'2020-06-03','MA009':'2020-08-05','MA011':'2020-10-13',
+    #                'MA101':'2020-12-03','MA103':'2021-02-03',}
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'MA']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
 
     for symbol, row in df1.iterrows():
         term = symbol[:5]
@@ -295,8 +320,14 @@ def calc_greeks_CF(df, today, r):
     df1 = df[df.index.str.startswith('CF')]
     # print(df1.head())
 
-    mature_dict = {'CF007':'2020-06-03','CF009':'2020-08-05','CF011':'2020-10-13',
-                   'CF101':'2020-12-03','CF103':'2021-02-03',}
+    # mature_dict = {'CF007':'2020-06-03','CF009':'2020-08-05','CF011':'2020-10-13',
+    #                'CF101':'2020-12-03','CF103':'2021-02-03',}
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'CF']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
 
     for symbol, row in df1.iterrows():
         term = symbol[:5]
