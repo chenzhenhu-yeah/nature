@@ -79,17 +79,19 @@ def calc_sigma_common(df, today, term_list, strike_pos, gap, dash):
     for term in term_list:
         try:
             df1 = df[df.index.str.startswith(term)]
-            strike_list = sorted( list(set([ x[strike_pos:] for x in df1.index ])) )
-            # print(term, strike_list)
-            # df1 = df1.set_index('symbol')
+            # strike_list = sorted( list(set([ x[strike_pos:] for x in df1.index ])) )
+            strike_list = list(set([ x[strike_pos:] for x in df1.index ]))
+            strike_list = sorted( [int(x) for x in strike_list] )
+            # print(strike_list)
+
             i = 0
             c_iv = 0
             p_iv = 0
             c_curve_dict = {}
             p_curve_dict = {}
             for strike in strike_list:
-                symbol_c = term + dash + 'C' + dash + strike
-                symbol_p = term + dash + 'P' + dash + strike
+                symbol_c = term + dash + 'C' + dash + str(strike)
+                symbol_p = term + dash + 'P' + dash + str(strike)
                 c_curve_dict[strike] = df1.at[symbol_c, 'iv']
                 p_curve_dict[strike] = df1.at[symbol_p, 'iv']
 
@@ -115,6 +117,7 @@ def calc_sigma_common(df, today, term_list, strike_pos, gap, dash):
         df.to_csv(fn, index=False, mode='a', header=False)
     else:
         df.to_csv(fn, index=False)
+    # print(r)
 
 
 def calc_sigma_IO(df_all, today):

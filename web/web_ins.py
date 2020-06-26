@@ -268,7 +268,7 @@ def opt_mature():
             if len(df) > 0:
                 rec = df.iloc[0,:]
                 setting_dict = dict(rec)
-                pz = rec.pz 
+                pz = rec.pz
 
     # 显示配置文件的内容
     df = pd.read_csv(filename, dtype='str')

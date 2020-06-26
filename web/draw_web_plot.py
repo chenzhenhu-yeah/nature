@@ -291,7 +291,7 @@ def mates():
         symbol2 = rec.mate2
         ic(symbol1, symbol2)
 
-def smile():
+def smile_symbol():
     """期权微笑曲线"""
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -304,25 +304,94 @@ def smile():
     df = df.drop_duplicates(subset=['term'], keep='last')
     # print(df.head())
 
-    fn = get_dss() + 'fut/cfg/IO_mature.csv'
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df_IO = pd.read_csv(fn)
     df_IO = df_IO[df_IO.flag == df_IO.flag]                 # 筛选出不为空的记录
     df = df[df.term.isin(list(df_IO.symbol))]
     print(df.term)
 
-    # for i, row in df.iterrows():
-    #     c_curve_dict = eval(row.c_curve)
-    #     p_curve_dict = eval(row.p_curve)
-    #
-    #     df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
-    #     df1 = df1.T
-    #     df1.columns = ['call', 'put']
-    #
-    #     df1.plot()
-    #     plt.title(today + '_' + row.term)
-    #
-    #     fn = 'static/smile_' + row.term + '.jpg'
-    #     plt.savefig(fn)
+    for i, row in df.iterrows():
+        c_curve_dict = eval(row.c_curve)
+        p_curve_dict = eval(row.p_curve)
+
+        df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
+        df1 = df1.T
+        df1.columns = ['call', 'put']
+
+        df1.plot()
+        plt.title(today + '_' + row.term)
+
+        fn = 'static/smile_' + row.term + '.jpg'
+        plt.savefig(fn)
+
+
+def smile_pz(pz, symbol_list):
+    now = datetime.now()
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    # print(first_day)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    # print(pre_month)
+    today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
+    # today = '2020-06-19'
+
+    fn = get_dss() + 'opt/' +  pre[:7] + '_sigma.csv'
+    df_pre = pd.read_csv(fn)
+    fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
+    df_today = pd.read_csv(fn)
+    df = pd.concat([df_pre, df_today])
+
+    plt.title(today + '_' + pz)
+    for i, symbol in enumerate(symbol_list):
+        df1 = df[df.term == symbol]
+        df1 = df1.drop_duplicates(subset=['date'], keep='last')
+        df1 = df1[df1.date <= today]
+        if len(df1) < 2:
+            continue
+
+        print(symbol)
+        # 上一日的曲线
+        if i in [0,1]:
+            row = df1.iloc[-2, :]
+            c_curve_dict = eval(row.c_curve)
+            p_curve_dict = eval(row.p_curve)
+            df2 = pd.DataFrame([c_curve_dict, p_curve_dict])
+            df2 = df2.T
+            df2.columns = ['call', 'put']
+            df2.index = df2.index.astype('int')
+            df2 = df2.sort_index()
+            plt.plot(df2.put, '--', label=row.term)
+
+        # 当日的曲线
+        row = df1.iloc[-1, :]
+        c_curve_dict = eval(row.c_curve)
+        p_curve_dict = eval(row.p_curve)
+        df2 = pd.DataFrame([c_curve_dict, p_curve_dict])
+        df2 = df2.T
+        df2.columns = ['call', 'put']
+        df2.index = df2.index.astype('int')
+        df2 = df2.sort_index()
+        plt.plot(df2.put, label=row.term)
+
+    # fn = 'static/smile_' + pz + '.jpg'
+    fn = 'static/smile_' + pz + '_' + today +  '.jpg'
+    plt.legend()
+    plt.savefig(fn)
+    plt.close()
+
+def smile():
+    """期权微笑曲线"""
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df_opt = pd.read_csv(fn)
+    # for pz in set(df_opt.pz):
+    for pz in ['IO']:
+        print(pz)
+        df = df_opt[(df_opt.pz == pz) & (df_opt.flag == df_opt.flag)]                 # 筛选出不为空的记录
+        df = df.sort_values('symbol')
+        smile_pz(pz, list(df.symbol))
 
 def iv_ts():
     """隐波时序图"""
