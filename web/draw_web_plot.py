@@ -343,6 +343,7 @@ def smile_pz(pz, symbol_list):
     df_today = pd.read_csv(fn)
     df = pd.concat([df_pre, df_today])
 
+    plt.close()
     plt.title(today + '_' + pz)
     for i, symbol in enumerate(symbol_list):
         df1 = df[df.term == symbol]
@@ -362,6 +363,7 @@ def smile_pz(pz, symbol_list):
             df2.columns = ['call', 'put']
             df2.index = df2.index.astype('int')
             df2 = df2.sort_index()
+            df2 = df2[(df2.index <= 4400) & (df2.index >= 3800)]
             plt.plot(df2.put, '--', label=row.term)
 
         # 当日的曲线
@@ -373,6 +375,7 @@ def smile_pz(pz, symbol_list):
         df2.columns = ['call', 'put']
         df2.index = df2.index.astype('int')
         df2 = df2.sort_index()
+        df2 = df2[(df2.index <= 4400) & (df2.index >= 3800)]
         plt.plot(df2.put, label=row.term)
 
     # fn = 'static/smile_' + pz + '.jpg'
