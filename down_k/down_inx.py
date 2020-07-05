@@ -11,20 +11,31 @@ import tushare as ts
 from nature import get_dss
 
 
-# 加载配置
-config = open(get_dss()+'csv/config.json')
-setting = json.load(config)
-pro_id = setting['pro_id']
-pro = ts.pro_api(pro_id)
-ts_code_dict = {'000001':'000001.SH','000300':'000300.SH','399001':'399001.SZ','399005':'399005.SZ','399006':'399006.SZ','399905':'399905.SZ'}
 
-def down_inx(xcod, start):
+def down_inx_pro(xcod, start):
+    # 加载配置
+    config = open(get_dss()+'csv/config.json')
+    setting = json.load(config)
+    pro_id = setting['pro_id']
+    pro = ts.pro_api(pro_id)
+    ts_code_dict = {'000001':'000001.SH','000300':'000300.SH','399001':'399001.SZ','399005':'399005.SZ','399006':'399006.SZ','399905':'399905.SZ'}
+
     start = start.replace('-','')
     df = pro.index_daily( ts_code=ts_code_dict[xcod], start_date=start, end_date=None )
     df['date'] = df['trade_date'].str.slice(0,4) + '-' + df['trade_date'].str.slice(4,6) + '-' + df['trade_date'].str.slice(6,8)
     df['volume'] = df['vol']
     df = df.loc[:, ['date','open','high','close','low','volume','amount'] ]
     df = df.set_index('date')
+
+    return df
+
+
+def down_inx_hist(xcod, start):
+    ts_code_dict = {'000001':'sh','000300':'hs300','399001':'sz','399005':'zxb','399006':'cyb'}
+
+    df = ts.get_hist_data(ts_code_dict[xcod], start=start)
+    df['amount'] = 0
+    df = df.loc[:, ['open','high','close','low','volume','amount'] ]
 
     return df
 
@@ -48,7 +59,8 @@ def down_inx_single(code,dss,xtim0='2018-01-01'):
 
     try:
         # xd=ts.get_h_data(xcod,start=tim0,index=True,end=None,retry_count=5,pause=1)     #Day9
-        xd = down_inx(xcod, tim0)
+        # xd = down_inx_pro(xcod, tim0)
+        xd = down_inx_hist(xcod, tim0)
 
         #-------------
         if xd is not None:
@@ -72,7 +84,7 @@ def down_inx_single(code,dss,xtim0='2018-01-01'):
 
 
 def down_inx_all(dss):
-    codes = ['000001','000300','399001','399005','399006','399905']
+    codes = ['000001','000300','399001','399005','399006']
     # codes = ['000001']
     for code in codes:
         down_inx_single(code,dss)

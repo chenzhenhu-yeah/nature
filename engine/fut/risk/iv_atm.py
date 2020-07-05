@@ -130,66 +130,68 @@ def calc_sigma_IO(df_all, today):
     calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
 
 
-def calc_sigma_m(df_all, today):
-    df = df_all[df_all.index.str.startswith('m')]
-    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
-    # print(term_list)
-    strike_pos = 8
-    gap = 50
-    dash = '-'
-    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
-
-
-def calc_sigma_RM(df_all, today):
-    df = df_all[df_all.index.str.startswith('RM')]
-    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
-    # print(term_list)
-    strike_pos = 6
-    gap = 25
-    dash = ''
-    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
-
-
-def calc_sigma_MA(df_all, today):
-    df = df_all[df_all.index.str.startswith('MA')]
-    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
-    # print(term_list)
-    strike_pos = 6
-    gap = 25
-    dash = ''
-    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
-
-
-def calc_sigma_CF(df_all, today):
-    df = df_all[df_all.index.str.startswith('CF')]
-    term_list = sorted( list(set([ x[:5] for x in df.index ])) )
-    # print(term_list)
-    strike_pos = 6
-    gap = 200
-    dash = ''
-    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
-
-def calc_sigma():
+def calc_iv_atm():
+    # 计算IO合约min5的iv值，保存在文件中
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-05-29'
+    today = '2020-07-03'
 
-    fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'IO']
+    df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
+    df2 = df2[df2.mature > today]
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    print(mature_dict)
+    # print(df2)
+    cur_io = min(mature_dict.keys())
+    cur_if = 'IF' + cur_io[2:]
+    # print(cur_if)
+    fn = get_dss() + 'fut/bar/day_' + cur_if + '.csv'
     df = pd.read_csv(fn)
-    df = df.drop_duplicates(subset=['Instrument'], keep='last')
-    df = df.set_index('Instrument')
-    # print(df.head())
-
+    df = df[df.date == today]
+    print(df)
     if len(df) > 0:
-        calc_sigma_IO(df, today)
-        calc_sigma_m(df, today)
-        calc_sigma_RM(df, today)
-        calc_sigma_MA(df, today)
-        calc_sigma_CF(df, today)
+        row = df.iloc[0,:]
+        strike = row.open*0.5 + row.close*0.5
+        strike = int(round(strike/1E4,2)*1E4)
+    else:
+        return
+
+    atm = str(strike)                                 # 获得平值
+    print(atm)
+
+    atm = '4000'
+    for symbol in ['IO2007']:
+
+    # for symbol in mature_dict.keys():
+        # print(symbol)
+        # 取IF min5数据
+
+
+
+        for flag in ['-C-', '-P-']:
+            fn = get_dss() + 'fut/bar/min5_' + symbol + flag + atm + '.csv'
+            df = pd.read_csv(fn)
+            df = df[df.date == today]
+            # print(df.head())
+
+            # 与IF 数据进行join
+
+
+            for i, row in df.iterrows():
+                print(row)
+                break
+
+
+        # df = df.drop_duplicates(subset=['Instrument'], keep='last')
+    #     df = df.set_index('Instrument')
+    #     # print(df.head())
+    #
+    #     if len(df) > 0:
+    #         calc_sigma_IO(df, today)
 
 if __name__ == '__main__':
-    calc_sigma()
-
-    # term_structure(date)
-    # iv_ts(date)
+    calc_iv_atm()

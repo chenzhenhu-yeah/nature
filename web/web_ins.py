@@ -10,7 +10,7 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates, iv_ts, star
+from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates, iv_ts, star, vol
 from nature import del_blank, check_symbols_p
 
 
@@ -639,6 +639,20 @@ def show_iv_ts():
 
     # return str(r)
     return render_template("show_jpg.html",header="iv_ts",items=r)
+
+@app.route('/show_vol', methods=['get'])
+def show_vol():
+    vol()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('vol'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="vol",items=r)
+
 
 @app.route('/log')
 def show_log():

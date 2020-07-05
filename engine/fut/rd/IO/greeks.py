@@ -415,23 +415,20 @@ def die_forward_put(dt):
 
 
 def calc_hv():
-    df = get_inx('000300', '2019-01-01', '2020-05-15')
+    # df = get_inx('000300', '2019-06-01', '2020-07-15')
+    df = get_inx('000300', '2019-06-01')
     # df = df.sort_values('date')
     df = df.set_index('date')
     df = df.sort_index()
 
     df['ln'] = np.log(df.close)
     df['rt'] = df['ln'].diff(1)
-    df['hv'] = df['rt'].rolling(60).std()
+    df['hv'] = df['rt'].rolling(20).std()
     df['hv'] *= np.sqrt(242)
 
     df = df.iloc[-242:,:]
     print(df.head())
     print(df.tail())
-
-    plt.plot(df['hv'])
-    plt.grid()
-    plt.show()
 
     cur = df.iloc[-1,:]
     hv = cur['hv']
@@ -447,9 +444,20 @@ def calc_hv():
     hv_percentile = len(df[df.hv < hv]) / 242
     print('hv percentile: ', hv_percentile)
 
+    plt.figure(figsize=(13,7))
+    plt.xticks(rotation=45)
+    plt.plot(df['hv'])
+    plt.grid(True, axis='y')
 
+    ax = plt.gca()
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::30]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
 
-
+    plt.show()
 
 
 if __name__ == '__main__':
