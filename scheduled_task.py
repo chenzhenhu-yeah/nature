@@ -110,9 +110,12 @@ def run_tick2bar():
         now = datetime.datetime.now()
         today = now.strftime('%Y%m%d')
         weekday = int(now.strftime('%w'))
-        print(today,weekday)
         if 1 <= weekday <= 5:
+            print('\n' + str(now) + " tick2bar begin...")
             tick2bar(today)
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " tick2bar end ")
+
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -122,7 +125,10 @@ def run_pandian():
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
         if 1 <= weekday <= 5:
+            print('\n' + str(now) + " pandian begin...")
             pandian_run()
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " pandian end ")
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -132,7 +138,10 @@ def run_book_opt():
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
         if 1 <= weekday <= 5:
+            print('\n' + str(now) + " book_opt begin...")
             book_opt_run()
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " book_opt end ")
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -143,6 +152,8 @@ def run_down_data():
     if 1 <= weekday <= 5:
         print('\n' + str(now) + " down_data begin...")
         down_data(dss)
+        now = datetime.datetime.now()
+        print('\n' + str(now) + " down_data end ")
 
 
 def run_down_opt():
@@ -152,11 +163,18 @@ def run_down_opt():
         if 1 <= weekday <= 5:
             print('\n' + str(now) + " down_opt begin...")
             down_opt()
+            print(" down_opt end ")
             time.sleep(180)
+
+            now = datetime.datetime.now()
             print('\n' + str(now) + " calc_greeks begin...")
             calc_greeks()
+            print(" calc_greeks end ")
+
+            now = datetime.datetime.now()
             print('\n' + str(now) + " calc_sigma begin...")
             calc_sigma()
+            print(" calc_sigma end ")
 
     except Exception as e:
         s = traceback.format_exc()
@@ -174,6 +192,7 @@ def run_arbitrage():
             if calc_die():
                 fn = get_dss() + 'opt/die.csv'
                 send_email(dss, 'die', '', [fn])
+            print(" arbitrage end ")
 
     except Exception as e:
         s = traceback.format_exc()
