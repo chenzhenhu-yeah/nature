@@ -118,6 +118,7 @@ def yue():
         # plt.show()
         fn = 'static/yue_' + row.symbol_dual + '.jpg'
         plt.savefig(fn)
+        plt.close()
 
 def dali():
     pz_list = ['m', 'RM', 'MA']
@@ -183,6 +184,7 @@ def dali():
         plt.legend()
         fn = 'static/dali_' + pz + '.jpg'
         plt.savefig(fn)
+        plt.close()
         # plt.show()
 
         # break
