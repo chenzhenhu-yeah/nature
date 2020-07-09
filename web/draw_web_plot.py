@@ -188,6 +188,7 @@ def dali():
         # plt.show()
 
         # break
+    plt.close()
 
 
 def star():
@@ -546,7 +547,7 @@ def vol():
 if __name__ == '__main__':
     pass
     # yue()
-    # dali()
+    dali()
     # opt()
     # mates()
     smile()

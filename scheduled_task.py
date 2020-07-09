@@ -245,11 +245,11 @@ if __name__ == '__main__':
         # 盘中
         # schedule.every().day.at("11:26").do(run_down_opt)
         # schedule.every().day.at("11:35").do(run_arbitrage)
-        schedule.every().day.at("14:56").do(run_down_opt)
+        schedule.every().day.at("15:01").do(run_down_opt)
 
 
         # 盘后
-        schedule.every().day.at("15:15").do(run_tick2bar)
+        schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
         schedule.every().day.at("15:27").do(run_down_data)

@@ -50,6 +50,10 @@ class HuQuote(CtpQuote):
         self.temp_tradeDay = ''
         self.bar_min1_dict = {}
 
+        self.ticks_dict = {}
+        self.tm100 = 0
+        self.cc = 0
+
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
         """"""
@@ -87,29 +91,21 @@ class HuQuote(CtpQuote):
         (tick.UpdateTime>='00:00:00' and tick.UpdateTime <= '02:30:01') :
             #threading.Thread( target=self.OnTick, args=(tick,) ).start()
             #多线程容易出错。
+
+            # t0 = time.time()
             self.OnTick(tick)
+            # t1 = time.time()
 
-    # 处理收到的tick-----------------------------------------------------------
-    def OnTick(self, f: Tick):
-        """"""
-        # 以白银作为首笔，确定当前的self.tradeDay
-        if self.tradeDay == '':
-            if f.Instrument[:2] == 'ag':
-                self.tradeDay = self.temp_tradeDay
-                # 赋值后，在此交易时段内保持不变。
-            else:
-                # 等待首笔Tick品种为白银
-                return
+            # if self.cc < 1000:
+            #     self.tm100 += t1-t0
+            #     self.cc += 1
+            # else:
+            #     print(self.tm100)
+            #     self.tm100 = 0
+            #     self.cc = 0
 
-        # 夜盘时段，零点前，UpdateDate为当日日期。
-        # 夜盘时段，零点后，UpdateDate与tradeDay一致。
-        UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
-        if f.UpdateTime >= '20:59:59':
-            if self.night_day == '':
-                self.night_day = time.strftime('%Y-%m-%d',time.localtime())
-            UpdateDate = self.night_day
-
-        # 保存Tick到文件
+    # 保存tick到文件 -----------------------------------------------------------
+    def save_tick_file_origin(self, f, UpdateDate):
         df = pd.DataFrame([f.__dict__])
         df['Localtime'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
         df['UpdateDate'] = UpdateDate
@@ -121,6 +117,66 @@ class HuQuote(CtpQuote):
             df.to_csv(fname, index=False, mode='a', header=False)
         else:
             df.to_csv(fname, index=False, mode='a')
+
+    # 保存tick到文件 -----------------------------------------------------------
+    def save_tick_file(self, f, UpdateDate):
+        fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
+
+        df = pd.DataFrame([f.__dict__])
+        df['Localtime'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        df['UpdateDate'] = UpdateDate
+        cols = ['Localtime','LastPrice','Instrument','AskPrice','AskVolume','BidPrice','BidVolume','AveragePrice','UpperLimitPrice','LowerLimitPrice','PreSettlementPrice','PreClosePrice','OpenPrice','PreDelta','CurrDelta','PreOpenInterest','OpenInterest','UpdateMillisec','Volume','UpdateDate','UpdateTime']
+        df = df[cols]
+
+        if f.Instrument in self.ticks_dict:
+            df1 = self.ticks_dict[f.Instrument]
+            df = pd.concat([df1, df])
+            self.ticks_dict[f.Instrument] = df
+        else:
+            # 首次，建文件
+            # df.to_csv(fname, index=False, mode='a')
+            df.to_csv(fname, index=False)
+
+            # 清空df, 建字典键值
+            df = df.drop(index=df.index)
+            self.ticks_dict[f.Instrument] = df
+
+        if len(df) >= 360:
+            df.to_csv(fname, index=False, mode='a', header=False)
+
+            # 清空df
+            df = df.drop(index=df.index)
+            self.ticks_dict[f.Instrument] = df
+
+    # 处理收到的tick-----------------------------------------------------------
+    def OnTick(self, f: Tick):
+        """"""
+        # 以白银作为首笔，确定当前的self.tradeDay
+        if len(self.tradeDay) != 8:
+            if f.Instrument[:2] == 'ag':
+                # 赋值后，在此交易时段内保持不变。
+                self.tradeDay = self.temp_tradeDay
+
+                # 防止意料之外的情况，至今没有找到原因
+                if len(self.tradeDay) != 8:
+                    print('self.tradeDay ', self.tradeDay)
+                    return
+            else:
+                # 等待首笔Tick品种为白银
+                print('here ', f.Instrument)
+                return
+        
+        # 夜盘时段，零点前，UpdateDate为当日日期。
+        # 夜盘时段，零点后，UpdateDate与tradeDay一致。
+        UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
+        if f.UpdateTime >= '20:59:59':
+            if self.night_day == '':
+                self.night_day = time.strftime('%Y-%m-%d',time.localtime())
+            UpdateDate = self.night_day
+
+        # 保存Tick到文件
+        self.save_tick_file(f, UpdateDate)
+        # self.save_tick_file_origin(f, UpdateDate)
 
         # 处理Bar
         self._Generate_Bar_MinOne(f, UpdateDate)
@@ -218,6 +274,7 @@ class TestQuote(object):
         self.pwd = pwd
         self.q = None
         self.working = False
+        self.dss = get_dss()
 
     #----------------------------------------------------------------------
     def run(self):
@@ -252,6 +309,11 @@ class TestQuote(object):
         # 对quote的 ReqUserLogout方法做了修改
         self.q.ReqUserLogout()
         self.working = False
+
+        for symbol in self.q.ticks_dict.keys():
+            df = self.q.ticks_dict[symbol]
+            fname = self.dss + 'fut/tick/tick_' + self.q.tradeDay + '_' + symbol + '.csv'
+            df.to_csv(fname, index=False, mode='a', header=False)
 
         now = datetime.now()
         print( 'in release, now time is: ', now )
