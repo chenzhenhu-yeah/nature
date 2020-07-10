@@ -119,7 +119,7 @@ class HuQuote(CtpQuote):
             df.to_csv(fname, index=False, mode='a')
 
     # 保存tick到文件 -----------------------------------------------------------
-    def save_tick_file(self, f, UpdateDate):
+    def save_tick_file_second(self, f, UpdateDate):
         fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
 
         df = pd.DataFrame([f.__dict__])
@@ -151,6 +151,40 @@ class HuQuote(CtpQuote):
             df = df.drop(index=df.index)
             self.ticks_dict[f.Instrument] = df
 
+    # 保存tick到文件 -----------------------------------------------------------
+    def save_tick_file(self, symbol):
+
+        fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + symbol + '.csv'
+        cols = ['Localtime','Instrument','LastPrice','Volume','UpdateDate','UpdateTime']
+        df = pd.DataFrame(self.ticks_dict[symbol], columns=cols)
+        if os.path.exists(fname):
+            df.to_csv(fname, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fname, index=False)
+
+        # 清空tick队列
+        self.ticks_dict[symbol] = []
+
+
+    # 缓存tick -----------------------------------------------------------
+    def cache_tick(self, f, UpdateDate):
+        Localtime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        rec =  [Localtime, f.Instrument, f.LastPrice, f.Volume, UpdateDate, f.UpdateTime]
+
+        if f.Instrument in self.ticks_dict:
+            self.ticks_dict[f.Instrument].append( rec )
+            # print('here2')
+        else:
+            # 首笔, 建字典键值
+            self.ticks_dict[f.Instrument] = [rec]
+            # print('here3')
+
+        # 中午及夜盘中段保存tick到文件，减少内存占用
+        if (f.UpdateTime >= '11:29:50' and f.UpdateTime <= '11:32:59') or (f.UpdateTime >= '22:59:50' and f.UpdateTime <= '23:02:59') :
+            # print('here! ', f.Instrument)
+            self.save_tick_file(f.Instrument)
+
+
     # 处理收到的tick-----------------------------------------------------------
     def OnTick(self, f: Tick):
         """"""
@@ -159,10 +193,12 @@ class HuQuote(CtpQuote):
             if f.Instrument[:2] == 'ag':
                 # 赋值后，在此交易时段内保持不变。
                 self.tradeDay = self.temp_tradeDay
+                print('got ', f.Instrument)
+                print('self.tradeDay ', self.tradeDay)
 
                 # 防止意料之外的情况，至今没有找到原因
                 if len(self.tradeDay) != 8:
-                    print('self.tradeDay ', self.tradeDay)
+                    print('出现了点意外：self.tradeDay ', self.tradeDay)
                     return
             else:
                 # 等待首笔Tick品种为白银
@@ -177,9 +213,8 @@ class HuQuote(CtpQuote):
                 self.night_day = time.strftime('%Y-%m-%d',time.localtime())
             UpdateDate = self.night_day
 
-        # 保存Tick到文件
-        # self.save_tick_file(f, UpdateDate)
-        # self.save_tick_file_origin(f, UpdateDate)
+        # 缓存Tick
+        self.cache_tick(f, UpdateDate)
 
         # 处理Bar
         self._Generate_Bar_MinOne(f, UpdateDate)
@@ -314,9 +349,7 @@ class TestQuote(object):
         self.working = False
 
         for symbol in self.q.ticks_dict.keys():
-            df = self.q.ticks_dict[symbol]
-            fname = self.dss + 'fut/tick/tick_' + self.q.tradeDay + '_' + symbol + '.csv'
-            df.to_csv(fname, index=False, mode='a', header=False)
+            self.q.save_tick_file(symbol)
 
         now = datetime.now()
         print( 'in release, now time is: ', now )
