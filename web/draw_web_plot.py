@@ -184,12 +184,10 @@ def dali():
         plt.legend()
         fn = 'static/dali_' + pz + '.jpg'
         plt.savefig(fn)
-        plt.close()
-        # plt.show()
+        # plt.close()
+        plt.cla()
 
         # break
-    plt.close()
-
 
 def star():
     pz_list = ['CF', 'SR', 'IO']
