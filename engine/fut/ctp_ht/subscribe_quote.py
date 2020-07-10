@@ -133,15 +133,18 @@ class HuQuote(CtpQuote):
             df = pd.concat([df1, df])
             self.ticks_dict[f.Instrument] = df
         else:
-            # 首次，建文件
-            # df.to_csv(fname, index=False, mode='a')
-            df.to_csv(fname, index=False)
+            # 时段首笔，判断是否需要建文件
+            if os.path.exists(fname):
+                df.to_csv(fname, index=False, mode='a', header=False)
+            else:
+                df.to_csv(fname, index=False)
 
             # 清空df, 建字典键值
             df = df.drop(index=df.index)
             self.ticks_dict[f.Instrument] = df
 
-        if len(df) >= 360:
+        # if len(df) >= 360:
+        if (f.UpdateTime >= '11:29:50' and f.UpdateTime <= '12:00:00') or (f.UpdateTime >= '22:59:50' and f.UpdateTime <= '23:02:59') :
             df.to_csv(fname, index=False, mode='a', header=False)
 
             # 清空df
@@ -165,7 +168,7 @@ class HuQuote(CtpQuote):
                 # 等待首笔Tick品种为白银
                 print('here ', f.Instrument)
                 return
-        
+
         # 夜盘时段，零点前，UpdateDate为当日日期。
         # 夜盘时段，零点后，UpdateDate与tradeDay一致。
         UpdateDate = self.tradeDay[:4] + '-' + self.tradeDay[4:6] + '-' + self.tradeDay[6:8]
@@ -175,7 +178,7 @@ class HuQuote(CtpQuote):
             UpdateDate = self.night_day
 
         # 保存Tick到文件
-        self.save_tick_file(f, UpdateDate)
+        # self.save_tick_file(f, UpdateDate)
         # self.save_tick_file_origin(f, UpdateDate)
 
         # 处理Bar
