@@ -19,7 +19,7 @@ import traceback
 import sys
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
+from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date, get_symbols_trade 
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
@@ -63,8 +63,9 @@ class FutEngine(object):
         # 加载品种
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
-        symbols = setting['symbols_trade']
-        self.vtSymbol_list = symbols.split(',')
+        # symbols = setting['symbols_trade']
+        # self.vtSymbol_list = symbols.split(',')
+        self.vtSymbol_list = get_symbols_trade()
 
         # 初始化组合
         self.portfolio_list = []

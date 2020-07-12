@@ -33,6 +33,39 @@ def get_repo():
     #print(path[:i])
     return path[:i] + 'repo\\'
 
+
+#----------------------------------------------------------------------
+def get_symbols_trade():
+    # 加载品种
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    symbols = setting['symbols_trade']
+    symbols_list = symbols.split(',')
+
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    # today = '2020-07-03'
+
+    # 加载IF、IO
+
+    strike_list = range(3000,6000,100)
+    # print(*strike_list)
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'IO']
+    df2 = df2[df2.flag == 'm0']                 # 筛选出不为空的记录
+    df2 = df2[df2.mature >= today]
+    for io in df2.symbol:
+        cur_IF = 'IF' + io[2:]
+        symbols_list.append(cur_IF)
+        for strike in strike_list:
+            symbols_list.append( io + '-C-' + str(strike) )
+            symbols_list.append( io + '-P-' + str(strike) )
+
+    # print( symbols_list )
+    return symbols_list
+
 #----------------------------------------------------------------------
 def get_symbols_quote():
     symbols_list = []
@@ -40,12 +73,10 @@ def get_symbols_quote():
     today = now.strftime('%Y-%m-%d')
     # today = '2020-07-03'
 
-
-
     try:
         # 加载IF、IO
 
-        strike_list = range(2000,6000,100)
+        strike_list = range(3000,6000,100)
         # print(*strike_list)
 
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
@@ -425,5 +456,5 @@ def bsm_put_imp_vol(S0, K, T, r, C0):
 
 
 if __name__ == '__main__':
-    # get_symbols_quote()
+    get_symbols_trade()
     pass
