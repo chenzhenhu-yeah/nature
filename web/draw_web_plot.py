@@ -118,7 +118,7 @@ def yue():
         # plt.show()
         fn = 'static/yue_' + row.symbol_dual + '.jpg'
         plt.savefig(fn)
-        plt.close()
+        plt.cla()
 
 def dali():
     pz_list = ['m', 'RM', 'MA']
@@ -239,7 +239,7 @@ def star():
         plt.legend()
         fn = 'static/star_' + pz + '.jpg'
         plt.savefig(fn)
-        # plt.show()
+        plt.cla()
 
         # break
 
@@ -272,7 +272,7 @@ def opt():
             # plt.legend()
             fn = 'static/opt_' + filename + '.jpg'
             plt.savefig(fn)
-            # plt.show()
+            plt.cla()
 
             # break
 
@@ -401,7 +401,7 @@ def smile_pz(pz, symbol_list, atm, call):
     plt.grid(True, axis='x')
     plt.legend()
     plt.savefig(fn)
-    plt.close()
+    plt.cla()
 
 def smile():
     """期权微笑曲线"""
@@ -432,61 +432,55 @@ def smile():
 def iv_ts():
     """隐波时序图"""
     now = datetime.now()
-
-    # 本月第一天
-    first_day = datetime(now.year, now.month, 1)
-    # print(first_day)
-    #前一个月最后一天
-    pre_month = first_day - timedelta(days = 1)
-    # print(pre_month)
     today = now.strftime('%Y-%m-%d')
-    pre = pre_month.strftime('%Y-%m-%d')
     # today = '2020-05-29'
 
-    fn = get_dss() + 'opt/' +  pre[:7] + '_greeks.csv'
-    df_pre = pd.read_csv(fn)
-    fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
-    df_today = pd.read_csv(fn)
+    fn = get_dss() + 'opt/iv_atm_' + today[:4] + '.csv'
+    df = pd.read_csv(fn)
 
-    df = pd.concat([df_pre, df_today])
-    df['dt'] = df.Localtime.str.slice(0,13)
-    df = df.set_index('dt')
-    print(df.head())
-    print(df.tail())
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df1 = pd.read_csv(fn)
+    df1 = df1[df1.flag == df1.flag]                 # 筛选出不为空的记录
+    df1 = df1[df1.mature >= today]                  # 过期的合约就不要了
 
-    term_dict = {'IO2007-':['-4200', '-4100', '-4300', '-4400', '-4500'],
-                 'm2009-': ['-2800', '-2750'],
-                 'RM009':['2300', '2350'],
-                 'MA009':['1800', '1850'],
-                 'CF009':['11800', '11200'],
-                }
+    for pz in ['IO']:
+        df2 = df[df.pz == pz]
+        df3 = df1[df1.pz == pz]
 
-    for term in term_dict.keys():
-        for strike in term_dict[term]:
-            symbol = term + 'C' + strike
+        # 画日线图
+        plt.figure(figsize=(12,7))
+        plt.title(today + 'iv_ts_day_' + pz)
+        plt.ylim([0.15,0.5])
+        for symbol in sorted(list(df3['symbol'])):
             # print(symbol)
-            df1 = df[df.Instrument == symbol]
-            df1['iv_call'] = df1.iv
-            # df1 = df1.reset_index()
-            # print(df1)
+            df21 = df2[df2.symbol == symbol]
+            df21 = df21[df21.time == '14:59:00']
+            df21 = df21.set_index('date')
+            # print(df21)
+            plt.plot(df21.iv_a, label=symbol)
 
-            symbol = term + 'P' + strike
+        plt.legend()
+        fn = 'static/iv_ts_day_' + pz + '.jpg'
+        plt.savefig(fn)
+        plt.cla()
+
+        # 画分钟图
+        plt.figure(figsize=(12,7))
+        plt.title(today + 'iv_ts_min5_' + pz)
+        plt.ylim([0.15,0.5])
+        for symbol in sorted(list(df3['symbol'])):
             # print(symbol)
-            df2 = df[df.Instrument == symbol]
-            df2['iv_put'] = df2.iv
-            # df2 = df2.reset_index()
-            # print(df2)
+            df21 = df2[df2.symbol == symbol]
+            df21 = df21.iloc[-240:,:]                    # 5日分时线，每天48个bar
+            df21 = df21.reset_index()
+            # print(df21)
+            plt.plot(df21.iv_a, label=symbol)
 
-            if len(df1) > 0 and len(df2) > 0:
-                plt.figure(figsize=(12,7))
-                plt.plot(df1.iv_call)
-                plt.plot(df2.iv_put)
-                plt.title(today + '_iv_ts_' + term + strike)
+        plt.legend()
+        fn = 'static/iv_ts_min5_' + pz + '.jpg'
+        plt.savefig(fn)
+        plt.cla()
 
-                plt.legend()
-                # plt.show()
-                fn = 'static/iv_ts_' + term + strike + '.jpg'
-                plt.savefig(fn)
 
 
 def hv():
@@ -536,7 +530,7 @@ def hv():
     # plt.show()
     fn = 'static/vol_hv.jpg'
     plt.savefig(fn)
-    plt.close()
+    plt.cla()
 
 
 def vol():
@@ -545,10 +539,10 @@ def vol():
 if __name__ == '__main__':
     pass
     # yue()
-    dali()
+    # dali()
     # opt()
     # mates()
-    smile()
-    # iv_ts()
+    # smile()
+    iv_ts()
     # star()
     # hv()

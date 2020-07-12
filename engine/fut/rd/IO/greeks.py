@@ -199,12 +199,12 @@ def calc_greeks(year):
 
 def test_iv():
     r = 0.03
-    S0 = 3912.577
+    S0 = 4489
 
-    K = 3900
-    T = 12/365
+    K = 4600
+    T = 10/365
 
-    C0 = 71.8
+    C0 = 64.8
     sa = bsm_call_imp_vol(S0, K, T, r, C0)
 
     # C0 = 71.4
@@ -464,11 +464,11 @@ if __name__ == '__main__':
     year = '2020'
     dt = '2020-05-13'
 
-    calc_hv()
+    # calc_hv()
 
     # calc_greeks(year)
 
-    # test_iv()
+    test_iv()
     # test_greeks()
     # export_data(dt)
 

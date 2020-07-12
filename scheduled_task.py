@@ -25,6 +25,7 @@ from nature.engine.fut.risk.examine import examine
 from nature.engine.fut.risk.greeks import calc_greeks
 from nature.engine.fut.risk.sigma import calc_sigma
 from nature.engine.fut.risk.arbitrage import calc_pcp, calc_die
+from nature.engine.fut.risk.iv_atm import calc_iv_atm
 
 
 dss = r'../data/'
@@ -119,6 +120,23 @@ def run_tick2bar():
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
+
+def run_iv():
+    try:
+        now = datetime.datetime.now()
+        today = now.strftime('%Y%m%d')
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            print('\n' + str(now) + " calc_iv_atm begin...")
+            calc_iv_atm()
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " calc_iv_atm end ")
+
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+
 
 def run_pandian():
     try:
@@ -223,7 +241,7 @@ def run_mail_pdf():
             # print(dirname+fn)
 
         # 分主题发送邮件
-        s_list = ['dali', 'yue', 'vol', 'smile', 'star']
+        s_list = ['dali', 'yue', 'vol', 'smile', 'star', 'iv_ts']
         for s in s_list:
             try:
                 time.sleep(3)
@@ -250,10 +268,11 @@ if __name__ == '__main__':
 
         # 盘后
         schedule.every().day.at("15:05").do(run_tick2bar)
+        schedule.every().day.at("15:15").do(run_iv)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
         schedule.every().day.at("15:27").do(run_down_data)
-        schedule.every().day.at("15:28").do(run_mail_pdf)
+        schedule.every().day.at("15:29").do(run_mail_pdf)
         schedule.every().day.at("15:30").do(mail_log)
 
         # schedule.every().day.at("03:30").do(run_examine)

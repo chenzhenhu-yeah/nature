@@ -1,8 +1,15 @@
 #  -*- coding: utf-8 -*-
 import os
+import numpy as np
 import pandas as pd
 import time
 from datetime import datetime
+
+import math
+from math import sqrt, log
+from scipy import stats
+import scipy.stats as si
+
 import json
 from csv import DictReader
 import smtplib
@@ -332,6 +339,89 @@ def is_market_date():
                 r = False
 
     return r
+
+#----------------------------------------------------------------------
+# 欧式看涨期权BSM定价公式
+def bsm_call_value(S0, K, T, r, sigma):
+    """
+    Parameters:
+    ==========
+    S0: float
+        标的物初始价格水平
+    K: float
+       行权价格
+    T: float
+       到期日
+    r: float
+       固定无风险短期利率
+    sigma: float
+       波动因子
+    Returns
+    ==========
+    value: float
+    """
+    # 为避免divide by zero，K T sigma 三个参数不能为零。
+    try:
+        S0 = float(S0)
+        d1 = (np.log(S0 /K) + (r + 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+        d2 = (np.log(S0 /K) + (r - 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+        value = (S0 * stats.norm.cdf(d1, 0, 1) - K * np.exp(-r * T) * stats.norm.cdf(d2, 0, 1))
+    except:
+        value = float('nan')
+        print('divide by zero')
+
+    return value
+
+# print( bsm_call_value(3800, 3900, 30/365, 0.01, 0.18) )
+
+# 欧式看跌期权BSM定价公式
+def bsm_put_value(S0, K, T, r, sigma):
+    put_value = bsm_call_value(S0,K,T,r,sigma) - S0 + math.exp(-r * T) * K
+    return put_value
+
+    # S0 = float(S0)
+    # d1 = (np.log(S0 /K) + (r + 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+    # d2 = (np.log(S0 /K) + (r - 0.5 * sigma**2) * T )/(sigma * np.sqrt(T))
+    # value = K * np.exp(-r * T) * stats.norm.cdf(-d2, 0, 1) - S0 * stats.norm.cdf(-d1, 0, 1)
+    # return value
+
+# print( bsm_put_value(3800, 3900, 30/365, 0.01, 0.18) )
+
+
+# 网上的算法，有些数据下易出错-------------------------------------------------------------------------
+# def bsm_call_imp_vol(S0, K, T, r, C0, sigma_est, it=100):
+#     for i in range(it):
+#         sigma_est -= ((bsm_call_value(S0, K, T, r, sigma_est) - C0)
+#                      / bsm_vega(S0, K, T, r, sigma_est))
+#     return sigma_est
+#
+# def bsm_put_imp_vol(S0, K, T, r, C0, sigma_est, it=100):
+#     for i in range(it):
+#         sigma_est -= ((bsm_put_value(S0, K, T, r, sigma_est) - C0)
+#                      / bsm_vega(S0, K, T, r, sigma_est))
+#     return sigma_est
+
+# 自己设计的新算法------------------------------------------------------------------------------------
+def bsm_call_imp_vol(S0, K, T, r, C0):
+    sigma = 0.1
+    for i in range(100, 10000, 10):
+        sigma = i / 1E4
+        bsm = bsm_call_value(S0, K, T, r, sigma)
+        # print(sigma, bsm)
+        if bsm >= C0:
+            break
+
+    return sigma
+
+def bsm_put_imp_vol(S0, K, T, r, C0):
+    sigma = 0.1
+    for i in range(100, 10000, 10):
+        sigma = i / 1E4
+        bsm = bsm_put_value(S0, K, T, r, sigma)
+        if bsm >= C0:
+            break
+
+    return sigma
 
 
 if __name__ == '__main__':
