@@ -6,7 +6,7 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 import traceback
 
-from nature import to_log, get_dss, get_contract, send_email
+from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
 
@@ -43,8 +43,6 @@ class Fut_DaLiSignal(Signal):
         self.can_short = False
         self.pnl = 0
         self.first = True
-
-        self.counter = 0
 
         Signal.__init__(self, portfolio, vtSymbol)
 
@@ -156,10 +154,6 @@ class Fut_DaLiSignal(Signal):
             to_log(self.vtSymbol + ' 已跌停，该品种dali策略暂停交易')
 
         if self.paused == True and self.backtest == False:
-            self.counter += 1
-            if self.counter == 3:
-                send_email(get_dss(), self.vtSymbol + ' 挂单未成交！！！', '')
-
             return
 
         self.calculateIndicator()     # 计算指标
@@ -181,7 +175,6 @@ class Fut_DaLiSignal(Signal):
                 b = False
         if b == True:
             self.paused = False
-            self.counter = 0
 
         self.lock.release()
         # print(self.order_list)
@@ -490,7 +483,6 @@ class Fut_DaLiSignal(Signal):
                 df.to_csv(filename, index=False, mode='a', header=False)
             else:
                 df.to_csv(filename, index=False)
-
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
