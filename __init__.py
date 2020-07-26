@@ -52,6 +52,7 @@ from nature.engine.fut.engine.fut_strategyCci_Raw import Fut_Cci_RawPortfolio
 from nature.engine.fut.engine.fut_strategyCci_Enhance import Fut_Cci_EnhancePortfolio
 from nature.engine.fut.engine.fut_strategyIc import Fut_IcPortfolio
 from nature.engine.fut.engine.fut_strategyYue import Fut_YuePortfolio
+from nature.engine.fut.engine.fut_strategyAvenger import Fut_AvengerPortfolio
 
 from nature.engine.fut.rd.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.rd.opt_short_put import Opt_Short_PutPortfolio

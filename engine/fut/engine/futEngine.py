@@ -19,7 +19,7 @@ import traceback
 import sys
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date, get_symbols_trade 
+from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date, get_symbols_trade
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
@@ -29,6 +29,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
+from nature import Fut_AvengerPortfolio
 
 #from ipdb import set_trace
 
@@ -150,6 +151,19 @@ class FutEngine(object):
                 for i, row in df.iterrows():
                     if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
                         self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
+
+        if 'symbols_avenger' in setting:
+            symbols = setting['symbols_avenger']
+            if len(symbols) > 0:
+                avenger_symbol_list = symbols.split(',')
+            else:
+                avenger_symbol_list = []
+            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

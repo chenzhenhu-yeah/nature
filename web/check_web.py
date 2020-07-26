@@ -9,7 +9,7 @@ import tushare as ts
 import json
 import os
 
-from nature import get_dss
+from nature import get_dss, get_symbols_trade
 
 def del_blank(c):
     s = str(c).strip()
@@ -142,11 +142,8 @@ def check_symbols_p(key, value):
 
     # 判读策略将交易的品种是否在symbols_trade中维护
     if key not in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12','symbols_trade','gateway_pz','gateway_pf']:
-        config = open(get_dss() + 'fut/cfg/config.json')
-        setting = json.load(config)
-        symbols = setting['symbols_trade']
-        symbols_trade_list = symbols.split(',')
         if len(value) > 0:
+            symbols_trade_list = get_symbols_trade()
             symbol_list = value.split(',')
             for symbol in symbol_list:
                 if symbol not in  symbols_trade_list:
