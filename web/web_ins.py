@@ -358,6 +358,42 @@ def opt_book():
 
     return render_template("opt_book.html",tip=tips,rows=r)
 
+@app.route('/market_date', methods=['get','post'])
+def market_date():
+    filename = get_dss() + 'fut/engine/market_date.csv'
+    if request.method == "POST":
+        date = del_blank( request.form.get('date') )
+        morning = del_blank( request.form.get('morning') )
+        night = del_blank( request.form.get('night') )
+
+        kind = request.form.get('kind')
+
+        r = [[date,morning,night]]
+        cols = ['date','morning','night']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.date != date ]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.date != date ]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    df = df.sort_values(by='date')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("market_date.html",title="market_date",rows=r)
+
 @app.route('/value_p_csv', methods=['get','post'])
 def value_p_csv():
     fn = get_dss() + 'fut/engine/value_p.csv'

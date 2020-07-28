@@ -193,13 +193,13 @@ class Gateway_Ht_CTP(object):
         if exchangeID == '':
             return
 
-        self.lock.acquire()
-
         try:
             now = datetime.now()
             now = now.strftime('%H:%M')
-            if now in ['10:14', '10:15', '10:16']:
+            if now in ['10:14', '10:15', '10:16'] and code[:2] not in ['IF', 'IO']:
                 time.sleep(960)
+
+            self.lock.acquire()
 
             # 对价格四舍五入
             priceTick = get_contract(code).price_tick

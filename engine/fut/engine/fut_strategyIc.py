@@ -15,7 +15,7 @@ class Fut_IcSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
-        self.type = 'mix' 
+        self.type = 'mix'
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
@@ -108,9 +108,12 @@ class Fut_IcSignal(Signal):
     #----------------------------------------------------------------------
     def open(self, price, change):
         pass
+        # print('come here open !')
+
     #----------------------------------------------------------------------
-    def close(self, price):
+    def close(self, price, change):
         pass
+        # print('come here close !')
 
 ########################################################################
 class Fut_IcPortfolio(Portfolio):

@@ -19,7 +19,7 @@ from multiprocessing.connection import Client
 import traceback
 
 from nature import SOCKET_BAR
-from nature import to_log, is_trade_day, send_email, get_dss
+from nature import to_log, is_trade_day, send_email, get_dss, get_symbols_trade
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
 
@@ -28,6 +28,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
+from nature import Fut_AvengerPortfolio
 
 #from ipdb import set_trace
 
@@ -48,15 +49,17 @@ class FutEngine(object):
         self.portfolio_list = []           # 组合
         self.vtSymbol_list = []            # 品种
 
-        self.dataDict = OrderedDict()
+        # self.dataDict = OrderedDict()
+        self.dataDict = {}
         self.startDt = None
         self.endDt = None
 
         # 加载品种
-        config = open(get_dss()+'fut/cfg/config.json')
-        setting = json.load(config)
-        symbols = setting['symbols_trade']
-        self.vtSymbol_list = symbols.split(',')
+        # config = open(get_dss()+'fut/cfg/config.json')
+        # setting = json.load(config)
+        # symbols = setting['symbols_trade']
+        # self.vtSymbol_list = symbols.split(',')
+        self.vtSymbol_list = get_symbols_trade()
 
     #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
@@ -80,11 +83,11 @@ class FutEngine(object):
         #         rsiboll_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
-        if 'symbols_dali' in setting:
-            symbols = setting['symbols_dali']
-            if len(symbols) > 0:
-                dali_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+        # if 'symbols_dali' in setting:
+        #     symbols = setting['symbols_dali']
+        #     if len(symbols) > 0:
+        #         dali_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
         # if 'symbols_dalicta' in setting:
         #     symbols = setting['symbols_dalicta']
@@ -144,6 +147,19 @@ class FutEngine(object):
         #             if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
         #                 self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
+        if 'symbols_avenger' in setting:
+            symbols = setting['symbols_avenger']
+            if len(symbols) > 0:
+                avenger_symbol_list = symbols.split(',')
+            else:
+                avenger_symbol_list = []
+            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
         """加载投资组合"""
@@ -155,36 +171,45 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
+
         for vtSymbol in self.vtSymbol_list:
-            filename = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
+            # test_list = ['IF2008','IO2008-C-4600','IO2008-P-4600']
+            # if vtSymbol in test_list:
 
-            df = pd.read_csv(filename)
-            for i, d in df.iterrows():
-                #print(d)
+                fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
+                if os.path.exists(fn):
+                    df = pd.read_csv(fn)
+                    for i, d in df.iterrows():
+                        #print(d)
 
-                bar = VtBarData()
-                bar.vtSymbol = vtSymbol
-                bar.symbol = vtSymbol
-                bar.open = float(d['open'])
-                bar.high = float(d['high'])
-                bar.low = float(d['low'])
-                bar.close = float(d['close'])
-                bar.volume = d['volume']
+                        bar = VtBarData()
+                        bar.vtSymbol = vtSymbol
+                        bar.symbol = vtSymbol
+                        bar.open = float(d['open'])
+                        bar.high = float(d['high'])
+                        bar.low = float(d['low'])
+                        bar.close = float(d['close'])
+                        bar.volume = d['volume']
 
-                date = str(d['date'])
-                bar.date = date
-                bar.time = str(d['time'])
-                if '-' in date:
-                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
-                else:
-                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+                        date = str(d['date'])
+                        bar.date = date
+                        bar.time = str(d['time'])
+                        if '-' in date:
+                            bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y-%m-%d %H:%M:%S')
+                        else:
+                            bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
 
-                bar.datetime = datetime.strftime(bar.datetime, '%Y-%m-%d %H:%M:%S')
+                        bar.datetime = datetime.strftime(bar.datetime, '%Y-%m-%d %H:%M:%S')
 
-                barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
-                barDict[bar.vtSymbol] = bar
+                        # barDict = self.dataDict.setdefault(bar.datetime, OrderedDict())
+                        # barDict[bar.vtSymbol] = bar
+                        if bar.datetime in self.dataDict:
+                            self.dataDict[bar.datetime][bar.vtSymbol] = bar
+                        else:
+                            self.dataDict[bar.datetime] = {}
+                            self.dataDict[bar.datetime][bar.vtSymbol] = bar
 
-                # break
+                        # break
 
     # -----------------------------------------------------------
     def run_playback(self):
@@ -193,32 +218,36 @@ class FutEngine(object):
         g30 = BarGenerator('min30')
         gday = BarGenerator('day')
 
-        for dt, barDict in self.dataDict.items():
+        dt_list = sorted(self.dataDict.keys())
+
+        # for dt, barDict in self.dataDict.items():
+        for dt in dt_list:
+            barDict = self.dataDict[dt]
             #print(dt)
             if dt < self.startDt or dt > self.endDt:
                 continue
-            #print(dt)
+            # print(dt)
             try:
                 for bar in barDict.values():
 
-                    bar_day = gday.update_bar(bar)
-                    if bar_day is not None:
-                        #gday.save_bar(bar_day)
-                        for p in self.portfolio_list:
-                            p.onBar(bar_day, 'day')
-
-
-                    bar_min30 = g30.update_bar(bar)
-                    if bar_min30 is not None:
-                        #g30.save_bar(bar_min30)
-                        for p in self.portfolio_list:
-                            p.onBar(bar_min30, 'min30')
-
-                    bar_min15 = g15.update_bar(bar)
-                    if bar_min15 is not None:
-                        #g15.save_bar(bar_min5)
-                        for p in self.portfolio_list:
-                            p.onBar(bar_min15, 'min15')
+                    # bar_day = gday.update_bar(bar)
+                    # if bar_day is not None:
+                    #     #gday.save_bar(bar_day)
+                    #     for p in self.portfolio_list:
+                    #         p.onBar(bar_day, 'day')
+                    #
+                    #
+                    # bar_min30 = g30.update_bar(bar)
+                    # if bar_min30 is not None:
+                    #     #g30.save_bar(bar_min30)
+                    #     for p in self.portfolio_list:
+                    #         p.onBar(bar_min30, 'min30')
+                    #
+                    # bar_min15 = g15.update_bar(bar)
+                    # if bar_min15 is not None:
+                    #     #g15.save_bar(bar_min5)
+                    #     for p in self.portfolio_list:
+                    #         p.onBar(bar_min15, 'min15')
 
                     bar_min5 = g5.update_bar(bar)
                     if bar_min5 is not None:
@@ -312,8 +341,8 @@ def start():
     print(u'期货交易引擎开始回放')
 
     # start_date = '2019-12-01 09:00:00'
-    start_date = '2020-04-24 09:00:00'
-    end_date   = '2020-04-24 15:00:00'
+    start_date = '2020-07-24 09:00:00'
+    end_date   = '2020-07-24 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

@@ -11,7 +11,7 @@ from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, Signal
 
 
 ########################################################################
-class Fut_AvengerSignal(Signal):
+class Fut_FollowSignal(Signal):
 
     #----------------------------------------------------------------------
     def __init__(self, portfolio, vtSymbol):
@@ -89,7 +89,7 @@ class Fut_AvengerSignal(Signal):
         r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.can_buy,self.can_sell,self.can_short,self.can_cover]]
         df = pd.DataFrame(r)
 
-        filename = get_dss() +  'fut/engine/avenger/bar_avenger_'+self.type+ '_' + self.vtSymbol + '.csv'
+        filename = get_dss() +  'fut/engine/follow/bar_follow_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
         else:
@@ -116,7 +116,7 @@ class Fut_AvengerSignal(Signal):
 
     #----------------------------------------------------------------------
     def load_var(self):
-        fn = get_dss() +  'fut/engine/avenger/signal_avenger_var.csv'
+        fn = get_dss() +  'fut/engine/follow/signal_follow_var.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             df = df[df.vtSymbol == self.vtSymbol]
@@ -160,7 +160,7 @@ class Fut_AvengerSignal(Signal):
 
         if r != []:
             df = pd.DataFrame(r, columns=['datetime','vtSymbol','price','hold','profit'])
-            fn = get_dss() +  'fut/engine/avenger/signal_avenger_var.csv'
+            fn = get_dss() +  'fut/engine/follow/signal_follow_var.csv'
             if os.path.exists(fn):
                 df.to_csv(fn, index=False, mode='a', header=False)
             else:
@@ -178,11 +178,11 @@ class Fut_AvengerSignal(Signal):
         # print('come here close !')
 
 ########################################################################
-class Fut_AvengerPortfolio(Portfolio):
+class Fut_FollowPortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
-        self.name = 'avenger'
+        self.name = 'follow'
 
         assert len(symbol_list) == 3
         self.symbol_o = symbol_list[0]
@@ -211,7 +211,7 @@ class Fut_AvengerPortfolio(Portfolio):
 
         self.switch_state = 'off'
         pz = str(get_contract(self.symbol_c).pz)
-        fn = get_dss() +  'fut/engine/avenger/avenger_switch_' + pz + '.csv'
+        fn = get_dss() +  'fut/engine/follow/follow_switch_' + pz + '.csv'
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             if len(df) > 0:
@@ -222,7 +222,7 @@ class Fut_AvengerPortfolio(Portfolio):
                     df2 = pd.DataFrame([rec])
                     df2.to_csv(fn, index=False)                      # 回写文件
 
-        Portfolio.__init__(self, Fut_AvengerSignal, engine, symbol_list, signal_param)
+        Portfolio.__init__(self, Fut_FollowSignal, engine, symbol_list, signal_param)
 
 #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):

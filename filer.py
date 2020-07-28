@@ -4,8 +4,10 @@ from multiprocessing.connection import Client
 import pandas as pd
 import time
 import json
+import traceback
 
 from nature import SOCKET_FILER
+from nature import to_log
 
 dss = '../data/'
 address = ('localhost', SOCKET_FILER)
@@ -96,5 +98,9 @@ if __name__ == "__main__":
     except Exception as e:
         print('error')
         print(e)
+
+        s = traceback.format_exc()
+        to_log(s)
+
         while True:
             time.sleep(300)

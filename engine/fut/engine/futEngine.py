@@ -67,6 +67,7 @@ class FutEngine(object):
         # symbols = setting['symbols_trade']
         # self.vtSymbol_list = symbols.split(',')
         self.vtSymbol_list = get_symbols_trade()
+        print(self.vtSymbol_list)
 
         # 初始化组合
         self.portfolio_list = []
@@ -225,47 +226,48 @@ class FutEngine(object):
             for id in self.vtSymbol_list:
                 try:
                     fname = self.dss + 'fut/put/min1_' + id + '.csv'
-                    #print(fname)
-                    df = pd.read_csv(fname)
-                    d = dict(df.loc[0,:])
-                    #print(d)
-                    #print(type(d))
-                    bar = VtBarData()
-                    bar.__dict__ = d
-                    bar.vtSymbol = id
-                    bar.symbol = id
+                    if os.path.exists(fname):
+                        # print(fname)
+                        df = pd.read_csv(fname)
+                        d = dict(df.loc[0,:])
+                        #print(d)
+                        #print(type(d))
+                        bar = VtBarData()
+                        bar.__dict__ = d
+                        bar.vtSymbol = id
+                        bar.symbol = id
 
-                    if id not in vtSymbol_dict:
-                        vtSymbol_dict[id] = bar
-                    elif vtSymbol_dict[id].time != bar.time:
-                        vtSymbol_dict[id] = bar
+                        if id not in vtSymbol_dict:
+                            vtSymbol_dict[id] = bar
+                        elif vtSymbol_dict[id].time != bar.time:
+                            vtSymbol_dict[id] = bar
 
-                        bar_day = gday.update_bar(bar)
-                        if bar_day is not None:
-                            gday.save_bar(bar_day)
+                            bar_day = gday.update_bar(bar)
+                            if bar_day is not None:
+                                gday.save_bar(bar_day)
+                                for p in self.portfolio_list:
+                                    p.onBar(bar_day, 'day')
+
+                            bar_min30 = g30.update_bar(bar)
+                            if bar_min30 is not None:
+                                g30.save_bar(bar_min30)
+                                for p in self.portfolio_list:
+                                    p.onBar(bar_min30, 'min30')
+
+                            bar_min15 = g15.update_bar(bar)
+                            if bar_min15 is not None:
+                                g15.save_bar(bar_min15)
+                                for p in self.portfolio_list:
+                                    p.onBar(bar_min15, 'min15')
+
+                            bar_min5 = g5.update_bar(bar)
+                            if bar_min5 is not None:
+                                g5.save_bar(bar_min5)
+                                for p in self.portfolio_list:
+                                    p.onBar(bar_min5, 'min5')
+
                             for p in self.portfolio_list:
-                                p.onBar(bar_day, 'day')
-
-                        bar_min30 = g30.update_bar(bar)
-                        if bar_min30 is not None:
-                            g30.save_bar(bar_min30)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min30, 'min30')
-
-                        bar_min15 = g15.update_bar(bar)
-                        if bar_min15 is not None:
-                            g15.save_bar(bar_min15)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min15, 'min15')
-
-                        bar_min5 = g5.update_bar(bar)
-                        if bar_min5 is not None:
-                            g5.save_bar(bar_min5)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min5, 'min5')
-
-                        for p in self.portfolio_list:
-                            p.onBar(bar, 'min1')
+                                p.onBar(bar, 'min1')
 
                 except Exception as e:
                     # 对文件并发访问，存着读空文件的可能！！！
@@ -321,7 +323,7 @@ class FutEngine(object):
         priceTick = get_contract(vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
 
-        if self.gateway is not None:
+        if self.gateway is not None:            
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
             threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
 

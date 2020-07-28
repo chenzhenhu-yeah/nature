@@ -135,9 +135,13 @@ class Fut_YueSignal(Signal):
     #----------------------------------------------------------------------
     def open(self, price, change):
         pass
+        # print('come here open !')
+
     #----------------------------------------------------------------------
-    def close(self, price):
+    def close(self, price, change):
         pass
+        # print('come here close !')
+
 
 ########################################################################
 class Fut_YuePortfolio(Portfolio):
