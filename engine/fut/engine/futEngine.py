@@ -72,11 +72,11 @@ class FutEngine(object):
         # 初始化组合
         self.portfolio_list = []
 
-        if 'symbols_rsiboll' in setting:
-            symbols = setting['symbols_rsiboll']
-            if len(symbols) > 0:
-                rsiboll_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
+        # if 'symbols_rsiboll' in setting:
+        #     symbols = setting['symbols_rsiboll']
+        #     if len(symbols) > 0:
+        #         rsiboll_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
         # if 'symbols_cciboll' in setting:
         #     symbols = setting['symbols_cciboll']
@@ -90,12 +90,12 @@ class FutEngine(object):
                 dali_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
-        if 'symbols_dalicta' in setting:
-            symbols = setting['symbols_dalicta']
-            if len(symbols) > 0:
-                dalicta_symbol_list = symbols.split(',')
-                for symbol in dalicta_symbol_list:
-                    self.loadPortfolio(Fut_DaLictaPortfolio, [symbol])
+        # if 'symbols_dalicta' in setting:
+        #     symbols = setting['symbols_dalicta']
+        #     if len(symbols) > 0:
+        #         dalicta_symbol_list = symbols.split(',')
+        #         for symbol in dalicta_symbol_list:
+        #             self.loadPortfolio(Fut_DaLictaPortfolio, [symbol])
 
         # if 'symbols_atrrsi' in setting:
         #     symbols = setting['symbols_atrrsi']
@@ -103,11 +103,11 @@ class FutEngine(object):
         #         atrrsi_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_AtrRsiPortfolio, atrrsi_symbol_list)
 
-        if 'symbols_turtle' in setting:
-            symbols = setting['symbols_turtle']
-            if len(symbols) > 0:
-                turtle_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
+        # if 'symbols_turtle' in setting:
+        #     symbols = setting['symbols_turtle']
+        #     if len(symbols) > 0:
+        #         turtle_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_TurtlePortfolio, turtle_symbol_list)
 
         if 'symbols_owl' in setting:
             symbols = setting['symbols_owl']
@@ -115,17 +115,17 @@ class FutEngine(object):
                 owl_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_OwlPortfolio, owl_symbol_list)
 
-        if 'symbols_aberration_enhance' in setting:
-            symbols = setting['symbols_aberration_enhance']
-            if len(symbols) > 0:
-                aberration_enhance_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
-
-        if 'symbols_cci_raw' in setting:
-            symbols = setting['symbols_cci_raw']
-            if len(symbols) > 0:
-                cci_raw_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
+        # if 'symbols_aberration_enhance' in setting:
+        #     symbols = setting['symbols_aberration_enhance']
+        #     if len(symbols) > 0:
+        #         aberration_enhance_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Aberration_EnhancePortfolio, aberration_enhance_symbol_list)
+        #
+        # if 'symbols_cci_raw' in setting:
+        #     symbols = setting['symbols_cci_raw']
+        #     if len(symbols) > 0:
+        #         cci_raw_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
 
         if 'symbols_ic' in setting:
             symbols = setting['symbols_ic']
@@ -153,18 +153,19 @@ class FutEngine(object):
                     if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
                         self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
-        if 'symbols_avenger' in setting:
-            symbols = setting['symbols_avenger']
-            if len(symbols) > 0:
-                avenger_symbol_list = symbols.split(',')
-            else:
-                avenger_symbol_list = []
-            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
-                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+        if self.seq_tm == 'morning':
+            if 'symbols_avenger' in setting:
+                symbols = setting['symbols_avenger']
+                if len(symbols) > 0:
+                    avenger_symbol_list = symbols.split(',')
+                else:
+                    avenger_symbol_list = []
+                fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+                if os.path.exists(fn):
+                    df = pd.read_csv(fn)
+                    for i, row in df.iterrows():
+                        if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+                            self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
@@ -323,7 +324,7 @@ class FutEngine(object):
         priceTick = get_contract(vtSymbol).price_tick
         price = int(round(price/priceTick, 0)) * priceTick
 
-        if self.gateway is not None:            
+        if self.gateway is not None:
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
             threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
 
