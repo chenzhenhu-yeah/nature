@@ -28,7 +28,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
-from nature import Fut_AvengerPortfolio
+from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio
 
 #from ipdb import set_trace
 
@@ -147,18 +147,24 @@ class FutEngine(object):
         #             if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
         #                 self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
-        if 'symbols_avenger' in setting:
-            symbols = setting['symbols_avenger']
+        if 'symbols_follow' in setting:
+            symbols = setting['symbols_follow']
             if len(symbols) > 0:
-                avenger_symbol_list = symbols.split(',')
-            else:
-                avenger_symbol_list = []
-            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
-                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+                dali_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
+
+        # if 'symbols_avenger' in setting:
+        #     symbols = setting['symbols_avenger']
+        #     if len(symbols) > 0:
+        #         avenger_symbol_list = symbols.split(',')
+        #     else:
+        #         avenger_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+        #                 self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -274,7 +280,7 @@ class FutEngine(object):
     def _bc_loadInitBar(self, vtSymbol, initBars, minx):
         """反调函数，因引擎知道数据在哪，初始化Bar数据，"""
 
-        assert minx != 'min1'
+        # assert minx != 'min1'
 
         r = []
         # 直接读取signal对应minx相关的文件。
@@ -283,7 +289,7 @@ class FutEngine(object):
             df = pd.read_csv(fn)
             df['datetime'] = df['date'] + ' ' + df['time']
             df = df[df.datetime < self.startDt]
-            print(vtSymbol, len(df), minx)
+            # print(vtSymbol, len(df), minx)
             assert len(df) >= initBars
 
             df = df.sort_values(by=['date','time'])

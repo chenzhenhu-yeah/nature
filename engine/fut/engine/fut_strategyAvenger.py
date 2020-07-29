@@ -73,10 +73,12 @@ class Fut_AvengerSignal(Signal):
         # 告知组合层，已获得最新行情
         self.portfolio.got_dict[self.vtSymbol] = True
 
-        if self.vtSymbol == self.portfolio.symbol_c and self.portfolio.hold_c != 0:
+        # if self.vtSymbol == self.portfolio.symbol_c and self.portfolio.hold_c != 0:
+        if self.vtSymbol == self.portfolio.symbol_c:
             self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
 
-        if self.vtSymbol == self.portfolio.symbol_p and self.portfolio.hold_p != 0:
+        # if self.vtSymbol == self.portfolio.symbol_p and self.portfolio.hold_p != 0:
+        if self.vtSymbol == self.portfolio.symbol_p:
             self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
 
         self.can_buy = False
@@ -129,8 +131,8 @@ class Fut_AvengerSignal(Signal):
                     self.portfolio.hold_o = rec.hold
                     self.portfolio.profit_o = rec.profit
 
-                    self.price_o_high = 1.01 * rec.price
-                    self.price_o_low  = 0.99 * rec.price
+                    self.portfolio.price_o_high = 1.01 * rec.price
+                    self.portfolio.price_o_low  = 0.99 * rec.price
 
                 if self.vtSymbol == self.portfolio.symbol_c:
                     self.portfolio.price_c = rec.price
@@ -253,7 +255,7 @@ class Fut_AvengerPortfolio(Portfolio):
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
 
-        if self.got_dict[self.symbol_o] == True and self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
+        if bar.time > '09:35:00' and self.got_dict[self.symbol_o] == True and self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
             s_o = self.signalDict[self.symbol_o][0]
             s_c = self.signalDict[self.symbol_c][0]
             s_p = self.signalDict[self.symbol_p][0]

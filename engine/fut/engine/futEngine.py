@@ -29,7 +29,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
-from nature import Fut_AvengerPortfolio
+from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio
 
 #from ipdb import set_trace
 
@@ -154,6 +154,12 @@ class FutEngine(object):
                         self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
         if self.seq_tm == 'morning':
+            if 'symbols_follow' in setting:
+                symbols = setting['symbols_follow']
+                if len(symbols) > 0:
+                    dali_symbol_list = symbols.split(',')
+                    self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
+
             if 'symbols_avenger' in setting:
                 symbols = setting['symbols_avenger']
                 if len(symbols) > 0:
