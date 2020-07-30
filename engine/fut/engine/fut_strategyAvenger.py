@@ -226,7 +226,19 @@ class Fut_AvengerPortfolio(Portfolio):
 
         Portfolio.__init__(self, Fut_AvengerSignal, engine, symbol_list, signal_param)
 
-#----------------------------------------------------------------------
+    #----------------------------------------------------------------------
+    def rec_profit(self, dt, tm, price_o, price_c, price_p, note):    
+        r = [[dt, tm, price_o, price_c, self.hold_c, self.price_c, self.profit_c, price_p, self.hold_p, self.price_p, self.profit_p, note, 60, self.profit_c + self.profit_p]]
+        df = pd.DataFrame(r, columns=['date','time','price_o','price_c','hold_c','cost_c','profit_c','price_p','hold_p','cost_p','profit_p','note','commission','profit'])
+        pz = str(get_contract(self.symbol_c).pz)
+        fn = get_dss() +  'fut/engine/avenger/portfolio_profit_' + pz + '.csv'
+        if os.path.exists(fn):
+            df.to_csv(fn, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn, index=False)
+
+
+    #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
 
@@ -275,25 +287,29 @@ class Fut_AvengerPortfolio(Portfolio):
                 self.hold_c = -1
                 self.hold_p = -1
 
-                self.profit_o = (self.price_c + self.price_p) / 2    # 止盈止损点
+                self.profit_o = self.price_c + self.price_p          # 止盈止损点
                 self.switch_state = 'off'                            # 不再开仓
 
-            # 盈亏离场
-            elif abs(self.profit_c + self.profit_p) > self.profit_o:
-                if self.hold_c == -1 and self.hold_p == -1:
-                    s_c.cover(s_c.bar.AskPrice, 1)                  # 挂卖价
-                    s_p.cover(s_p.bar.AskPrice, 1)                  # 挂卖价
-                    self.hold_c = 0
-                    self.hold_p = 0
-                if self.hold_c == 0 and self.hold_p == -2:
-                    s_p.cover(s_p.bar.AskPrice, 2)                  # 挂卖价
-                    self.hold_p = 0
-                if self.hold_c == -2 and self.hold_p == 0:
-                    s_c.cover(s_c.bar.AskPrice, 2)                  # 挂卖价
-                    self.hold_c = 0
+                self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '开仓')
 
             # 已持仓
             elif self.hold_c != 0 or self.hold_p != 0:
+                # 盈亏离场 或 无剩余价值离场
+                if abs(self.profit_c + self.profit_p) > 0.5*self.profit_o or abs(self.hold_c*s_c.bar.close + self.hold_p*s_p.bar.close) <= 3:
+                    if self.hold_c == -1 and self.hold_p == -1:
+                        s_c.cover(s_c.bar.AskPrice, 1)                  # 挂卖价
+                        s_p.cover(s_p.bar.AskPrice, 1)                  # 挂卖价
+                        self.hold_c = 0
+                        self.hold_p = 0
+                    if self.hold_c == 0 and self.hold_p == -2:
+                        s_p.cover(s_p.bar.AskPrice, 2)                  # 挂卖价
+                        self.hold_p = 0
+                    if self.hold_c == -2 and self.hold_p == 0:
+                        s_c.cover(s_c.bar.AskPrice, 2)                  # 挂卖价
+                        self.hold_c = 0
+
+                    self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '清仓')
+
                 # 复仇
                 if self.hold_c == -1 and self.hold_p == -1:
                     # 上涨1%
@@ -306,6 +322,8 @@ class Fut_AvengerPortfolio(Portfolio):
                         self.hold_c = 0
                         self.hold_p = -2
 
+                        self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '上涨复仇')
+
                     # 下跌1%
                     if s_o.bar.close < self.price_o_low:
                         s_p.cover(s_p.bar.AskPrice, 1)                  # 挂卖价
@@ -315,6 +333,8 @@ class Fut_AvengerPortfolio(Portfolio):
                         self.price_c = (s_c.bar.BidPrice + self.price_c) / 2
                         self.hold_p = 0
                         self.hold_c = -2
+
+                        self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '下跌复仇')
 
                 # 复仇失败，上涨后又回原点
                 if self.hold_c == 0 and self.hold_p == -2 and s_o.bar.close < self.price_o:
@@ -326,6 +346,8 @@ class Fut_AvengerPortfolio(Portfolio):
                     self.hold_p = -1
                     self.hold_c = -1
 
+                    self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '复仇失败')
+
 
                 # 复仇失败，下跌后又回原点
                 if self.hold_c == -2 and self.hold_p == 0 and s_o.bar.close > self.price_o:
@@ -335,6 +357,8 @@ class Fut_AvengerPortfolio(Portfolio):
                     self.price_c = 2*self.price_c - s_c.bar.AskPrice
                     self.hold_p = -1
                     self.hold_c = -1
+
+                    self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '复仇失败')
 
 
             self.got_dict[self.symbol_o] = False

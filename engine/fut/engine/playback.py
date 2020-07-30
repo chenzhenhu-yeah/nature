@@ -153,18 +153,18 @@ class FutEngine(object):
                 dali_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
 
-        # if 'symbols_avenger' in setting:
-        #     symbols = setting['symbols_avenger']
-        #     if len(symbols) > 0:
-        #         avenger_symbol_list = symbols.split(',')
-        #     else:
-        #         avenger_symbol_list = []
-        #     fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
-        #     if os.path.exists(fn):
-        #         df = pd.read_csv(fn)
-        #         for i, row in df.iterrows():
-        #             if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
-        #                 self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+        if 'symbols_avenger' in setting:
+            symbols = setting['symbols_avenger']
+            if len(symbols) > 0:
+                avenger_symbol_list = symbols.split(',')
+            else:
+                avenger_symbol_list = []
+            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):

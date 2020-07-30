@@ -97,7 +97,6 @@ class Fut_FollowSignal(Signal):
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
-
         # 开多仓
         if self.can_buy == True:
             self.buy(bar.close, self.fixedSize)
@@ -178,6 +177,16 @@ class Fut_FollowPortfolio(Portfolio):
 
         Portfolio.__init__(self, Fut_FollowSignal, engine, symbol_list, signal_param)
 
+#----------------------------------------------------------------------
+    def rec_profit(self, dt, tm, price_o, price_c, price_p, note):
+        r = [[dt, tm, price_o, price_c, self.hold_c, self.price_c, self.profit_c, price_p, self.hold_p, self.price_p, self.profit_p, note, 60, self.profit_c + self.profit_p]]
+        df = pd.DataFrame(r, columns=['date','time','price_o','price_c','hold_c','cost_c','profit_c','price_p','hold_p','cost_p','profit_p','note','commission','profit'])
+        pz = str(get_contract(self.symbol_c).pz)
+        fn = get_dss() +  'fut/engine/follow/portfolio_profit_' + pz + '.csv'
+        if os.path.exists(fn):
+            df.to_csv(fn, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn, index=False)
 
 #----------------------------------------------------------------------
     def get_open_signal(self):
@@ -227,15 +236,24 @@ class Fut_FollowPortfolio(Portfolio):
 
                 s_c = self.signalDict[self.symbol_c][0]
                 s_p = self.signalDict[self.symbol_p][0]
-                s_c.short(s_c.bar.close, 1)
-                s_p.short(s_p.bar.close, 1)
+
+                if self.engine.type == 'backtest':
+                    s_c.short(s_c.bar.close, 1)
+                    s_p.short(s_p.bar.close, 1)
+                else:
+                    s_c.short(s_c.bar.BidPrice, 1)                     # 挂买价
+                    s_p.short(s_p.bar.BidPrice, 1)                     # 挂买价
 
                 self.got_dict[self.symbol_o] = False
                 self.got_dict[self.symbol_c] = False
                 self.got_dict[self.symbol_p] = False
 
-                self.price_c = s_c.bar.close
-                self.price_p = s_p.bar.close
+                if self.engine.type == 'backtest':
+                    self.price_c = s_c.bar.close
+                    self.price_p = s_p.bar.close
+                else:
+                    self.price_c = s_c.bar.BidPrice
+                    self.price_p = s_p.bar.BidPrice
 
                 self.hold_c = -1
                 self.hold_p = -1
@@ -247,7 +265,9 @@ class Fut_FollowPortfolio(Portfolio):
                 fn = get_dss() +  'fut/engine/follow/follow_switch.csv'
                 df2.to_csv(fn, index=False)                          # 回写文件
 
-            if self.symbol_c != '' and self.symbol_p != '' :
+                self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '开仓')
+
+            if self.hold_c == -1 and self.hold_p == -1 :
                 if self.got_dict[self.symbol_o] == True and self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
                     self.got_dict[self.symbol_o] = False
                     self.got_dict[self.symbol_c] = False
@@ -257,25 +277,41 @@ class Fut_FollowPortfolio(Portfolio):
                     s_c = self.signalDict[self.symbol_c][0]
                     s_p = self.signalDict[self.symbol_p][0]
 
-                    # 盈亏离场
-                    if self.profit_c + self.profit_p > 0.5*self.profit_o or self.profit_c + self.profit_p < -0.3*self.profit_o :
-                        s_c.cover(s_c.bar.close, 1)
-                        s_p.cover(s_p.bar.close, 1)
-                        # s_c.cover(s_c.bar.AskPrice, 1)                  # 挂卖价
-                        # s_p.cover(s_p.bar.AskPrice, 1)                  # 挂卖价
+                    # 盈亏离场 或 无剩余价值离场
+                    if self.profit_c + self.profit_p > 0.5*self.profit_o or self.profit_c + self.profit_p < -0.3*self.profit_o or abs(self.hold_c*s_c.bar.close + self.hold_p*s_p.bar.close) <= 3:
+                        if self.engine.type == 'backtest':
+                            s_c.cover(s_c.bar.close, 1)
+                            s_p.cover(s_p.bar.close, 1)
+                        else:
+                            s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
+                            s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+
                         self.hold_c = 0
                         self.hold_p = 0
+
+                        self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '清仓')
 
                     # 已持仓
                     elif self.hold_c == -1 or self.hold_p == -1:
                         # 上涨2% 或 离行权价小于50点时
                         if s_o.bar.close > self.price_o_high or self.strike_high - s_o.bar.close < 50:
-                            s_c.cover(s_c.bar.close, 1)
-                            s_p.cover(s_p.bar.close, 1)
-                            self.price_c = self.price_c - s_c.bar.close
-                            self.price_p = self.price_p - s_p.bar.close
+                            if self.engine.type == 'backtest':
+                                s_c.cover(s_c.bar.close, 1)
+                                s_p.cover(s_p.bar.close, 1)
+                            else:
+                                s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
+                                s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+
+                            if self.engine.type == 'backtest':
+                                self.price_c = self.price_c - s_c.bar.close
+                                self.price_p = self.price_p - s_p.bar.close
+                            else:
+                                self.price_c = self.price_c - s_c.bar.AskPrice
+                                self.price_p = self.price_p - s_p.bar.AskPrice
+
                             self.hold_c = 0
                             self.hold_p = 0
+                            self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '移仓')
 
                             self.price_o = s_o.bar.close
                             self.price_o_high = 1.04 * self.price_o
@@ -289,28 +325,48 @@ class Fut_FollowPortfolio(Portfolio):
 
                             s_c = self.signalDict[self.symbol_c][0]
                             s_p = self.signalDict[self.symbol_p][0]
-                            s_c.short(s_c.bar.close, 1)
-                            s_p.short(s_p.bar.close, 1)
+
+                            if self.engine.type == 'backtest':
+                                s_c.short(s_c.bar.close, 1)
+                                s_p.short(s_p.bar.close, 1)
+                            else:
+                                s_c.short(s_c.bar.BidPrice, 1)                     # 挂买价
+                                s_p.short(s_p.bar.BidPrice, 1)                     # 挂买价
 
                             self.got_dict[self.symbol_o] = False
                             self.got_dict[self.symbol_c] = False
                             self.got_dict[self.symbol_p] = False
 
-                            self.price_c += s_c.bar.close
-                            self.price_p += s_p.bar.close
+                            if self.engine.type == 'backtest':
+                                self.price_c += s_c.bar.close
+                                self.price_p += s_p.bar.close
+                            else:
+                                self.price_c += s_c.bar.BidPrice
+                                self.price_p += s_p.bar.BidPrice
 
                             self.hold_c = -1
                             self.hold_p = -1
-
+                            self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '移仓')
 
                         # 下跌2% 或 离行权价小于50点时
                         if s_o.bar.close < self.price_o_low or s_o.bar.close - self.strike_low < 50:
-                            s_c.cover(s_c.bar.close, 1)
-                            s_p.cover(s_p.bar.close, 1)
-                            self.price_c = self.price_c - s_c.bar.close
-                            self.price_p = self.price_p - s_p.bar.close
+                            if self.engine.type == 'backtest':
+                                s_c.cover(s_c.bar.close, 1)
+                                s_p.cover(s_p.bar.close, 1)
+                            else:
+                                s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
+                                s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+
+                            if self.engine.type == 'backtest':
+                                self.price_c = self.price_c - s_c.bar.close
+                                self.price_p = self.price_p - s_p.bar.close
+                            else:
+                                self.price_c = self.price_c - s_c.bar.AskPrice
+                                self.price_p = self.price_p - s_p.bar.AskPrice
+
                             self.hold_c = 0
                             self.hold_p = 0
+                            self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '移仓')
 
                             self.price_o = s_o.bar.close
                             self.price_o_high = 1.04 * self.price_o
@@ -324,18 +380,28 @@ class Fut_FollowPortfolio(Portfolio):
 
                             s_c = self.signalDict[self.symbol_c][0]
                             s_p = self.signalDict[self.symbol_p][0]
-                            s_c.short(s_c.bar.close, 1)
-                            s_p.short(s_p.bar.close, 1)
+                            if self.engine.type == 'backtest':
+                                s_c.short(s_c.bar.close, 1)
+                                s_p.short(s_p.bar.close, 1)
+                            else:
+                                s_c.short(s_c.bar.BidPrice, 1)                     # 挂买价
+                                s_p.short(s_p.bar.BidPrice, 1)                     # 挂买价
+
 
                             self.got_dict[self.symbol_o] = False
                             self.got_dict[self.symbol_c] = False
                             self.got_dict[self.symbol_p] = False
 
-                            self.price_c += s_c.bar.close
-                            self.price_p += s_p.bar.close
+                            if self.engine.type == 'backtest':
+                                self.price_c += s_c.bar.close
+                                self.price_p += s_p.bar.close
+                            else:
+                                self.price_c += s_c.bar.BidPrice
+                                self.price_p += s_p.bar.BidPrice
 
                             self.hold_c = -1
                             self.hold_p = -1
+                            self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '移仓')
 
 
         self.result.updateBar(bar)
