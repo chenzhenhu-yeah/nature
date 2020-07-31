@@ -423,6 +423,7 @@ class Fut_FollowPortfolio(Portfolio):
                 self.strike_high = rec.strike_high
                 self.strike_low  = rec.strike_low
 
+                self.profit_o = rec.profit_o
                 self.price_o = rec.price_o
                 self.price_o_high = 1.04 * self.price_o
                 self.price_o_low  = 0.96 * self.price_o
@@ -438,9 +439,9 @@ class Fut_FollowPortfolio(Portfolio):
         Portfolio.daily_close(self)
 
         r = [ [self.result.date, self.symbol_c, self.symbol_p, self.strike_high, self.strike_low, \
-               self.price_o, self.price_c, self.price_p, self.hold_c, self.hold_p] ]
+               self.profit_o, self.price_o, self.price_c, self.price_p, self.hold_c, self.hold_p] ]
 
-        df = pd.DataFrame(r, columns=['datetime','symbol_c', 'symbol_p', 'strike_high', 'strike_low','price_o', 'price_c', 'price_p', 'hold_c', 'hold_p'])
+        df = pd.DataFrame(r, columns=['datetime','symbol_c', 'symbol_p', 'strike_high', 'strike_low','profit_o','price_o', 'price_c', 'price_p', 'hold_c', 'hold_p'])
         fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
         if os.path.exists(fn):
             df.to_csv(fn, index=False, mode='a', header=False)
