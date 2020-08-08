@@ -403,7 +403,7 @@ def anytime():
     time.sleep(10)
     e.worker_open()
     schedule.every().day.at("15:03").do(e.worker_close)
-    schedule.every().day.at("02:33").do(e.worker_close)
+    schedule.every().day.at("02:31").do(e.worker_close)
 
     while True:
         schedule.run_pending()
@@ -418,27 +418,27 @@ def start():
     schedule.every().monday.at("08:56").do(e.worker_open)
     schedule.every().monday.at("15:03").do(e.worker_close)
     schedule.every().monday.at("20:56").do(e.worker_open)
-    schedule.every().tuesday.at("02:33").do(e.worker_close)
+    schedule.every().tuesday.at("02:31").do(e.worker_close)
 
     schedule.every().tuesday.at("08:56").do(e.worker_open)
     schedule.every().tuesday.at("15:03").do(e.worker_close)
     schedule.every().tuesday.at("20:56").do(e.worker_open)
-    schedule.every().wednesday.at("02:33").do(e.worker_close)
+    schedule.every().wednesday.at("02:31").do(e.worker_close)
 
     schedule.every().wednesday.at("08:56").do(e.worker_open)
     schedule.every().wednesday.at("15:03").do(e.worker_close)
     schedule.every().wednesday.at("20:56").do(e.worker_open)
-    schedule.every().thursday.at("02:33").do(e.worker_close)
+    schedule.every().thursday.at("02:31").do(e.worker_close)
 
     schedule.every().thursday.at("08:56").do(e.worker_open)
     schedule.every().thursday.at("15:03").do(e.worker_close)
     schedule.every().thursday.at("20:56").do(e.worker_open)
-    schedule.every().friday.at("02:33").do(e.worker_close)
+    schedule.every().friday.at("02:31").do(e.worker_close)
 
     schedule.every().friday.at("08:56").do(e.worker_open)
     schedule.every().friday.at("15:03").do(e.worker_close)
     schedule.every().friday.at("20:56").do(e.worker_open)
-    schedule.every().saturday.at("02:33").do(e.worker_close)
+    schedule.every().saturday.at("02:31").do(e.worker_close)
 
     while True:
         schedule.run_pending()
