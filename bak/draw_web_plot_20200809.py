@@ -136,21 +136,39 @@ def dali():
         df1 = df1.set_index('date')
         # print(df1.head(3))
 
+        fn = get_dss() + 'fut/engine/daliopt/portfolio_daliopt_' + pz + '_var.csv'
+        df2 = pd.read_csv(fn)
+        df2['date'] = df2.datetime.str.slice(0,10)
+        df2['time'] = df2.datetime.str.slice(11,19)
+        df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
+        df2 = df2.drop_duplicates(subset=['date'],keep='last')
+        df2['daliopt'] = df2['portfolioValue'] + df2['netPnl']
+        df2 = df2.loc[:, ['date', 'daliopt']]
+        df2 = df2.set_index('date')
+        # print(df2.head(3))
 
-        # fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
-        # df3 = pd.read_csv(fn)
-        # df3['date'] = df3.datetime.str.slice(0,10)
-        # df3['time'] = df3.datetime.str.slice(11,19)
-        # df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
-        # df3 = df3.drop_duplicates(subset=['date'],keep='last')
-        # df3['mutual'] = df3['portfolioValue'] + df3['netPnl']
-        # df3 = df3.loc[:, ['date', 'mutual']]
-        # df3 = df3.set_index('date')
-        # # print(df3.head(3))
+        fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
+        df3 = pd.read_csv(fn)
+        df3['date'] = df3.datetime.str.slice(0,10)
+        df3['time'] = df3.datetime.str.slice(11,19)
+        df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+        df3 = df3.drop_duplicates(subset=['date'],keep='last')
+        df3['mutual'] = df3['portfolioValue'] + df3['netPnl']
+        df3 = df3.loc[:, ['date', 'mutual']]
+        df3 = df3.set_index('date')
+        # print(df3.head(3))
+
+        df = df1.join(df2)
+        df = df.join(df3)
+        df['total'] = df['dali'] + df['daliopt'] + df['mutual']
+        # print(df)
 
         plt.figure(figsize=(12,7))
         plt.title(pz)
-        plt.plot(df1.dali)
+        plt.plot(df.dali)
+        plt.plot(df.daliopt)
+        plt.plot(df.mutual)
+        plt.plot(df.total)
 
         plt.xticks(rotation=45)
         plt.grid(True, axis='y')
@@ -175,6 +193,16 @@ def star():
     pz_list = ['CF', 'SR', 'IO']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
+        fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
+        df2 = pd.read_csv(fn)
+        df2['date'] = df2.datetime.str.slice(0,10)
+        df2['time'] = df2.datetime.str.slice(11,19)
+        df2 = df2[df2.time.isin(['14:59:00', '15:00:00'])]
+        df2 = df2.drop_duplicates(subset=['date'],keep='last')
+        df2['star'] = df2['portfolioValue'] + df2['netPnl']
+        df2 = df2.loc[:, ['date', 'star']]
+        df2 = df2.set_index('date')
+        # print(df2.head(3))
 
         fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
         df3 = pd.read_csv(fn)
@@ -187,11 +215,15 @@ def star():
         df3 = df3.set_index('date')
         # print(df3.head(3))
 
-        df = df3
+        df = df2.join(df3)
+        df['total'] = df['star'] + df['mutual']
+        # print(df)
 
         plt.figure(figsize=(12,7))
         plt.title(pz)
+        plt.plot(df.star)
         plt.plot(df.mutual)
+        plt.plot(df.total)
 
         plt.xticks(rotation=45)
         plt.grid(True, axis='y')
@@ -511,6 +543,6 @@ if __name__ == '__main__':
     # opt()
     # mates()
     # smile()
-    # iv_ts()
-    star()
+    iv_ts()
+    # star()
     # hv()

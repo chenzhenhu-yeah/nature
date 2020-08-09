@@ -269,8 +269,8 @@ if __name__ == '__main__':
         # 盘后
         schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:15").do(run_iv)
-        # schedule.every().day.at("15:20").do(run_book_opt)
-        # schedule.every().day.at("15:25").do(run_pandian)
+        schedule.every().day.at("15:20").do(run_book_opt)
+        schedule.every().day.at("15:25").do(run_pandian)
         schedule.every().day.at("15:27").do(run_down_data)
         schedule.every().day.at("15:29").do(run_mail_pdf)
         schedule.every().day.at("15:30").do(mail_log)

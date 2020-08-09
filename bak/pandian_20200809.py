@@ -296,46 +296,55 @@ def pandian_dali_MA(today):
     df.to_csv(fn, index=False, mode='a', header=None)
 
 def fresh_p(today, fn_p):
-    # print(today, fn_p)
+    print(today, fn_p)
 
     df_p = pd.read_csv(fn_p)
-    if len(df_p) > 0:
-        rec = df_p.iloc[-1,:]
-        pos_dict = eval(rec.posDict)
-        close_dict = eval(rec.closeDict)
-        value = rec.portfolioValue
-        net_pnl = 0
-        item_list = list( pos_dict.keys() )
-        book_list = [x for x in item_list if x.startswith('book')]
-        fut_list =  [x for x in item_list if x not in book_list]
+    rec = df_p.iloc[-1,:]
+    pos_dict = eval(rec.posDict)
+    close_dict = eval(rec.closeDict)
+    value = rec.portfolioValue
+    net_pnl = 0
+    item_list = list( pos_dict.keys() )
+    book_list = [x for x in item_list if x.startswith('booking')]
+    fut_list =  [x for x in item_list if x not in book_list]
 
-        # 处理期权项
-        for book in book_list:
-            fn = get_dss() + 'fut/engine/opt/' + book + '.csv'
+    # 处理期权项
+    for book in book_list:
+        fn = get_dss() + 'fut/engine/opt/' + book + '.csv'
+        if os.path.exists(fn):
+            # 读取booking文件
             df = pd.read_csv(fn)
             row = df.iloc[-1,:]
             net_pnl += row.netPnl
-
-        # 处理期货项
-        for fut in fut_list:
-            fn = get_dss() + 'fut/bar/day_' + fut + '.csv'
+        else:
+            # 读取booked文件
+            fn = fn.replace('booking', 'booked')
             if os.path.exists(fn):
-                # 读取bar文件
                 df = pd.read_csv(fn)
                 row = df.iloc[-1,:]
-                price_new = row.close
-                price_last = close_dict[fut]
-                size = int(get_contract(fut).size)
-                value += (price_new - price_last) * pos_dict[fut] * size
-                close_dict[fut] = price_new
+                value += row.netPnl
+            pos_dict.pop(book)
 
-        rec.datetime = today + ' 15:00:00'
-        rec.portfolioValue = value
-        rec.netPnl = net_pnl
-        rec.posDict = str(pos_dict)
-        rec.closeDict = str(close_dict)
-        df_p = pd.DataFrame([rec])
-        df_p.to_csv(fn_p, index=False, header=None, mode='a')
+    # 处理期货项
+    for fut in fut_list:
+        fn = get_dss() + 'fut/bar/day_' + fut + '.csv'
+        if os.path.exists(fn):
+            # 读取bar文件
+            df = pd.read_csv(fn)
+            row = df.iloc[-1,:]
+            price_new = row.close
+            price_last = close_dict[fut]
+            size = int(get_contract(fut).size)
+            value += (price_new - price_last) * pos_dict[fut] * size
+            close_dict[fut] = price_new
+
+    rec.datetime = today + ' 15:00:00'
+    rec.portfolioValue = value
+    rec.netPnl = net_pnl
+    rec.posDict = str(pos_dict)
+    rec.closeDict = str(close_dict)
+    df_p = pd.DataFrame([rec])
+    df_p.to_csv(fn_p, index=False, header=None, mode='a')
 
 def fresh_star():
     now = datetime.now()
@@ -356,11 +365,10 @@ def fresh_daliopt():
 def fresh_mutual():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    pz_list = ['m','RM','MA','SR','CF','IO','ru']
+    pz_list = ['m','RM','MA','SR','CF','IO']
     for pz in pz_list:
         fn_p = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
-        if os.path.exists(fn_p):
-            fresh_p(today, fn_p)
+        fresh_p(today, fn_p)
 
 def pandian_run():
     try:
@@ -369,14 +377,14 @@ def pandian_run():
         today = now.strftime('%Y-%m-%d')
 
         pandian_dali(today)
-        # pandian_p(today)
-        # pandian_dali_m(today)
-        # pandian_dali_RM(today)
-        # pandian_dali_MA(today)
+        pandian_p(today)
+        pandian_dali_m(today)
+        pandian_dali_RM(today)
+        pandian_dali_MA(today)
 
-        # fresh_daliopt()
+        fresh_daliopt()
         fresh_mutual()
-        # fresh_star()
+        fresh_star()
 
     except Exception as e:
         s = traceback.format_exc()

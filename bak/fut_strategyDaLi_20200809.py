@@ -98,6 +98,49 @@ class Fut_DaLiSignal(Signal):
         # 按照新逻辑，不再做跳空处理
         pass
 
+        # 开盘缺口处理
+        # if self.first == True:
+        #     # 跳空后，调整队列
+        #     # g = bar.close - bar.PreClosePrice
+        #     g = bar.close - self.am.closeArray[-1]
+        #     cc = len(self.price_duo_list) - len(self.price_kong_list)
+        #
+        #     if abs(g) > 2*self.gap_base:
+        #         print(self.vtSymbol + ' 开盘跳空缺口')
+        #         self.record([[self.bar.date, self.bar.time, self.vtSymbol + ' 开盘跳空缺口']])
+        #         self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
+        #
+        #         # 高开
+        #         if g > 0 and cc <= 0:
+        #             i = 0
+        #             self.price_duo_list = sorted(self.price_duo_list)
+        #             while self.price_duo_list[0] < bar.close - self.gap_base:
+        #                 i += 1
+        #                 lowest = self.price_duo_list.pop(0)
+        #                 newest = bar.close + i*3*self.gap_base
+        #                 self.price_duo_list.append(newest)
+        #                 self.price_duo_list = sorted(self.price_duo_list)
+        #                 self.kong_adjust_price = self.kong_adjust_price  + (newest - lowest)
+        #
+        #             self.price_kong_list = self.adjust_price_kong(bar.close)
+        #
+        #         # 低开
+        #         if g < 0 and cc >= 0 :
+        #             i = 0
+        #             self.price_kong_list = sorted(self.price_kong_list)
+        #             while self.price_kong_list[-1] > bar.close + self.gap_base:
+        #                 i += 1
+        #                 highest = self.price_kong_list.pop(-1)
+        #                 newest  = bar.close - i*3*self.gap_base
+        #                 self.price_kong_list.append(newest)
+        #                 self.price_kong_list = sorted(self.price_kong_list)
+        #                 self.duo_adjust_price = self.duo_adjust_price - (highest - newest)
+        #
+        #             self.price_duo_list = self.adjust_price_duo(bar.close)
+        #
+        #         self.record([[self.bar.date, self.bar.time, str(self.price_duo_list), str(sorted(self.price_kong_list,reverse=True))]])
+        # self.first = False
+
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
         if not self.am.inited:
@@ -404,21 +447,13 @@ class Fut_DaLiSignal(Signal):
         return r
 
     #----------------------------------------------------------------------
-    def adjust_price_head(self):
-        if len(self.price_duo_list) == len(self.price_kong_list):
-            self.price_duo_list  = sorted( self.price_duo_list )
-            self.price_kong_list = sorted( self.price_kong_list, reverse=True )
-            head = int( (self.price_duo_list[0] + self.price_kong_list[0])/2 )
-            self.price_duo_list = self.adjust_price_duo(head)
-            self.price_kong_list = self.adjust_price_kong(head)
-
-    #----------------------------------------------------------------------
     def save_var(self):
         try:
             # 按照新逻辑，收盘不再调整队列
-            self.adjust_price_head()
+            # self.price_duo_list = self.adjust_price_duo()
+            # self.price_kong_list = self.adjust_price_kong()
             self.price_duo_list  = sorted( self.price_duo_list )
-            self.price_kong_list = sorted( self.price_kong_list, reverse=True )
+            self.price_kong_list = sorted( self.price_kong_list,reverse=True )
 
             pnl_trade = 0
             commission = 0
