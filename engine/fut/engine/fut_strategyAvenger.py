@@ -227,7 +227,7 @@ class Fut_AvengerPortfolio(Portfolio):
         Portfolio.__init__(self, Fut_AvengerSignal, engine, symbol_list, signal_param)
 
     #----------------------------------------------------------------------
-    def rec_profit(self, dt, tm, price_o, price_c, price_p, note):    
+    def rec_profit(self, dt, tm, price_o, price_c, price_p, note):
         r = [[dt, tm, price_o, price_c, self.hold_c, self.price_c, self.profit_c, price_p, self.hold_p, self.price_p, self.profit_p, note, 60, self.profit_c + self.profit_p]]
         df = pd.DataFrame(r, columns=['date','time','price_o','price_c','hold_c','cost_c','profit_c','price_p','hold_p','cost_p','profit_p','note','commission','profit'])
         pz = str(get_contract(self.symbol_c).pz)
@@ -345,6 +345,7 @@ class Fut_AvengerPortfolio(Portfolio):
                     self.price_p = 2*self.price_p - s_p.bar.AskPrice
                     self.hold_p = -1
                     self.hold_c = -1
+                    self.profit_c = self.hold_c * (s_c.bar.close - self.price_c)
 
                     self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '复仇失败')
 
@@ -357,6 +358,7 @@ class Fut_AvengerPortfolio(Portfolio):
                     self.price_c = 2*self.price_c - s_c.bar.AskPrice
                     self.hold_p = -1
                     self.hold_c = -1
+                    self.profit_p = self.hold_p * (s_p.bar.close - self.price_p)
 
                     self.rec_profit(bar.date, bar.time, s_o.bar.close, s_c.bar.close, s_p.bar.close, '复仇失败')
 
