@@ -4,7 +4,6 @@ from __future__ import print_function
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 
-import socket
 import os
 import schedule
 import time
@@ -34,7 +33,6 @@ from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio
 
 #from ipdb import set_trace
 
-
 ########################################################################
 class FutEngine(object):
     """
@@ -53,14 +51,11 @@ class FutEngine(object):
         self.vtSymbol_list = []            # 品种
         self.working = False
         self.seq_tm = ''
-        self.bar_list = []
-        self.lock = threading.Lock()
 
         # 开启bar监听服务
-        # threading.Thread( target=self.put_service, args=() ).start()
+        #threading.Thread( target=self.bar_service, args=() ).start()
+        threading.Thread( target=self.put_service, args=() ).start()
         threading.Thread( target=self.traded_service, args=() ).start()
-        threading.Thread( target=self.bar_listen_service, args=() ).start()
-        threading.Thread( target=self.on_bar_service, args=() ).start()
 
     #----------------------------------------------------------------------
     def init_daily(self):
@@ -223,119 +218,9 @@ class FutEngine(object):
                 tradeid_list = []
 
 
-    # 进程间通信接口------------------------------------------------------------
-    # def bar_listen_service(self): 进程通信接口总出现抛异常的情况
-    #     print('bar_listen_svervice 线程开始工作')
-    #
-    #     address = ('localhost', SOCKET_BAR)
-    #     while True:
-    #         try :
-    #             with Listener(address, authkey=b'secret password') as listener:
-    #                 with listener.accept() as conn:
-    #                     b = conn.recv_bytes(81920)
-    #                     s = str(b, encoding = "utf8")
-    #                     # s = conn.recv()
-    #                     d = eval(s)
-    #                     bar = VtBarData()
-    #                     bar.__dict__ = d
-    #                     self.lock.acquire()
-    #                     self.bar_list.append(bar)
-    #                     self.lock.release()
-    #         except Exception as e:
-    #             r = traceback.format_exc()
-    #             to_log(r)
-
-    def bar_listen_service(self):
-        print('bar_listen_svervice 线程开始工作')
-
-        server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        server.bind(('localhost', SOCKET_BAR))
-        server.listen(5)
-
-        while True:
-            try:
-                conn,addr = server.accept()
-                b = conn.recv(10240)
-                s = str(b, encoding='utf-8')
-                print( 'recive:', len(s) )
-                conn.close()
-
-                d = eval(s)
-                bar = VtBarData()
-                bar.__dict__ = d
-                self.lock.acquire()
-                self.bar_list.append(bar)
-                self.lock.release()
-            except Exception as e:
-                print('error ')
-                r = traceback.format_exc()
-                to_log(r)
-
-    # ------------------------------------------------------------------------
-    def on_bar_service(self):
-        print('on_bar_service 线程开始工作')
-
-        vtSymbol_dict = {}         # 缓存中间bar
-        g5 = BarGenerator('min5')
-        g15 = BarGenerator('min15')
-        g30 = BarGenerator('min30')
-        gday = BarGenerator('day')
-
-        while True:
-            try:
-                self.lock.acquire()
-                if len(self.bar_list) > 0:
-                    bar = self.bar_list.pop(0)
-                    id = bar.vtSymbol
-                    self.lock.release()
-
-                    if id not in vtSymbol_dict:
-                        vtSymbol_dict[id] = bar
-                    elif vtSymbol_dict[id].time != bar.time:
-                        vtSymbol_dict[id] = bar
-
-                        bar_day = gday.update_bar(bar)
-                        if bar_day is not None:
-                            gday.save_bar(bar_day)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_day, 'day')
-
-                        bar_min30 = g30.update_bar(bar)
-                        if bar_min30 is not None:
-                            g30.save_bar(bar_min30)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min30, 'min30')
-
-                        bar_min15 = g15.update_bar(bar)
-                        if bar_min15 is not None:
-                            g15.save_bar(bar_min15)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min15, 'min15')
-
-                        bar_min5 = g5.update_bar(bar)
-                        if bar_min5 is not None:
-                            g5.save_bar(bar_min5)
-                            for p in self.portfolio_list:
-                                p.onBar(bar_min5, 'min5')
-
-                        for p in self.portfolio_list:
-                            p.onBar(bar, 'min1')
-                else:
-                    self.lock.release()
-                    time.sleep(1)
-
-            except Exception as e:
-                # 对文件并发访问，存着读空文件的可能！！！
-                #print('-'*30)
-                #traceback.print_exc()
-                s = traceback.format_exc()
-                to_log(s)
-                self.lock.release()
-
-
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
-        print('put_service 线程开始工作')
+        print('on_bar线程开始工作')
 
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')

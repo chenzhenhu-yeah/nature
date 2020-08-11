@@ -172,7 +172,7 @@ def dali():
         # break
 
 def star():
-    pz_list = ['CF', 'SR', 'IO']
+    pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 

@@ -1,4 +1,4 @@
-import socket
+
 import os
 import time
 from datetime import datetime
@@ -19,6 +19,16 @@ from nature import VtBarData
 from nature import SOCKET_BAR, get_dss, to_log, get_contract, is_market_date
 from nature import get_symbols_quote
 
+# fn = get_dss() + 'fut/cfg/trade_time.csv'
+# df_tt = pd.read_csv(fn, dtype='str')
+# df_tt = df_tt[df_tt.seq=='1']
+# df_tt_2300 = df_tt[df_tt.end=='23:00:59']
+# df_tt_0230 = df_tt[df_tt.end=='02:30:59']
+#
+# pz_2300_list = list(df_tt_2300.symbol)
+# pz_0230_list = list(df_tt_0230.symbol)
+# print('夜盘结束时间为23:00的品种： ', pz_2300_list)
+# print('夜盘结束时间为02:30的品种： ', pz_0230_list)
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
@@ -209,37 +219,6 @@ class HuQuote(CtpQuote):
         # 处理Bar
         self._Generate_Bar_MinOne(f, UpdateDate)
 
-    # 使用socket监听接口实现通信-------------------------------------------------------------
-    # def send_bar(self, bar, minx): 进程通信接口总出现抛异常的情况
-    #     address = ('localhost', SOCKET_BAR)
-    #     try :
-    #         with Client(address, authkey=b'secret password') as conn2:
-    #             s = str(bar.__dict__)
-    #             # print('s: ', len(s))
-    #             b = bytes(s, encoding = "utf8")
-    #             # print('b: ', len(b))
-    #             # conn2.send(s)
-    #             conn2.send_bytes(b)
-    #
-    #     except Exception as e:
-    #         print('error，发送太密集')
-    #         r = traceback.format_exc()
-    #         to_log(r)
-
-    def send_bar(self, bar, minx):
-        try :
-            client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            client.connect(('localhost', SOCKET_BAR))
-
-            s = str(bar.__dict__)
-            b = bytes(s, encoding='utf-8')
-            client.send(b)
-            client.close()
-        except Exception as e:
-            print('error，发送太密集')
-            r = traceback.format_exc()
-            to_log(r)
-
     # 保存新生成的bar到put目录下的相应文件，通过该文件来进行多进程数据的同步-----------------------
     def put_bar(self, bar, minx):
         df = pd.DataFrame([bar.__dict__])
@@ -274,10 +253,7 @@ class HuQuote(CtpQuote):
             # 将 bar的分钟改为整点，推送并保存bar
             bar.date = new_bar.date
             bar.time = new_bar.time[:-2] + '00'
-
-            self.send_bar(bar, 'min1')
-            if bar.vtSymbol[:2] == 'ag':
-                self.put_bar(bar, 'min1')
+            self.put_bar(bar, 'min1')
 
             bar.open = new_bar.open
             bar.high = new_bar.high
@@ -312,6 +288,18 @@ class HuQuote(CtpQuote):
 
         self.bar_min1_dict[id] = bar
 
+        # 收盘前，确保委托单能够成功发出！
+        # if tick.UpdateTime in ['14:58:57','14:58:58','14:58:59']:
+        #     bar.time = '15:00:00'
+        #     self.put_bar(bar, 'min1')
+        #
+        # c = get_contract(bar.vtSymbol)
+        # if c.pz in pz_0230_list and tick.UpdateTime in ['02:28:57','02:28:58','02:28:59']:
+        #     bar.time = '02:30:00'
+        #     self.put_bar(bar, 'min1')
+        # elif c.pz in pz_2300_list and tick.UpdateTime in ['22:58:57','22:58:58','22:58:59']:
+        #     bar.time = '23:00:00'
+        #     self.put_bar(bar, 'min1')
 
 class TestQuote(object):
     """TestQuote"""

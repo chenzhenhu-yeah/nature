@@ -153,7 +153,7 @@ def trade2book():
         pz = str(get_contract(row.InstrumentID).pz)
         if p[:6] == 'mutual':
             fn_p = dss + 'fut/engine/mutual/portfolio_' + p + '_' + pz + '_var.csv'
-            if os.path.exists(fn):
+            if os.path.exists(fn_p):
                 df_p = pd.read_csv(fn_p)
                 if len(df_p) >= 1:
                     rec = df_p.iloc[-1,:]
