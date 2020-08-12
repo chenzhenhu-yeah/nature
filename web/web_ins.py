@@ -611,7 +611,7 @@ def smile():
         if date == '':
             now = datetime.now()
             date = now.strftime('%Y-%m-%d')
-        return smile_show(pz, type, date, kind, symbol)            
+        return smile_show(pz, type, date, kind, symbol)
 
     return render_template("smile.html", title='smile')
 
@@ -654,6 +654,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
 
-    # app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
