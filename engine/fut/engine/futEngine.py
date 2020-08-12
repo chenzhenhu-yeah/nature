@@ -257,7 +257,7 @@ class FutEngine(object):
                 conn,addr = server.accept()
                 b = conn.recv(10240)
                 s = str(b, encoding='utf-8')
-                print( 'recive:', len(s) )
+                # print( 'recive:', len(s) )
                 conn.close()
 
                 d = eval(s)
