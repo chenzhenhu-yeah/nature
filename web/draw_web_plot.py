@@ -361,15 +361,13 @@ def smile_pz(pz, symbol_list, atm, call, date, gap):
             df2['avg'] = df2.call*0.5 + df2.put*0.5
             df2.index = df2.index.astype('int')
             df2 = df2.sort_index()
-            df2 = df2[(df2.index <= atm+3*gap) & (df2.index >= atm-3*gap)]
 
             if call == 'call':
+                df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-2*gap)]
                 plt.plot(df2.call, '--', label=row.term)
             elif call == 'put':
+                df2 = df2[(df2.index <= atm+2*gap) & (df2.index >= atm-5*gap)]
                 plt.plot(df2.put, '--', label=row.term)
-            elif call == 'avg':
-                plt.plot(df2.avg, '--', label=row.term)
-
 
         # 当日的曲线
         row = df1.iloc[-1, :]
@@ -381,14 +379,13 @@ def smile_pz(pz, symbol_list, atm, call, date, gap):
         df2['avg'] = df2.call*0.5 + df2.put*0.5
         df2.index = df2.index.astype('int')
         df2 = df2.sort_index()
-        df2 = df2[(df2.index <= atm+3*gap) & (df2.index >= atm-3*gap)]
 
         if call == 'call':
+            df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-2*gap)]
             plt.plot(df2.call, label=row.term)
         elif call == 'put':
+            df2 = df2[(df2.index <= atm+2*gap) & (df2.index >= atm-5*gap)]
             plt.plot(df2.put, label=row.term)
-        elif call == 'avg':
-            plt.plot(df2.avg, label=row.term)
 
     plt.grid(True, axis='x')
     plt.legend()
