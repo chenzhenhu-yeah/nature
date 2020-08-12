@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timedelta
 import talib
 
-from nature import get_dss, get_inx
+from nature import get_dss, get_inx, get_contract
 
 
 def ic(symbol1, symbol2):
@@ -261,42 +261,68 @@ def mates():
         symbol2 = rec.mate2
         ic(symbol1, symbol2)
 
-def smile_symbol():
-    """期权微笑曲线"""
-    now = datetime.now()
-    # today = now.strftime('%Y-%m-%d %H:%M:%S')
+
+def smile_symbol(symbol, date, atm, gap):
+    now = datetime.strptime(date, '%Y-%m-%d')
+    # now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    # today = '2020-06-22'
 
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df = pd.read_csv(fn)
-    df = df[df.date == today]
+    df = df[df.date <= today]
     df = df.drop_duplicates(subset=['term'], keep='last')
-    # print(df.head())
+    df = df[df.term == symbol]
+    row = df.iloc[-1,:]
+    c_curve_dict = eval(row.c_curve)
+    p_curve_dict = eval(row.p_curve)
 
-    fn = get_dss() + 'fut/cfg/opt_mature.csv'
-    df_IO = pd.read_csv(fn)
-    df_IO = df_IO[df_IO.flag == df_IO.flag]                 # 筛选出不为空的记录
-    df = df[df.term.isin(list(df_IO.symbol))]
-    print(df.term)
+    df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
+    df1 = df1.T
+    df1.columns = ['call', 'put']
+    df1 = df1.loc[atm-5*gap :atm+5*gap, :]
 
-    for i, row in df.iterrows():
-        c_curve_dict = eval(row.c_curve)
-        p_curve_dict = eval(row.p_curve)
+    plt.figure(figsize=(12,7))
+    plt.title(today + '_' + row.term)
+    # df1.plot()
+    plt.plot(df1.call)
+    plt.plot(df1.put)
 
-        df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
-        df1 = df1.T
-        df1.columns = ['call', 'put']
-
-        df1.plot()
-        plt.title(today + '_' + row.term)
-
-        fn = 'static/smile_' + row.term + '.jpg'
-        plt.savefig(fn)
+    plt.legend()
+    fn = 'static/smile_symbol.jpg'
+    plt.savefig(fn)
 
 
-def smile_pz(pz, symbol_list, atm, call):
-    now = datetime.now()
+def smile_show_symbol(symbol, date):
+    pz = str(get_contract(symbol).pz)
+    gap = 100
+    if pz == 'CF':
+        gap = 200
+    if pz in ['RM', 'MA', 'm']:
+        gap = 50
+
+    if pz == 'IO':
+        cur_if = 'IF' + symbol[2:]
+    else:
+        cur_if = pz + symbol[len(pz):]
+
+    fn = get_dss() + 'fut/bar/day_' + cur_if + '.csv'
+    df = pd.read_csv(fn)
+    row = df.iloc[-1,:]
+    strike = row.open*0.5 + row.close*0.5
+    strike = int( round(strike*(100/gap)/1E4,2)*1E4/(100/gap) )
+    atm = strike                                    # 获得平值
+
+    smile_symbol(symbol, date, atm, gap)
+
+    fn = 'smile_symbol.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def smile_pz(pz, symbol_list, atm, call, date, gap):
+    now = datetime.strptime(date, '%Y-%m-%d')
+    # now = datetime.now()
+
     # 本月第一天
     first_day = datetime(now.year, now.month, 1)
     # print(first_day)
@@ -312,6 +338,9 @@ def smile_pz(pz, symbol_list, atm, call):
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
     df_today = pd.read_csv(fn)
     df = pd.concat([df_pre, df_today])
+
+    plt.figure(figsize=(12,7))
+    plt.title('smile_' + today + '_' + pz+ '_' + call)
 
     for i, symbol in enumerate(symbol_list):
         df1 = df[df.term == symbol]
@@ -332,7 +361,7 @@ def smile_pz(pz, symbol_list, atm, call):
             df2['avg'] = df2.call*0.5 + df2.put*0.5
             df2.index = df2.index.astype('int')
             df2 = df2.sort_index()
-            df2 = df2[(df2.index <= atm+200) & (df2.index >= atm-200)]
+            df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-5*gap)]
 
             if call == 'call':
                 plt.plot(df2.call, '--', label=row.term)
@@ -352,7 +381,7 @@ def smile_pz(pz, symbol_list, atm, call):
         df2['avg'] = df2.call*0.5 + df2.put*0.5
         df2.index = df2.index.astype('int')
         df2 = df2.sort_index()
-        df2 = df2[(df2.index <= atm+200) & (df2.index >= atm-200)]
+        df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-5*gap)]
 
         if call == 'call':
             plt.plot(df2.call, label=row.term)
@@ -361,41 +390,60 @@ def smile_pz(pz, symbol_list, atm, call):
         elif call == 'avg':
             plt.plot(df2.avg, label=row.term)
 
-
-    # fn = 'static/smile_' + pz + '.jpg'
-    fn = 'static/smile_' + pz + '_' + call + '_' + today +  '.jpg'
-    plt.title('smile_' + today + '_' + pz+ '_' + call)
-    # plt.grid()
     plt.grid(True, axis='x')
     plt.legend()
+    fn = 'static/smile_show.jpg'
     plt.savefig(fn)
     plt.cla()
 
-def smile():
-    """期权微笑曲线"""
 
+def smile_show_pz(pz, type, date):
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df_opt = pd.read_csv(fn)
-    # for pz in set(df_opt.pz):
-    for pz in ['IO']:
-        print(pz)
-        df = df_opt[(df_opt.pz == pz) & (df_opt.flag == df_opt.flag)]                 # 筛选出不为空的记录
-        df = df.sort_values('symbol')
-        symbol_list = list(df.symbol)
 
+    df = df_opt[(df_opt.pz == pz) & (df_opt.flag == df_opt.flag)]                 # 筛选出不为空的记录
+    df = df.sort_values('symbol')
+    symbol_list = list(df.symbol)
+
+    gap = 100
+    if pz == 'CF':
+        gap = 200
+    if pz in ['RM', 'MA', 'm']:
+        gap = 50
+
+    if pz == 'IO':
         cur_if = 'IF' + symbol_list[0][2:]
-        # print(cur_if)
-        fn = get_dss() + 'fut/bar/day_' + cur_if + '.csv'
-        df = pd.read_csv(fn)
-        row = df.iloc[-1,:]
-        strike = row.open*0.5 + row.close*0.5
-        strike = int(round(strike/1E4,2)*1E4)
-        atm = strike                                    # 获得平值
-        # print(atm)
+    else:
+        cur_if = pz + symbol_list[0][len(pz):]
 
-        smile_pz(pz, symbol_list, atm, 'call')
-        smile_pz(pz, symbol_list, atm, 'put')
-        smile_pz(pz, symbol_list, atm, 'avg')
+    fn = get_dss() + 'fut/bar/day_' + cur_if + '.csv'
+    df = pd.read_csv(fn)
+    row = df.iloc[-1,:]
+    strike = row.open*0.5 + row.close*0.5
+    strike = int( round(strike*(100/gap)/1E4,2)*1E4/(100/gap) )
+    atm = strike                                    # 获得平值
+    # print(atm)
+
+    if type == 'call':
+        smile_pz(pz, symbol_list, atm, 'call', date, gap)
+    if type == 'put':
+        smile_pz(pz, symbol_list, atm, 'put', date, gap)
+
+    r = ''
+    fn = 'smile_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def smile_show(pz, type, date, kind, symbol):
+    """期权微笑曲线"""
+    if kind == 'pz':
+        return smile_show_pz(pz, type, date)
+    elif kind == 'symbol':
+        return smile_show_symbol(symbol, date)
+    else:
+        return ''
+
 
 def iv_ts():
     """隐波时序图"""
@@ -449,12 +497,19 @@ def iv_ts():
         plt.savefig(fn)
         plt.cla()
 
+def hv_show(code):
+    # hv()
+    now = datetime.now()
+    start_day = now - timedelta(days = 480)
+    start_day = start_day.strftime('%Y-%m-%d')
 
+    if code == '000300':
+        df = get_inx('000300', start_day)
+    else:
+        fn = get_dss() + 'fut/bar/day_' + code + '.csv'
+        df = pd.read_csv(fn)
+        df = df[df.date >= start_day]
 
-def hv():
-    # df = get_inx('000300', '2019-06-01', '2020-07-15')
-    df = get_inx('000300', '2019-06-01')
-    # df = df.sort_values('date')
     df = df.set_index('date')
     df = df.sort_index()
 
@@ -464,25 +519,13 @@ def hv():
     df['hv'] *= np.sqrt(242)
 
     df = df.iloc[-242:,:]
-    # print(df.head())
-    # print(df.tail())
-
     cur = df.iloc[-1,:]
     hv = round(cur['hv'], 2)
     hv_rank = round( (hv - df['hv'].min()) / (df['hv'].max() - df['hv'].min()), 2 )
-    # print('hv: ', hv)
-    # print('hv Rank: ', hv_rank)
-
-    # print('     均值：',df['hv'].mean())
-    # print('0.2分位数:',np.percentile(df['hv'], 20))
-    # print('0.5分位数:',np.percentile(df['hv'], 50))
-    # print('0.8分位数:',np.percentile(df['hv'], 80))
-
     hv_percentile = round( len(df[df.hv < hv]) / 242, 2 )
-    # print('hv percentile: ', hv_percentile)
 
     plt.figure(figsize=(13,7))
-    plt.title( 'hv:' + str(hv) + '      hv Rank:' + str(hv_rank) + '      hv Percentile:' + str(hv_percentile) )
+    plt.title( code + '       hv: ' + str(hv) + '      hv Rank: ' + str(hv_rank) + '      hv Percentile: ' + str(hv_percentile) )
     plt.xticks(rotation=45)
     plt.plot(df['hv'], '-*')
     plt.grid(True, axis='y')
@@ -495,14 +538,15 @@ def hv():
     for label in ax.get_xticklabels()[-1:]:
         label.set_visible(True)
 
-    # plt.show()
-    fn = 'static/vol_hv.jpg'
+    fn = 'static/hv_show.jpg'
     plt.savefig(fn)
     plt.cla()
 
-
-def vol():
-    hv()
+    r = ''
+    fn = 'hv_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
 
 if __name__ == '__main__':
     pass
@@ -513,4 +557,4 @@ if __name__ == '__main__':
     # smile()
     # iv_ts()
     star()
-    # hv()
+    # hv_show()

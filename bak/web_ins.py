@@ -10,7 +10,7 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show, smile_show, opt, dali, yue, mates, iv_ts, star, hv_show
+from nature import draw_web, ic_show, ip_show, smile, opt, dali, yue, mates, iv_ts, star, vol
 from nature import del_blank, check_symbols_p
 
 
@@ -394,6 +394,19 @@ def market_date():
 
     return render_template("market_date.html",title="market_date",rows=r)
 
+@app.route('/value_p_csv', methods=['get','post'])
+def value_p_csv():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn, dtype='str')
+
+    r = []
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    r.append( list(df.columns) )
+    r = reversed(r)
+
+    return render_template("show_fut_csv.html",title="value_p",rows=r)
+
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():
     fn = get_dss() + 'fut/engine/value_dali.csv'
@@ -407,6 +420,30 @@ def value_dali_csv():
 
     return render_template("show_fut_csv.html",title="value_dali",rows=r)
 
+@app.route('/value_p_render', methods=['get','post'])
+def value_p_render():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['p']
+    df = df[ df.symbol.isin(['dali','star','opt']) ]
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_render', methods=['get','post'])
+def value_dali_render():
+    fn = get_dss() + 'fut/engine/value_dali.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['pz']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
 
 @app.route('/value_dali_m_render', methods=['get','post'])
 def value_dali_m_render():
@@ -414,6 +451,54 @@ def value_dali_m_render():
     df = pd.read_csv(fn)
     df['close'] = df['year_ratio']
     df['symbol'] = df['name']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_RM_render', methods=['get','post'])
+def value_dali_RM_render():
+    fn = get_dss() + 'fut/engine/value_dali_RM.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['name']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/value_dali_MA_render', methods=['get','post'])
+def value_dali_MA_render():
+    fn = get_dss() + 'fut/engine/value_dali_MA.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['year_ratio']
+    df['symbol'] = df['name']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/risk_p_render', methods=['get','post'])
+def risk_p_render():
+    fn = get_dss() + 'fut/engine/value_p.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['risk']
+    df['symbol'] = df['p']
+
+    draw_web.value(df)
+    time.sleep(1)
+    fn = 'value.html'
+    return app.send_static_file(fn)
+
+@app.route('/risk_dali_render', methods=['get','post'])
+def risk_dali_render():
+    fn = get_dss() + 'fut/engine/value_dali.csv'
+    df = pd.read_csv(fn)
+    df['close'] = df['risk']
+    df['symbol'] = df['pz']
 
     draw_web.value(df)
     time.sleep(1)
@@ -591,29 +676,19 @@ def show_iv_ts():
     # return str(r)
     return render_template("show_jpg.html",header="iv_ts",items=r)
 
-@app.route('/hv', methods=['get', 'post'])
-def hv():
-    if request.method == "POST":
-        code = request.form.get('code')
-        return hv_show(code)
+@app.route('/show_vol', methods=['get'])
+def show_vol():
+    vol()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('vol'):
+            r.append(dirname + fn)
 
-    return render_template("hv.html", title="hv")
+    # return str(r)
+    return render_template("show_jpg.html",header="vol",items=r)
 
-
-@app.route('/smile', methods=['get', 'post'])
-def smile():
-    if request.method == "POST":
-        pz = request.form.get('pz')
-        type = request.form.get('type')
-        date = request.form.get('date')
-        kind = request.form.get('kind')
-        symbol = request.form.get('symbol')
-        if date == '':
-            now = datetime.now()
-            date = now.strftime('%Y-%m-%d')
-        return smile_show(pz, type, date, kind, symbol)            
-
-    return render_template("smile.html", title='smile')
 
 @app.route('/log')
 def show_log():
@@ -654,6 +729,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
 
-    # app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
