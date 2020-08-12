@@ -361,7 +361,7 @@ def smile_pz(pz, symbol_list, atm, call, date, gap):
             df2['avg'] = df2.call*0.5 + df2.put*0.5
             df2.index = df2.index.astype('int')
             df2 = df2.sort_index()
-            df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-5*gap)]
+            df2 = df2[(df2.index <= atm+3*gap) & (df2.index >= atm-3*gap)]
 
             if call == 'call':
                 plt.plot(df2.call, '--', label=row.term)
@@ -381,7 +381,7 @@ def smile_pz(pz, symbol_list, atm, call, date, gap):
         df2['avg'] = df2.call*0.5 + df2.put*0.5
         df2.index = df2.index.astype('int')
         df2 = df2.sort_index()
-        df2 = df2[(df2.index <= atm+5*gap) & (df2.index >= atm-5*gap)]
+        df2 = df2[(df2.index <= atm+3*gap) & (df2.index >= atm-3*gap)]
 
         if call == 'call':
             plt.plot(df2.call, label=row.term)
