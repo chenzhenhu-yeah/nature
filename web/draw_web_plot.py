@@ -120,56 +120,46 @@ def yue():
         plt.savefig(fn)
         plt.cla()
 
-def dali():
-    pz_list = ['m', 'RM', 'MA']
-    # pz_list = ['m']
-    for pz in pz_list:
-        # 读取品种每日盈亏情况，清洗数据为每日一个记录
-        fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
-        df1 = pd.read_csv(fn)
-        df1['date'] = df1.datetime.str.slice(0,10)
-        df1['time'] = df1.datetime.str.slice(11,19)
-        df1 = df1[df1.time.isin(['14:59:00', '15:00:00'])]
-        df1 = df1.drop_duplicates(subset=['date'],keep='last')
-        df1['dali'] = df1['pnl_net']
-        df1 = df1.loc[:, ['date', 'dali']]
-        df1 = df1.set_index('date')
-        # print(df1.head(3))
+def dali_show(pz):
+    # pz_list = ['m', 'RM', 'MA']
 
+    # 读取品种每日盈亏情况，清洗数据为每日一个记录
+    fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
+    df1 = pd.read_csv(fn)
+    df1['date'] = df1.datetime.str.slice(0,10)
+    df1['time'] = df1.datetime.str.slice(11,19)
+    df1 = df1[df1.time.isin(['14:59:00', '15:00:00'])]
+    df1 = df1.drop_duplicates(subset=['date'],keep='last')
+    df1['dali'] = df1['pnl_net']
+    df1 = df1.loc[:, ['date', 'dali']]
+    df1 = df1.set_index('date')
+    # print(df1.head(3))
 
-        # fn = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
-        # df3 = pd.read_csv(fn)
-        # df3['date'] = df3.datetime.str.slice(0,10)
-        # df3['time'] = df3.datetime.str.slice(11,19)
-        # df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
-        # df3 = df3.drop_duplicates(subset=['date'],keep='last')
-        # df3['mutual'] = df3['portfolioValue'] + df3['netPnl']
-        # df3 = df3.loc[:, ['date', 'mutual']]
-        # df3 = df3.set_index('date')
-        # # print(df3.head(3))
+    plt.figure(figsize=(12,7))
+    plt.title(pz)
+    plt.plot(df1.dali)
 
-        plt.figure(figsize=(12,7))
-        plt.title(pz)
-        plt.plot(df1.dali)
+    plt.xticks(rotation=45)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
 
-        plt.xticks(rotation=45)
-        plt.grid(True, axis='y')
-        ax = plt.gca()
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
 
-        for label in ax.get_xticklabels():
-            label.set_visible(False)
-        for label in ax.get_xticklabels()[1::25]:
-            label.set_visible(True)
-        for label in ax.get_xticklabels()[-1:]:
-            label.set_visible(True)
+    # plt.legend()
+    fn = 'static/dali_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
 
-        plt.legend()
-        fn = 'static/dali_' + pz + '.jpg'
-        plt.savefig(fn)
-        # plt.close()
-        plt.cla()
-
-        # break
+    r = ''
+    fn = 'dali_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
 
 def star():
     pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm']
@@ -545,6 +535,101 @@ def hv_show(code):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def book_min5_show(startdate, dual_list):
+    plt.figure(figsize=(12,8))
+
+    for dual in dual_list:
+        symbol_a = dual[0]
+        num_a    = int(dual[1])
+        symbol_b = dual[2]
+        num_b    = int(dual[3])
+
+        fn = get_dss() + 'fut/bar/min5_' + symbol_a + '.csv'
+        df_a = pd.read_csv(fn)
+        fn = get_dss() + 'fut/bar/min5_' + symbol_b + '.csv'
+        df_b = pd.read_csv(fn)
+        df_a = df_a[df_a.date >= startdate]
+        df_b = df_b[df_b.date >= startdate]
+        assert len(df_a) == len(df_b)
+        df_a['dt'] = df_a['date'] + ' ' + df_a['time']
+        df_a['value'] = num_a*df_a['close'] + num_b*df_b['close']
+        df_a = df_a.set_index('dt')
+        # print(df_a.tail())
+        # print(df_b.tail())
+        plt.plot(df_a.value, label=symbol_a+' '+str(num_a)+ '   '+symbol_b+' '+ str(num_b))
+
+    plt.xticks(rotation=45)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
+
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/book_min5_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'book_min5_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def iv_straddle_show(symbol, strike, startdate):
+    exchangeID = str(get_contract(symbol).exchangeID)
+    if exchangeID in ['CFFEX', 'DCE']:
+        s_a = symbol + '-C-' + strike
+        s_b = symbol + '-P-' + strike
+    else:
+        s_a = symbol + 'C' + strike
+        s_b = symbol + 'P' + strike
+
+    fn = get_dss() + 'fut/bar/min5_' + s_a + '.csv'
+    df_a = pd.read_csv(fn)
+    fn = get_dss() + 'fut/bar/min5_' + s_b + '.csv'
+    df_b = pd.read_csv(fn)
+    df_a = df_a[df_a.date >= startdate]
+    df_b = df_b[df_b.date >= startdate]
+    assert len(df_a) == len(df_b)
+    df_a['dt'] = df_a['date'] + ' ' + df_a['time']
+    df_a['value'] = df_a['close'] + df_b['close']
+    df_a = df_a.set_index('dt')
+
+    df_a['next'] = df_a['value'].shift(1)
+    df_a['value'] = np.log(df_a['value']) - np.log(df_a['next'])
+    df_a['value'] = df_a['value'].cumsum()
+    print(df_a.head())
+
+    plt.figure(figsize=(12,8))
+    plt.plot(df_a.value)
+
+    plt.xticks(rotation=45)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
+
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/iv_straddle_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'iv_straddle_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
 if __name__ == '__main__':
     pass
     # yue()
@@ -553,5 +638,8 @@ if __name__ == '__main__':
     # mates()
     # smile()
     # iv_ts()
-    star()
+    # star()
     # hv_show()
+
+    # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
+    # iv_straddle_show('IO2008', '4600', '2020-08-01')

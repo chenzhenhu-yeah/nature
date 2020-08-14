@@ -2,7 +2,7 @@
 import pandas as pd
 from flask import Flask, render_template, request, redirect
 from flask import url_for
-from datetime import datetime
+from datetime import datetime, timedelta
 from multiprocessing.connection import Client
 import time
 import tushare as ts
@@ -10,7 +10,8 @@ import json
 import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
-from nature import draw_web, ic_show, ip_show, smile_show, opt, dali, yue, mates, iv_ts, star, hv_show
+from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
+from nature import iv_straddle_show, hv_show, book_min5_show
 from nature import del_blank, check_symbols_p
 
 
@@ -408,17 +409,13 @@ def value_dali_csv():
     return render_template("show_fut_csv.html",title="value_dali",rows=r)
 
 
-@app.route('/value_dali_m_render', methods=['get','post'])
-def value_dali_m_render():
-    fn = get_dss() + 'fut/engine/value_dali_m.csv'
-    df = pd.read_csv(fn)
-    df['close'] = df['year_ratio']
-    df['symbol'] = df['name']
+@app.route('/plot_dali', methods=['get','post'])
+def plot_dali():
+    if request.method == "POST":
+        pz = request.form.get('pz')
+        return dali_show(pz)
 
-    draw_web.value(df)
-    time.sleep(1)
-    fn = 'value.html'
-    return app.send_static_file(fn)
+    return render_template("plot_dali.html", title="plot_dali")
 
 @app.route('/ic_y_m', methods=['get','post'])
 def ic_y_m():
@@ -614,6 +611,41 @@ def smile():
         return smile_show(pz, type, date, kind, symbol)
 
     return render_template("smile.html", title='smile')
+
+@app.route('/iv_straddle', methods=['get', 'post'])
+def iv_straddle():
+    if request.method == "POST":
+        symbol = request.form.get('symbol')
+        strike = request.form.get('strike')
+        startdate = request.form.get('startdate')
+        if startdate == '':
+            now = datetime.now() - timedelta(days = 3)
+            startdate = now.strftime('%Y-%m-%d')
+
+        return iv_straddle_show(symbol, strike, startdate)
+
+    return render_template("iv_straddle.html", title="iv_straddle")
+
+@app.route('/book_min5', methods=['get', 'post'])
+def book_min5():
+    if request.method == "POST":
+        startdate = request.form.get('startdate')
+        if startdate == '':
+            now = datetime.now() - timedelta(days = 3)
+            startdate = now.strftime('%Y-%m-%d')
+
+        r = []
+        seq_list = request.form.getlist('seq')
+        for seq in seq_list:
+            symbol_a = del_blank( request.form.get('symbol_a'+seq) )
+            num_a = del_blank( request.form.get('num_a'+seq) )
+            symbol_b = del_blank( request.form.get('symbol_b'+seq) )
+            num_b = del_blank( request.form.get('num_b'+seq) )
+            r.append( [symbol_a, num_a, symbol_b, num_b]  )
+
+        return book_min5_show(startdate, r)
+
+    return render_template("book_min5.html", title="book_min5")
 
 @app.route('/log')
 def show_log():

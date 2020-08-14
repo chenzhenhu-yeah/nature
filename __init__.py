@@ -73,4 +73,4 @@ from nature.engine.fut.backtest.backtest_result import Backtest_Result
 from nature.web.check_web import del_blank
 from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
-from nature.web.draw_web_plot import ic_show, ip_show, smile_show, opt, dali, yue, mates, iv_ts, star, hv_show
+from nature.web.draw_web_plot import ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star, hv_show, book_min5_show, iv_straddle_show

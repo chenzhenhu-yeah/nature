@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:900px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{title}}</h1>
+       </header>
+
+      <form method="post" action="book_min5">
+      <fieldset>
+        <p>
+          startdate:<input type="text" name="startdate"/> YYYY-MM-DD
+        </p>
+
+        <p>
+          <input type="checkbox" name="seq" value="1"/>1 &emsp; &emsp;
+          symbol_a1:<input type="text" name="symbol_a1" size="12" />
+          num_a1:<input type="text" name="num_a1" size="3" /> &emsp; &emsp;
+          symbol_b1:<input type="text" name="symbol_b1" size="12" />
+          num_b1:<input type="text" name="num_b1" size="3" />
+         </p>
+       <p>
+          <input type="checkbox" name="seq" value="2"/>2 &emsp; &emsp;
+          symbol_a2:<input type="text" name="symbol_a2" size="12" />
+          num_a2:<input type="text" name="num_a2" size="3" /> &emsp; &emsp;
+          symbol_b2:<input type="text" name="symbol_b2" size="12" />
+          num_b2:<input type="text" name="num_b2" size="3" />
+       </p>
+       <p>
+          <input type="checkbox" name="seq" value="3"/>3 &emsp; &emsp;
+          symbol_a3:<input type="text" name="symbol_a3" size="12" />
+          num_a3:<input type="text" name="num_a3" size="3" /> &emsp; &emsp;
+          symbol_b3:<input type="text" name="symbol_b3" size="12" />
+          num_b3:<input type="text" name="num_b3" size="3" />
+       </p>
+       <p>
+          <input type="checkbox" name="seq" value="4"/>4 &emsp; &emsp;
+          symbol_a4:<input type="text" name="symbol_a4" size="12" />
+          num_a4:<input type="text" name="num_a4" size="3" /> &emsp; &emsp;
+          symbol_b4:<input type="text" name="symbol_b4" size="12" />
+          num_b4:<input type="text" name="num_b4" size="3" />
+       </p>
+
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+    </section>
+  </body>
+</html>
