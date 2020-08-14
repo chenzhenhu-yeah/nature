@@ -356,11 +356,11 @@ def fresh_daliopt():
 def fresh_mutual():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    pz_list = ['m','RM','MA','SR','CF','IO','ru']
-    for pz in pz_list:
-        fn_p = get_dss() + 'fut/engine/mutual/portfolio_mutual_' + pz + '_var.csv'
-        if os.path.exists(fn_p):
-            fresh_p(today, fn_p)
+
+    dirname = get_dss() + 'fut/engine/mutual/'
+    listfile = os.listdir(dirname)
+    for fn in listfile:
+        fresh_p(today, fn)
 
 def pandian_run():
     try:
@@ -383,5 +383,5 @@ def pandian_run():
         to_log(s)
 
 if __name__ == '__main__':
-    pandian_run()
-    #pass
+    # pandian_run()
+    pass
