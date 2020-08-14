@@ -34,6 +34,38 @@ def get_repo():
     return path[:i] + 'repo\\'
 
 
+class Contract(object):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin):
+        """Constructor"""
+        self.pz = pz
+        self.size = size
+        self.price_tick = price_tick
+        self.variable_commission = variable_commission
+        self.fixed_commission = fixed_commission
+        self.slippage = slippage
+        self.exchangeID = exchangeID
+        self.margin = margin
+
+def get_contract(symbol):
+    pz = symbol[:2]
+    if pz.isalpha():
+        pass
+    else:
+        pz = symbol[:1]
+
+    contract_dict = {}
+    filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+    with open(filename_setting_fut,encoding='utf-8') as f:
+        r = DictReader(f)
+        for d in r:
+            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']) )
+
+    if pz in contract_dict:
+        return contract_dict[pz]
+    else:
+        return None
+        #assert False
+
 #----------------------------------------------------------------------
 def get_symbols_trade():
     # 加载品种
@@ -76,22 +108,39 @@ def get_symbols_quote():
     # today = '2020-07-03'
 
     try:
-        # 加载IF、IO
-
-        strike_list = range(3000,6000,50)
-        # print(*strike_list)
-
+        # 加载 期权，对于IO还要加载IF
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
-        df2 = pd.read_csv(fn)
-        df2 = df2[df2.pz == 'IO']
-        df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
-        df2 = df2[df2.mature > today]
-        for io in df2.symbol:
-            cur_IF = 'IF' + io[2:]
-            symbols_list.append(cur_IF)
-            for strike in strike_list:
-                symbols_list.append( io + '-C-' + str(strike) )
-                symbols_list.append( io + '-P-' + str(strike) )
+        df = pd.read_csv(fn)
+        for pz in ['IO']:
+            df2 = df2[df.pz == pz]
+            df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
+            df2 = df2[df2.mature > today]
+            for symbol in df2.symbol:
+                gap = 50
+                # if pz == 'CF':
+                #     gap = 200
+                # if pz in ['RM', 'MA']:
+                #     gap = 25
+
+                if pz == 'IO':
+                    cur_IF = 'IF' + symbol[2:]
+                else:
+                    cur_IF = pz + symbol[len(pz):]
+                symbols_list.append(cur_IF)
+
+                strike_min = 3000
+                strike_max = 6000
+                strike_list = range(strike_min, strike_max, gap)
+                # print(*strike_list)
+
+                exchangeID = str(get_contract(symbol).exchangeID)
+                for strike in strike_list:
+                    if exchangeID in ['CFFEX', 'DCE']:
+                        symbols_list.append( symbol + '-C-' + str(strike) )
+                        symbols_list.append( symbol + '-P-' + str(strike) )
+                    else:
+                        symbols_list.append( symbol + 'C' + str(strike) )
+                        symbols_list.append( symbol + 'P' + str(strike) )
 
         # 加载cu、al、zn
         yymm_list = ['2007','2008','2009','2010','2011','2012',
@@ -158,38 +207,6 @@ def get_symbols_quote():
     symbols_list = sorted(list(set(symbols_list)))
     # print(symbols_list)
     return symbols_list
-
-class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin):
-        """Constructor"""
-        self.pz = pz
-        self.size = size
-        self.price_tick = price_tick
-        self.variable_commission = variable_commission
-        self.fixed_commission = fixed_commission
-        self.slippage = slippage
-        self.exchangeID = exchangeID
-        self.margin = margin
-
-def get_contract(symbol):
-    pz = symbol[:2]
-    if pz.isalpha():
-        pass
-    else:
-        pz = symbol[:1]
-
-    contract_dict = {}
-    filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-    with open(filename_setting_fut,encoding='utf-8') as f:
-        r = DictReader(f)
-        for d in r:
-            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']) )
-
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        return None
-        #assert False
 
 def send_email_old(dss, subject, content):
     try:
