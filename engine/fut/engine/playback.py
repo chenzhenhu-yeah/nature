@@ -28,7 +28,8 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
-from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio
+from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
+
 
 #from ipdb import set_trace
 
@@ -147,24 +148,37 @@ class FutEngine(object):
         #             if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
         #                 self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
-        if 'symbols_follow' in setting:
-            symbols = setting['symbols_follow']
-            if len(symbols) > 0:
-                dali_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
+        # if 'symbols_follow' in setting:
+        #     symbols = setting['symbols_follow']
+        #     if len(symbols) > 0:
+        #         dali_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
+        #
+        # if 'symbols_avenger' in setting:
+        #     symbols = setting['symbols_avenger']
+        #     if len(symbols) > 0:
+        #         avenger_symbol_list = symbols.split(',')
+        #     else:
+        #         avenger_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+        #                 self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
-        if 'symbols_avenger' in setting:
-            symbols = setting['symbols_avenger']
+        if 'symbols_ratio' in setting:
+            symbols = setting['symbols_ratio']
             if len(symbols) > 0:
-                avenger_symbol_list = symbols.split(',')
+                ratio_symbol_list = symbols.split(',')
             else:
-                avenger_symbol_list = []
-            fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+                ratio_symbol_list = []
+            fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
             if os.path.exists(fn):
                 df = pd.read_csv(fn)
                 for i, row in df.iterrows():
-                    if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
-                        self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+                    if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
+                        self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -179,8 +193,8 @@ class FutEngine(object):
         """加载数据"""
 
         for vtSymbol in self.vtSymbol_list:
-            # test_list = ['IF2008','IO2008-C-4600','IO2008-P-4600']
-            # if vtSymbol in test_list:
+            test_list = ['IO2008-C-4600','IO2008-C-4700','IO2008-C-4800','IO2008-C-4900']
+            if vtSymbol in test_list:
 
                 fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
                 if os.path.exists(fn):
@@ -347,8 +361,8 @@ def start():
     print(u'期货交易引擎开始回放')
 
     # start_date = '2019-12-01 09:00:00'
-    start_date = '2020-07-24 09:00:00'
-    end_date   = '2020-07-24 15:00:00'
+    start_date = '2020-08-10 09:00:00'
+    end_date   = '2020-08-11 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

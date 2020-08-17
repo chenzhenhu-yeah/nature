@@ -30,7 +30,7 @@ from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
 from nature import Fut_OwlPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
-from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio
+from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
 
 #from ipdb import set_trace
 
@@ -177,6 +177,19 @@ class FutEngine(object):
                     for i, row in df.iterrows():
                         if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
                             self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+
+        if 'symbols_ratio' in setting:
+            symbols = setting['symbols_ratio']
+            if len(symbols) > 0:
+                ratio_symbol_list = symbols.split(',')
+            else:
+                ratio_symbol_list = []
+            fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
+                        self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

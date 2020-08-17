@@ -253,29 +253,49 @@ def mates():
 
 
 def smile_symbol(symbol, date, atm, gap):
+
     now = datetime.strptime(date, '%Y-%m-%d')
     # now = datetime.now()
-    today = now.strftime('%Y-%m-%d')
 
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
+
+    fn = get_dss() + 'opt/' +  pre[:7] + '_sigma.csv'
+    df_pre = pd.read_csv(fn)
     fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
-    df = pd.read_csv(fn)
-    df = df[df.date <= today]
-    df = df.drop_duplicates(subset=['term'], keep='last')
+    df_today = pd.read_csv(fn)
+    df = pd.concat([df_pre, df_today])
     df = df[df.term == symbol]
+    df = df[df.date <= today]
+    df = df.drop_duplicates(subset=['date'], keep='last')
+    # print(df.tail())
+
+    plt.figure(figsize=(12,7))
+    plt.title(today + '_' + symbol)
+
+    row = df.iloc[-2,:]
+    c_curve_dict = eval(row.c_curve)
+    p_curve_dict = eval(row.p_curve)
+    df2 = pd.DataFrame([c_curve_dict, p_curve_dict])
+    df2 = df2.T
+    df2.columns = ['call', 'put']
+    df2 = df2.loc[atm-5*gap :atm+5*gap, :]
+    plt.plot(df2.call, '--', label='pre call')
+    plt.plot(df2.put, '--', label='pre put')
+
     row = df.iloc[-1,:]
     c_curve_dict = eval(row.c_curve)
     p_curve_dict = eval(row.p_curve)
-
     df1 = pd.DataFrame([c_curve_dict, p_curve_dict])
     df1 = df1.T
     df1.columns = ['call', 'put']
     df1 = df1.loc[atm-5*gap :atm+5*gap, :]
-
-    plt.figure(figsize=(12,7))
-    plt.title(today + '_' + row.term)
-    # df1.plot()
-    plt.plot(df1.call)
-    plt.plot(df1.put)
+    plt.plot(df1.call, label='next call')
+    plt.plot(df1.put,  label='next put')
 
     plt.legend()
     fn = 'static/smile_symbol.jpg'
@@ -636,7 +656,7 @@ if __name__ == '__main__':
     # dali()
     # opt()
     # mates()
-    # smile()
+    # smile_show_symbol('IO2008', '2020-08-12')
     # iv_ts()
     # star()
     # hv_show()

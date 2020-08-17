@@ -273,8 +273,13 @@ def opt_mature():
 
     # 显示配置文件的内容
     df = pd.read_csv(filename, dtype='str')
-    df = df[df.pz == pz]
-    df = df.sort_values(by='symbol', ascending=False)
+    if pz == '':
+        df = df.sort_values(by='mature', ascending=False)
+        df = df.iloc[:10, :]
+    else:
+        df = df[df.pz == pz]
+        df = df.sort_values(by='symbol', ascending=False)
+
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
@@ -394,6 +399,43 @@ def market_date():
         r.append( list(row) )
 
     return render_template("market_date.html",title="market_date",rows=r)
+
+@app.route('/ratio', methods=['get','post'])
+def ratio():
+    filename = get_dss() + 'fut/engine/ratio/portfolio_ratio_param.csv'
+    if request.method == "POST":
+        symbol_c = del_blank( request.form.get('symbol_c') )
+        symbol_p = del_blank( request.form.get('symbol_p') )
+        fixed_size = del_blank( request.form.get('fixed_size') )
+        gap = del_blank( request.form.get('gap') )
+        profit = del_blank( request.form.get('profit') )
+
+        kind = request.form.get('kind')
+
+        r = [[symbol_c,symbol_p,fixed_size,gap,profit]]
+        cols = ['symbol_c','symbol_p','fixed_size','gap','profit']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("ratio.html",title="ratio",rows=r)
 
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():

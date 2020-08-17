@@ -180,7 +180,7 @@ class Gateway_Ht_CTP(object):
         pz = get_contract(code).pz
         if portfolio in self.pf_dict:
             pz_list = self.pf_dict[portfolio].split(',')
-            if pz in pz_list:
+            if (pz in pz_list) or ('*' in pz_list):
                 print(portfolio, ' ', pz, ' send order here!')
             else:
                 print(portfolio, ' ', pz, ' just test order here!')

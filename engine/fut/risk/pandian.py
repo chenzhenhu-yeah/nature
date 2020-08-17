@@ -360,7 +360,7 @@ def fresh_mutual():
     dirname = get_dss() + 'fut/engine/mutual/'
     listfile = os.listdir(dirname)
     for fn in listfile:
-        fresh_p(today, fn)
+        fresh_p(today, dirname+fn)
 
 def pandian_run():
     try:
@@ -368,7 +368,7 @@ def pandian_run():
         #today = now.strftime('%Y-%m-%d') + ' 15:00:00'
         today = now.strftime('%Y-%m-%d')
 
-        pandian_dali(today)
+        # pandian_dali(today)
         # pandian_p(today)
         # pandian_dali_m(today)
         # pandian_dali_RM(today)
@@ -383,5 +383,5 @@ def pandian_run():
         to_log(s)
 
 if __name__ == '__main__':
-    # pandian_run()
+    pandian_run()
     pass
