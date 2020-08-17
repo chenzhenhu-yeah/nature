@@ -270,12 +270,15 @@ def tick2bar(tradeDay):
             # 该合约处理完毕，保存各周期bar到文件
             if len(r1) > 0:
                 save_bar(r1, symbol)
-                
+
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
             continue
 
 if __name__ == "__main__":
-    tradeDay = '20200515'
+    now = datetime.datetime.now()
+    tradeDay = now.strftime('%Y%m%d')
+    # tradeDay = '20200515'
+    
     tick2bar(tradeDay)
