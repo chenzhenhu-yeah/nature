@@ -85,10 +85,16 @@ class Fut_RatioSignal(Signal):
         self.portfolio.got_dict[self.vtSymbol] = True
 
         if self.vtSymbol == self.portfolio.symbol_c:
-            self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
+            if self.engine.type == 'backtest':
+                self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
+            else:
+                self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.BidPrice - self.portfolio.price_c)
 
         if self.vtSymbol == self.portfolio.symbol_p:
-            self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
+            if self.engine.type == 'backtest':
+                self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
+            else:
+                self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.AskPrice - self.portfolio.price_p)
 
         self.can_buy = False
         self.can_short = False
