@@ -126,7 +126,7 @@ def alter_book_by_rec(row):
             net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
 
     if row.Offset == 'Close':
-            net_pnl -= (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
+            net_pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
 
     # 统一更新价格
     close_dict[row.InstrumentID] = row.Price
