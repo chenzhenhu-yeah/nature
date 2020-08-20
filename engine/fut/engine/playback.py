@@ -148,12 +148,6 @@ class FutEngine(object):
         #             if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
         #                 self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
-        # if 'symbols_follow' in setting:
-        #     symbols = setting['symbols_follow']
-        #     if len(symbols) > 0:
-        #         dali_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
-        #
         # if 'symbols_avenger' in setting:
         #     symbols = setting['symbols_avenger']
         #     if len(symbols) > 0:
@@ -167,18 +161,32 @@ class FutEngine(object):
         #             if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
         #                 self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
-        if 'symbols_ratio' in setting:
-            symbols = setting['symbols_ratio']
+        # if 'symbols_ratio' in setting:
+        #     symbols = setting['symbols_ratio']
+        #     if len(symbols) > 0:
+        #         ratio_symbol_list = symbols.split(',')
+        #     else:
+        #         ratio_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
+        #                 self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
+
+        if 'symbols_follow' in setting:
+            symbols = setting['symbols_follow']
             if len(symbols) > 0:
-                ratio_symbol_list = symbols.split(',')
+                follow_symbol_list = symbols.split(',')
             else:
-                ratio_symbol_list = []
-            fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+                follow_symbol_list = []
+
+            fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
             if os.path.exists(fn):
                 df = pd.read_csv(fn)
                 for i, row in df.iterrows():
-                    if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
-                        self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
+                    if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
+                        self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -193,7 +201,7 @@ class FutEngine(object):
         """加载数据"""
 
         for vtSymbol in self.vtSymbol_list:
-            test_list = ['IO2008-C-4600','IO2008-C-4700','IO2008-C-4800','IO2008-C-4900']
+            test_list = ['IF2008','IO2008-C-4800','IO2008-P-4300','IO2008-C-4900','IO2008-P-4400']
             if vtSymbol in test_list:
 
                 fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'

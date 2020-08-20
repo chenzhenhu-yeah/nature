@@ -57,8 +57,10 @@ def update_rec_price(rec):
         if pos_dict[s] == 0:
             s_list.append(s)
     for s in s_list:
-        pos_dict.pop(s)
-        close_dict.pop(s)
+        if s in pos_dict:
+            pos_dict.pop(s)
+        if s in close_dict:
+            close_dict.pop(s)
 
     fn = dss + 'opt/' + today[:7] + '.csv'
     if os.path.exists(fn):

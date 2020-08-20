@@ -159,12 +159,6 @@ class FutEngine(object):
                         self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
         if self.seq_tm == 'morning':
-            if 'symbols_follow' in setting:
-                symbols = setting['symbols_follow']
-                if len(symbols) > 0:
-                    dali_symbol_list = symbols.split(',')
-                    self.loadPortfolio(Fut_FollowPortfolio, dali_symbol_list)
-
             if 'symbols_avenger' in setting:
                 symbols = setting['symbols_avenger']
                 if len(symbols) > 0:
@@ -177,6 +171,19 @@ class FutEngine(object):
                     for i, row in df.iterrows():
                         if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
                             self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+
+        if 'symbols_follow' in setting:
+            symbols = setting['symbols_follow']
+            if len(symbols) > 0:
+                follow_symbol_list = symbols.split(',')
+            else:
+                follow_symbol_list = []
+            fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
+            if os.path.exists(fn):
+                df = pd.read_csv(fn)
+                for i, row in df.iterrows():
+                    if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
+                        self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
         if 'symbols_ratio' in setting:
             symbols = setting['symbols_ratio']
