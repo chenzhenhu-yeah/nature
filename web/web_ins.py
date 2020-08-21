@@ -11,7 +11,7 @@ import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
-from nature import iv_straddle_show, hv_show, book_min5_show
+from nature import iv_straddle_show, hv_show, book_min5_show, hs300_spread_show
 from nature import del_blank, check_symbols_p
 
 
@@ -689,6 +689,18 @@ def book_min5():
 
     return render_template("book_min5.html", title="book_min5")
 
+@app.route('/hs300_spread', methods=['get', 'post'])
+def hs300_spread():
+    if request.method == "POST":
+        startdate = request.form.get('startdate')
+        if startdate == '':
+            now = datetime.now() - timedelta(days = 30)
+            startdate = now.strftime('%Y-%m-%d')
+
+        return hs300_spread_show(startdate)
+
+    return render_template("hs300_spread.html", title="hs300_spread")
+
 @app.route('/log')
 def show_log():
     items = read_log_today()
@@ -728,6 +740,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

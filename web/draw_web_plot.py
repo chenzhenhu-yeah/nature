@@ -650,6 +650,56 @@ def iv_straddle_show(symbol, strike, startdate):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def hs300_spread_show(start_day):
+    df_300 = get_inx('000300', start_day)
+    df_300 = df_300.set_index('date')
+    df_300 = df_300.sort_index()
+    # print(df_300.tail())
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df_opt = pd.read_csv(fn)
+    df = df_opt[(df_opt.pz == 'IO') & (df_opt.flag == df_opt.flag)]               # 筛选出不为空的记录
+    df = df.sort_values('symbol')
+    symbol_list = list(df.symbol)
+    # print(symbol_list)
+
+    plt.figure(figsize=(12,8))
+    plt.title('hs300_spread')
+    for symbol in symbol_list:
+        code = 'IF' + symbol[2:]
+        fn = get_dss() + 'fut/bar/day_' + code + '.csv'
+        df = pd.read_csv(fn)
+        df = df[df.date >= start_day]
+        df = df.set_index('date')
+        df = df.sort_index()
+        df['value'] = df.close - df_300.close
+        # print(df.tail())
+
+        plt.plot(df.value, label=code)
+
+    plt.xticks(rotation=45)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
+
+    # for label in ax.get_xticklabels():
+    #     label.set_visible(False)
+    # for label in ax.get_xticklabels()[1::25]:
+    #     label.set_visible(True)
+    # for label in ax.get_xticklabels()[-1:]:
+    #     label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/hs300_spread_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'hs300_spread_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+
 if __name__ == '__main__':
     pass
     # yue()
@@ -663,3 +713,4 @@ if __name__ == '__main__':
 
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
     # iv_straddle_show('IO2008', '4600', '2020-08-01')
+    hs300_spread_show('2020-08-01')

@@ -156,6 +156,9 @@ class Fut_FollowPortfolio(Portfolio):
         self.dual_name = self.symbol_future
 
         self.got_dict = {}
+        self.got_dict[self.symbol_o] = False
+        self.got_dict[self.symbol_c] = False
+        self.got_dict[self.symbol_p] = False
 
         self.price_o = 0
         self.price_o_high = 0

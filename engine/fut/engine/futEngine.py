@@ -281,11 +281,15 @@ class FutEngine(object):
                 conn.close()
 
                 d = eval(s)
-                bar = VtBarData()
-                bar.__dict__ = d
-                self.lock.acquire()
-                self.bar_list.append(bar)
-                self.lock.release()
+                if d.vtSymbol in self.vtSymbol_list:
+                    bar = VtBarData()
+                    bar.__dict__ = d
+                    self.lock.acquire()
+                    self.bar_list.append(bar)
+                    self.lock.release()
+                else:
+                    pass
+
             except Exception as e:
                 print('error ')
                 r = traceback.format_exc()
@@ -350,8 +354,6 @@ class FutEngine(object):
                 #traceback.print_exc()
                 s = traceback.format_exc()
                 to_log(s)
-                self.lock.release()
-
 
     # 文件通信接口  -----------------------------------------------------------
     def put_service(self):
