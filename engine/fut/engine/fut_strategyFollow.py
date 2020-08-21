@@ -254,11 +254,11 @@ class Fut_FollowPortfolio(Portfolio):
                     self.price_o_low  = (1-self.percent) * self.price_o
 
                     if self.engine.type == 'backtest':
-                        s_c.short(s_c.bar.close, 1)
-                        s_p.short(s_p.bar.close, 1)
+                        s_c.short(s_c.bar.close, self.fixed_size)
+                        s_p.short(s_p.bar.close, self.fixed_size)
                     else:
-                        s_c.short(s_c.bar.BidPrice, 1)                     # 挂买价
-                        s_p.short(s_p.bar.BidPrice, 1)                     # 挂买价
+                        s_c.short(s_c.bar.BidPrice, self.fixed_size)                     # 挂买价
+                        s_p.short(s_p.bar.BidPrice, self.fixed_size)                     # 挂买价
 
                     if self.engine.type == 'backtest':
                         self.price_c = s_c.bar.close
@@ -285,11 +285,11 @@ class Fut_FollowPortfolio(Portfolio):
                     # 盈亏离场 或 无剩余价值离场
                     if self.profit_c + self.profit_p > 0.5*self.profit_o or self.profit_c + self.profit_p < -0.3*self.profit_o or abs(s_c.bar.close + s_p.bar.close) <= 3:
                         if self.engine.type == 'backtest':
-                            s_c.cover(s_c.bar.close, 1)
-                            s_p.cover(s_p.bar.close, 1)
+                            s_c.cover(s_c.bar.close, self.fixed_size)
+                            s_p.cover(s_p.bar.close, self.fixed_size)
                         else:
-                            s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
-                            s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+                            s_c.cover(s_c.bar.AskPrice, self.fixed_size)           # 挂卖价
+                            s_p.cover(s_p.bar.AskPrice, self.fixed_size)           # 挂卖价
 
                         self.hold_c = 0
                         self.hold_p = 0
@@ -301,11 +301,11 @@ class Fut_FollowPortfolio(Portfolio):
                         # 上涨4% 或 离行权价小于50点时
                         if s_o.bar.close > self.price_o_high or self.strike_high - s_o.bar.close < self.gap:
                             if self.engine.type == 'backtest':
-                                s_c.cover(s_c.bar.close, 1)
-                                s_p.cover(s_p.bar.close, 1)
+                                s_c.cover(s_c.bar.close, self.fixed_size)
+                                s_p.cover(s_p.bar.close, self.fixed_size)
                             else:
-                                s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
-                                s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+                                s_c.cover(s_c.bar.AskPrice, self.fixed_size)           # 挂卖价
+                                s_p.cover(s_p.bar.AskPrice, self.fixed_size)           # 挂卖价
 
                             if self.engine.type == 'backtest':
                                 self.price_c = self.price_c - s_c.bar.close
@@ -340,11 +340,11 @@ class Fut_FollowPortfolio(Portfolio):
                         # 下跌4% 或 离行权价小于50点时
                     elif s_o.bar.close < self.price_o_low or s_o.bar.close - self.strike_low < self.gap:
                             if self.engine.type == 'backtest':
-                                s_c.cover(s_c.bar.close, 1)
-                                s_p.cover(s_p.bar.close, 1)
+                                s_c.cover(s_c.bar.close, self.fixed_size)
+                                s_p.cover(s_p.bar.close, self.fixed_size)
                             else:
-                                s_c.cover(s_c.bar.AskPrice, 1)           # 挂卖价
-                                s_p.cover(s_p.bar.AskPrice, 1)           # 挂卖价
+                                s_c.cover(s_c.bar.AskPrice, self.fixed_size)           # 挂卖价
+                                s_p.cover(s_p.bar.AskPrice, self.fixed_size)           # 挂卖价
 
                             if self.engine.type == 'backtest':
                                 self.price_c = self.price_c - s_c.bar.close
