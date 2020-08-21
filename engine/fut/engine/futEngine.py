@@ -281,7 +281,7 @@ class FutEngine(object):
                 conn.close()
 
                 d = eval(s)
-                if d.vtSymbol in self.vtSymbol_list:
+                if d['vtSymbol'] in self.vtSymbol_list:
                     bar = VtBarData()
                     bar.__dict__ = d
                     self.lock.acquire()
