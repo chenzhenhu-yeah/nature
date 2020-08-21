@@ -668,6 +668,8 @@ def hs300_spread_show(start_day):
     for symbol in symbol_list:
         code = 'IF' + symbol[2:]
         fn = get_dss() + 'fut/bar/day_' + code + '.csv'
+        if os.path.exists(fn) == False:
+            continue
         df = pd.read_csv(fn)
         df = df[df.date >= start_day]
         df = df.set_index('date')
