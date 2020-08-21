@@ -240,7 +240,9 @@ class Fut_FollowPortfolio(Portfolio):
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
-        if (bar.time > '09:35:00' and bar.time < '15:00:00') or  (bar.time > '21:05:00' and bar.time < '23:00:00') :    # 因第一根K线的价格为0
+        if (bar.time > '09:35:00' and bar.time < '11:30:00') or \
+           (bar.time > '13:05:00' and bar.time < '15:00:00') or \
+           (bar.time > '21:05:00' and bar.time < '23:00:00') :    # 因第一根K线的价格为0
             # 开仓
             if self.switch_state == 'on' and self.hold_c == 0 and self.hold_p == 0:
                 if self.got_dict[self.symbol_o] == True and self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:

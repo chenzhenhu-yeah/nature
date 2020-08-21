@@ -114,7 +114,7 @@ def get_symbols_quote():
         for pz in ['IO']:
             df2 = df[df.pz == pz]
             df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
-            df2 = df2[df2.mature > today]
+            df2 = df2[df2.mature >= today]
             for symbol in df2.symbol:
                 gap = 50
                 # if pz == 'CF':

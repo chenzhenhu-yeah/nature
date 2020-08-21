@@ -74,6 +74,7 @@ def update_rec_price(rec):
                 close_dict[symbol] = row.LastPrice
 
     rec.netPnl = net_pnl
+    rec.posDict = str(pos_dict)
     rec.closeDict = str(close_dict)
 
 def fresh_book():

@@ -600,38 +600,38 @@ def book_min5_show(startdate, dual_list):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def iv_straddle_show(symbol, strike, startdate):
-    exchangeID = str(get_contract(symbol).exchangeID)
-    if exchangeID in ['CFFEX', 'DCE']:
-        s_a = symbol + '-C-' + strike
-        s_b = symbol + '-P-' + strike
-    else:
-        s_a = symbol + 'C' + strike
-        s_b = symbol + 'P' + strike
-
-    fn = get_dss() + 'fut/bar/min5_' + s_a + '.csv'
-    df_a = pd.read_csv(fn)
-    fn = get_dss() + 'fut/bar/min5_' + s_b + '.csv'
-    df_b = pd.read_csv(fn)
-    df_a = df_a[df_a.date >= startdate]
-    df_b = df_b[df_b.date >= startdate]
-    assert len(df_a) == len(df_b)
-    df_a['dt'] = df_a['date'] + ' ' + df_a['time']
-    df_a['value'] = df_a['close'] + df_b['close']
-    df_a = df_a.set_index('dt')
-
-    df_a['next'] = df_a['value'].shift(1)
-    df_a['value'] = np.log(df_a['value']) - np.log(df_a['next'])
-    df_a['value'] = df_a['value'].cumsum()
-    print(df_a.head())
-
+def iv_straddle_show(symbol, strike_list, startdate):
     plt.figure(figsize=(12,8))
-    plt.plot(df_a.value)
+    for strike in strike_list:
+        exchangeID = str(get_contract(symbol).exchangeID)
+        if exchangeID in ['CFFEX', 'DCE']:
+            s_a = symbol + '-C-' + strike
+            s_b = symbol + '-P-' + strike
+        else:
+            s_a = symbol + 'C' + strike
+            s_b = symbol + 'P' + strike
+
+        fn = get_dss() + 'fut/bar/min5_' + s_a + '.csv'
+        df_a = pd.read_csv(fn)
+        fn = get_dss() + 'fut/bar/min5_' + s_b + '.csv'
+        df_b = pd.read_csv(fn)
+        df_a = df_a[df_a.date >= startdate]
+        df_b = df_b[df_b.date >= startdate]
+        assert len(df_a) == len(df_b)
+        df_a['dt'] = df_a['date'] + ' ' + df_a['time']
+        df_a['value'] = df_a['close'] + df_b['close']
+        df_a = df_a.set_index('dt')
+
+        df_a['next'] = df_a['value'].shift(1)
+        df_a['value'] = np.log(df_a['value']) - np.log(df_a['next'])
+        df_a['value'] = df_a['value'].cumsum()
+        print(df_a.head())
+        plt.plot(df_a.value, label=strike)
 
     plt.xticks(rotation=45)
     plt.grid(True, axis='y')
-    ax = plt.gca()
 
+    ax = plt.gca()
     for label in ax.get_xticklabels():
         label.set_visible(False)
     for label in ax.get_xticklabels()[1::25]:
@@ -712,5 +712,5 @@ if __name__ == '__main__':
     # hv_show()
 
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
-    # iv_straddle_show('IO2008', '4600', '2020-08-01')
-    hs300_spread_show('2020-08-01')
+    # iv_straddle_show('IO2008', ['4900'], '2020-08-01')
+    # hs300_spread_show('2020-08-01')

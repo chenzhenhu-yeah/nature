@@ -658,13 +658,26 @@ def smile():
 def iv_straddle():
     if request.method == "POST":
         symbol = request.form.get('symbol')
-        strike = request.form.get('strike')
+        strike1 = request.form.get('strike1')
+        strike2 = request.form.get('strike2')
+        strike3 = request.form.get('strike3')
+        strike4 = request.form.get('strike4')
+        strike_list = []
+        if strike1 != '':
+            strike_list.append(strike1)
+        if strike2 != '':
+            strike_list.append(strike2)
+        if strike3 != '':
+            strike_list.append(strike3)
+        if strike4 != '':
+            strike_list.append(strike4)
+
         startdate = request.form.get('startdate')
         if startdate == '':
             now = datetime.now() - timedelta(days = 3)
             startdate = now.strftime('%Y-%m-%d')
 
-        return iv_straddle_show(symbol, strike, startdate)
+        return iv_straddle_show(symbol, strike_list, startdate)
 
     return render_template("iv_straddle.html", title="iv_straddle")
 
@@ -740,6 +753,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
 
-    # app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
