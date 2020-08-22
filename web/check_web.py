@@ -101,19 +101,6 @@ def check_symbols_p(key, value):
             else:
                 r = 'min15_' + symbol + '.csv 记录数不足100'
 
-    if key == 'symbols_trade':
-        if len(value) > 0:
-            symbol_list = value.split(',')
-        else:
-            symbol_list = []
-
-        for symbol in symbol_list:
-            fn = get_dss() + 'fut/put/min1_' + symbol + '.csv'
-            if os.path.exists(fn):
-                pass
-            else:
-                r = 'min1_' + symbol + '.csv 文件不存在'
-
     if key in ['symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12']:
         if len(value) > 0:
             symbol_list = value.split(',')

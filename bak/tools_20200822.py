@@ -78,56 +78,26 @@ def get_symbols_trade():
     today = now.strftime('%Y-%m-%d')
     # today = '2020-07-03'
 
-    # 加载期权
+    # 加载IF、IO
+
+    strike_list = range(3000,6000,50)
+    # print(*strike_list)
+
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df1 = pd.read_csv(fn)
-    strike_list = []
-    for pz in ['IO', 'm', 'RM']:
-        for flag in ['m0', 'm1']:
-            df2 = df1[df1.pz == pz]
-            df2 = df2[df2.flag == flag]
-            df2 = df2[df2.mature >= today]
 
-            for i, row in df2.iterrows():
-                symbol = row.symbol
-                symbols_list.append(row.obj + symbol[len(pz):])
-
-                strike_min = int(row.strike_min1)
-                strike_max = int(row.strike_max1)
-                gap = int(row.gap1)
-                strike_list = range(strike_min, strike_max, gap)
-
-                if row.gap2 == row.gap2:                     # 非nan
-                    print('gap2 :' + row.gap2)
-                    strike_min = int(row.strike_min2)
-                    strike_max = int(row.strike_max2)
-                    gap = int(row.gap2)
-                    strike_list += range(strike_min, strike_max, gap)
-
-                for strike in strike_list:
-                    symbols_list.append( symbol + row.dash_c + str(strike) )
-                    symbols_list.append( symbol + row.dash_p + str(strike) )
-
-    # 加载cu、al、zn
-    yymm_list = ['2007','2008','2009','2010','2011','2012',
-            '2101','2102','2103','2104','2105','2106','2107','2108','2109','2110','2111','2112',
-            '2201','2202','2203','2204','2205','2206','2207','2208','2209','2210','2211','2212',
-            '2301','2302','2303','2304','2305','2306','2307','2308','2309','2310','2311','2312',
-            '2401','2402','2403','2404','2405','2406','2407','2408','2409','2410','2411','2412',
-            '2501','2502','2503','2504','2505','2506','2507','2508','2509','2510','2511','2512',
-            '2601','2602','2603','2604','2605','2606','2607','2608','2609','2610','2611','2612',
-            '2701','2702','2703','2704','2705','2706','2707','2708','2709','2710','2711','2712',
-            '2801','2802','2803','2804','2805','2806','2807','2808','2809','2810','2811','2812',
-            '2901','2902','2903','2904','2905','2906','2907','2908','2909','2910','2911','2912',
-           ]
-    yymm = today[2:4] + today[5:7]
-    index = yymm_list.index(yymm)
-    for s in ['cu', 'al', 'zn']:
-        for i in range(index, index+9):
-            symbols_list.append( s + yymm_list[i] )
+    for flag in ['m0', 'm1']:
+        df2 = df1[df1.pz == 'IO']
+        df2 = df2[df2.flag == flag]                 # 筛选出不为空的记录
+        df2 = df2[df2.mature >= today]
+        for io in df2.symbol:
+            cur_IF = 'IF' + io[2:]
+            symbols_list.append(cur_IF)
+            for strike in strike_list:
+                symbols_list.append( io + '-C-' + str(strike) )
+                symbols_list.append( io + '-P-' + str(strike) )
 
     symbols_list = list( set( symbols_list ) )
-    print(sorted(symbols_list))
     return symbols_list
 
 #----------------------------------------------------------------------
@@ -141,29 +111,36 @@ def get_symbols_quote():
         # 加载 期权，对于IO还要加载IF
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
         df = pd.read_csv(fn)
-        for pz in ['IO', 'm', 'RM']:
+        for pz in ['IO']:
             df2 = df[df.pz == pz]
             df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
             df2 = df2[df2.mature >= today]
-            for i, row in df2.iterrows():
-                symbol = row.symbol
-                symbols_list.append(row.obj + symbol[len(pz):])
+            for symbol in df2.symbol:
+                gap = 50
+                # if pz == 'CF':
+                #     gap = 200
+                # if pz in ['RM', 'MA']:
+                #     gap = 25
 
-                strike_min = int(row.strike_min1)
-                strike_max = int(row.strike_max1)
-                gap = int(row.gap1)
+                if pz == 'IO':
+                    cur_IF = 'IF' + symbol[2:]
+                else:
+                    cur_IF = pz + symbol[len(pz):]
+                symbols_list.append(cur_IF)
+
+                strike_min = 3000
+                strike_max = 6000
                 strike_list = range(strike_min, strike_max, gap)
+                # print(*strike_list)
 
-                if row.gap2 == row.gap2:                     # 非nan
-                    print('gap2 :' + row.gap2)
-                    strike_min = int(row.strike_min2)
-                    strike_max = int(row.strike_max2)
-                    gap = int(row.gap2)
-                    strike_list += range(strike_min, strike_max, gap)
-
+                exchangeID = str(get_contract(symbol).exchangeID)
                 for strike in strike_list:
-                    symbols_list.append( symbol + row.dash_c + str(strike) )
-                    symbols_list.append( symbol + row.dash_p + str(strike) )
+                    if exchangeID in ['CFFEX', 'DCE']:
+                        symbols_list.append( symbol + '-C-' + str(strike) )
+                        symbols_list.append( symbol + '-P-' + str(strike) )
+                    else:
+                        symbols_list.append( symbol + 'C' + str(strike) )
+                        symbols_list.append( symbol + 'P' + str(strike) )
 
         # 加载cu、al、zn
         yymm_list = ['2007','2008','2009','2010','2011','2012',
@@ -228,7 +205,7 @@ def get_symbols_quote():
             symbols_list += symbols.split(',')
 
     symbols_list = sorted(list(set(symbols_list)))
-    print(symbols_list)
+    # print(symbols_list)
     return symbols_list
 
 def send_email_old(dss, subject, content):
@@ -499,5 +476,4 @@ def bsm_put_imp_vol(S0, K, T, r, C0):
 
 if __name__ == '__main__':
     get_symbols_trade()
-    # get_symbols_quote()
     pass

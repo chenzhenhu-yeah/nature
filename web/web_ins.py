@@ -237,17 +237,26 @@ def fut_signal_pause():
 def opt_mature():
     pz = ''
     tips = '提示：'
-    setting_dict = {'pz':'','symbol':'','mature':'','flag':'',}
+    setting_dict = {'pz':'','symbol':'','mature':'','flag':'','obj':'','strike_min1':'','strike_max1':'','gap1':'','strike_min2':'','strike_max2':'','gap2':'','dash_c':'','dash_p':''}
     filename = get_dss() + 'fut/cfg/opt_mature.csv'
     if request.method == "POST":
         pz = del_blank( request.form.get('pz') )
         symbol = del_blank( request.form.get('symbol') )
         mature = del_blank( request.form.get('mature') )
         flag = del_blank( request.form.get('flag') )
+        obj = del_blank( request.form.get('obj') )
+        strike_min1 = del_blank( request.form.get('strike_min1') )
+        strike_max1 = del_blank( request.form.get('strike_max1') )
+        gap1 = del_blank( request.form.get('gap1') )
+        strike_min2 = del_blank( request.form.get('strike_min2') )
+        strike_max2 = del_blank( request.form.get('strike_max2') )
+        gap2 = del_blank( request.form.get('gap2') )
+        dash_c = del_blank( request.form.get('dash_c') )
+        dash_p = del_blank( request.form.get('dash_p') )
         kind = request.form.get('kind')
 
-        r = [[pz,symbol,mature,flag]]
-        cols = ['pz','symbol','mature','flag']
+        r = [[pz,symbol,mature,flag,obj,strike_min1,strike_max1,gap1,strike_min2,strike_max2,gap2,dash_c,dash_p]]
+        cols = ['pz','symbol','mature','flag','obj','strike_min1','strike_max1','gap1','strike_min2','strike_max2','gap2','dash_c','dash_p']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
@@ -439,7 +448,7 @@ def ratio():
 
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():
-    fn = get_dss() + 'fut/engine/value_dali.csv'
+    fn = get_dss() + 'fut/engine/star/value_dali.csv'
     df = pd.read_csv(fn, dtype='str')
 
     r = []
@@ -753,6 +762,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')
