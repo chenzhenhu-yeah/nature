@@ -141,7 +141,7 @@ def get_symbols_quote():
         # 加载 期权，对于IO还要加载IF
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
         df = pd.read_csv(fn)
-        for pz in ['IO', 'm', 'RM']:
+        for pz in ['IO', 'm', 'RM', 'MA', 'CF', 'c']:
             df2 = df[df.pz == pz]
             df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
             df2 = df2[df2.mature >= today]
