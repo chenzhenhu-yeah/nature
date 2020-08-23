@@ -25,7 +25,13 @@ def index():
 
 @app.route('/fut')
 def fut():
-    symbol = 'ag2012'
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    symbol = setting['symbols_quote_canary']
+    assert symbol[:2] == 'ag'
+    # symbol = 'ag2012'
+
+    # 只生成ag的min1文件，其他品种不产生
     filename = get_dss() + 'fut/put/min1_' + symbol + '.csv'
     df = pd.read_csv(filename, dtype='str')
     r_q = [ list(df.columns) ]

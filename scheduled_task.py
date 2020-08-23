@@ -136,8 +136,6 @@ def run_iv():
         s = traceback.format_exc()
         to_log(s)
 
-
-
 def run_pandian():
     try:
         now = datetime.datetime.now()
@@ -251,6 +249,13 @@ def run_mail_pdf():
 
 def run_examine():
     pass
+    now = datetime.datetime.now()
+    weekday = int(now.strftime('%w'))
+    if 1 <= weekday <= 5:
+        print('\n' + str(now) + " examine begin...")
+        examine()
+        now = datetime.datetime.now()
+        print('\n' + str(now) + " examine end ")
 
 if __name__ == '__main__':
     # run_mail_pdf()
@@ -265,17 +270,15 @@ if __name__ == '__main__':
         # schedule.every().day.at("11:35").do(run_arbitrage)
         schedule.every().day.at("15:01").do(run_down_opt)
 
-
         # 盘后
         schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:15").do(run_iv)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
         schedule.every().day.at("15:27").do(run_down_data)
-        schedule.every().day.at("15:29").do(run_mail_pdf)
+        schedule.every().day.at("15:28").do(run_mail_pdf)
+        schedule.every().day.at("15:29").do(run_examine)
         schedule.every().day.at("15:30").do(mail_log)
-
-        # schedule.every().day.at("03:30").do(run_examine)
 
         print('schedule begin...')
         while True:
