@@ -71,19 +71,20 @@ class Fut_FollowSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        self.portfolio.got_dict[self.vtSymbol] = True
+        if self.bar.AskPrice - self.bar.BidPrice < 3:
+            self.portfolio.got_dict[self.vtSymbol] = True
 
-        if self.vtSymbol == self.portfolio.symbol_c:
-            if self.portfolio.engine.type == 'backtest':
-                self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
-            else:
-                self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.BidPrice - self.portfolio.price_c)
+            if self.vtSymbol == self.portfolio.symbol_c:
+                if self.portfolio.engine.type == 'backtest':
+                    self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
+                else:
+                    self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.BidPrice - self.portfolio.price_c)
 
-        if self.vtSymbol == self.portfolio.symbol_p:
-            if self.portfolio.engine.type == 'backtest':
-                self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
-            else:
-                self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.AskPrice - self.portfolio.price_p)
+            if self.vtSymbol == self.portfolio.symbol_p:
+                if self.portfolio.engine.type == 'backtest':
+                    self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
+                else:
+                    self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.AskPrice - self.portfolio.price_p)
 
         self.can_buy = False
         self.can_short = False
@@ -240,9 +241,11 @@ class Fut_FollowPortfolio(Portfolio):
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
-        if (bar.time > '09:35:00' and bar.time < '11:30:00') or \
-           (bar.time > '13:05:00' and bar.time < '15:00:00') or \
-           (bar.time > '21:05:00' and bar.time < '23:00:00') :    # 因第一根K线的价格为0
+        if (bar.time > '09:35:00' and bar.time < '11:25:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
+           (bar.time > '13:05:00' and bar.time < '14:55:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
+           (bar.time > '09:05:00' and bar.time < '11:25:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
+           (bar.time > '13:35:00' and bar.time < '14:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
+           (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
             # 开仓
             if self.switch_state == 'on' and self.hold_c == 0 and self.hold_p == 0:
                 if self.got_dict[self.symbol_o] == True and self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:

@@ -415,6 +415,49 @@ def market_date():
 
     return render_template("market_date.html",title="market_date",rows=r)
 
+@app.route('/follow', methods=['get','post'])
+def follow():
+    filename = get_dss() + 'fut/engine/follow/portfolio_follow_param.csv'
+    if request.method == "POST":
+        symbol_o = del_blank( request.form.get('symbol_o') )
+        symbol_c = del_blank( request.form.get('symbol_c') )
+        symbol_p = del_blank( request.form.get('symbol_p') )
+        flag_c = del_blank( request.form.get('flag_c') )
+        flag_p = del_blank( request.form.get('flag_p') )
+        strike_high = del_blank( request.form.get('strike_high') )
+        strike_low = del_blank( request.form.get('strike_low') )
+        fixed_size = del_blank( request.form.get('fixed_size') )
+        switch_state = del_blank( request.form.get('switch_state') )
+        percent = del_blank( request.form.get('percent') )
+        gap = del_blank( request.form.get('gap') )
+
+        kind = request.form.get('kind')
+
+        r = [[symbol_o,symbol_c,symbol_p,flag_c,flag_p,strike_high,strike_low,fixed_size,switch_state,percent,gap]]
+        cols = ['symbol_o','symbol_c','symbol_p','flag_c','flag_p','strike_high','strike_low','fixed_size','switch_state','percent','gap']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("follow.html",title="follow",rows=r)
+
 @app.route('/ratio', methods=['get','post'])
 def ratio():
     filename = get_dss() + 'fut/engine/ratio/portfolio_ratio_param.csv'

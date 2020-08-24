@@ -126,8 +126,7 @@ def get_symbols_trade():
         for i in range(index, index+9):
             symbols_list.append( s + yymm_list[i] )
 
-    symbols_list = list( set( symbols_list ) )
-    # print(sorted(symbols_list))
+    symbols_list = sorted( list(set(symbols_list)) )
     return symbols_list
 
 #----------------------------------------------------------------------
@@ -228,7 +227,6 @@ def get_symbols_quote():
             symbols_list += symbols.split(',')
 
     symbols_list = sorted(list(set(symbols_list)))
-    # print(symbols_list)
     return symbols_list
 
 def send_email_old(dss, subject, content):
