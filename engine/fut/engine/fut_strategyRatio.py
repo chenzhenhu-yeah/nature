@@ -54,19 +54,17 @@ class Fut_RatioSignal(Signal):
             self.on_bar_minx(bar)
 
     def on_bar_minx(self, bar):
-        if self.paused == True:
-            return
-        else:
-            filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
-            if os.path.exists(filename):
-                df = pd.read_csv(filename)
-                df = df[df.signal == self.portfolio.name]
-                if len(df) > 0:
-                    symbol_list = str(df.iat[0,1]).split(',')
-                    if self.vtSymbol in symbol_list:
-                        self.paused = True
-                        print(self.vtSymbol + ' right now paused in ' + self.portfolio.name)
-                        return
+        filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
+        if os.path.exists(filename):
+            df = pd.read_csv(filename)
+            df = df[df.signal == self.portfolio.name]
+            if len(df) > 0:
+                symbol_list = str(df.iat[0,1]).split(',')
+                if self.vtSymbol in symbol_list:
+                    self.paused = True
+                    # print(self.vtSymbol + ' right now paused in ' + self.portfolio.name)
+                    return                
+        self.paused = False
 
         self.am.updateBar(bar)
         if not self.am.inited:
