@@ -63,7 +63,7 @@ class Fut_RatioSignal(Signal):
                 if self.vtSymbol in symbol_list:
                     self.paused = True
                     # print(self.vtSymbol + ' right now paused in ' + self.portfolio.name)
-                    return                
+                    return
         self.paused = False
 
         self.am.updateBar(bar)
@@ -102,7 +102,7 @@ class Fut_RatioSignal(Signal):
 
         # 记录数据
         if self.vtSymbol in [self.portfolio.symbol_c, self.portfolio.symbol_p]:
-            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.fixed_size, self.portfolio.gap, self.portfolio.profit]]
+            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p]]
             df = pd.DataFrame(r)
 
             filename = get_dss() +  'fut/engine/ratio/bar_ratio_'+self.type+ '_' + self.vtSymbol + '.csv'

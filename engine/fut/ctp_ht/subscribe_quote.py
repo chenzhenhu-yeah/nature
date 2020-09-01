@@ -227,18 +227,22 @@ class HuQuote(CtpQuote):
     #         to_log(r)
 
     def send_bar(self, bar, minx):
-        try :
-            client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            client.connect(('localhost', SOCKET_BAR))
+        i = 0
+        while i < 2:
+            try :
+                client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                client.connect(('localhost', SOCKET_BAR))
 
-            s = str(bar.__dict__)
-            b = bytes(s, encoding='utf-8')
-            client.send(b)
-            client.close()
-        except Exception as e:
-            print('error，发送太密集')
-            r = traceback.format_exc()
-            to_log(r)
+                s = str(bar.__dict__)
+                b = bytes(s, encoding='utf-8')
+                client.send(b)
+                client.close()
+                i += 2
+            except Exception as e:
+                i += 1
+                print('error，发送太密集')
+                r = traceback.format_exc()
+                to_log(r)
 
     # 保存新生成的bar到put目录下的相应文件，通过该文件来进行多进程数据的同步-----------------------
     def put_bar(self, bar, minx):

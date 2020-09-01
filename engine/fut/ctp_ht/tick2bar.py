@@ -265,7 +265,8 @@ def tick2bar(tradeDay):
                     # 处理该时段的tick，加工返回bar数据集
                     r1 += proc_segment(df1, row.begin, row.end, row.num, symbol)
                 else:
-                    to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
+                    if len(symbol) < 9:
+                        to_log( symbol + ' 时段数据缺失：'+ tradeDay + ' ' + str(row.seq) )
 
             # 该合约处理完毕，保存各周期bar到文件
             if len(r1) > 0:
@@ -280,5 +281,5 @@ if __name__ == "__main__":
     now = datetime.datetime.now()
     tradeDay = now.strftime('%Y%m%d')
     # tradeDay = '20200515'
-    
+
     tick2bar(tradeDay)

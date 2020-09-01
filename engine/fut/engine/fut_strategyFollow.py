@@ -93,7 +93,7 @@ class Fut_FollowSignal(Signal):
 
         # 记录数据
         if self.vtSymbol in [self.portfolio.symbol_o, self.portfolio.symbol_c, self.portfolio.symbol_p]:
-            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.can_buy,self.can_sell,self.can_short,self.can_cover]]
+            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit_o,self.portfolio.profit_c,self.portfolio.profit_p]]
             df = pd.DataFrame(r)
 
             filename = get_dss() +  'fut/engine/follow/bar_follow_'+self.type+ '_' + self.vtSymbol + '.csv'

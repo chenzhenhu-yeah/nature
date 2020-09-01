@@ -161,7 +161,7 @@ def dali_show(pz):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def star():
+def mutual():
     pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm', 'c']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
@@ -195,11 +195,48 @@ def star():
             label.set_visible(True)
 
         plt.legend()
-        fn = 'static/star_' + pz + '.jpg'
+        fn = 'static/mutual_' + pz + '.jpg'
         plt.savefig(fn)
         plt.cla()
 
-        # break
+
+def star():
+    pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm', 'c']
+    for pz in pz_list:
+        # 读取品种每日盈亏情况，清洗数据为每日一个记录
+
+        fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
+        df3 = pd.read_csv(fn)
+        df3['date'] = df3.datetime.str.slice(0,10)
+        df3['time'] = df3.datetime.str.slice(11,19)
+        df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+        df3 = df3.drop_duplicates(subset=['date'],keep='last')
+        df3['star'] = df3['portfolioValue'] + df3['netPnl']
+        df3 = df3.loc[:, ['date', 'star']]
+        df3 = df3.set_index('date')
+        # print(df3.head(3))
+
+        df = df3
+
+        plt.figure(figsize=(12,7))
+        plt.title(pz)
+        plt.plot(df.mutual)
+
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y')
+        ax = plt.gca()
+
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+        for label in ax.get_xticklabels()[1::25]:
+            label.set_visible(True)
+        for label in ax.get_xticklabels()[-1:]:
+            label.set_visible(True)
+
+        plt.legend()
+        fn = 'static/star_' + pz + '.jpg'
+        plt.savefig(fn)
+        plt.cla()
 
 def opt():
     dirname = get_dss() + 'fut/engine/opt/'
@@ -570,7 +607,11 @@ def book_min5_show(startdate, dual_list):
         df_b = pd.read_csv(fn)
         df_a = df_a[df_a.date >= startdate]
         df_b = df_b[df_b.date >= startdate]
+        df_a = df_a.reset_index()
+        df_b = df_b.reset_index()
         assert len(df_a) == len(df_b)
+        # print(df_a.head())
+        # print(df_b.head())
         df_a['dt'] = df_a['date'] + ' ' + df_a['time']
         df_a['value'] = num_a*df_a['close'] + num_b*df_b['close']
         df_a = df_a.set_index('dt')
@@ -600,6 +641,61 @@ def book_min5_show(startdate, dual_list):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def book_min5_now_show(startdate, dual_list):
+    now = datetime.now()
+    startdate = now.strftime('%Y-%m-%d')
+
+    plt.figure(figsize=(12,8))
+    for dual in dual_list:
+        symbol_a = dual[0]
+        num_a    = int(dual[1])
+        symbol_b = dual[2]
+        num_b    = int(dual[3])
+
+        fn = get_dss() + 'fut/put/rec/min5_' + symbol_a + '.csv'
+        if os.path.exists(fn) == False:
+            continue
+        df_a = pd.read_csv(fn)
+        fn = get_dss() + 'fut/put/rec/min5_' + symbol_b + '.csv'
+        if os.path.exists(fn) == False:
+            continue
+        df_b = pd.read_csv(fn)
+        df_a = df_a[df_a.date >= startdate]
+        df_b = df_b[df_b.date >= startdate]
+        df_a = df_a.reset_index()
+        df_b = df_b.reset_index()
+        assert len(df_a) == len(df_b)
+        # print(df_a.head())
+        # print(df_b.head())
+        df_a['dt'] = df_a['date'] + ' ' + df_a['time']
+        df_a['value'] = num_a*df_a['close'] + num_b*df_b['close']
+        df_a = df_a.set_index('dt')
+        # print(df_a.tail())
+        # print(df_b.tail())
+        plt.plot(df_a.value, label=symbol_a+' '+str(num_a)+ '   '+symbol_b+' '+ str(num_b))
+
+    plt.xticks(rotation=45)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
+
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/book_min5_now_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'book_min5_now_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
 def iv_straddle_show(symbol, strike_list, startdate):
     plt.figure(figsize=(12,8))
     for strike in strike_list:
@@ -622,10 +718,10 @@ def iv_straddle_show(symbol, strike_list, startdate):
         df_a['value'] = df_a['close'] + df_b['close']
         df_a = df_a.set_index('dt')
 
-        df_a['next'] = df_a['value'].shift(1)
-        df_a['value'] = np.log(df_a['value']) - np.log(df_a['next'])
-        df_a['value'] = df_a['value'].cumsum()
-        print(df_a.head())
+        # df_a['next'] = df_a['value'].shift(1)
+        # df_a['value'] = np.log(df_a['value']) - np.log(df_a['next'])
+        # df_a['value'] = df_a['value'].cumsum()
+        # print(df_a.head())
         plt.plot(df_a.value, label=strike)
 
     plt.xticks(rotation=45)

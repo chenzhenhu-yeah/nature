@@ -35,7 +35,7 @@ def get_repo():
 
 
 class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin,symbol):
         """Constructor"""
         self.pz = pz
         self.size = size
@@ -45,6 +45,18 @@ class Contract(object):
         self.slippage = slippage
         self.exchangeID = exchangeID
         self.margin = margin
+
+        self.symbol = symbol
+        self.be_opt = False if len(symbol) < 9 else True
+        self.strike = self.cacl_strike(symbol)
+
+    def cacl_strike(self, symbol):
+        if self.be_opt:
+            for i in [-6, -5, -4, -3]:
+                if symbol[i:].isdigit():
+                    return int(symbol[i:])
+        return None
+
 
 def get_contract(symbol):
     pz = symbol[:2]
@@ -58,7 +70,7 @@ def get_contract(symbol):
     with open(filename_setting_fut,encoding='utf-8') as f:
         r = DictReader(f)
         for d in r:
-            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']) )
+            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
 
     if pz in contract_dict:
         return contract_dict[pz]

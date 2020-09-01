@@ -101,6 +101,7 @@ def alter_book_by_rec(row):
     pos_dict = {}
     close_dict = {}
     size = int(get_contract(row.InstrumentID).size)
+    fixed_commission = int(get_contract(row.InstrumentID).fixed_commission)
 
     # 读取文件最新值
     fn_book = get_dss() + 'fut/engine/opt/' + row.book + '.csv'
@@ -130,6 +131,8 @@ def alter_book_by_rec(row):
 
     if row.Offset == 'Close':
             net_pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
+
+    net_pnl -= abs(row.Volume * fixed_commission)
 
     # 统一更新价格
     close_dict[row.InstrumentID] = row.Price
