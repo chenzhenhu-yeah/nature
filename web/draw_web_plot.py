@@ -201,7 +201,7 @@ def mutual():
 
 
 def star():
-    pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm', 'c']
+    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'c']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 
@@ -220,7 +220,7 @@ def star():
 
         plt.figure(figsize=(12,7))
         plt.title(pz)
-        plt.plot(df.mutual)
+        plt.plot(df.star)
 
         plt.xticks(rotation=45)
         plt.grid(True, axis='y')
@@ -356,7 +356,7 @@ def smile_show_symbol(symbol, date):
     df = pd.read_csv(fn)
     row = df.iloc[-1,:]
     strike = row.open*0.5 + row.close*0.5
-    strike = int( round(strike*(100/gap)/1E4,2)*1E4/(100/gap) )
+    strike = int(round( round(strike*(100/gap)/1E4,2)*1E4/(100/gap), 0))
     atm = strike                                    # 获得平值
 
     smile_symbol(symbol, date, atm, gap)
@@ -464,7 +464,7 @@ def smile_show_pz(pz, type, date):
     df = pd.read_csv(fn)
     row = df.iloc[-1,:]
     strike = row.open*0.5 + row.close*0.5
-    strike = int( round(strike*(100/gap)/1E4,2)*1E4/(100/gap) )
+    strike = int(round( round(strike*(100/gap)/1E4,2)*1E4/(100/gap) ,0))
     atm = strike                                    # 获得平值
     # print(atm)
 
@@ -797,6 +797,11 @@ def hs300_spread_show(start_day):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def skew_show(start_day):
+    pass
+
+
+
 
 if __name__ == '__main__':
     pass
@@ -806,7 +811,7 @@ if __name__ == '__main__':
     # mates()
     # smile_show_symbol('IO2008', '2020-08-12')
     # iv_ts()
-    # star()
+    star()
     # hv_show()
 
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])

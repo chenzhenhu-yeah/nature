@@ -49,6 +49,7 @@ class Contract(object):
         self.symbol = symbol
         self.be_opt = False if len(symbol) < 9 else True
         self.strike = self.cacl_strike(symbol)
+        self.basic = self.cacl_basic(pz, symbol)
 
     def cacl_strike(self, symbol):
         if self.be_opt:
@@ -57,6 +58,13 @@ class Contract(object):
                     return int(symbol[i:])
         return None
 
+    def cacl_basic(self, pz, symbol):
+        if self.be_opt:
+            n = len(pz)
+            for i in [4, 3]:
+                if symbol[n:n+i].isdigit():
+                    return symbol[:n+i]
+        return symbol
 
 def get_contract(symbol):
     pz = symbol[:2]
