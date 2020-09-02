@@ -11,7 +11,7 @@ import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
-from nature import iv_straddle_show, hv_show, book_min5_show, book_min5_now_show, hs300_spread_show
+from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show, hs300_spread_show
 from nature import del_blank, check_symbols_p
 
 
@@ -689,6 +689,61 @@ def show_iv_ts():
     # return str(r)
     return render_template("show_jpg.html",header="iv_ts",items=r)
 
+
+@app.route('/T', methods=['get','post'])
+def T():
+    tips = ''
+    r = [['隐波', '时间价值', '内在价值', '卖价', '买价', '最新价',
+          '行权价',
+          '最新价', '买价', '卖价', '内在价值', '时间价值','隐波']]
+
+    if request.method == "POST":
+        symbol = del_blank( request.form.get('symbol') )
+        date = del_blank( request.form.get('date') )
+        if date == '':
+            now = datetime.now()
+            date = now.strftime('%Y-%m-%d')
+            # date = '2020-08-06'
+
+        tips += '合约： ' + symbol + '  日期：' + date
+        fn = get_dss() + 'opt/' + date[:7] + '_greeks.csv'
+        # fn = get_dss() + 'opt/2020-08_greeks.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            df = df[df.Instrument.str.slice(0,len(symbol)) == symbol]
+            df = df[df.Localtime.str.slice(0,10) == date]
+            df = df.drop_duplicates(subset=['Instrument'],keep='last')
+            df = df.sort_values('Instrument')
+            # print(df.tail())
+            obj = 0
+            n = int( len(df)/2 )
+            if n > 0:
+                for i in range(n):
+                    row_c = df.iloc[i,:]
+                    row_p = df.iloc[i+n,:]
+                    strike_c = get_contract(row_c.Instrument).strike
+                    strike_p = get_contract(row_p.Instrument).strike
+                    assert strike_c == strike_p
+                    theory_value_c = int( float(row_c.obj) - strike_c )
+                    theory_value_c = theory_value_c if theory_value_c > 0 else 0
+                    time_value_c = int( float(row_c.AskPrice) - theory_value_c )
+                    theory_value_p = int( strike_p - float(row_p.obj) )
+                    theory_value_p = theory_value_p if theory_value_p > 0 else 0
+                    time_value_p = int( float(row_p.AskPrice) - theory_value_p )
+                    obj = row_c.obj
+                    r.append([round(row_c.iv,2), time_value_c, theory_value_c,
+                              row_c.AskPrice, row_c.BidPrice, round(row_c.LastPrice,1),
+                              strike_c,
+                              round(row_p.LastPrice,1), row_p.BidPrice, row_p.AskPrice,
+                              theory_value_p, time_value_p, round(row_p.iv,2)])
+
+                tips += ' 标的价格：' + str(obj)
+    else:
+        pass
+
+    return render_template("T.html",title="T",rows=r,tip=tips)
+
+
 @app.route('/hv', methods=['get', 'post'])
 def hv():
     if request.method == "POST":
@@ -696,6 +751,15 @@ def hv():
         return hv_show(code)
 
     return render_template("hv.html", title="hv")
+
+
+@app.route('/skew', methods=['get', 'post'])
+def skew():
+    if request.method == "POST":
+        basic = request.form.get('basic')
+        return skew_show(basic)
+
+    return render_template("skew.html", title="skew")
 
 
 @app.route('/smile', methods=['get', 'post'])
@@ -776,61 +840,6 @@ def hs300_spread():
         return hs300_spread_show(startdate)
 
     return render_template("hs300_spread.html", title="hs300_spread")
-
-
-@app.route('/T', methods=['get','post'])
-def T():
-    tips = ''
-    r = [['隐波', '时间价值', '内在价值', '持仓量', '卖价', '买价', '最新价',
-          '行权价',
-          '最新价', '买价','卖价','持仓量','内在价值', '时间价值','隐波']]
-
-    if request.method == "POST":
-        symbol = del_blank( request.form.get('symbol') )
-        date = del_blank( request.form.get('date') )
-        if date == '':
-            now = datetime.now()
-            date = now.strftime('%Y-%m-%d')
-            # date = '2020-08-06'
-
-        tips += '合约： ' + symbol + '  日期：' + date
-        fn = get_dss() + 'opt/' + date[:7] + '_greeks.csv'
-        # fn = get_dss() + 'opt/2020-08_greeks.csv'
-        if os.path.exists(fn):
-            df = pd.read_csv(fn)
-            df = df[df.Instrument.str.slice(0,len(symbol)) == symbol]
-            df = df[df.Localtime.str.slice(0,10) == date]
-            df = df.drop_duplicates(subset=['Instrument'],keep='last')
-            df = df.sort_values('Instrument')
-            # print(df.tail())
-            obj = 0
-            n = int( len(df)/2 )
-            if n > 0:
-                for i in range(n):
-                    row_c = df.iloc[i,:]
-                    row_p = df.iloc[i+n,:]
-                    strike_c = get_contract(row_c.Instrument).strike
-                    strike_p = get_contract(row_p.Instrument).strike
-                    assert strike_c == strike_p
-                    theory_value_c = int( float(row_c.obj) - strike_c )
-                    theory_value_c = theory_value_c if theory_value_c > 0 else 0
-                    time_value_c = int( float(row_c.AskPrice) - theory_value_c )
-                    theory_value_p = int( strike_p - float(row_p.obj) )
-                    theory_value_p = theory_value_p if theory_value_p > 0 else 0
-                    time_value_p = int( float(row_p.AskPrice) - theory_value_p )
-                    obj = row_c.obj
-                    r.append([round(row_c.iv,2), time_value_c, theory_value_c, row_c.Volume,
-                              row_c.AskPrice, row_c.BidPrice, round(row_c.LastPrice,1),
-                              strike_c,
-                              round(row_p.LastPrice,1), row_p.BidPrice, row_p.AskPrice,
-                              row_p.Volume, theory_value_p, time_value_p, round(row_p.iv,2)])
-
-                tips += ' 标的价格：' + str(obj)
-    else:
-        pass
-
-    return render_template("T.html",title="T",rows=r,tip=tips)
-
 
 @app.route('/log')
 def show_log():

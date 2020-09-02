@@ -24,6 +24,7 @@ from nature.engine.fut.ctp_ht.tick2bar import tick2bar
 from nature.engine.fut.risk.examine import examine
 from nature.engine.fut.risk.greeks import calc_greeks
 from nature.engine.fut.risk.sigma import calc_sigma
+from nature.engine.fut.risk.skew import calc_skew
 from nature.engine.fut.risk.arbitrage import calc_pcp, calc_die
 from nature.engine.fut.risk.iv_atm import calc_iv_atm
 
@@ -191,6 +192,11 @@ def run_down_opt():
             print('\n' + str(now) + " calc_sigma begin...")
             calc_sigma()
             print(" calc_sigma end ")
+
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " calc_skew begin...")
+            calc_skew()
+            print(" calc_skew end ")
 
     except Exception as e:
         s = traceback.format_exc()

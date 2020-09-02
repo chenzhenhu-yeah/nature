@@ -75,4 +75,4 @@ from nature.web.check_web import del_blank
 from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
 from nature.web.draw_web_plot import ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
-from nature.web.draw_web_plot import hs300_spread_show, hv_show, book_min5_show, book_min5_now_show, iv_straddle_show
+from nature.web.draw_web_plot import hs300_spread_show, hv_show, skew_show, book_min5_show, book_min5_now_show, iv_straddle_show

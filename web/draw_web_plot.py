@@ -592,6 +592,39 @@ def hv_show(code):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def skew_show(basic):
+    fn = get_dss() + 'opt/skew.csv'
+    df = pd.read_csv(fn)
+    df = df[df.basic == basic]
+
+    df = df.set_index('date')
+    df = df.sort_index()
+
+    plt.figure(figsize=(13,7))
+    plt.title( basic )
+    plt.xticks(rotation=90)
+    plt.plot(df['skew_c'])
+    plt.plot(df['skew_p'])
+    plt.legend()
+
+    # ax = plt.gca()
+    # for label in ax.get_xticklabels():
+    #     label.set_visible(False)
+    # for label in ax.get_xticklabels()[1::30]:
+    #     label.set_visible(True)
+    # for label in ax.get_xticklabels()[-1:]:
+    #     label.set_visible(True)
+
+    fn = 'static/skew_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'skew_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
 def book_min5_show(startdate, dual_list):
     plt.figure(figsize=(12,8))
 
@@ -797,11 +830,6 @@ def hs300_spread_show(start_day):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def skew_show(start_day):
-    pass
-
-
-
 
 if __name__ == '__main__':
     pass
@@ -811,8 +839,9 @@ if __name__ == '__main__':
     # mates()
     # smile_show_symbol('IO2008', '2020-08-12')
     # iv_ts()
-    star()
+    # star()
     # hv_show()
+    skew_show('IO2009')
 
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
     # iv_straddle_show('IO2008', ['4900'], '2020-08-01')

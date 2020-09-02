@@ -97,8 +97,10 @@ def fresh_mutual():
         fresh_p(today, dirname+fn)
 
 def fresh_star():
+    all = 0
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
+
     pz_list = ['CF','m','IO','MA','RM','c']
     for pz in pz_list:
         fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
@@ -136,6 +138,12 @@ def fresh_star():
         fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
         df.to_csv(fn, index=False, header=None, mode='a')
 
+        all += value + net_pnl
+    df = pd.DataFrame([[today, all]], columns=['date','cur_value'])
+    fn = get_dss() + 'fut/engine/star/value_all.csv'
+    df.to_csv(fn, index=False, header=None, mode='a')
+
+
 def pandian_run():
     try:
         now = datetime.now()
@@ -152,3 +160,5 @@ def pandian_run():
 if __name__ == '__main__':
     # pandian_run()
     pass
+
+    fresh_star()
