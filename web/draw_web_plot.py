@@ -646,13 +646,13 @@ def book_min5_show(startdate, dual_list):
         # print(df_a.head())
         # print(df_b.head())
         df_a['dt'] = df_a['date'] + ' ' + df_a['time']
-        df_a['value'] = num_a*df_a['close'] + num_b*df_b['close']
+        df_a['value'] = abs(num_a*df_a['close'] + num_b*df_b['close'])
         df_a = df_a.set_index('dt')
         # print(df_a.tail())
         # print(df_b.tail())
         plt.plot(df_a.value, label=symbol_a+' '+str(num_a)+ '   '+symbol_b+' '+ str(num_b))
 
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.grid(True, axis='y')
     ax = plt.gca()
 
@@ -701,13 +701,13 @@ def book_min5_now_show(startdate, dual_list):
         # print(df_a.head())
         # print(df_b.head())
         df_a['dt'] = df_a['date'] + ' ' + df_a['time']
-        df_a['value'] = num_a*df_a['close'] + num_b*df_b['close']
+        df_a['value'] = abs(num_a*df_a['close'] + num_b*df_b['close'])
         df_a = df_a.set_index('dt')
         # print(df_a.tail())
         # print(df_b.tail())
         plt.plot(df_a.value, label=symbol_a+' '+str(num_a)+ '   '+symbol_b+' '+ str(num_b))
 
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.grid(True, axis='y')
     ax = plt.gca()
 
