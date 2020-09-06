@@ -488,6 +488,128 @@ def smile_show(pz, type, date, kind, symbol):
     else:
         return ''
 
+def open_interest_show_distribution(basic, type, date):
+    now = datetime.now()
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
+
+    fn = get_dss() + 'opt/' +  pre[:7] + '_greeks.csv'
+    df_pre = pd.read_csv(fn)
+    fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
+    df_today = pd.read_csv(fn)
+    df = pd.concat([df_pre, df_today])
+
+    df = df[df.Instrument.str.slice(0,len(basic)) == basic]
+    df['date'] = df.Localtime.str.slice(0,10)
+    date_list = sorted(list(set(list(df.date))), reverse=True)
+    print(date_list)
+    if len(date_list) < 10:
+        return ''
+
+    plt.figure(figsize=(12,7))
+    plt.title(' ')
+
+    for i in [0, 1, 9]:
+    # for i in [0]:
+        df1 = df[df.date == date_list[i]]
+        df1 = df1.sort_values('Instrument')
+        n = len(df1)
+        assert n % 2 == 0
+        n = int(n / 2)
+        df_c = df1.iloc[:n , :]
+        df_p = df1.iloc[n: , :]
+        # print(df_c)
+        # print(df_p)
+        if type == 'call':
+            df2 = df_c
+        else:
+            df2 = df_p
+
+        strike_list = []
+        for j, row in df2.iterrows():
+            strike_list.append( get_contract(row.Instrument).strike )
+        df2['strike'] = strike_list
+        df2 = df2.set_index('strike')
+        if i == 0:
+            plt.plot(df2.OpenInterest, label=date_list[i])
+        else:
+            plt.plot(df2.OpenInterest, '--', label=date_list[i])
+        # print(df2.OpenInterest)
+
+    plt.xticks(rotation=90)
+    plt.legend()
+    fn = 'static/open_interest.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    fn = 'open_interest.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+
+
+def open_interest_show_total(basic, date):
+    now = datetime.now()
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
+
+    fn = get_dss() + 'opt/' +  pre[:7] + '_greeks.csv'
+    df_pre = pd.read_csv(fn)
+    fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
+    df_today = pd.read_csv(fn)
+    df = pd.concat([df_pre, df_today])
+
+    df = df[df.Instrument.str.slice(0,len(basic)) == basic]
+    df['date'] = df.Localtime.str.slice(0,10)
+    df = df[df.date >= date]
+    df = df.sort_values('Instrument')
+    n = len(df)
+    assert n % 2 == 0
+    n = int(n / 2)
+    df_c = df.iloc[:n , :]
+    df_p = df.iloc[n: , :]
+
+    df_c = df_c.sort_values('date')
+    df_c = df_c.set_index('date')
+    s_c = df_c.groupby('date')['OpenInterest'].sum()
+
+    df_p = df_p.sort_values('date')
+    df_p = df_p.set_index('date')
+    s_p = df_p.groupby('date')['OpenInterest'].sum()
+
+    plt.figure(figsize=(12,7))
+    plt.title(' ')
+    plt.plot(s_c, label='call')
+    plt.plot(s_p, label='put')
+    plt.xticks(rotation=90)
+
+    plt.legend()
+    fn = 'static/open_interest.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    fn = 'open_interest.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def open_interest_show(basic, type, date, kind):
+    """期权微笑曲线"""
+    if kind == 'distribution':
+        return open_interest_show_distribution(basic, type, date)
+    elif kind == 'total':
+        return open_interest_show_total(basic, date)
+    else:
+        return ''
 
 def iv_ts():
     """隐波时序图"""
@@ -729,7 +851,7 @@ def book_min5_now_show(startdate, dual_list):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def iv_straddle_show(symbol, strike_list, startdate):
+def iv_straddle_show(symbol, strike_list, startdate, kind):
     plt.figure(figsize=(12,8))
     for strike in strike_list:
         exchangeID = str(get_contract(symbol).exchangeID)
@@ -740,10 +862,18 @@ def iv_straddle_show(symbol, strike_list, startdate):
             s_a = symbol + 'C' + strike
             s_b = symbol + 'P' + strike
 
-        fn = get_dss() + 'fut/bar/min5_' + s_a + '.csv'
+        if kind == 'daily':
+            fn = get_dss() + 'fut/bar/min5_' + s_a + '.csv'
+        else:
+            fn = get_dss() + 'fut/put/rec/min5_' + s_a + '.csv'
         df_a = pd.read_csv(fn)
-        fn = get_dss() + 'fut/bar/min5_' + s_b + '.csv'
+
+        if kind == 'daily':
+            fn = get_dss() + 'fut/bar/min5_' + s_b + '.csv'
+        else:
+            fn = get_dss() + 'fut/put/rec/min5_' + s_b + '.csv'
         df_b = pd.read_csv(fn)
+
         df_a = df_a[df_a.date >= startdate]
         df_b = df_b[df_b.date >= startdate]
         assert len(df_a) == len(df_b)
@@ -841,7 +971,10 @@ if __name__ == '__main__':
     # iv_ts()
     # star()
     # hv_show()
-    skew_show('IO2009')
+    # skew_show('IO2009')
+    # open_interest_show('IO2009', 'call', '2020-08-01', 'total')
+    # open_interest_show('IO2009', 'call', '2020-08-01', 'distribution')
+    # open_interest_show('IO2010', 'put', '2020-08-01', 'distribution')
 
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
     # iv_straddle_show('IO2008', ['4900'], '2020-08-01')

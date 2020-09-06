@@ -71,34 +71,29 @@
        <h1>{{title}}</h1>
        </header>
 
-      <form method="post" action="iv_straddle">
+      <form method="post" action="open_interest">
       <fieldset>
         <p>
-          symbol:<input type="text" name="symbol"  required/>
+          basic:<input type="text" name="basic"  required/>
         </p>
 
         <p>
-          strike1:<input type="text" name="strike1"  required/>
-        </p>
-        <p>
-          strike2:<input type="text" name="strike2"  />
-        </p>
-        <p>
-          strike3:<input type="text" name="strike3"  />
-        </p>
-        <p>
-          strike4:<input type="text" name="strike4"  />
+          type:
+          <select name="type"/>
+            <option value='call'>call</option>
+            <option value='put'>put</option>
+          </select>
         </p>
 
         <p>
-          startdate:<input type="text" name="startdate"/> YYYY-MM-DD
+        date:<input type="text" name="date"/> YYYY-MM-DD
         </p>
 
         <p>
         <pre>
-        daily<input type="radio" name="kind" value="daily" />     now<input type="radio" name="kind" value="now" />
+        distribution<input type="radio" name="kind" value="distribution" />     total<input type="radio" name="kind" value="total" />
         </pre>
-       </p>
+        </p>
 
       </fieldset>
 

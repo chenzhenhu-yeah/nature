@@ -11,7 +11,7 @@ import os
 
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
-from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show, hs300_spread_show
+from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show, open_interest_show, hs300_spread_show
 from nature import del_blank, check_symbols_p
 
 
@@ -780,6 +780,7 @@ def smile():
 @app.route('/iv_straddle', methods=['get', 'post'])
 def iv_straddle():
     if request.method == "POST":
+        kind = request.form.get('kind')
         symbol = request.form.get('symbol')
         strike1 = request.form.get('strike1')
         strike2 = request.form.get('strike2')
@@ -800,7 +801,7 @@ def iv_straddle():
             now = datetime.now() - timedelta(days = 3)
             startdate = now.strftime('%Y-%m-%d')
 
-        return iv_straddle_show(symbol, strike_list, startdate)
+        return iv_straddle_show(symbol, strike_list, startdate, kind)
 
     return render_template("iv_straddle.html", title="iv_straddle")
 
@@ -828,6 +829,24 @@ def book_min5():
             return book_min5_show(startdate, r)
 
     return render_template("book_min5.html", title="book_min5")
+
+
+@app.route('/open_interest', methods=['get', 'post'])
+def open_interest():
+    if request.method == "POST":
+        basic = request.form.get('basic')
+        type = request.form.get('type')
+        date = request.form.get('date')
+        kind = request.form.get('kind')
+
+        if date == '':
+            now = datetime.now()
+            date = now.strftime('%Y-%m-%d')
+
+        return open_interest_show(basic, type, date, kind)
+
+    return render_template("open_interest.html", title='open_interest')
+
 
 @app.route('/hs300_spread', methods=['get', 'post'])
 def hs300_spread():
