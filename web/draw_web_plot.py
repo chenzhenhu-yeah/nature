@@ -139,7 +139,7 @@ def dali_show(pz):
     plt.title(pz)
     plt.plot(df1.dali)
 
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.grid(True, axis='y')
     ax = plt.gca()
 
@@ -201,28 +201,33 @@ def mutual():
 
 
 def star():
-    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'c']
+    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'c', 'all']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 
-        fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
-        df3 = pd.read_csv(fn)
-        df3['date'] = df3.datetime.str.slice(0,10)
-        df3['time'] = df3.datetime.str.slice(11,19)
-        df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
-        df3 = df3.drop_duplicates(subset=['date'],keep='last')
-        df3['star'] = df3['portfolioValue'] + df3['netPnl']
+        if pz == 'all':
+            fn = get_dss() + 'fut/engine/star/value_all.csv'
+            df3 = pd.read_csv(fn)
+            df3['star'] = df3['cur_value']
+        else:
+            fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
+            df3 = pd.read_csv(fn)
+            df3['date'] = df3.datetime.str.slice(0,10)
+            df3['time'] = df3.datetime.str.slice(11,19)
+            df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+            df3 = df3.drop_duplicates(subset=['date'],keep='last')
+            df3['star'] = df3['portfolioValue'] + df3['netPnl']
+
+
         df3 = df3.loc[:, ['date', 'star']]
         df3 = df3.set_index('date')
-        # print(df3.head(3))
-
         df = df3
 
         plt.figure(figsize=(12,7))
         plt.title(pz)
         plt.plot(df.star)
 
-        plt.xticks(rotation=45)
+        plt.xticks(rotation=90)
         plt.grid(True, axis='y')
         ax = plt.gca()
 
@@ -692,7 +697,7 @@ def hv_show(code):
 
     plt.figure(figsize=(13,7))
     plt.title( code + '       hv: ' + str(hv) + '      hv Rank: ' + str(hv_rank) + '      hv Percentile: ' + str(hv_percentile) )
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.plot(df['hv'], '-*')
     plt.grid(True, axis='y')
 
@@ -887,7 +892,7 @@ def iv_straddle_show(symbol, strike_list, startdate, kind):
         # print(df_a.head())
         plt.plot(df_a.value, label=strike)
 
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.grid(True, axis='y')
 
     ax = plt.gca()

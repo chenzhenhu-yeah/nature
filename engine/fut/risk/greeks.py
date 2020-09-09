@@ -137,7 +137,8 @@ def calc_greeks_IO(df, today, r):
         term = symbol[:6]
         if len(df_obj) == 1:
             K = float( symbol[9:] )                                       # 行权价格
-            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            S0 = df_obj.at[symbol_obj,'LastPrice']                      # 标的价格
+
             is_call = True if symbol[7] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
@@ -168,7 +169,15 @@ def calc_greeks_m(df, today, r):
 
         if len(df_obj) == 1:
             K = float( symbol[8:] )                                       # 行权价格
-            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            # S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            ask_price = float(df_obj.at[symbol_obj,'AskPrice'])
+            ask_price = 0 if ask_price < 0 else ask_price
+            ask_price = 100E4 if ask_price > 100E4 else ask_price
+            bid_price = float(df_obj.at[symbol_obj,'BidPrice'])
+            bid_price = 0 if bid_price < 0 else bid_price
+            bid_price = 100E4 if bid_price > 100E4 else bid_price
+            S0 = (ask_price + bid_price) * 0.5                            # 标的价格
+
             is_call = True if symbol[6] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
@@ -198,7 +207,15 @@ def calc_greeks_RM(df, today, r):
 
         if len(df_obj) == 1:
             K = float( symbol[6:] )                                       # 行权价格
-            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            # S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            ask_price = float(df_obj.at[symbol_obj,'AskPrice'])
+            ask_price = 0 if ask_price < 0 else ask_price
+            ask_price = 100E4 if ask_price > 100E4 else ask_price
+            bid_price = float(df_obj.at[symbol_obj,'BidPrice'])
+            bid_price = 0 if bid_price < 0 else bid_price
+            bid_price = 100E4 if bid_price > 100E4 else bid_price
+            S0 = (ask_price + bid_price) * 0.5                            # 标的价格
+
             is_call = True if symbol[5] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
@@ -228,7 +245,15 @@ def calc_greeks_MA(df, today, r):
 
         if len(df_obj) == 1:
             K = float( symbol[6:] )                                       # 行权价格
-            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            # S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            ask_price = float(df_obj.at[symbol_obj,'AskPrice'])
+            ask_price = 0 if ask_price < 0 else ask_price
+            ask_price = 100E4 if ask_price > 100E4 else ask_price
+            bid_price = float(df_obj.at[symbol_obj,'BidPrice'])
+            bid_price = 0 if bid_price < 0 else bid_price
+            bid_price = 100E4 if bid_price > 100E4 else bid_price
+            S0 = (ask_price + bid_price) * 0.5                            # 标的价格
+
             is_call = True if symbol[5] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
@@ -258,7 +283,15 @@ def calc_greeks_CF(df, today, r):
 
         if len(df_obj) == 1:
             K = float( symbol[6:] )                                       # 行权价格
-            S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            # S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            ask_price = float(df_obj.at[symbol_obj,'AskPrice'])
+            ask_price = 0 if ask_price < 0 else ask_price
+            ask_price = 100E4 if ask_price > 100E4 else ask_price
+            bid_price = float(df_obj.at[symbol_obj,'BidPrice'])
+            bid_price = 0 if bid_price < 0 else bid_price
+            bid_price = 100E4 if bid_price > 100E4 else bid_price
+            S0 = (ask_price + bid_price) * 0.5                            # 标的价格
+
             is_call = True if symbol[5] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
