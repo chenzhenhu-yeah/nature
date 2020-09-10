@@ -27,6 +27,9 @@ class Fut_DaLiSignal(Signal):
         self.atrWindow = 20
         self.atr_x = 8
         self.dual = 10
+        self.atr_h = 5
+        self.adjust_bp = 0
+        self.price_tick = get_contract(vtSymbol).price_tick
 
         self.gap = 30
         self.gap_base = self.gap
@@ -68,6 +71,7 @@ class Fut_DaLiSignal(Signal):
                 self.gap_max = rec.gap_max
                 self.atr_x = rec.atr_x
                 self.dual = rec.dual
+                self.atr_h = rec.atr_h
 
                 #print('成功加载策略参数')
 
@@ -167,6 +171,11 @@ class Fut_DaLiSignal(Signal):
         self.gap = min(self.gap, self.gap_max)
         #self.gap = 20
 
+        if self.atrValue > self.atr_h:
+            self.adjust_bp = self.price_tick
+        else:
+            self.adjust_bp = 0
+
         gap_minus = self.get_gap_minus()
         # 价格下跌，空队列占优平一仓，多队列占优开一仓（需满足最近价的间隔要求）
         if self.bar.close <= self.get_price_kong() - gap_minus:
@@ -204,7 +213,7 @@ class Fut_DaLiSignal(Signal):
             if cc < 0:
                 # 价格从高位下跌，仓差收窄，收窄时只有一种方式，单减。
                 # 平空仓，移多队列。此时队列中的数量是充足的。
-                self.cover(bar.close, self.fixedSize)
+                self.cover(bar.close + self.adjust_bp, self.fixedSize)
                 self.unit_cover()
 
                 # 多队列实时调整，队列数量保持不变
@@ -213,17 +222,17 @@ class Fut_DaLiSignal(Signal):
             elif cc < self.dual or len(self.price_kong_list) <= 5:
                 # 价格回归后继续下跌，仓差走扩，起步阶段用仓差单增的方式。
                 # 价格下跌，买开仓
-                self.buy(bar.close, self.fixedSize)
+                self.buy(bar.close + self.adjust_bp, self.fixedSize)
                 self.unit_buy(bar.close)
 
                 # 空队列实时调整，队列数量保持不变
                 self.price_kong_list = self.adjust_price_kong(bar.close)
             else:
                 # 价格深度下跌，仓差走扩，临近底部，用仓差双增的方式。
-                self.cover(bar.close, self.fixedSize)
+                self.cover(bar.close + self.adjust_bp, self.fixedSize)
                 self.unit_cover()
 
-                self.buy(bar.close, self.fixedSize)
+                self.buy(bar.close + self.adjust_bp, self.fixedSize)
                 self.unit_buy(bar.close)
 
             self.paused = True
@@ -235,7 +244,7 @@ class Fut_DaLiSignal(Signal):
             if cc > 0:
                 # 价格从底部上涨，仓差收窄，收窄时只有一种方式，单减。
                 # 平多仓，移空队列。此时队列中的数量是充足的。
-                self.sell(bar.close, self.fixedSize)
+                self.sell(bar.close - self.adjust_bp, self.fixedSize)
                 self.unit_sell()
 
                 # 空队列实时调整，队列数量保持不变
@@ -244,17 +253,17 @@ class Fut_DaLiSignal(Signal):
             elif cc > -self.dual or len(self.price_duo_list) <= 5:
                 # 价格回归后继续上涨，仓差走扩，起步阶段用仓差单增的方式。
                 # 价格上涨，开空仓，移多队列
-                self.short(bar.close, self.fixedSize)
+                self.short(bar.close - self.adjust_bp, self.fixedSize)
                 self.unit_short(bar.close)
 
                 # 多队列实时调整，队列数量保持不变
                 self.price_duo_list = self.adjust_price_duo(bar.close)
             else:
                 # 价格疯狂上涨，仓差走扩，临近顶部，用仓差双增的方式。
-                self.sell(bar.close, self.fixedSize)
+                self.sell(bar.close - self.adjust_bp, self.fixedSize)
                 self.unit_sell()
 
-                self.short(bar.close, self.fixedSize)
+                self.short(bar.close - self.adjust_bp, self.fixedSize)
                 self.unit_short(bar.close)
 
             self.paused = True

@@ -102,7 +102,7 @@ class Fut_RatioSignal(Signal):
 
         # 记录数据
         if self.vtSymbol in [self.portfolio.symbol_c, self.portfolio.symbol_p]:
-            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p]]
+            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p,self.portfolio.profit_c+self.portfolio.profit_p]]
             df = pd.DataFrame(r)
 
             filename = get_dss() +  'fut/engine/ratio/bar_ratio_'+self.type+ '_' + self.vtSymbol + '.csv'
@@ -226,6 +226,7 @@ class Fut_RatioPortfolio(Portfolio):
            (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
             # 开仓
             if self.hold_c == 0 and self.hold_p == 0 :
+                self.fixed_size, self.gap, self.profit = self.load_param(self.symbol_c, self.symbol_p)    # 加载最新参数
                 if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
                     self.got_dict[self.symbol_c] = False
                     self.got_dict[self.symbol_p] = False
@@ -250,6 +251,7 @@ class Fut_RatioPortfolio(Portfolio):
 
             # 获利平仓
             if self.hold_c == 1 and self.hold_p == -2:
+                self.fixed_size, self.gap, self.profit = self.load_param(self.symbol_c, self.symbol_p)    # 加载最新参数
                 if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
                     self.got_dict[self.symbol_c] = False
                     self.got_dict[self.symbol_p] = False
