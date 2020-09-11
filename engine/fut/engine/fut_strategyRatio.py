@@ -175,7 +175,10 @@ class Fut_RatioPortfolio(Portfolio):
         self.profit_c = 0
         self.profit_p = 0
 
-        self.fixed_size, self.gap, self.profit = self.load_param(self.symbol_c, self.symbol_p)
+        self.fixed_size = 1
+        self.gap = 100
+        self.profit = 100
+        self.load_param(self.symbol_c, self.symbol_p)
 
         Portfolio.__init__(self, Fut_RatioSignal, engine, symbol_list, signal_param)
 
@@ -187,9 +190,11 @@ class Fut_RatioPortfolio(Portfolio):
         fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
         df = pd.read_csv(fn)
         df = df[(df.symbol_c == s_c) & (df.symbol_p == s_p)]
-        row = df.iloc[-1,:]
-
-        return int(row.fixed_size), int(row.gap), int(row.profit)
+        if len(df) > 0:
+            row = df.iloc[-1,:]
+            self.fixed_size = int(row.fixed_size)
+            self.gap = int(row.gap)
+            self.profit = int(row.profit)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -226,7 +231,7 @@ class Fut_RatioPortfolio(Portfolio):
            (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
             # 开仓
             if self.hold_c == 0 and self.hold_p == 0 :
-                self.fixed_size, self.gap, self.profit = self.load_param(self.symbol_c, self.symbol_p)    # 加载最新参数
+                self.load_param(self.symbol_c, self.symbol_p)                                             # 加载最新参数
                 if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
                     self.got_dict[self.symbol_c] = False
                     self.got_dict[self.symbol_p] = False
@@ -251,7 +256,7 @@ class Fut_RatioPortfolio(Portfolio):
 
             # 获利平仓
             if self.hold_c == 1 and self.hold_p == -2:
-                self.fixed_size, self.gap, self.profit = self.load_param(self.symbol_c, self.symbol_p)    # 加载最新参数
+                self.load_param(self.symbol_c, self.symbol_p)                       # 加载最新参数
                 if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
                     self.got_dict[self.symbol_c] = False
                     self.got_dict[self.symbol_p] = False

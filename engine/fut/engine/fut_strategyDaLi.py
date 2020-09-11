@@ -58,22 +58,21 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def load_param(self):
         filename = get_dss() +  'fut/engine/dali/signal_dali_param.csv'
-        pz = str(get_contract(self.vtSymbol).pz)
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            df = df[ df.pz == pz ]
-            if len(df) > 0:
-                rec = df.iloc[0,:]
-                self.fixedSize = rec.fixed_size
-                self.gap = rec.gap
-                self.gap_base = rec.gap
-                self.gap_min = rec.gap_min
-                self.gap_max = rec.gap_max
-                self.atr_x = rec.atr_x
-                self.dual = rec.dual
-                self.atr_h = rec.atr_h
+        pz = str(get_contract(self.vtSymbol).pz)        
+        df = pd.read_csv(filename)
+        df = df[ df.pz == pz ]
+        if len(df) > 0:
+            rec = df.iloc[0,:]
+            self.fixedSize = rec.fixed_size
+            self.gap = rec.gap
+            self.gap_base = rec.gap
+            self.gap_min = rec.gap_min
+            self.gap_max = rec.gap_max
+            self.atr_x = rec.atr_x
+            self.dual = rec.dual
+            self.atr_h = rec.atr_h
 
-                #print('成功加载策略参数')
+            #print('成功加载策略参数')
 
     # 回测时用，实盘用不上----------------------------------------------------
     def set_param(self, param_dict):
