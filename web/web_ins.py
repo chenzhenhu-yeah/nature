@@ -735,7 +735,7 @@ def T():
                               row_c.AskPrice, row_c.BidPrice, round(row_c.LastPrice,1),
                               strike_c,
                               round(row_p.LastPrice,1), row_p.BidPrice, row_p.AskPrice,
-                              theory_value_p, time_value_p, round(row_p.iv,2)])
+                              theory_value_p, time_value_p, round(100*row_p.iv,2)])
 
                 tips += ' 标的价格：' + str(obj)
     else:
