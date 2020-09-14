@@ -13,7 +13,7 @@
          margin-right:18px;
       }
       section {
-         width:900px;
+         width:550px;
          float:left;
          margin-bottom:36px;
       }
@@ -68,44 +68,72 @@
 
     <section>
        <header>
-       <h1>{{title}}</h1>
+       <h1>ratio</h1>
        </header>
 
-      <form method="post" action="iv_straddle">
+      <form method="post" action="ratio">
       <fieldset>
-        <p>
-          symbol:<input type="text" name="symbol"  required/>
-        </p>
 
-        <p>
-          strike1:<input type="text" name="strike1"  />
-        </p>
-        <p>
-          strike2:<input type="text" name="strike2"  />
-        </p>
-        <p>
-          strike3:<input type="text" name="strike3"  />
-        </p>
-        <p>
-          strike4:<input type="text" name="strike4"  />
-        </p>
+      <p>
+        basic:<input type="text" name="basic"  required/>
+      </p>
+      <p>
+        strike:<input type="text" name="strike"  required/>
+      </p>
+      <p>
+        direction:
+        <select name="direction"/>
+            <option value=''></option>
+            <option value='duo'>duo</option>
+            <option value='kong'>kong</option>
+        </select>
+      </p>
+      <p>
+        fixed_size:<input type="number" name="fixed_size" value=1 />
+      </p>
+      <p>
+        hold_c:<input type="number" name="hold_c" value=0 />
+      </p>
+      <p>
+        hold_p:<input type="number" name="hold_p" value=0 />
+      </p>
+      <p>
+        profit:<input type="text" name="profit" />
+      </p>
+      <p>
+        state:
+          <select name="state"/>
+            <option value='run'>run</option>
+            <option value='stop'>stop</option>
+          </select>
+      </p>
+      <p>
+        source:<input type="text" name="source" value="hand" />
+      </p>
 
-        <p>
-          startdate:<input type="text" name="startdate"/> YYYY-MM-DD
-        </p>
-
-        <p>
+      <p>
         <pre>
-        daily<input type="radio" name="kind" value="daily" />     now<input type="radio" name="kind" value="now" />
+        add<input type="radio" name="kind" value="add" />     del<input type="radio" name="kind" value="del" />     alter<input type="radio" name="kind" value="alter" />
         </pre>
-       </p>
-
+      </p>
       </fieldset>
 
       <div>
       <input type="submit" value="Submit"/>
       </div>
       </form>
+
+       <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
+
     </section>
   </body>
 </html>

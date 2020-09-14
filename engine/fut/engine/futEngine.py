@@ -27,7 +27,7 @@ from nature import Book, a_file
 from nature import Gateway_Ht_CTP, pandian_run
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
-from nature import Fut_OwlPortfolio
+from nature import Fut_OwlPortfolio, Fut_StraddlePortfolio, Fut_SdifferPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
@@ -198,6 +198,18 @@ class FutEngine(object):
                     if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
                         self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
+        # if 'symbols_straddle' in setting:
+        #     symbols = setting['symbols_straddle']
+        #     if len(symbols) > 0:
+        #         straddle_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+        #
+        # if 'symbols_sdiffer' in setting:
+        #     symbols = setting['symbols_sdiffer']
+        #     if len(symbols) > 0:
+        #         sdiffer_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
         self.gateway.open()
@@ -225,22 +237,28 @@ class FutEngine(object):
         tradeid_list = []
 
         while True:
-            time.sleep(23)
-            if self.working == True:
-                df_trade = pd.read_csv(fn_trade, skiprows=n)
-                df_trade.columns = ['Direction','ExchangeID','InstrumentID','Offset','OrderID','Price','SysID','TradeID','TradeTime','TradingDay','Volume']
-                # print(df_trade)
-                for i, row in df_trade.iterrows():
-                    n += 1
-                    if row.TradeID in tradeid_list:
-                        continue
-                    else:
-                        print( '分发成交回报，TradeID: '+str(row.TradeID)+'， symbol: '+str(row.InstrumentID) )
-                        tradeid_list.append(row.TradeID)
-                        for p in self.portfolio_list:
-                            p.on_trade( {'symbol':row.InstrumentID,'direction':row.Direction,'offset':row.Offset,'price':row.Price,'volume':row.Volume} )
-            else:
-                tradeid_list = []
+            try:
+                time.sleep(23)
+                if self.working == True:
+                    df_trade = pd.read_csv(fn_trade, skiprows=n)
+                    df_trade.columns = ['Direction','ExchangeID','InstrumentID','Offset','OrderID','Price','SysID','TradeID','TradeTime','TradingDay','Volume']
+                    # print(df_trade)
+                    for i, row in df_trade.iterrows():
+                        n += 1
+                        if row.TradeID in tradeid_list:
+                            continue
+                        else:
+                            print( '分发成交回报，TradeID: '+str(row.TradeID)+'， symbol: '+str(row.InstrumentID) )
+                            tradeid_list.append(row.TradeID)
+                            for p in self.portfolio_list:
+                                p.on_trade( {'symbol':row.InstrumentID,'direction':row.Direction,'offset':row.Offset,'price':row.Price,'volume':row.Volume} )
+                else:
+                    tradeid_list = []
+            except Exception as e:
+                n += 1
+                s = traceback.format_exc()
+                to_log(s)
+                to_log('成交回报服务出现异常')
 
 
     # 进程间通信接口------------------------------------------------------------

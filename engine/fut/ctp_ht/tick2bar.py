@@ -152,6 +152,7 @@ def proc_segment(df1,begin,end,num,symbol):
     return r
 
 def save_bar(r1, symbol):
+    # 保存min1
     df_symbol = pd.DataFrame(r1, columns=['date','time','open','high','low','close','volume'])
     fname = get_dss() + 'fut/bar/min1_' + symbol + '.csv'
     if os.path.exists(fname):

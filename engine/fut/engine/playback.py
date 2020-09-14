@@ -25,7 +25,7 @@ from nature import Book, a_file
 
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
 from nature import Fut_DaLiPortfolio, Fut_DaLictaPortfolio, Fut_TurtlePortfolio
-from nature import Fut_OwlPortfolio
+from nature import Fut_OwlPortfolio, Fut_StraddlePortfolio, Fut_SdifferPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
@@ -187,6 +187,19 @@ class FutEngine(object):
                 for i, row in df.iterrows():
                     if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
                         self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+
+        if 'symbols_straddle' in setting:
+            symbols = setting['symbols_straddle']
+            if len(symbols) > 0:
+                straddle_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+
+        if 'symbols_sdiffer' in setting:
+            symbols = setting['symbols_sdiffer']
+            if len(symbols) > 0:
+                sdiffer_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):

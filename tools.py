@@ -50,7 +50,7 @@ class Contract(object):
         self.be_opt = False if len(symbol) < 9 else True
         self.strike = self.cacl_strike(symbol)
         self.basic = self.cacl_basic(pz, symbol)
-
+        
     def cacl_strike(self, symbol):
         if self.be_opt:
             for i in [-6, -5, -4, -3]:

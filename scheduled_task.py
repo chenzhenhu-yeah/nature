@@ -27,7 +27,7 @@ from nature.engine.fut.risk.sigma import calc_sigma
 from nature.engine.fut.risk.skew import calc_skew
 from nature.engine.fut.risk.arbitrage import calc_pcp, calc_die
 from nature.engine.fut.risk.iv_atm import calc_iv_atm
-
+from nature.engine.fut.risk.sdiffer import calc_sdiffer
 
 dss = r'../data/'
 
@@ -146,6 +146,20 @@ def run_pandian():
             pandian_run()
             now = datetime.datetime.now()
             print('\n' + str(now) + " pandian end ")
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+def run_sdiffer():
+    try:
+        now = datetime.datetime.now()
+        today = now.strftime('%Y-%m-%d')
+        weekday = int(now.strftime('%w'))
+        if 1 <= weekday <= 5:
+            print('\n' + str(now) + " calc sdiffer begin...")
+            calc_sdiffer(today)
+            now = datetime.datetime.now()
+            print('\n' + str(now) + " calc sdiffer end ")
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -281,6 +295,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:15").do(run_iv)
         schedule.every().day.at("15:20").do(run_book_opt)
         schedule.every().day.at("15:25").do(run_pandian)
+        schedule.every().day.at("15:26").do(run_sdiffer)
         schedule.every().day.at("15:27").do(run_down_data)
         schedule.every().day.at("15:28").do(run_mail_pdf)
         schedule.every().day.at("15:29").do(run_examine)

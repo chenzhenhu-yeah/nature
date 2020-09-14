@@ -71,34 +71,21 @@
        <h1>{{title}}</h1>
        </header>
 
-      <form method="post" action="iv_straddle">
+      <form method="post" action="straddle_diff">
       <fieldset>
         <p>
-          symbol:<input type="text" name="symbol"  required/>
-        </p>
-
-        <p>
-          strike1:<input type="text" name="strike1"  />
+          basic_m0:<input type="text" name="basic_m0"  required/>
         </p>
         <p>
-          strike2:<input type="text" name="strike2"  />
-        </p>
-        <p>
-          strike3:<input type="text" name="strike3"  />
-        </p>
-        <p>
-          strike4:<input type="text" name="strike4"  />
+          basic_m1:<input type="text" name="basic_m1"  required/>
         </p>
 
         <p>
           startdate:<input type="text" name="startdate"/> YYYY-MM-DD
         </p>
-
         <p>
-        <pre>
-        daily<input type="radio" name="kind" value="daily" />     now<input type="radio" name="kind" value="now" />
-        </pre>
-       </p>
+          enddate:<input type="text" name="enddate"/> YYYY-MM-DD
+        </p>
 
       </fieldset>
 

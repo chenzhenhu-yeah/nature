@@ -965,6 +965,52 @@ def hs300_spread_show(start_day):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def straddle_diff_show(basic_m0, basic_m1, date_begin, date_end):
+    plt.figure(figsize=(12,8))
+
+    fn = get_dss() + 'opt/straddle_differ.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date <= date_end]
+    per_10 = ''
+    per_50 = ''
+    per_90 = ''
+
+    if len(df) >= 480:
+        df = df.iloc[-480:, :]
+        per_10 = int(df.differ.quantile(0.05))
+        per_50 = int(df.differ.quantile(0.5))
+        per_90 = int(df.differ.quantile(0.95))
+
+    df = df[df.date >= date_begin]
+    df = df[(df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1)]
+    df['dt'] = df.date + ' ' + df.time
+    df = df.set_index('dt')
+
+
+
+    plt.title('5:' + str(per_10) + '   50:' + str(per_50) + '   95:' + str(per_90))
+    plt.plot(df['differ'])
+    plt.xticks(rotation=90)
+    plt.grid(True, axis='y')
+
+    ax = plt.gca()
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/straddle_diff_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'straddle_diff_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
 
 if __name__ == '__main__':
     pass
@@ -984,3 +1030,4 @@ if __name__ == '__main__':
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
     # iv_straddle_show('IO2008', ['4900'], '2020-08-01')
     # hs300_spread_show('2020-08-01')
+    straddle_diff_show('IO2009', 'IO2010','2020-09-01', '2020-09-10')

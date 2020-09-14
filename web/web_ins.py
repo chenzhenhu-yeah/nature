@@ -9,11 +9,11 @@ import tushare as ts
 import json
 import os
 
+from nature import del_blank, check_symbols_p
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
-from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show, open_interest_show, hs300_spread_show
-from nature import del_blank, check_symbols_p
-
+from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
+from nature import open_interest_show, hs300_spread_show, straddle_diff_show
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -495,6 +495,43 @@ def ratio():
 
     return render_template("ratio.html",title="ratio",rows=r)
 
+@app.route('/straddle', methods=['get','post'])
+def straddle():
+    filename = get_dss() + 'fut/engine/straddle/portfolio_straddle_param.csv'
+    if request.method == "POST":
+        kind = request.form.get('kind')
+        basic = del_blank( request.form.get('basic') )
+        strike = del_blank( request.form.get('strike') )
+        fixed_size = del_blank( request.form.get('fixed_size') )
+        profit = del_blank( request.form.get('profit') )
+        state = del_blank( request.form.get('state') )
+        source = del_blank( request.form.get('source') )
+
+        r = [[basic,strike,fixed_size,profit,state,source]]
+        cols = ['basic','strike','fixed_size','profit','state','source']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.basic != basic) & (df.strike != strike)]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.basic != basic) & (df.strike != strike)]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("straddle.html",title="straddle",rows=r)
+
 
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():
@@ -860,6 +897,24 @@ def hs300_spread():
 
     return render_template("hs300_spread.html", title="hs300_spread")
 
+
+@app.route('/straddle_diff', methods=['get', 'post'])
+def straddle_diff():
+    if request.method == "POST":
+        basic_m0 = request.form.get('basic_m0')
+        basic_m1 = request.form.get('basic_m1')
+        startdate = request.form.get('startdate')
+        if startdate == '':
+            now = datetime.now() - timedelta(days = 3)
+            startdate = now.strftime('%Y-%m-%d')
+        enddate = request.form.get('enddate')
+        if enddate == '':
+            enddate = startdate
+
+        return straddle_diff_show(basic_m0, basic_m1, startdate, enddate)
+
+    return render_template("straddle_diff.html", title="straddle_diff")
+
 @app.route('/log')
 def show_log():
     items = read_log_today()
@@ -899,6 +954,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')
