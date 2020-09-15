@@ -71,7 +71,7 @@ class Fut_FollowSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        if self.bar.AskPrice - self.bar.BidPrice < 3:
+        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
             self.portfolio.got_dict[self.vtSymbol] = True
 
             if self.vtSymbol == self.portfolio.symbol_c:
