@@ -353,7 +353,7 @@ class FutEngine(object):
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         print('send order: ', r)
-        fn = 'fut/engine/engine_deal.csv'
+        fn = get_dss() + 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         if self.gateway is not None:

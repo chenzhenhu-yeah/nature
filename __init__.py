@@ -26,7 +26,7 @@ from nature.hu_signal.k_pattern import signal_k_pattern
 from nature.hold.book import Book, has_factor, stk_report
 
 from nature.auto_trade.place_order import send_instruction
-from nature.filer import rc_file, a_file
+from nature.filer import rc_file, a_file, get_file_lock, release_file_lock
 
 from nature.strategy import Tick, VtBarData, ArrayManager, GatewayPingan, BarGenerator, DailyResult
 from nature.strategy import (DIRECTION_LONG, DIRECTION_SHORT,

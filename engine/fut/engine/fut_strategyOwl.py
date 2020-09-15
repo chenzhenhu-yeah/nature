@@ -143,7 +143,7 @@ class Fut_OwlSignal(Signal):
 
     #----------------------------------------------------------------------
     def save_var(self):
-        fn = 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         for ins in self.ins_list:
             a_file(fn, str(ins))

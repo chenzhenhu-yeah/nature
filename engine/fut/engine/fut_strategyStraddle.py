@@ -8,7 +8,7 @@ from collections import OrderedDict, defaultdict
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
-
+from nature import get_file_lock, release_file_lock
 
 ########################################################################
 class Fut_StraddleSignal(Signal):
@@ -144,7 +144,7 @@ class Fut_StraddlePortfolio(Portfolio):
 
         self.got_dict = {}
         for symbol in symbol_list:
-            self.got_dict[self.symbol] = False
+            self.got_dict[symbol] = False
 
         Portfolio.__init__(self, Fut_StraddleSignal, engine, symbol_list, signal_param)
 
@@ -201,6 +201,8 @@ class Fut_StraddlePortfolio(Portfolio):
                     self.got_dict[self.symbol] = False
 
                 fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
+                while get_file_lock(fn) == False:
+                    time.sleep(1)
                 df = pd.read_csv(fn)                                                      # 加载最新参数
                 for i, row in df.iterrows():
                     exchangeID = str(get_contract(row.basic).exchangeID)
@@ -220,80 +222,80 @@ class Fut_StraddlePortfolio(Portfolio):
                             if self.engine.type == 'backtest':
                                 s_c.buy(s_c.bar.close, row.fixed_size)
                                 s_p.buy(s_p.bar.close, row.fixed_size)
-                                row.price_c = s_c.bar.close
-                                row.price_p = s_p.bar.close
+                                df.at[i, 'price_c'] = s_c.bar.close
+                                df.at[i, 'price_p'] = s_p.bar.close
                             else:
                                 s_c.buy(s_c.bar.AskPrice, self.fixed_size)              # 挂卖价
                                 s_p.buy(s_p.bar.AskPrice, self.fixed_size)              # 挂卖价
-                                row.price_c = s_c.bar.AskPrice
-                                row.price_p = s_p.bar.AskPrice
-                            row.hold_c = 1
-                            row.hold_p = 1
+                                df.at[i, 'price_c'] = s_c.bar.AskPrice
+                                df.at[i, 'price_p'] = s_p.bar.AskPrice
+                            df.at[i, 'hold_c'] = 1
+                            df.at[i, 'hold_p'] = 1
 
                         if row.direction == 'kong':
                             if self.engine.type == 'backtest':
                                 s_c.buy(s_c.bar.close, self.fixed_size)
                                 s_p.short(s_p.bar.close, 2*self.fixed_size)
-                                self.price_c = s_c.bar.close
-                                self.price_p = s_p.bar.close
+                                df.at[i, 'price_c'] = s_c.bar.close
+                                df.at[i, 'price_p'] = s_p.bar.close
                             else:
                                 s_c.buy(s_c.bar.AskPrice, self.fixed_size)              # 挂卖价
                                 s_p.short(s_p.bar.BidPrice, 2*self.fixed_size)          # 挂买价
-                                self.price_c = s_c.bar.AskPrice
-                                self.price_p = s_p.bar.BidPrice
-                            row.hold_c = -1
-                            row.hold_p = -1
+                                df.at[i, 'price_c'] = s_c.bar.AskPrice
+                                df.at[i, 'price_p'] = s_p.bar.BidPrice
+                            df.at[i, 'hold_c'] = -1
+                            df.at[i, 'hold_p'] = -1
 
 
                     # 多单获利平仓
                     if row.hold_c == 1 and row.hold_p == 1:
                         if self.engine.type == 'backtest':
-                            row.profit_c = s_c.bar.close - row.price_c
-                            row.profit_p = s_p.bar.close - row.price_p
-                            row.profit_0 = row.profit_c + row.profit_p
+                            df.at[i, 'profit_c'] = s_c.bar.close - row.price_c
+                            df.at[i, 'profit_p'] = s_p.bar.close - row.price_p
+                            df.at[i, 'profit_0'] = row.profit_c + row.profit_p
 
                             if row.profit_o >= row.profit:
                                 s_c.sell(s_c.bar.close, row.fixed_size)
                                 s_p.sell(s_p.bar.close, row.fixed_size)
-                                row.hold_c = 0
-                                row.hold_p = 0
-                                row.state = 'stop'
+                                df.at[i, 'hold_c'] = 0
+                                df.at[i, 'hold_p'] = 0
+                                df.at[i, 'state'] = 'stop'
                         else:
-                            row.profit_c = s_c.bar.BidPrice - row.price_c
-                            row.profit_p = s_p.bar.BidPrice - row.price_p
-                            row.profit_0 = row.profit_c + row.profit_p
+                            df.at[i, 'profit_c'] = s_c.bar.BidPrice - row.price_c
+                            df.at[i, 'profit_p'] = s_p.bar.BidPrice - row.price_p
+                            df.at[i, 'profit_0'] = row.profit_c + row.profit_p
 
                             if row.profit_o >= row.profit:
                                 s_c.sell(s_c.bar.BidPrice, row.fixed_size)
                                 s_p.sell(s_p.bar.BidPrice, row.fixed_size)
-                                row.hold_c = 0
-                                row.hold_p = 0
-                                row.state = 'stop'
-
+                                df.at[i, 'hold_c'] = 0
+                                df.at[i, 'hold_p'] = 0
+                                df.at[i, 'state'] = 'stop'
 
                     # 空单获利平仓
                     if row.hold_c == -1 and row.hold_p == -1:
                         if self.engine.type == 'backtest':
-                            row.profit_c = -(s_c.bar.close - row.price_c)
-                            row.profit_p = -(s_p.bar.close - row.price_p)
-                            row.profit_0 = row.profit_c + row.profit_p
+                            df.at[i, 'profit_c'] = -(s_c.bar.close - row.price_c)
+                            df.at[i, 'profit_p'] = -(s_p.bar.close - row.price_p)
+                            df.at[i, 'profit_0'] = row.profit_c + row.profit_p
 
                             if row.profit_o >= row.profit:
                                 s_c.cover(s_c.bar.close, row.fixed_size)
                                 s_p.cover(s_p.bar.close, row.fixed_size)
-                                row.hold_c = 0
-                                row.hold_p = 0
-                                row.state = 'stop'
+                                df.at[i, 'hold_c'] = 0
+                                df.at[i, 'hold_p'] = 0
+                                df.at[i, 'state'] = 'stop'
                         else:
-                            row.profit_c = -(s_c.bar.AskPrice - row.price_c)
-                            row.profit_p = -(s_p.bar.AskPrice - row.price_p)
-                            row.profit_0 = row.profit_c + row.profit_p
+                            df.at[i, 'profit_c'] = -(s_c.bar.AskPrice - row.price_c)
+                            df.at[i, 'profit_p'] = -(s_p.bar.AskPrice - row.price_p)
+                            df.at[i, 'profit_0'] = row.profit_c + row.profit_p
 
                             if row.profit_o >= row.profit:
                                 s_c.cover(s_c.bar.AskPrice, row.fixed_size)
                                 s_p.cover(s_p.bar.AskPrice, row.fixed_size)
-                                row.hold_c = 0
-                                row.hold_p = 0
-                                row.state = 'stop'
+                                df.at[i, 'hold_c'] = 0
+                                df.at[i, 'hold_p'] = 0
+                                df.at[i, 'state'] = 'stop'
 
                 df.to_csv(fn, index=False)                                        # 回写文件
+                release_file_lock(fn)

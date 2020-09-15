@@ -970,6 +970,7 @@ def straddle_diff_show(basic_m0, basic_m1, date_begin, date_end):
 
     fn = get_dss() + 'opt/straddle_differ.csv'
     df = pd.read_csv(fn)
+    df = df[(df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1)]
     df = df[df.date <= date_end]
     per_10 = ''
     per_50 = ''
@@ -982,11 +983,8 @@ def straddle_diff_show(basic_m0, basic_m1, date_begin, date_end):
         per_90 = int(df.differ.quantile(0.95))
 
     df = df[df.date >= date_begin]
-    df = df[(df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1)]
     df['dt'] = df.date + ' ' + df.time
     df = df.set_index('dt')
-
-
 
     plt.title('5:' + str(per_10) + '   50:' + str(per_50) + '   95:' + str(per_90))
     plt.plot(df['differ'])

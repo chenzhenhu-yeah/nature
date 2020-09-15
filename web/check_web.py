@@ -140,6 +140,7 @@ def check_symbols_p(key, value):
                    'symbols_trade','gateway_pz','gateway_pf','symbols_owl','symbols_cci_raw','symbols_aberration_enhance',
                    'symbols_cciboll','symbols_dali','symbols_rsiboll','symbols_atrrsi','symbols_turtle','symbols_dalicta',
                    'symbols_dualband','symbols_ic','symbols_ma','symbols_yue','symbols_avenger','symbols_follow','symbols_ratio','symbols_quote_canary',
+                   'symbols_straddle','symbols_sdiffer',
                   ]
     if key not in symbols_all:
         r = '新symbols，未在web端进行风控'

@@ -79,6 +79,8 @@ def calc_iv_atm():
         # print(symbol)
         # 取IF min5数据
         fn = get_dss() + 'fut/bar/min5_IF' + symbol[2:] + '.csv'
+        if os.path.exists(fn) == False:
+            continue
         df = pd.read_csv(fn)
         df = df[df.date == today]
         if len(df) == 0:

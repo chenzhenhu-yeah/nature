@@ -14,6 +14,7 @@ from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contr
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show
+from nature import get_file_lock, release_file_lock
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -314,7 +315,7 @@ def fut_owl():
             num = del_blank( int(request.form.get('num')) )
 
             ins = str({'ins':ins_type,'price':price,'num':num})
-            fn = 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
+            fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
             # fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
             a_file(fn,ins)
 
@@ -322,7 +323,7 @@ def fut_owl():
             now = datetime.now()
             today = now.strftime('%Y-%m-%d %H:%M:%S')
             ins = str({'date':today,'ins':ins_type,'price':price,'num':num})
-            fn = 'fut/engine/owl/history.csv'
+            fn = get_dss() + 'fut/engine/owl/history.csv'
             a_file(fn,ins)
 
             tips = 'append success'
@@ -498,6 +499,9 @@ def ratio():
 @app.route('/straddle', methods=['get','post'])
 def straddle():
     filename = get_dss() + 'fut/engine/straddle/portfolio_straddle_param.csv'
+    while get_file_lock(filename) == False:
+        time.sleep(1)
+
     if request.method == "POST":
         kind = request.form.get('kind')
         basic = del_blank( request.form.get('basic') )
@@ -529,6 +533,7 @@ def straddle():
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
+    release_file_lock(filename)
 
     return render_template("straddle.html",title="straddle",rows=r)
 
@@ -948,7 +953,7 @@ def confirm_ins():
     if ins_type in ['up_warn','down_warn','del']:
         ins = str({'ins':ins_type,'code':code,'num':num,'price':price,'name':name})
 
-    filename = 'csv/ins.txt'
+    filename = get_dss() + 'csv/ins.txt'
 
     a_file(filename,ins)
     return 'success: ' + ins

@@ -198,11 +198,11 @@ class FutEngine(object):
                     if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
                         self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
-        # if 'symbols_straddle' in setting:
-        #     symbols = setting['symbols_straddle']
-        #     if len(symbols) > 0:
-        #         straddle_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+        if 'symbols_straddle' in setting:
+            symbols = setting['symbols_straddle']
+            if len(symbols) > 0:
+                straddle_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
         #
         # if 'symbols_sdiffer' in setting:
         #     symbols = setting['symbols_sdiffer']
@@ -479,7 +479,7 @@ class FutEngine(object):
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
         #print('send order: ', r)
         to_log( str(r)[3:-2] )
-        fn = 'fut/engine/engine_deal.csv'
+        fn = get_dss() + 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
         priceTick = get_contract(vtSymbol).price_tick
