@@ -73,7 +73,7 @@ class Fut_OwlSignal(Signal):
     def calculateIndicator(self):
         """计算技术指标"""
         r = []
-        fn = 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         self.ins_list += rc_file(fn)
 
