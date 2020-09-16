@@ -191,14 +191,14 @@ class Fut_StraddlePortfolio(Portfolio):
            (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
 
             got_all = True
-            for symbol in symbol_list:
-               if self.got_dict[self.symbol] == False:
+            for symbol in self.vtSymbolList:
+               if self.got_dict[symbol] == False:
                    got_all = False
                    break
 
             if got_all == True:
-                for symbol in symbol_list:
-                    self.got_dict[self.symbol] = False
+                for symbol in self.vtSymbolList:
+                    self.got_dict[symbol] = False
 
                 fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
                 while get_file_lock(fn) == False:
