@@ -506,13 +506,17 @@ def straddle():
         kind = request.form.get('kind')
         basic = del_blank( request.form.get('basic') )
         strike = del_blank( request.form.get('strike') )
+        direction = del_blank( request.form.get('direction') )
         fixed_size = del_blank( request.form.get('fixed_size') )
+        hold_c = del_blank( request.form.get('hold_c') )
+        hold_p = del_blank( request.form.get('hold_p') )
         profit = del_blank( request.form.get('profit') )
         state = del_blank( request.form.get('state') )
         source = del_blank( request.form.get('source') )
 
-        r = [[basic,strike,fixed_size,profit,state,source]]
-        cols = ['basic','strike','fixed_size','profit','state','source']
+
+        r = [[basic,strike,direction,fixed_size,hold_c,hold_p,profit,state,source,'','','','','']]
+        cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
