@@ -88,15 +88,15 @@ class Fut_StraddleSignal(Signal):
         self.can_sell = False
         self.can_cover = False
 
-        # 记录数据
-        # r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p,self.portfolio.profit_c+self.portfolio.profit_p]]
-        # df = pd.DataFrame(r)
-        #
-        # filename = get_dss() +  'fut/engine/straddle/bar_straddle_'+self.type+ '_' + self.vtSymbol + '.csv'
-        # if os.path.exists(filename):
-        #     df.to_csv(filename, index=False, mode='a', header=False)
-        # else:
-        #     df.to_csv(filename, index=False)
+        记录数据
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p,self.portfolio.profit_c+self.portfolio.profit_p]]
+        df = pd.DataFrame(r)
+
+        filename = get_dss() +  'fut/engine/straddle/bar_straddle_'+self.type+ '_' + self.vtSymbol + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
