@@ -910,6 +910,7 @@ def hs300_spread():
 @app.route('/straddle_diff', methods=['get', 'post'])
 def straddle_diff():
     if request.method == "POST":
+        kind = request.form.get('kind')
         basic_m0 = request.form.get('basic_m0')
         basic_m1 = request.form.get('basic_m1')
         startdate = request.form.get('startdate')
@@ -920,7 +921,7 @@ def straddle_diff():
         if enddate == '':
             enddate = startdate
 
-        return straddle_diff_show(basic_m0, basic_m1, startdate, enddate)
+        return straddle_diff_show(basic_m0, basic_m1, startdate, enddate, kind)
 
     return render_template("straddle_diff.html", title="straddle_diff")
 

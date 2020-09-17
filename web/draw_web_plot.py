@@ -965,7 +965,7 @@ def hs300_spread_show(start_day):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def straddle_diff_show(basic_m0, basic_m1, date_begin, date_end):
+def straddle_diff_day_show(basic_m0, basic_m1, date_begin, date_end):
     plt.figure(figsize=(12,8))
 
     fn = get_dss() + 'opt/straddle_differ.csv'
@@ -1010,6 +1010,94 @@ def straddle_diff_show(basic_m0, basic_m1, date_begin, date_end):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def straddle_diff_now_show(basic_m0, basic_m1, date):
+    # 获得上一个交易日，用于确定差值的基准
+    symbol_obj = 'IF' + basic_m0[2:]
+    fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date <= date]
+    # print(date, df.iat[-1,0])
+    if date == df.iat[-1,0]:
+        date_pre = df.iat[-2,0]
+    else:
+        date_pre = df.iat[-1,0]
+
+    # 取开盘数据的atm
+    fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date == date]
+    df = df[df.time == '09:34:00']
+    # print(df)
+    rec = df.iloc[0,:]
+    obj = rec.close
+    gap = 50
+    # gap = 100
+    atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic_m0 + '-C-' + str(atm) + '.csv'
+    df_m0_c = pd.read_csv(fn)
+    df_m0_c_pre = df_m0_c[df_m0_c.date == date_pre]
+    df_m0_c = df_m0_c[df_m0_c.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic_m0 + '-P-' + str(atm) + '.csv'
+    df_m0_p = pd.read_csv(fn)
+    df_m0_p_pre = df_m0_p[df_m0_p.date == date_pre]
+    df_m0_p = df_m0_p[df_m0_p.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic_m1 + '-C-' + str(atm) + '.csv'
+    df_m1_c = pd.read_csv(fn)
+    df_m1_c_pre = df_m1_c[df_m1_c.date == date_pre]
+    df_m1_c = df_m1_c[df_m1_c.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic_m1 + '-P-' + str(atm) + '.csv'
+    df_m1_p = pd.read_csv(fn)
+    df_m1_p_pre = df_m1_p[df_m1_p.date == date_pre]
+    df_m1_p = df_m1_p[df_m1_p.date == date]
+
+    d_base_m1 = df_m1_c_pre.iat[-1,5] + df_m1_p_pre.iat[-1,5]
+    d_base_m0 = df_m0_c_pre.iat[-1,5] + df_m0_p_pre.iat[-1,5]
+
+    df_m1_c = df_m1_c.reset_index()
+    df_m1_p = df_m1_p.reset_index()
+    df_m0_c = df_m0_c.reset_index()
+    df_m0_p = df_m0_p.reset_index()
+
+    df_m1_c['diff_m1'] = df_m1_c.close + df_m1_p.close - d_base_m1
+    df_m0_c['diff_m0'] = df_m0_c.close + df_m0_p.close - d_base_m0
+    df_m1_c['differ'] = df_m1_c.diff_m1 - df_m0_c.diff_m0
+
+    plt.figure(figsize=(12,8))
+    plt.title('')
+    plt.plot(df_m1_c['differ'])
+    plt.xticks(rotation=90)
+    plt.grid(True, axis='y')
+
+    ax = plt.gca()
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::25]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    plt.legend()
+    fn = 'static/straddle_diff_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'straddle_diff_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def straddle_diff_show(basic_m0, basic_m1, startdate, enddate, kind):
+    if kind == 'now':
+        straddle_diff_now_show(basic_m0, basic_m1, startdate)
+    else:
+        straddle_diff_day_show(basic_m0, basic_m1, startdate, enddate)
+
+
 if __name__ == '__main__':
     pass
     # yue()
@@ -1028,4 +1116,5 @@ if __name__ == '__main__':
     # book_min5_show('2020-08-01', [['IO2008-C-4200', '1', 'IO2008-C-4300', '-2'], ['IO2008-C-4600', '1', 'IO2008-C-4700', '-2']])
     # iv_straddle_show('IO2008', ['4900'], '2020-08-01')
     # hs300_spread_show('2020-08-01')
-    straddle_diff_show('IO2009', 'IO2010','2020-09-01', '2020-09-10')
+    # straddle_diff_show('IO2009', 'IO2010','2020-09-01', '2020-09-10')
+    straddle_diff_now_show('IO2010', 'IO2011','2020-09-17')

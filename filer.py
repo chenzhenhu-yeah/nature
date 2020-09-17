@@ -2,6 +2,7 @@
 from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
 import pandas as pd
+import os
 import time
 import json
 import traceback
@@ -91,6 +92,8 @@ def deal_file(ins):
 
     r = []
     fn = ins['filename']
+    if os.path.exists(fn) == False:
+        return False
 
     if ins['ins']=='r':
         with open(fn, 'r', encoding='utf-8') as f:
@@ -146,21 +149,18 @@ def deal_file(ins):
 def file_service():
     print('beging filer')
     while True:
-        with Listener(address, authkey=b'secret password') as listener:
-            with listener.accept() as conn:
-                # print('connection accepted from', listener.last_accepted)
-                ins_dict = conn.recv(); #print(ins_dict)
-                conn.send( deal_file(ins_dict) )
+        try:
+            with Listener(address, authkey=b'secret password') as listener:
+                with listener.accept() as conn:
+                    # print('connection accepted from', listener.last_accepted)
+                    ins_dict = conn.recv(); #print(ins_dict)
+                    conn.send( deal_file(ins_dict) )
+        except Exception as e:
+            print('error')
+            print(e)
+
+            s = traceback.format_exc()
+            to_log(s)
 
 if __name__ == "__main__":
-    try:
-        file_service()
-    except Exception as e:
-        print('error')
-        print(e)
-
-        s = traceback.format_exc()
-        to_log(s)
-
-        while True:
-            time.sleep(300)
+    file_service()

@@ -61,6 +61,7 @@ def save_sdiffer(date, date_pre, basic_m0, basic_m1, atm, stat):
 
 # def calc_sdiffer(date, date_pre):
 def calc_sdiffer(date):
+    # 当月合约临近到期日的数据只看不用
     now = datetime.strptime(date, '%Y-%m-%d')
     next_day = now + timedelta(days = 10)
     next_day = next_day.strftime('%Y-%m-%d')
@@ -75,12 +76,14 @@ def calc_sdiffer(date):
     df = df_opt[(df_opt.pz == 'IO') & (df_opt.flag == 'm1')]
     basic_m1 = df.iat[0,1]
 
+    # 获得上一个交易日，用于确定差值的基准
     symbol_obj = 'IF' + basic_m0[2:]
     fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
     df = pd.read_csv(fn)
     assert date == df.iat[-1,0]
     date_pre = df.iat[-2,0]
 
+    # 取开盘数据的atm
     fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
     df = pd.read_csv(fn)
     df = df[df.date == date]
