@@ -198,17 +198,17 @@ class Fut_StraddlePortfolio(Portfolio):
                    break
 
             if got_all == True:
-                print('got all bar ')
+                # print('got all bar ')
                 for symbol in self.vtSymbolList:
                     self.got_dict[symbol] = False
 
                 fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
                 while get_file_lock(fn) == False:
                     time.sleep(1)
-                print('get file lock success')
+                # print('get file lock success')
                 df = pd.read_csv(fn)                                                      # 加载最新参数
                 for i, row in df.iterrows():
-                    print(row)
+                    # print(row)
                     exchangeID = str(get_contract(row.basic).exchangeID)
                     if exchangeID in ['CFFEX', 'DCE']:
                         symbol_c = row.basic + '-C-' + str(row.strike)
@@ -222,7 +222,7 @@ class Fut_StraddlePortfolio(Portfolio):
 
                     # 开仓
                     if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run':
-                        print('come here ')
+                        # print('come here ')
                         if row.direction == 'duo':
                             if self.engine.type == 'backtest':
                                 s_c.buy(s_c.bar.close, row.fixed_size)

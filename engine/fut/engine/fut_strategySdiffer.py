@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import time
 from datetime import datetime, timedelta
 
 from csv import DictReader
@@ -156,6 +157,14 @@ class Fut_SdifferPortfolio(Portfolio):
         self.basic_m1 = None
         self.cacl_vars()
 
+        self.atm = None
+        self.hold_m0 = 0
+        self.hold_m1 = 0
+        self.price_c_m0 = None
+        self.price_p_m0 = None
+        self.price_c_m1 = None
+        self.price_p_m1 = None
+
         self.symbol_obj = None
         self.symbol_c_m0 = None
         self.symbol_p_m0 = None
@@ -163,6 +172,7 @@ class Fut_SdifferPortfolio(Portfolio):
         self.symbol_p_m1 = None
         self.d_base_m0 = None
         self.d_base_m1 = None
+
 
         Portfolio.__init__(self, Fut_SdifferSignal, engine, symbol_list, signal_param)
 
@@ -185,7 +195,7 @@ class Fut_SdifferPortfolio(Portfolio):
         if next_day >= mature:
             self.stop = True
 
-        fn = get_dss() + 'opt/straddle_diff.csv'
+        fn = get_dss() + 'opt/straddle_differ.csv'
         df = pd.read_csv(fn)
         df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1) & (df.stat == 'y')]
         df = df.iloc[-480:, :]
@@ -197,7 +207,8 @@ class Fut_SdifferPortfolio(Portfolio):
     def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
 
-        if self.stop == True:
+        # 临近到期日，且无仓位
+        if self.stop == True and self.hold_m0 == 0 and self.hold_m1 == 0:
             return
 
         # 不处理不相关的品种
@@ -251,16 +262,18 @@ class Fut_SdifferPortfolio(Portfolio):
                 # 先确定当日要交易的合约
                 if self.symbol_obj is None:
                     self.symbol_obj = 'IF' + self.basic_m0[2:]
-                    fn = get_dss() + 'fut/bar/day_' + self.symbol_obj + '.csv'
-                    df = pd.read_csv(fn)
-                    gap = 50
-                    rec = df.iloc[-1,:]
-                    obj = rec.close
-                    atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
-                    self.symbol_c_m0 = self.basic_m0 + '-C-' + str(atm)
-                    self.symbol_p_m0 = self.basic_m0 + '-P-' + str(atm)
-                    self.symbol_c_m1 = self.basic_m1 + '-C-' + str(atm)
-                    self.symbol_p_m1 = self.basic_m1 + '-P-' + str(atm)
+
+                    if self.atm is None:
+                        s_obj = self.signalDict[self.symbol_obj][0]
+                        obj = s_obj.close
+                        gap = 50
+                        atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
+                        self.atm = atm
+
+                    self.symbol_c_m0 = self.basic_m0 + '-C-' + str(self.atm)
+                    self.symbol_p_m0 = self.basic_m0 + '-P-' + str(self.atm)
+                    self.symbol_c_m1 = self.basic_m1 + '-C-' + str(self.atm)
+                    self.symbol_p_m1 = self.basic_m1 + '-P-' + str(self.atm)
 
                     fn = get_dss() + 'fut/bar/day_' + self.symbol_c_m0 + '.csv'
                     df_m0_c_pre =  pd.read_csv(fn)
@@ -273,19 +286,77 @@ class Fut_SdifferPortfolio(Portfolio):
                     self.d_base_m0 = df_m0_c_pre.iat[-1,5] + df_m0_p_pre.iat[-1,5]
                     self.d_base_m1 = df_m1_c_pre.iat[-1,5] + df_m1_p_pre.iat[-1,5]
                 else:
+                    r = []
                     s_c_m0 = self.signalDict[self.symbol_c_m0][0]
                     s_p_m0 = self.signalDict[self.symbol_p_m0][0]
                     s_c_m1 = self.signalDict[self.symbol_c_m1][0]
                     s_p_m1 = self.signalDict[self.symbol_p_m1][0]
 
                     # 开仓
-                    if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run':
-                        pass
+                    if row.hold_m0 == 0 and row.hold_m1 == 0:
+                        diff_m0 = 0.5*(s_c_m0.AskPrice+s_c_m0.BidPrice) + 0.5*(s_p_m0.AskPrice+s_p_m0.BidPrice) - self.d_base_m0
+                        diff_m1 = 0.5*(s_c_m1.AskPrice+s_c_m1.BidPrice) + 0.5*(s_p_m1.AskPrice+s_p_m1.BidPrice) - self.d_base_m1
+                        differ  = diff_m1 - diff_m0
+
+                        # 做多
+                        # if differ < self.per_10:
+                        if differ < 9:
+                            r.append( [self.basic_m0,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
+                            r.append( [self.basic_m1,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
+
+                        # 做空
+                        # if differ > self.per_90:
+                        if differ > 9:
+                            r.append( [self.basic_m1,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
+                            r.append( [self.basic_m0,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
+
+                        fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
+                        while get_file_lock(fn) == False:
+                            time.sleep(1)
+                        cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o']
+                        df = pd.DataFrame(r, columns=cols)
+                        df.to_csv(filename, mode='a', header=False, index=False)
+                        release_file_lock(fn)
 
                     # 多单获利平仓
-                    if row.hold_c == 1 and row.hold_p == 1:
+                    if row.hold_m0 == -1 and row.hold_m1 == 1:
                         pass
 
                     # 空单获利平仓
-                    if row.hold_c == -1 and row.hold_p == -1:
+                    if row.hold_m0 == 1 and row.hold_m1 == -1:
                         pass
+
+    #----------------------------------------------------------------------
+    def daily_open(self):
+        Portfolio.daily_open(self)
+
+        fn = get_dss() +  'fut/engine/sdiffer/portfolio_' + self.name_second + '_save.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1)]
+            if len(df) > 0:
+                rec = df.iloc[-1,:]            # 取最近日期的记录
+
+                if rec.hold_m0 == 0 and rec.hold_m1 == 0:
+                    pass
+                else:
+                    self.atm = rec.atm
+                    self.hold_m0 = rec.hold_m0
+                    self.hold_m1 = rec.hold_m1
+                    self.price_c_m0 = rec.price_c_m0
+                    self.price_p_m0 = rec.price_p_m0
+                    self.price_c_m1 = rec.price_c_m1
+                    self.price_p_m1 = rec.price_p_m1
+
+    #----------------------------------------------------------------------
+    def daily_close(self):
+        Portfolio.daily_close(self)
+
+        r = [ [self.result.date, self.basic_m0, self.basic_m1, self.atm, self.hold_m0, self.hold_m1, self.price_c_m0, self.price_p_m0, self.price_c_m1, self.price_p_m1] ]
+
+        df = pd.DataFrame(r, columns=['datetime','basic_m0', 'basic_m1', 'hold_m0', 'hold_m1', 'price_c_m0', 'price_p_m0', 'price_c_m1', 'price_p_m1'])
+        fn = get_dss() +  'fut/engine/sdiffer/portfolio_' + self.name_second + '_save.csv'
+        if os.path.exists(fn):
+            df.to_csv(fn, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn, index=False)

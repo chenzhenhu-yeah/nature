@@ -1067,7 +1067,7 @@ def straddle_diff_now_show(basic_m0, basic_m1, date):
     df_m1_c['differ'] = df_m1_c.diff_m1 - df_m0_c.diff_m0
 
     plt.figure(figsize=(12,8))
-    plt.title('')
+    plt.title('atm: ' + atm)
     plt.plot(df_m1_c['differ'])
     plt.xticks(rotation=90)
     plt.grid(True, axis='y')
@@ -1093,9 +1093,9 @@ def straddle_diff_now_show(basic_m0, basic_m1, date):
 
 def straddle_diff_show(basic_m0, basic_m1, startdate, enddate, kind):
     if kind == 'now':
-        straddle_diff_now_show(basic_m0, basic_m1, startdate)
+        return straddle_diff_now_show(basic_m0, basic_m1, startdate)
     else:
-        straddle_diff_day_show(basic_m0, basic_m1, startdate, enddate)
+        return straddle_diff_day_show(basic_m0, basic_m1, startdate, enddate)
 
 
 if __name__ == '__main__':

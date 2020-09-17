@@ -130,7 +130,7 @@ def deal_file(ins):
                 else:
                     file_lock[fn] = True
                     r = True
-            # print(file_lock)
+            print(file_lock)
 
     if ins['ins']=='release_file_lock':
             if fn not in file_lock:
@@ -142,7 +142,7 @@ def deal_file(ins):
                     r = True
                 else:
                     r = False
-            # print(file_lock)
+            print(file_lock)
 
     return r
 
