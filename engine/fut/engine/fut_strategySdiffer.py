@@ -92,14 +92,14 @@ class Fut_SdifferSignal(Signal):
         self.can_cover = False
 
         # 记录数据
-        # r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p,self.portfolio.profit_c+self.portfolio.profit_p]]
-        # df = pd.DataFrame(r)
-        #
-        # filename = get_dss() +  'fut/engine/sdiffer/bar_sdiffer_'+self.type+ '_' + self.vtSymbol + '.csv'
-        # if os.path.exists(filename):
-        #     df.to_csv(filename, index=False, mode='a', header=False)
-        # else:
-        #     df.to_csv(filename, index=False)
+        r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice]]
+        df = pd.DataFrame(r)
+
+        filename = get_dss() +  'fut/engine/sdiffer/bar_sdiffer_'+self.type+ '_' + self.vtSymbol + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -147,7 +147,7 @@ class Fut_SdifferPortfolio(Portfolio):
 
         self.got_dict = {}
         for symbol in symbol_list:
-            self.got_dict[self.symbol] = False
+            self.got_dict[symbol] = False
 
         self.per_10 = 0
         self.per_50 = 0
@@ -156,6 +156,7 @@ class Fut_SdifferPortfolio(Portfolio):
         self.basic_m0 = None
         self.basic_m1 = None
         self.cacl_vars()
+        print(self.stop, self.basic_m0, self.basic_m1)
 
         self.atm = None
         self.hold_m0 = 0
@@ -173,12 +174,11 @@ class Fut_SdifferPortfolio(Portfolio):
         self.d_base_m0 = None
         self.d_base_m1 = None
 
-
         Portfolio.__init__(self, Fut_SdifferSignal, engine, symbol_list, signal_param)
 
     #----------------------------------------------------------------------
     def cacl_vars(self):
-        now = datetime.strptime(date, '%Y-%m-%d')
+        now = datetime.now()
         next_day = now + timedelta(days = 10)
         next_day = next_day.strftime('%Y-%m-%d')
 
@@ -235,7 +235,9 @@ class Fut_SdifferPortfolio(Portfolio):
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
+        # print('here')
         self.control_in_p(bar)
+        # print('here3')
 
         self.result.updateBar(bar)
         self.result.updatePos(self.posDict)
@@ -250,14 +252,16 @@ class Fut_SdifferPortfolio(Portfolio):
            (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
 
             got_all = True
-            for symbol in symbol_list:
-               if self.got_dict[self.symbol] == False:
+            for symbol in self.vtSymbolList:
+               if self.got_dict[symbol] == False:
                    got_all = False
                    break
 
+            # print('here2')
             if got_all == True:
-                for symbol in symbol_list:
-                    self.got_dict[self.symbol] = False
+                print('get all bar ')
+                for symbol in self.vtSymbolList:
+                    self.got_dict[symbol] = False
 
                 # 先确定当日要交易的合约
                 if self.symbol_obj is None:
@@ -265,11 +269,12 @@ class Fut_SdifferPortfolio(Portfolio):
 
                     if self.atm is None:
                         s_obj = self.signalDict[self.symbol_obj][0]
-                        obj = s_obj.close
+                        obj = s_obj.bar.close
                         gap = 50
                         atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
                         self.atm = atm
 
+                    print(self.atm)
                     self.symbol_c_m0 = self.basic_m0 + '-C-' + str(self.atm)
                     self.symbol_p_m0 = self.basic_m0 + '-P-' + str(self.atm)
                     self.symbol_c_m1 = self.basic_m1 + '-C-' + str(self.atm)
@@ -293,10 +298,11 @@ class Fut_SdifferPortfolio(Portfolio):
                     s_p_m1 = self.signalDict[self.symbol_p_m1][0]
 
                     # 开仓
-                    if row.hold_m0 == 0 and row.hold_m1 == 0:
-                        diff_m0 = 0.5*(s_c_m0.AskPrice+s_c_m0.BidPrice) + 0.5*(s_p_m0.AskPrice+s_p_m0.BidPrice) - self.d_base_m0
-                        diff_m1 = 0.5*(s_c_m1.AskPrice+s_c_m1.BidPrice) + 0.5*(s_p_m1.AskPrice+s_p_m1.BidPrice) - self.d_base_m1
+                    if self.hold_m0 == 0 and self.hold_m1 == 0:
+                        diff_m0 = 0.5*(s_c_m0.bar.AskPrice+s_c_m0.bar.BidPrice) + 0.5*(s_p_m0.bar.AskPrice+s_p_m0.bar.BidPrice) - self.d_base_m0
+                        diff_m1 = 0.5*(s_c_m1.bar.AskPrice+s_c_m1.bar.BidPrice) + 0.5*(s_p_m1.bar.AskPrice+s_p_m1.bar.BidPrice) - self.d_base_m1
                         differ  = diff_m1 - diff_m0
+                        print(differ)
 
                         # 做多
                         # if differ < self.per_10:
@@ -319,11 +325,11 @@ class Fut_SdifferPortfolio(Portfolio):
                         release_file_lock(fn)
 
                     # 多单获利平仓
-                    if row.hold_m0 == -1 and row.hold_m1 == 1:
+                    if self.hold_m0 == -1 and self.hold_m1 == 1:
                         pass
 
                     # 空单获利平仓
-                    if row.hold_m0 == 1 and row.hold_m1 == -1:
+                    if self.hold_m0 == 1 and self.hold_m1 == -1:
                         pass
 
     #----------------------------------------------------------------------
