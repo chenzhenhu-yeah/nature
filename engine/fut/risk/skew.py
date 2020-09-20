@@ -14,7 +14,7 @@ from nature import get_dss, get_inx, get_contract
 def calc_skew():
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    # date = '2020-08-06'
+    # date = '2020-09-02'
 
     # 数据基于greeks文件，该文件中已计算好合约的iv
     fn = get_dss() + 'opt/' + date[:7] + '_greeks.csv'
@@ -67,16 +67,16 @@ def calc_skew():
                 df1 = df1.set_index('Instrument')
                 skew_c = round( 100*(df1.at[otm_c,'iv']-df1.at[atm_c,'iv']) / df1.at[atm_c,'iv'], 2)
                 skew_p = round( 100*(df1.at[otm_p,'iv']-df1.at[atm_p,'iv']) / df1.at[atm_p,'iv'], 2)
+                skew_mean = round( 100*( df1.at[otm_c,'iv'] + df1.at[otm_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
                 # print(skew_c)
                 # print(skew_p)
-                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p])
+                print(skew_mean)
+                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p, skew_mean])
 
         except:
             pass
 
-        # break
-
-    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p'])
+    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p', 'skew_mean'])
     fn = get_dss() + 'opt/skew.csv'
     if os.path.exists(fn):
         df.to_csv(fn, index=False, header=None, mode='a')

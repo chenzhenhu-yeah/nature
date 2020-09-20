@@ -6,8 +6,42 @@ import zipfile
 import os
 from datetime import datetime, timedelta
 
-from nature import get_dss
+from nature import get_dss, get_contract, get_symbols_quote, to_log
 
+
+def calc_d_base(date):
+    # 计算并保存d_base
+    r = []
+    symbol_list = get_symbols_quote()
+    for symbol in symbol_list:
+        if symbol[:2] != 'IO':
+            continue
+
+        try:
+            basic = symbol[:6]
+            strike = get_contract(symbol).strike
+
+            symbol_c = basic + '-C-' + str(strike)
+            symbol_p = basic + '-P-' + str(strike)
+
+            fn = get_dss() + 'fut/bar/day_' + symbol_c + '.csv'
+            df_c =  pd.read_csv(fn)
+            fn = get_dss() + 'fut/bar/day_' + symbol_p + '.csv'
+            df_p =  pd.read_csv(fn)
+
+            d_base = df_c.iat[-1,5] + df_p.iat[-1,5]
+            r.append( [date, basic, strike, d_base] )
+        except Exception as e:
+            # s = traceback.format_exc()
+            # to_log(s)
+            pass
+
+    df = pd.DataFrame(r, columns=['date','basic','strike','d_base'])
+    fn = get_dss() + 'opt/sdiffer_d_base.csv'
+    if os.path.exists(fn):
+        df.to_csv(fn, index=False, mode='a', header=False)
+    else:
+        df.to_csv(fn, index=False)
 
 def save_sdiffer(date, date_pre, basic_m0, basic_m1, atm, stat):
     fn = get_dss() + 'fut/bar/min5_' + basic_m0 + '-C-' + str(atm) + '.csv'
@@ -119,8 +153,18 @@ def calc_sdiffer(date):
     basic_m1 = 'IO' + yymm_list[index+1]
     save_sdiffer(date, date_pre, basic_m0, basic_m1, atm, stat)
 
+    calc_d_base(date)
+
 
 if __name__ == '__main__':
     # calc_sdiffer('2020-09-09', '2020-09-08')
+
+    # fn = get_dss() + 'opt/straddle_differ.csv'
+    # df = pd.read_csv(fn)
+    # date_list = sorted(list(set(df.date)))
+    # print(date_list)
+    #
+    # for date in date_list:
+    #     calc_d_base(date)
 
     pass

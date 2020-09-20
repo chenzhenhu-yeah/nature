@@ -201,7 +201,7 @@ def mutual():
 
 
 def star():
-    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'c', 'all']
+    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'all']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 
@@ -978,15 +978,16 @@ def straddle_diff_day_show(basic_m0, basic_m1, date_begin, date_end):
 
     if len(df) >= 480:
         df = df.iloc[-480:, :]
-        per_10 = int(df.differ.quantile(0.05))
+        per_10 = int(df.differ.quantile(0.01))
         per_50 = int(df.differ.quantile(0.5))
-        per_90 = int(df.differ.quantile(0.95))
+        per_90 = int(df.differ.quantile(0.99))
 
     df = df[df.date >= date_begin]
     df['dt'] = df.date + ' ' + df.time
     df = df.set_index('dt')
+    # print(df)
 
-    plt.title('5:' + str(per_10) + '   50:' + str(per_50) + '   95:' + str(per_90))
+    plt.title('date: ' + date_begin + '   5:' + str(per_10) + '   50:' + str(per_50) + '   95:' + str(per_90))
     plt.plot(df['differ'])
     plt.xticks(rotation=90)
     plt.grid(True, axis='y')
@@ -1011,12 +1012,25 @@ def straddle_diff_day_show(basic_m0, basic_m1, date_begin, date_end):
     return r
 
 def straddle_diff_now_show(basic_m0, basic_m1, date):
+    fn = get_dss() + 'opt/straddle_differ.csv'
+    df = pd.read_csv(fn)
+    df = df[(df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1)]
+    df = df[df.date <= date]
+    per_10 = ''
+    per_50 = ''
+    per_90 = ''
+
+    if len(df) >= 480:
+        df = df.iloc[-480:, :]
+        per_10 = int(df.differ.quantile(0.01))
+        per_50 = int(df.differ.quantile(0.5))
+        per_90 = int(df.differ.quantile(0.99))
+
     # 获得上一个交易日，用于确定差值的基准
     symbol_obj = 'IF' + basic_m0[2:]
     fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
     df = pd.read_csv(fn)
     df = df[df.date <= date]
-    # print(date, df.iat[-1,0])
     if date == df.iat[-1,0]:
         date_pre = df.iat[-2,0]
     else:
@@ -1027,6 +1041,9 @@ def straddle_diff_now_show(basic_m0, basic_m1, date):
     df = pd.read_csv(fn)
     df = df[df.date == date]
     df = df[df.time == '09:34:00']
+    if len(df) == 0:
+        return '当前日期无数据'
+
     # print(df)
     rec = df.iloc[0,:]
     obj = rec.close
@@ -1067,7 +1084,7 @@ def straddle_diff_now_show(basic_m0, basic_m1, date):
     df_m1_c['differ'] = df_m1_c.diff_m1 - df_m0_c.diff_m0
 
     plt.figure(figsize=(12,8))
-    plt.title('atm: ' + str(atm))
+    plt.title('date: ' + date + '   atm: ' + str(atm) + '   5:' + str(per_10) + '   50:' + str(per_50) + '   95:' + str(per_90))
     plt.plot(df_m1_c['differ'])
     plt.xticks(rotation=90)
     plt.grid(True, axis='y')

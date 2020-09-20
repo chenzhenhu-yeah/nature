@@ -25,22 +25,11 @@ from nature import rc_file
 #     # row.stat = 'n'
 #     df.at[i, 'stat'] = 'n'
 #
-#
-# print(df)
-#
-
-from nature import get_file_lock, release_file_lock
-get_file_lock('t4')
-
-release_file_lock('t4')
-release_file_lock('t41')
-
-
-
-
-
-
-
+fn = get_dss() + 'opt/skew.csv'
+df = pd.read_csv(fn)
+df['skew_mean'] = ''
+print(df.head())
+df.to_csv(fn, index=False)
 
 # print(df.describe())
 # # df['diff'].plot(kind='hist')

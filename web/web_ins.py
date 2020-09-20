@@ -541,6 +541,54 @@ def straddle():
 
     return render_template("straddle.html",title="straddle",rows=r)
 
+@app.route('/sdiffer', methods=['get','post'])
+def sdiffer():
+    filename = get_dss() + 'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
+    while get_file_lock(filename) == False:
+        time.sleep(1)
+
+    if request.method == "POST":
+        kind = request.form.get('kind')
+        basic_m0 = del_blank( request.form.get('basic_m0') )
+        basic_m1 = del_blank( request.form.get('basic_m1') )
+        strike = del_blank( request.form.get('strike') )
+        fixed_size = del_blank( request.form.get('fixed_size') )
+        hold_m0 = del_blank( request.form.get('hold_m0') )
+        hold_m1 = del_blank( request.form.get('hold_m1') )
+        d_low_open = del_blank( request.form.get('d_low_open') )
+        d_high_open= del_blank( request.form.get('d_high_open') )
+        profit = del_blank( request.form.get('profit') )
+        state = del_blank( request.form.get('state') )
+        source = del_blank( request.form.get('source') )
+
+        now = datetime.now()
+        date = now.strftime('%Y-%m-%d')
+        r = [[date,basic_m0,basic_m1,strike,fixed_size,hold_m0,hold_m1,'','','','',d_low_open,d_high_open,100,0,-100,0,profit,state,source,'','','']]
+        cols = ['date','basic_m0','basic_m1','strike','fixed_size','hold_m0','hold_m1','price_c_m0','price_p_m0','price_c_m1','price_p_m1','d_low_open','d_high_open','d_max','dida_max','d_min','dida_min','profit','state','source','profit_m0','profit_m1','profit_o']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.basic_m0 != basic_m0) & (df.basic_m1 != basic_m1) & (df.strike != strike)]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            # 删
+            df = pd.read_csv(filename, dtype='str')
+            df = df[(df.basic_m0 != basic_m0) & (df.basic_m1 != basic_m1) & (df.strike != strike)]
+            df.to_csv(filename, index=False)
+            # 增
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+    release_file_lock(filename)
+
+    return render_template("sdiffer.html",title="sdiffer",rows=r)
+
 
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():
@@ -915,7 +963,7 @@ def straddle_diff():
         basic_m1 = request.form.get('basic_m1')
         startdate = request.form.get('startdate')
         if startdate == '':
-            now = datetime.now() - timedelta(days = 3)
+            now = datetime.now()
             startdate = now.strftime('%Y-%m-%d')
         enddate = request.form.get('enddate')
         if enddate == '':

@@ -156,23 +156,8 @@ class Fut_SdifferPortfolio(Portfolio):
         self.basic_m0 = None
         self.basic_m1 = None
         self.cacl_vars()
-        print(self.stop, self.basic_m0, self.basic_m1)
 
-        self.atm = None
-        self.hold_m0 = 0
-        self.hold_m1 = 0
-        self.price_c_m0 = None
-        self.price_p_m0 = None
-        self.price_c_m1 = None
-        self.price_p_m1 = None
-
-        self.symbol_obj = None
-        self.symbol_c_m0 = None
-        self.symbol_p_m0 = None
-        self.symbol_c_m1 = None
-        self.symbol_p_m1 = None
-        self.d_base_m0 = None
-        self.d_base_m1 = None
+        self.d_base_dict = {}
 
         Portfolio.__init__(self, Fut_SdifferSignal, engine, symbol_list, signal_param)
 
@@ -198,18 +183,19 @@ class Fut_SdifferPortfolio(Portfolio):
         fn = get_dss() + 'opt/straddle_differ.csv'
         df = pd.read_csv(fn)
         df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1) & (df.stat == 'y')]
-        df = df.iloc[-480:, :]
-        self.per_10 = df.differ.quantile(0.1)
-        self.per_50 = df.differ.quantile(0.5)
-        self.per_90 = df.differ.quantile(0.9)
+        if len(df) >= 480:
+            df = df.iloc[-480:, :]
+            self.per_10 = df.differ.quantile(0.01)
+            self.per_50 = df.differ.quantile(0.5)
+            self.per_90 = df.differ.quantile(0.99)
+        else:
+            self.per_10 = -100
+            self.per_50 = 0
+            self.per_90 = 100
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """引擎新推送过来bar，传递给每个signal"""
-
-        # 临近到期日，且无仓位
-        if self.stop == True and self.hold_m0 == 0 and self.hold_m1 == 0:
-            return
 
         # 不处理不相关的品种
         if bar.vtSymbol not in self.vtSymbolList:
@@ -259,110 +245,169 @@ class Fut_SdifferPortfolio(Portfolio):
 
             # print('here2')
             if got_all == True:
-                print('get all bar ')
+                # print('get all bar ')
                 for symbol in self.vtSymbolList:
                     self.got_dict[symbol] = False
 
-                # 先确定当日要交易的合约
+                cols = ['date','basic_m0','basic_m1','strike','fixed_size','hold_m0','hold_m1','price_c_m0','price_p_m0','price_c_m1','price_p_m1','d_low_open','d_high_open','d_max','dida_max','d_min','dida_min','profit','state','source','profit_m0','profit_m1','profit_o']
+                fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
+                while get_file_lock(fn) == False:
+                    time.sleep(1)
+
+                # 先确定当日要交易的合约，生成当日交易记录
                 if self.symbol_obj is None:
                     self.symbol_obj = 'IF' + self.basic_m0[2:]
 
-                    if self.atm is None:
+                    # 临近到期日，暂停自动交易，否则，发出条件单
+                    if self.stop == False:
                         s_obj = self.signalDict[self.symbol_obj][0]
                         obj = s_obj.bar.close
                         gap = 50
                         atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
-                        self.atm = atm
-
-                    print(self.atm)
-                    self.symbol_c_m0 = self.basic_m0 + '-C-' + str(self.atm)
-                    self.symbol_p_m0 = self.basic_m0 + '-P-' + str(self.atm)
-                    self.symbol_c_m1 = self.basic_m1 + '-C-' + str(self.atm)
-                    self.symbol_p_m1 = self.basic_m1 + '-P-' + str(self.atm)
-
-                    fn = get_dss() + 'fut/bar/day_' + self.symbol_c_m0 + '.csv'
-                    df_m0_c_pre =  pd.read_csv(fn)
-                    fn = get_dss() + 'fut/bar/day_' + self.symbol_p_m0 + '.csv'
-                    df_m0_p_pre =  pd.read_csv(fn)
-                    fn = get_dss() + 'fut/bar/day_' + self.symbol_c_m1 + '.csv'
-                    df_m1_c_pre =  pd.read_csv(fn)
-                    fn = get_dss() + 'fut/bar/day_' + self.symbol_p_m1 + '.csv'
-                    df_m1_p_pre =  pd.read_csv(fn)
-                    self.d_base_m0 = df_m0_c_pre.iat[-1,5] + df_m0_p_pre.iat[-1,5]
-                    self.d_base_m1 = df_m1_c_pre.iat[-1,5] + df_m1_p_pre.iat[-1,5]
-                else:
-                    r = []
-                    s_c_m0 = self.signalDict[self.symbol_c_m0][0]
-                    s_p_m0 = self.signalDict[self.symbol_p_m0][0]
-                    s_c_m1 = self.signalDict[self.symbol_c_m1][0]
-                    s_p_m1 = self.signalDict[self.symbol_p_m1][0]
-
-                    # 开仓
-                    if self.hold_m0 == 0 and self.hold_m1 == 0:
-                        diff_m0 = 0.5*(s_c_m0.bar.AskPrice+s_c_m0.bar.BidPrice) + 0.5*(s_p_m0.bar.AskPrice+s_p_m0.bar.BidPrice) - self.d_base_m0
-                        diff_m1 = 0.5*(s_c_m1.bar.AskPrice+s_c_m1.bar.BidPrice) + 0.5*(s_p_m1.bar.AskPrice+s_p_m1.bar.BidPrice) - self.d_base_m1
-                        differ  = diff_m1 - diff_m0
-                        print(differ)
-
-                        # 做多
-                        # if differ < self.per_10:
-                        if differ < 9:
-                            r.append( [self.basic_m0,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
-                            r.append( [self.basic_m1,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
-
-                        # 做空
-                        # if differ > self.per_90:
-                        if differ > 9:
-                            r.append( [self.basic_m1,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
-                            r.append( [self.basic_m0,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
-
-                        fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
-                        while get_file_lock(fn) == False:
-                            time.sleep(1)
-                        cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o']
+                        r = [[bar.date, self.basic_m0, self.basic_m1, atm, 1, \
+                              0, 0, '','','','', \
+                              self.per_10, self.per_90, 0,0,0,0, \
+                              13,'run','sdiffer','','',''] ]
                         df = pd.DataFrame(r, columns=cols)
                         df.to_csv(filename, mode='a', header=False, index=False)
-                        release_file_lock(fn)
+                else:
+                    df = pd.read_csv(fn)
+                    for i, row in df.iterrows():
+                        if row.state == 'stop':
+                            continue
 
-                    # 多单获利平仓
-                    if self.hold_m0 == -1 and self.hold_m1 == 1:
-                        pass
+                        r = []
+                        cols_straddle = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o']
+                        fn_straddle = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
 
-                    # 空单获利平仓
-                    if self.hold_m0 == 1 and self.hold_m1 == -1:
-                        pass
+                        symbol_c_m0 = row.basic_m0 + '-C-' + str(row.strike)
+                        symbol_p_m0 = row.basic_m0 + '-P-' + str(row.strike)
+                        symbol_c_m1 = row.basic_m1 + '-C-' + str(row.strike)
+                        symbol_p_m1 = row.basic_m1 + '-P-' + str(row.strike)
+
+                        s_c_m0 = self.signalDict[symbol_c_m0][0]
+                        s_p_m0 = self.signalDict[symbol_p_m0][0]
+                        s_c_m1 = self.signalDict[symbol_c_m1][0]
+                        s_p_m1 = self.signalDict[symbol_p_m1][0]
+
+                        d_base_m0 = d_base_dict[row.d_base_m0 + '_' + str(row.strike)]
+                        d_base_m1 = d_base_dict[row.d_base_m1 + '_' + str(row.strike)]
+
+                        # 开仓
+                        if row.hold_m0 == 0 and row.hold_m1 == 0:
+                            diff_m0 = 0.5*(s_c_m0.bar.AskPrice+s_c_m0.bar.BidPrice) + 0.5*(s_p_m0.bar.AskPrice+s_p_m0.bar.BidPrice) - d_base_m0
+                            diff_m1 = 0.5*(s_c_m1.bar.AskPrice+s_c_m1.bar.BidPrice) + 0.5*(s_p_m1.bar.AskPrice+s_p_m1.bar.BidPrice) - d_base_m1
+                            differ  = diff_m1 - diff_m0
+                            print('differ: ', differ)
+
+                            if differ >= row.d_max:
+                                df.at[i, 'd_max'] = differ
+                                df.at[i, 'dida_max'] = 0
+                            else:
+                                df.at[i, 'dida_max'] = row.dida_max + 1
+                                print(df.at[i, 'dida_max'], row.dida_max)
+
+                            if differ <= row.d_min:
+                                df.at[i, 'd_min'] = differ
+                                df.at[i, 'dida_min'] = 0
+                            else:
+                                df.at[i, 'dida_min'] = row.dida_min + 1
+                                print(df.at[i, 'dida_min'], row.dida_min)
+
+                            # 做多
+                            # if differ < 9:
+                            if df.at[i, 'dida_min'] <= row.d_low_open and differ >= row.d_low_open and df.at[i, 'dida_min'] > 0:
+                                r.append( [row.basic_m0,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
+                                r.append( [row.basic_m1,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
+                                df.at[i, 'hold_m0'] = -1
+                                df.at[i, 'hold_m1'] = 1
+                                df.at[i, 'price_c_m0'] = s_c_m0.bar.BidPrice
+                                df.at[i, 'price_p_m0'] = s_p_m0.bar.BidPrice
+                                df.at[i, 'price_c_m1'] = s_c_m1.bar.AskPrice
+                                df.at[i, 'price_p_m1'] = s_c_m1.bar.AskPrice
+
+                            # 做空
+                            # if differ > 9:
+                            if df.at[i, 'dida_max'] >= row.d_high_open and differ <= row.d_high_open and df.at[i, 'dida_max'] > 0:
+                                r.append( [row.basic_m1,self.atm,'kong',1,0,0,1000,'run','sdiffer','','','','',''] )
+                                r.append( [row.basic_m0,self.atm,'duo', 1,0,0,1000,'run','sdiffer','','','','',''] )
+                                df.at[i, 'hold_m0'] = 1
+                                df.at[i, 'hold_m1'] = -1
+                                df.at[i, 'price_c_m0'] = s_c_m0.bar.AskPrice
+                                df.at[i, 'price_p_m0'] = s_p_m0.bar.AskPrice
+                                df.at[i, 'price_c_m1'] = s_c_m1.bar.BidPrice
+                                df.at[i, 'price_p_m1'] = s_c_m1.bar.BidPrice
+
+                            while get_file_lock(fn_straddle) == False:
+                                time.sleep(1)
+                            df_straddle = pd.DataFrame(r, columns=cols)
+                            df_straddle.to_csv(fn_straddle, mode='a', header=False, index=False)
+                            release_file_lock(fn_straddle)
+
+                        # 多单获利平仓
+                        elif row.hold_m0 == -1 and row.hold_m1 == 1:
+                            df.at[i, 'profit_m0'] = (row.price_c_m0 + row.price_p_m0) - (s_c_m0.bar.AskPrice + s_p_m0.bar.AskPrice)
+                            df.at[i, 'profit_m1'] = (s_c_m1.bar.BidPrice + s_p_m1.bar.BidPrice) - (row.price_c_m1 + row.price_p_m1)
+                            df.at[i, 'profit_o'] = df.at[i, 'profit_m0'] + df.at[i, 'profit_m1']
+
+                            if df.at[i, 'profit_o'] >= row.profit:
+                                while get_file_lock(fn_straddle) == False:
+                                    time.sleep(1)
+                                df_straddle = pd.read_csv(fn_straddle)
+                                for j, jow in df_straddle.iterrows():
+                                    if jow.basic == row.basic_m0 and jow.strike == row.strike and jow.direction == 'kong' and jow.source == 'sdiffer':
+                                        df_straddle.at[i, 'profit'] = -100
+                                    if jow.basic == row.basic_m1 and jow.strike == row.strike and jow.direction == 'duo' and jow.source == 'sdiffer':
+                                        df_straddle.at[i, 'profit'] = -100
+                                df_straddle.to_csv(fn_straddle, index=False)
+                                release_file_lock(fn_straddle)
+
+                        # 空单获利平仓
+                        elif row.hold_m0 == 1 and row.hold_m1 == -1:
+                            df.at[i, 'profit_m0'] = (s_c_m0.bar.BidPrice + s_p_m0.bar.BidPrice) - (row.price_c_m0 + row.price_p_m0)
+                            df.at[i, 'profit_m1'] = (row.price_c_m1 + row.price_p_m1) - (s_c_m1.bar.AskPrice + s_p_m1.bar.AskPrice)
+                            df.at[i, 'profit_o'] = df.at[i, 'profit_m0'] + df.at[i, 'profit_m1']
+
+                            if df.at[i, 'profit_o'] >= row.profit:
+                                while get_file_lock(fn_straddle) == False:
+                                    time.sleep(1)
+                                df_straddle = pd.read_csv(fn_straddle)
+                                for j, jow in df_straddle.iterrows():
+                                    if jow.basic == row.basic_m0 and jow.strike == row.strike and jow.direction == 'duo' and jow.source == 'sdiffer':
+                                        df_straddle.at[i, 'profit'] = -100
+                                    if jow.basic == row.basic_m1 and jow.strike == row.strike and jow.direction == 'kong' and jow.source == 'sdiffer':
+                                        df_straddle.at[i, 'profit'] = -100
+                                df_straddle.to_csv(fn_straddle, index=False)
+                                release_file_lock(fn_straddle)
+
+                release_file_lock(fn)
 
     #----------------------------------------------------------------------
     def daily_open(self):
         Portfolio.daily_open(self)
 
-        fn = get_dss() +  'fut/engine/sdiffer/portfolio_' + self.name_second + '_save.csv'
-        if os.path.exists(fn):
-            df = pd.read_csv(fn)
-            df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1)]
-            if len(df) > 0:
-                rec = df.iloc[-1,:]            # 取最近日期的记录
-
-                if rec.hold_m0 == 0 and rec.hold_m1 == 0:
-                    pass
-                else:
-                    self.atm = rec.atm
-                    self.hold_m0 = rec.hold_m0
-                    self.hold_m1 = rec.hold_m1
-                    self.price_c_m0 = rec.price_c_m0
-                    self.price_p_m0 = rec.price_p_m0
-                    self.price_c_m1 = rec.price_c_m1
-                    self.price_p_m1 = rec.price_p_m1
+        fn = get_dss() + 'opt/straddle_differ.csv'
+        df = pd.read_csv(fn)
+        date_list = sorted(list(set(df.date)))
+        # print(date_list)
+        date = date_list[-1]
+        df = df[df.date == date]
+        for i, row in df.iterrows():
+            self.d_base_dict[row.basic + '_' + row.strike] = row.d_base
 
     #----------------------------------------------------------------------
     def daily_close(self):
         Portfolio.daily_close(self)
 
-        r = [ [self.result.date, self.basic_m0, self.basic_m1, self.atm, self.hold_m0, self.hold_m1, self.price_c_m0, self.price_p_m0, self.price_c_m1, self.price_p_m1] ]
+        fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
+        while get_file_lock(fn) == False:
+            time.sleep(1)
 
-        df = pd.DataFrame(r, columns=['datetime','basic_m0', 'basic_m1', 'hold_m0', 'hold_m1', 'price_c_m0', 'price_p_m0', 'price_c_m1', 'price_p_m1'])
-        fn = get_dss() +  'fut/engine/sdiffer/portfolio_' + self.name_second + '_save.csv'
-        if os.path.exists(fn):
-            df.to_csv(fn, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fn, index=False)
+        df = pd.read_csv(fn)
+        for i, row in df.iterrows():
+            if row.date == self.bar.date and row.source == 'sdiffer' and row.hold_m0 == 0:
+                df.at[i, 'state'] = 'stop'
+
+        df = df[(df.state == 'run') | (df.date == self.bar.date)]
+        df.to_csv(fn, index=False)
+        release_file_lock(fn)
