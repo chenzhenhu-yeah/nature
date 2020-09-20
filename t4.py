@@ -27,7 +27,7 @@ from nature import rc_file
 #
 fn = get_dss() + 'opt/skew.csv'
 df = pd.read_csv(fn)
-df['skew_mean'] = ''
+df['skew_mean_p'] = ''
 print(df.head())
 df.to_csv(fn, index=False)
 

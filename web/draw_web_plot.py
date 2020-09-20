@@ -726,9 +726,10 @@ def skew_show(basic):
 
     df = df.set_index('date')
     df = df.sort_index()
+    rec = df.iloc[-1,:]
 
     plt.figure(figsize=(13,7))
-    plt.title( basic )
+    plt.title( basic + '   ' + str(rec.atm) )
     plt.xticks(rotation=90)
     plt.plot(df['skew_c'])
     plt.plot(df['skew_p'])

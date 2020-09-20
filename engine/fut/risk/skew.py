@@ -56,27 +56,33 @@ def calc_skew():
                 if exchangeID in ['CFFEX', 'DCE']:
                     atm_c = basic + '-C-' + str(atm)
                     atm_p = basic + '-P-' + str(atm)
-                    otm_c = basic + '-C-' + str(atm+2*gap)
-                    otm_p = basic + '-P-' + str(atm-2*gap)
+                    otm_right_c = basic + '-C-' + str(atm+2*gap)
+                    otm_right_p = basic + '-P-' + str(atm+2*gap)
+                    otm_left_c = basic + '-C-' + str(atm-2*gap)
+                    otm_left_p = basic + '-P-' + str(atm-2*gap)
                 else:
                     atm_c = basic + 'C' + str(atm)
                     atm_p = basic + 'P' + str(atm)
-                    otm_c = basic + 'C' + str(atm+2*gap)
-                    otm_p = basic + 'P' + str(atm-2*gap)
+                    otm_right_c = basic + 'C' + str(atm+2*gap)
+                    otm_right_p = basic + 'P' + str(atm+2*gap)
+                    otm_left_c = basic + 'C' + str(atm-2*gap)
+                    otm_left_p = basic + 'P' + str(atm-2*gap)
 
                 df1 = df1.set_index('Instrument')
-                skew_c = round( 100*(df1.at[otm_c,'iv']-df1.at[atm_c,'iv']) / df1.at[atm_c,'iv'], 2)
-                skew_p = round( 100*(df1.at[otm_p,'iv']-df1.at[atm_p,'iv']) / df1.at[atm_p,'iv'], 2)
-                skew_mean = round( 100*( df1.at[otm_c,'iv'] + df1.at[otm_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
+                skew_c = round( 100*(df1.at[otm_right_c,'iv']-df1.at[atm_c,'iv']) / df1.at[atm_c,'iv'], 2)
+                skew_p = round( 100*(df1.at[otm_left_p,'iv']-df1.at[atm_p,'iv']) / df1.at[atm_p,'iv'], 2)
+
+                skew_mean_c = round( 100*( df1.at[otm_right_c,'iv'] + df1.at[otm_right_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
+                skew_mean_p = round( 100*( df1.at[otm_left_c,'iv'] + df1.at[otm_left_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
                 # print(skew_c)
                 # print(skew_p)
-                print(skew_mean)
-                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p, skew_mean])
+
+                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p, skew_mean_c, skew_mean_p])
 
         except:
             pass
 
-    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p', 'skew_mean'])
+    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p', 'skew_mean_c', 'skew_mean_p'])
     fn = get_dss() + 'opt/skew.csv'
     if os.path.exists(fn):
         df.to_csv(fn, index=False, header=None, mode='a')
