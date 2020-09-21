@@ -60,16 +60,18 @@ def save_sdiffer(date, date_pre, basic_m0, basic_m1, atm, stat):
     df_m1_c = pd.read_csv(fn)
     df_m1_c_pre = df_m1_c[df_m1_c.date == date_pre]
     df_m1_c = df_m1_c[df_m1_c.date == date]
-
+    if len(df_m1_c_pre) == 0:
+        return
+                
     fn = get_dss() + 'fut/bar/min5_' + basic_m1 + '-P-' + str(atm) + '.csv'
     df_m1_p = pd.read_csv(fn)
     df_m1_p_pre = df_m1_p[df_m1_p.date == date_pre]
     df_m1_p = df_m1_p[df_m1_p.date == date]
 
-    print(basic_m0, basic_m1)
-    print(atm)
-    print(df_m1_c_pre.head())
-    print(df_m1_p_pre.head())
+    # print(basic_m0, basic_m1)
+    # print(atm)
+    # print(df_m1_c_pre.head())
+    # print(df_m1_p_pre.head())
 
     d_base_m1 = df_m1_c_pre.iat[-1,5] + df_m1_p_pre.iat[-1,5]
     d_base_m0 = df_m0_c_pre.iat[-1,5] + df_m0_p_pre.iat[-1,5]

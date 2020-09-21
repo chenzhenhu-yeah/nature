@@ -50,7 +50,7 @@ class Contract(object):
         self.be_opt = False if len(symbol) < 9 else True
         self.strike = self.cacl_strike(symbol)
         self.basic = self.cacl_basic(pz, symbol)
-        
+
     def cacl_strike(self, symbol):
         if self.be_opt:
             for i in [-6, -5, -4, -3]:
@@ -103,7 +103,7 @@ def get_symbols_trade():
     df1 = pd.read_csv(fn)
     strike_list = []
     for pz in ['IO', 'm', 'RM']:
-        for flag in ['m0', 'm1']:
+        for flag in ['m0', 'm1', 'm2']:
             df2 = df1[df1.pz == pz]
             df2 = df2[df2.flag == flag]
             df2 = df2[df2.mature >= today]
