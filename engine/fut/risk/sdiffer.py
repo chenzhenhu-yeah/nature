@@ -66,6 +66,11 @@ def save_sdiffer(date, date_pre, basic_m0, basic_m1, atm, stat):
     df_m1_p_pre = df_m1_p[df_m1_p.date == date_pre]
     df_m1_p = df_m1_p[df_m1_p.date == date]
 
+    print(basic_m0, basic_m1)
+    print(atm)
+    print(df_m1_c_pre.head())
+    print(df_m1_p_pre.head())
+
     d_base_m1 = df_m1_c_pre.iat[-1,5] + df_m1_p_pre.iat[-1,5]
     d_base_m0 = df_m0_c_pre.iat[-1,5] + df_m0_p_pre.iat[-1,5]
 
@@ -157,7 +162,7 @@ def calc_sdiffer(date):
 
 
 if __name__ == '__main__':
-    # calc_sdiffer('2020-09-09', '2020-09-08')
+    calc_sdiffer('2020-09-21')
 
     # fn = get_dss() + 'opt/straddle_differ.csv'
     # df = pd.read_csv(fn)

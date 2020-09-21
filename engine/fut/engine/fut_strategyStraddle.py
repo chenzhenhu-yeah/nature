@@ -5,6 +5,8 @@ import time
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
+import traceback
+
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
@@ -191,24 +193,13 @@ class Fut_StraddlePortfolio(Portfolio):
            (bar.time > '13:35:00' and bar.time < '14:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
            (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
 
-            got_all = True
-            for symbol in self.vtSymbolList:
-               if self.got_dict[symbol] == False:
-                   got_all = False
-                   break
-
-            if got_all == True:
-                # print('got all bar ')
-                for symbol in self.vtSymbolList:
-                    self.got_dict[symbol] = False
-
-                fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
-                while get_file_lock(fn) == False:
-                    time.sleep(1)
-                # print('get file lock success')
-                df = pd.read_csv(fn)                                                      # 加载最新参数
-                for i, row in df.iterrows():
-                    # print(row)
+            fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
+            while get_file_lock(fn) == False:
+                time.sleep(1)
+            df = pd.read_csv(fn)                                                      # 加载最新参数
+            symbol_got_list = []
+            for i, row in df.iterrows():
+                try:
                     exchangeID = str(get_contract(row.basic).exchangeID)
                     if exchangeID in ['CFFEX', 'DCE']:
                         symbol_c = row.basic + '-C-' + str(row.strike)
@@ -217,90 +208,110 @@ class Fut_StraddlePortfolio(Portfolio):
                         symbol_c = row.basic + 'C' + str(row.strike)
                         symbol_p = row.basic + 'P' + str(row.strike)
 
-                    s_c = self.signalDict[symbol_c][0]
-                    s_p = self.signalDict[symbol_p][0]
+                    if self.got_dict[symbol_c] == False or self.got_dict[symbol_p] == False:
+                        continue
+                    else:
+                        symbol_got_list.append(symbol_c)
+                        symbol_got_list.append(symbol_p)
 
-                    # 开仓
-                    if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run':
-                        # print('come here ')
-                        if row.direction == 'duo':
+                        s_c = self.signalDict[symbol_c][0]
+                        s_p = self.signalDict[symbol_p][0]
+
+                        # 开仓
+                        if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run':
+                            # print('come here ')
+                            if row.direction == 'duo':
+                                if self.engine.type == 'backtest':
+                                    s_c.buy(s_c.bar.close, row.fixed_size)
+                                    s_p.buy(s_p.bar.close, row.fixed_size)
+                                    df.at[i, 'price_c'] = s_c.bar.close
+                                    df.at[i, 'price_p'] = s_p.bar.close
+                                else:
+                                    s_c.buy(s_c.bar.AskPrice, row.fixed_size)              # 挂卖价
+                                    s_p.buy(s_p.bar.AskPrice, row.fixed_size)              # 挂卖价
+                                    df.at[i, 'price_c'] = s_c.bar.AskPrice
+                                    df.at[i, 'price_p'] = s_p.bar.AskPrice
+                                df.at[i, 'hold_c'] = 1
+                                df.at[i, 'hold_p'] = 1
+                                df.at[i, 'tm'] = bar.time
+
+                            if row.direction == 'kong':
+                                if self.engine.type == 'backtest':
+                                    s_c.short(s_c.bar.close, row.fixed_size)
+                                    s_p.short(s_p.bar.close, row.fixed_size)
+                                    df.at[i, 'price_c'] = s_c.bar.close
+                                    df.at[i, 'price_p'] = s_p.bar.close
+                                else:
+                                    s_c.short(s_c.bar.BidPrice, row.fixed_size)              # 挂买价
+                                    s_p.short(s_p.bar.BidPrice, row.fixed_size)              # 挂买价
+                                    df.at[i, 'price_c'] = s_c.bar.BidPrice
+                                    df.at[i, 'price_p'] = s_p.bar.BidPrice
+                                df.at[i, 'hold_c'] = -1
+                                df.at[i, 'hold_p'] = -1
+                                df.at[i, 'tm'] = bar.time
+
+
+                        # 多单获利平仓
+                        if row.hold_c == 1 and row.hold_p == 1:
                             if self.engine.type == 'backtest':
-                                s_c.buy(s_c.bar.close, row.fixed_size)
-                                s_p.buy(s_p.bar.close, row.fixed_size)
-                                df.at[i, 'price_c'] = s_c.bar.close
-                                df.at[i, 'price_p'] = s_p.bar.close
-                            else:
-                                s_c.buy(s_c.bar.AskPrice, row.fixed_size)              # 挂卖价
-                                s_p.buy(s_p.bar.AskPrice, row.fixed_size)              # 挂卖价
-                                df.at[i, 'price_c'] = s_c.bar.AskPrice
-                                df.at[i, 'price_p'] = s_p.bar.AskPrice
-                            df.at[i, 'hold_c'] = 1
-                            df.at[i, 'hold_p'] = 1
+                                df.at[i, 'profit_c'] = s_c.bar.close - row.price_c
+                                df.at[i, 'profit_p'] = s_p.bar.close - row.price_p
+                                df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
+                                df.at[i, 'tm'] = bar.time
 
-                        if row.direction == 'kong':
+                                if row.profit_o >= row.profit:
+                                    s_c.sell(s_c.bar.close, row.fixed_size)
+                                    s_p.sell(s_p.bar.close, row.fixed_size)
+                                    df.at[i, 'hold_c'] = 0
+                                    df.at[i, 'hold_p'] = 0
+                                    df.at[i, 'state'] = 'stop'
+                            else:
+                                df.at[i, 'profit_c'] = s_c.bar.BidPrice - row.price_c
+                                df.at[i, 'profit_p'] = s_p.bar.BidPrice - row.price_p
+                                df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
+                                df.at[i, 'tm'] = bar.time
+                                # print('come here 1')
+
+                                if row.profit_o >= row.profit:
+                                    s_c.sell(s_c.bar.BidPrice, row.fixed_size)
+                                    s_p.sell(s_p.bar.BidPrice, row.fixed_size)
+                                    df.at[i, 'hold_c'] = 0
+                                    df.at[i, 'hold_p'] = 0
+                                    df.at[i, 'state'] = 'stop'
+
+                        # 空单获利平仓
+                        if row.hold_c == -1 and row.hold_p == -1:
                             if self.engine.type == 'backtest':
-                                s_c.short(s_c.bar.close, row.fixed_size)
-                                s_p.short(s_p.bar.close, row.fixed_size)
-                                df.at[i, 'price_c'] = s_c.bar.close
-                                df.at[i, 'price_p'] = s_p.bar.close
+                                df.at[i, 'profit_c'] = -(s_c.bar.close - row.price_c)
+                                df.at[i, 'profit_p'] = -(s_p.bar.close - row.price_p)
+                                df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
+                                df.at[i, 'tm'] = bar.time
+
+                                if row.profit_o >= row.profit:
+                                    s_c.cover(s_c.bar.close, row.fixed_size)
+                                    s_p.cover(s_p.bar.close, row.fixed_size)
+                                    df.at[i, 'hold_c'] = 0
+                                    df.at[i, 'hold_p'] = 0
+                                    df.at[i, 'state'] = 'stop'
                             else:
-                                s_c.short(s_c.bar.BidPrice, row.fixed_size)              # 挂买价
-                                s_p.short(s_p.bar.BidPrice, row.fixed_size)              # 挂买价
-                                df.at[i, 'price_c'] = s_c.bar.BidPrice
-                                df.at[i, 'price_p'] = s_p.bar.BidPrice
-                            df.at[i, 'hold_c'] = -1
-                            df.at[i, 'hold_p'] = -1
+                                df.at[i, 'profit_c'] = -(s_c.bar.AskPrice - row.price_c)
+                                df.at[i, 'profit_p'] = -(s_p.bar.AskPrice - row.price_p)
+                                df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
+                                df.at[i, 'tm'] = bar.time
+                                # print('come here -1')
 
+                                if row.profit_o >= row.profit:
+                                    s_c.cover(s_c.bar.AskPrice, row.fixed_size)
+                                    s_p.cover(s_p.bar.AskPrice, row.fixed_size)
+                                    df.at[i, 'hold_c'] = 0
+                                    df.at[i, 'hold_p'] = 0
+                                    df.at[i, 'state'] = 'stop'
 
-                    # 多单获利平仓
-                    if row.hold_c == 1 and row.hold_p == 1:
-                        if self.engine.type == 'backtest':
-                            df.at[i, 'profit_c'] = s_c.bar.close - row.price_c
-                            df.at[i, 'profit_p'] = s_p.bar.close - row.price_p
-                            df.at[i, 'profit_o'] = row.profit_c + row.profit_p
+                except Exception as e:
+                    s = traceback.format_exc()
+                    to_log(s)
 
-                            if row.profit_o >= row.profit:
-                                s_c.sell(s_c.bar.close, row.fixed_size)
-                                s_p.sell(s_p.bar.close, row.fixed_size)
-                                df.at[i, 'hold_c'] = 0
-                                df.at[i, 'hold_p'] = 0
-                                df.at[i, 'state'] = 'stop'
-                        else:
-                            df.at[i, 'profit_c'] = s_c.bar.BidPrice - row.price_c
-                            df.at[i, 'profit_p'] = s_p.bar.BidPrice - row.price_p
-                            df.at[i, 'profit_o'] = row.profit_c + row.profit_p
-
-                            if row.profit_o >= row.profit:
-                                s_c.sell(s_c.bar.BidPrice, row.fixed_size)
-                                s_p.sell(s_p.bar.BidPrice, row.fixed_size)
-                                df.at[i, 'hold_c'] = 0
-                                df.at[i, 'hold_p'] = 0
-                                df.at[i, 'state'] = 'stop'
-
-                    # 空单获利平仓
-                    if row.hold_c == -1 and row.hold_p == -1:
-                        if self.engine.type == 'backtest':
-                            df.at[i, 'profit_c'] = -(s_c.bar.close - row.price_c)
-                            df.at[i, 'profit_p'] = -(s_p.bar.close - row.price_p)
-                            df.at[i, 'profit_o'] = row.profit_c + row.profit_p
-
-                            if row.profit_o >= row.profit:
-                                s_c.cover(s_c.bar.close, row.fixed_size)
-                                s_p.cover(s_p.bar.close, row.fixed_size)
-                                df.at[i, 'hold_c'] = 0
-                                df.at[i, 'hold_p'] = 0
-                                df.at[i, 'state'] = 'stop'
-                        else:
-                            df.at[i, 'profit_c'] = -(s_c.bar.AskPrice - row.price_c)
-                            df.at[i, 'profit_p'] = -(s_p.bar.AskPrice - row.price_p)
-                            df.at[i, 'profit_o'] = row.profit_c + row.profit_p
-
-                            if row.profit_o >= row.profit:
-                                s_c.cover(s_c.bar.AskPrice, row.fixed_size)
-                                s_p.cover(s_p.bar.AskPrice, row.fixed_size)
-                                df.at[i, 'hold_c'] = 0
-                                df.at[i, 'hold_p'] = 0
-                                df.at[i, 'state'] = 'stop'
-
-                df.to_csv(fn, index=False)                                        # 回写文件
-                release_file_lock(fn)
+            df.to_csv(fn, index=False)                                        # 回写文件
+            release_file_lock(fn)
+            for symbol in symbol_got_list:
+                self.got_dict[symbol] = False

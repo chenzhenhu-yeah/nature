@@ -7,10 +7,12 @@ from datetime import datetime, timedelta
 
 from csv import DictReader
 from collections import OrderedDict, defaultdict
+import traceback
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
+from nature import get_file_lock, release_file_lock
 
 
 ########################################################################
@@ -157,6 +159,7 @@ class Fut_SdifferPortfolio(Portfolio):
         self.basic_m1 = None
         self.cacl_vars()
 
+        self.symbol_obj= None
         self.d_base_dict = {}
 
         Portfolio.__init__(self, Fut_SdifferSignal, engine, symbol_list, signal_param)
@@ -269,7 +272,7 @@ class Fut_SdifferPortfolio(Portfolio):
                               self.per_10, self.per_90, 0,0,0,0, \
                               13,'run','sdiffer','','',''] ]
                         df = pd.DataFrame(r, columns=cols)
-                        df.to_csv(filename, mode='a', header=False, index=False)
+                        df.to_csv(fn, mode='a', header=False, index=False)
                 else:
                     df = pd.read_csv(fn)
                     for i, row in df.iterrows():
@@ -386,14 +389,14 @@ class Fut_SdifferPortfolio(Portfolio):
     def daily_open(self):
         Portfolio.daily_open(self)
 
-        fn = get_dss() + 'opt/straddle_differ.csv'
+        fn = get_dss() + 'opt/sdiffer_d_base.csv'
         df = pd.read_csv(fn)
         date_list = sorted(list(set(df.date)))
         # print(date_list)
         date = date_list[-1]
         df = df[df.date == date]
         for i, row in df.iterrows():
-            self.d_base_dict[row.basic + '_' + row.strike] = row.d_base
+            self.d_base_dict[row.basic + '_' + str(row.strike)] = row.d_base
 
     #----------------------------------------------------------------------
     def daily_close(self):

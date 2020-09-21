@@ -8,6 +8,8 @@ import time
 import tushare as ts
 import json
 import os
+import traceback
+
 
 from nature import del_blank, check_symbols_p
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
@@ -502,43 +504,46 @@ def straddle():
     while get_file_lock(filename) == False:
         time.sleep(1)
 
-    if request.method == "POST":
-        kind = request.form.get('kind')
-        basic = del_blank( request.form.get('basic') )
-        strike = del_blank( request.form.get('strike') )
-        direction = del_blank( request.form.get('direction') )
-        fixed_size = del_blank( request.form.get('fixed_size') )
-        hold_c = del_blank( request.form.get('hold_c') )
-        hold_p = del_blank( request.form.get('hold_p') )
-        profit = del_blank( request.form.get('profit') )
-        state = del_blank( request.form.get('state') )
-        source = del_blank( request.form.get('source') )
+    try:
+        if request.method == "POST":
+            kind = request.form.get('kind')
+            basic = del_blank( request.form.get('basic') )
+            strike = del_blank( request.form.get('strike') )
+            direction = del_blank( request.form.get('direction') )
+            fixed_size = del_blank( request.form.get('fixed_size') )
+            hold_c = del_blank( request.form.get('hold_c') )
+            hold_p = del_blank( request.form.get('hold_p') )
+            profit = del_blank( request.form.get('profit') )
+            state = del_blank( request.form.get('state') )
+            source = del_blank( request.form.get('source') )
 
 
-        r = [[basic,strike,direction,fixed_size,hold_c,hold_p,profit,state,source,'','','','','']]
-        cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o']
-        if kind == 'add':
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
-        if kind == 'del':
-            df = pd.read_csv(filename, dtype='str')
-            df = df[(df.basic != basic) & (df.strike != strike)]
-            df.to_csv(filename, index=False)
-        if kind == 'alter':
-            # 删
-            df = pd.read_csv(filename, dtype='str')
-            df = df[(df.basic != basic) & (df.strike != strike)]
-            df.to_csv(filename, index=False)
-            # 增
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
+            r = [[basic,strike,direction,fixed_size,hold_c,hold_p,profit,state,source,'','','','','','00:00:00']]
+            cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','tm']
+            if kind == 'add':
+                df = pd.DataFrame(r, columns=cols)
+                df.to_csv(filename, mode='a', header=False, index=False)
+            if kind == 'del':
+                df = pd.read_csv(filename, dtype='str')
+                df = df[~( (df.basic == basic) & (df.strike == strike) & (df.direction == direction) & (df.source == source) )]
+                df.to_csv(filename, index=False)
+            if kind == 'alter':
+                df = pd.read_csv(filename, dtype='str')
+                for i, row in df.iterrows():
+                    if row.basic == basic and row.strike == strike and row.direction == direction and row.source == source:
+                        df.at[i, 'profit'] = profit
+                        df.at[i, 'state'] = state
+                df.to_csv(filename, index=False)
 
-    df = pd.read_csv(filename, dtype='str')
-    r = [ list(df.columns) ]
-    for i, row in df.iterrows():
-        r.append( list(row) )
+        df = pd.read_csv(filename, dtype='str')
+        r = [ list(df.columns) ]
+        for i, row in df.iterrows():
+            r.append( list(row) )
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
     release_file_lock(filename)
-
     return render_template("straddle.html",title="straddle",rows=r)
 
 @app.route('/sdiffer', methods=['get','post'])
