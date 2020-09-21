@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import talib
 
 from nature import get_dss, get_inx, get_contract
-
+from nature import bsm_call_imp_vol, bsm_put_imp_vol
 
 def ic(symbol1, symbol2):
     fn = get_dss() +'fut/bar/day_' + symbol1 + '.csv'
@@ -719,40 +719,6 @@ def hv_show(code):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
-def skew_show(basic):
-    fn = get_dss() + 'opt/skew.csv'
-    df = pd.read_csv(fn)
-    df = df[df.basic == basic]
-
-    df = df.set_index('date')
-    df = df.sort_index()
-    rec = df.iloc[-1,:]
-
-    plt.figure(figsize=(13,7))
-    plt.title( basic + '   ' + str(rec.atm) )
-    plt.xticks(rotation=90)
-    plt.plot(df['skew_c'])
-    plt.plot(df['skew_p'])
-    plt.legend()
-
-    # ax = plt.gca()
-    # for label in ax.get_xticklabels():
-    #     label.set_visible(False)
-    # for label in ax.get_xticklabels()[1::30]:
-    #     label.set_visible(True)
-    # for label in ax.get_xticklabels()[-1:]:
-    #     label.set_visible(True)
-
-    fn = 'static/skew_show.jpg'
-    plt.savefig(fn)
-    plt.cla()
-
-    r = ''
-    fn = 'skew_show.jpg'
-    now = str(int(time.time()))
-    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
-    return r
-
 def book_min5_show(startdate, dual_list):
     plt.figure(figsize=(12,8))
 
@@ -1116,6 +1082,157 @@ def straddle_diff_show(basic_m0, basic_m1, startdate, enddate, kind):
         return straddle_diff_day_show(basic_m0, basic_m1, startdate, enddate)
 
 
+def skew_day_show(basic):
+    fn = get_dss() + 'opt/skew.csv'
+    df = pd.read_csv(fn)
+    df = df[df.basic == basic]
+
+    df = df.set_index('date')
+    df = df.sort_index()
+    rec = df.iloc[-1,:]
+
+    plt.figure(figsize=(13,7))
+    plt.title( basic + '   ' + str(rec.atm) )
+    plt.xticks(rotation=90)
+    plt.plot(df.skew_c, label='c')
+    plt.plot(df.skew_p, label='p')
+    plt.plot(df.skew_mean_c, label='mean_c')
+    plt.plot(df.skew_mean_p, label='mean_p')
+    plt.legend()
+
+    # ax = plt.gca()
+    # for label in ax.get_xticklabels():
+    #     label.set_visible(False)
+    # for label in ax.get_xticklabels()[1::30]:
+    #     label.set_visible(True)
+    # for label in ax.get_xticklabels()[-1:]:
+    #     label.set_visible(True)
+
+    fn = 'static/skew_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    r = ''
+    fn = 'skew_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+def skew_now_show(basic, date):
+    # 获得上一个交易日，用于确定差值的基准
+    symbol_obj = 'IF' + basic[2:]
+    fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date <= date]
+    if date == df.iat[-1,0]:
+        date_pre = df.iat[-2,0]
+    else:
+        date_pre = df.iat[-1,0]
+
+    # 取开盘数据的atm
+    fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
+    df = pd.read_csv(fn)
+    df = df[df.date == date]
+    df1 = df[df.time == '09:34:00']
+    if len(df1) == 0:
+        return '当前日期无数据'
+
+    rec = df1.iloc[0,:]
+    obj = rec.close
+    gap = 50
+    atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-C-' + str(atm) + '.csv'
+    df_atm_c = pd.read_csv(fn)
+    df_atm_c = df_atm_c[df_atm_c.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-P-' + str(atm) + '.csv'
+    df_atm_p = pd.read_csv(fn)
+    df_atm_p = df_atm_p[df_atm_p.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-C-' + str(atm+2*gap) + '.csv'
+    df_right_c = pd.read_csv(fn)
+    df_right_c = df_right_c[df_right_c.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-P-' + str(atm+2*gap) + '.csv'
+    df_right_p = pd.read_csv(fn)
+    df_right_p = df_right_p[df_right_p.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-C-' + str(atm-2*gap) + '.csv'
+    df_left_c = pd.read_csv(fn)
+    df_left_c = df_left_c[df_left_c.date == date]
+
+    fn = get_dss() + 'fut/put/rec/min5_' + basic + '-P-' + str(atm-2*gap) + '.csv'
+    df_left_p = pd.read_csv(fn)
+    df_left_p = df_left_p[df_left_p.date == date]
+
+    df = df.reset_index()
+    df_atm_c = df_atm_c.reset_index()
+    df_atm_p = df_atm_p.reset_index()
+    df_right_c = df_right_c.reset_index()
+    df_right_p = df_right_p.reset_index()
+    df_left_c = df_left_c.reset_index()
+    df_left_p = df_left_p.reset_index()
+
+    r = 0.03
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'IO']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    date_mature = mature_dict[ basic ]
+    date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+    td = datetime.strptime(date, '%Y-%m-%d')
+    T = float((date_mature - td).days) / 365                       # 剩余期限
+
+    skew_c_list = []
+    skew_p_list = []
+    skew_mean_c_list = []
+    skew_mean_p_list = []
+
+    for i, row in df.iterrows():
+        try:
+            S0 = row.close
+            iv_atm_c = bsm_call_imp_vol(S0, atm, T, r, df_atm_c.at[i,'close'])
+            iv_atm_p = bsm_put_imp_vol(S0, atm, T, r, df_atm_p.at[i,'close'])
+            iv_right_c = bsm_call_imp_vol(S0, atm+2*gap, T, r, df_right_c.at[i,'close'])
+            iv_right_p = bsm_put_imp_vol(S0, atm+2*gap, T, r, df_right_p.at[i,'close'])
+            iv_left_c = bsm_call_imp_vol(S0, atm-2*gap, T, r, df_left_c.at[i,'close'])
+            iv_left_p = bsm_put_imp_vol(S0, atm-2*gap, T, r, df_left_p.at[i,'close'])
+
+            skew_c_list.append( round( 100*(iv_right_c - iv_atm_c) / iv_atm_c, 2) )
+            skew_p_list.append( round( 100*(iv_left_p - iv_atm_p)  / iv_atm_p, 2) )
+            skew_mean_c_list.append( round( 100*( iv_right_c + iv_right_p - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
+            skew_mean_p_list.append( round( 100*( iv_left_c  + iv_left_p  - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
+        except:
+            break
+
+    plt.figure(figsize=(13,7))
+    plt.title( basic + '   ' + str(atm) )
+    plt.xticks(rotation=90)
+    plt.plot(skew_c_list, label='c')
+    plt.plot(skew_p_list, label='p')
+    plt.plot(skew_mean_c_list, label='mean_c')
+    plt.plot(skew_mean_p_list, label='mean_p')
+    plt.legend()
+
+    fn = 'static/skew_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    rr = ''
+    fn = 'skew_show.jpg'
+    now = str(int(time.time()))
+    rr = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return rr
+
+
+def skew_show(basic, date, kind):
+    if kind == 'now':
+        return skew_now_show(basic, date)
+    else:
+        return skew_day_show(basic)
+
 if __name__ == '__main__':
     pass
     # yue()
@@ -1135,4 +1252,6 @@ if __name__ == '__main__':
     # iv_straddle_show('IO2008', ['4900'], '2020-08-01')
     # hs300_spread_show('2020-08-01')
     # straddle_diff_show('IO2009', 'IO2010','2020-09-01', '2020-09-10')
-    straddle_diff_now_show('IO2010', 'IO2011','2020-09-17')
+    # straddle_diff_now_show('IO2010', 'IO2011','2020-09-17')
+
+    skew_show('IO2010', 'no', '2020-09-18', 'now')

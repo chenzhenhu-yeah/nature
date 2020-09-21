@@ -850,8 +850,14 @@ def hv():
 @app.route('/skew', methods=['get', 'post'])
 def skew():
     if request.method == "POST":
+        kind = request.form.get('kind')
         basic = request.form.get('basic')
-        return skew_show(basic)
+        date = request.form.get('date')
+        if date == '':
+            now = datetime.now()
+            date = now.strftime('%Y-%m-%d')
+
+        return skew_show(basic, date, kind)
 
     return render_template("skew.html", title="skew")
 
