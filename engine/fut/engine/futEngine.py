@@ -204,11 +204,11 @@ class FutEngine(object):
                 straddle_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
 
-        # if 'symbols_sdiffer' in setting:
-        #     symbols = setting['symbols_sdiffer']
-        #     if len(symbols) > 0:
-        #         sdiffer_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+        if 'symbols_sdiffer' in setting:
+            symbols = setting['symbols_sdiffer']
+            if len(symbols) > 0:
+                sdiffer_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

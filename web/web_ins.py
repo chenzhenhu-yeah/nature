@@ -502,7 +502,7 @@ def ratio():
 def straddle():
     filename = get_dss() + 'fut/engine/straddle/portfolio_straddle_param.csv'
     while get_file_lock(filename) == False:
-        time.sleep(1)
+        time.sleep(0.01)
 
     try:
         if request.method == "POST":
@@ -568,23 +568,23 @@ def sdiffer():
 
         now = datetime.now()
         date = now.strftime('%Y-%m-%d')
-        r = [[date,basic_m0,basic_m1,strike,fixed_size,hold_m0,hold_m1,'','','','',d_low_open,d_high_open,100,0,-100,0,profit,state,source,'','','']]
+        r = [[date,basic_m0,basic_m1,strike,fixed_size,hold_m0,hold_m1,'','','','',d_low_open,d_high_open,100.0,0,-100.0,0,profit,state,source,'','','']]
         cols = ['date','basic_m0','basic_m1','strike','fixed_size','hold_m0','hold_m1','price_c_m0','price_p_m0','price_c_m1','price_p_m1','d_low_open','d_high_open','d_max','dida_max','d_min','dida_min','profit','state','source','profit_m0','profit_m1','profit_o']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
         if kind == 'del':
             df = pd.read_csv(filename, dtype='str')
-            df = df[(df.basic_m0 != basic_m0) & (df.basic_m1 != basic_m1) & (df.strike != strike)]
+            df = df[~((df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1) & (df.strike == strike) & (df.hold_m0 == hold_m0) & (df.hold_m1 == hold_m1) & (df.source == source))]
             df.to_csv(filename, index=False)
         if kind == 'alter':
-            # 删
             df = pd.read_csv(filename, dtype='str')
-            df = df[(df.basic_m0 != basic_m0) & (df.basic_m1 != basic_m1) & (df.strike != strike)]
+            for i, row in df.iterrows():
+                if row.basic_m0 == basic_m0 and row.basic_m1 == basic_m1 and row.strike == strike and row.hold_m0 == hold_m0 and row.hold_m1 == hold_m1 and row.source == source:
+                    df.at[i, 'profit'] = profit
+                    df.at[i, 'state'] = state
             df.to_csv(filename, index=False)
-            # 增
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
+
 
     df = pd.read_csv(filename, dtype='str')
     r = [ list(df.columns) ]
