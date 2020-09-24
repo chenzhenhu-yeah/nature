@@ -243,13 +243,13 @@ class Fut_SdifferPortfolio(Portfolio):
 
             cols = ['date','basic_m0','basic_m1','strike','fixed_size','hold_m0','hold_m1','price_c_m0','price_p_m0','price_c_m1','price_p_m1','d_low_open','d_high_open','d_max','dida_max','d_min','dida_min','profit','state','source','profit_m0','profit_m1','profit_o']
             fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
-            while get_file_lock(fn) == False:
-                time.sleep(0.01)
+            # while get_file_lock(fn) == False:
+            #     time.sleep(0.01)
 
             cols_straddle = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','tm']
             fn_straddle = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
-            while get_file_lock(fn_straddle) == False:
-                time.sleep(0.01)
+            # while get_file_lock(fn_straddle) == False:
+            #     time.sleep(0.01)
 
             df = pd.read_csv(fn)
             df_straddle = pd.read_csv(fn_straddle)
@@ -396,10 +396,10 @@ class Fut_SdifferPortfolio(Portfolio):
 
 
             df_straddle.to_csv(fn_straddle, index=False)
-            release_file_lock(fn_straddle)
+            # release_file_lock(fn_straddle)
 
             df.to_csv(fn, index=False)
-            release_file_lock(fn)
+            # release_file_lock(fn)
 
             for symbol in symbol_got_list:
                 self.got_dict[symbol] = False
@@ -428,9 +428,9 @@ class Fut_SdifferPortfolio(Portfolio):
 
         df = pd.read_csv(fn)
         for i, row in df.iterrows():
-            if row.date == self.bar.date and row.source == 'sdiffer' and row.hold_m0 == 0:
+            if row.date == self.result.date[:10] and row.source == 'sdiffer' and row.hold_m0 == 0:
                 df.at[i, 'state'] = 'stop'
 
-        df = df[(df.state == 'run') | (df.date == self.bar.date)]
+        df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
         df.to_csv(fn, index=False)
         release_file_lock(fn)

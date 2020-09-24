@@ -501,8 +501,8 @@ def ratio():
 @app.route('/straddle', methods=['get','post'])
 def straddle():
     filename = get_dss() + 'fut/engine/straddle/portfolio_straddle_param.csv'
-    while get_file_lock(filename) == False:
-        time.sleep(0.01)
+    # while get_file_lock(filename) == False:
+        # time.sleep(0.01)
 
     try:
         if request.method == "POST":
@@ -543,14 +543,14 @@ def straddle():
         s = traceback.format_exc()
         to_log(s)
 
-    release_file_lock(filename)
+    # release_file_lock(filename)
     return render_template("straddle.html",title="straddle",rows=r)
 
 @app.route('/sdiffer', methods=['get','post'])
 def sdiffer():
     filename = get_dss() + 'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
-    while get_file_lock(filename) == False:
-        time.sleep(1)
+    # while get_file_lock(filename) == False:
+    #     time.sleep(1)
 
     if request.method == "POST":
         kind = request.form.get('kind')
@@ -590,7 +590,7 @@ def sdiffer():
     r = [ list(df.columns) ]
     for i, row in df.iterrows():
         r.append( list(row) )
-    release_file_lock(filename)
+    # release_file_lock(filename)
 
     return render_template("sdiffer.html",title="sdiffer",rows=r)
 

@@ -195,8 +195,8 @@ class Fut_StraddlePortfolio(Portfolio):
 
             symbol_got_list = []
             fn = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
-            while get_file_lock(fn) == False:
-                time.sleep(0.01)
+            # while get_file_lock(fn) == False:
+            #     time.sleep(0.01)
 
             df = pd.read_csv(fn)                                                      # 加载最新参数
             for i, row in df.iterrows():
@@ -312,6 +312,6 @@ class Fut_StraddlePortfolio(Portfolio):
                     to_log(s)
 
             df.to_csv(fn, index=False)                                        # 回写文件
-            release_file_lock(fn)
+            # release_file_lock(fn)
             for symbol in symbol_got_list:
                 self.got_dict[symbol] = False
