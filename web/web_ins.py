@@ -594,6 +594,22 @@ def sdiffer():
 
     return render_template("sdiffer.html",title="sdiffer",rows=r)
 
+@app.route('/gateway_trade', methods=['get'])
+def gateway_trade():
+    fn = get_dss() + 'fut/engine/gateway_trade.csv'
+
+    # 显示文件的内容
+    df = pd.read_csv(fn, dtype='str')
+    df = df.iloc[-30:, :]
+    df = df.sort_index(ascending=False)
+    df = df.reset_index()
+    df = df[['TradingDay','TradeTime','InstrumentID','Offset','Direction','Price','Volume']]
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("gateway_trade.html", rows=r)
+
 
 @app.route('/value_dali_csv', methods=['get','post'])
 def value_dali_csv():

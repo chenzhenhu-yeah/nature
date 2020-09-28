@@ -25,11 +25,13 @@ from nature import rc_file
 #     # row.stat = 'n'
 #     df.at[i, 'stat'] = 'n'
 
-fn = get_dss() + 'opt/skew.csv'
-df = pd.read_csv(fn)
-df['skew_mean_p'] = ''
-print(df.head())
-df.to_csv(fn, index=False)
+for pz in ['m', 'MA', 'RM', 'p']:
+    fn = get_dss() +  'fut/engine/dali/signal_dali_multi_var_' + pz + '.csv'
+    df = pd.read_csv(fn)
+    df['size_duo_list'] = ''
+    df['size_kong_list'] = ''
+    print(df.head())
+    df.to_csv(fn, index=False)
 
 # print(df.describe())
 # # df['diff'].plot(kind='hist')

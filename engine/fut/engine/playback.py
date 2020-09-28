@@ -84,11 +84,11 @@ class FutEngine(object):
         #         rsiboll_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_RsiBollPortfolio, rsiboll_symbol_list)
 
-        # if 'symbols_dali' in setting:
-        #     symbols = setting['symbols_dali']
-        #     if len(symbols) > 0:
-        #         dali_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
+        if 'symbols_dali' in setting:
+            symbols = setting['symbols_dali']
+            if len(symbols) > 0:
+                dali_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_DaLiPortfolio, dali_symbol_list)
 
         # if 'symbols_dalicta' in setting:
         #     symbols = setting['symbols_dalicta']
@@ -174,31 +174,31 @@ class FutEngine(object):
         #             if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
         #                 self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
-        if 'symbols_follow' in setting:
-            symbols = setting['symbols_follow']
-            if len(symbols) > 0:
-                follow_symbol_list = symbols.split(',')
-            else:
-                follow_symbol_list = []
-
-            fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
-                        self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
-
-        if 'symbols_straddle' in setting:
-            symbols = setting['symbols_straddle']
-            if len(symbols) > 0:
-                straddle_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
-
-        if 'symbols_sdiffer' in setting:
-            symbols = setting['symbols_sdiffer']
-            if len(symbols) > 0:
-                sdiffer_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+        # if 'symbols_follow' in setting:
+        #     symbols = setting['symbols_follow']
+        #     if len(symbols) > 0:
+        #         follow_symbol_list = symbols.split(',')
+        #     else:
+        #         follow_symbol_list = []
+        #
+        #     fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
+        #                 self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+        #
+        # if 'symbols_straddle' in setting:
+        #     symbols = setting['symbols_straddle']
+        #     if len(symbols) > 0:
+        #         straddle_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+        #
+        # if 'symbols_sdiffer' in setting:
+        #     symbols = setting['symbols_sdiffer']
+        #     if len(symbols) > 0:
+        #         sdiffer_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
 
 
     #----------------------------------------------------------------------
@@ -214,7 +214,7 @@ class FutEngine(object):
         """加载数据"""
 
         for vtSymbol in self.vtSymbol_list:
-            test_list = ['IF2008','IO2008-C-4800','IO2008-P-4300','IO2008-C-4900','IO2008-P-4400']
+            test_list = ['m2101','RM101','MA101','p2101']
             if vtSymbol in test_list:
 
                 fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
