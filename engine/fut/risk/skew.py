@@ -72,17 +72,16 @@ def calc_skew():
                 skew_c = round( 100*(df1.at[otm_right_c,'iv']-df1.at[atm_c,'iv']) / df1.at[atm_c,'iv'], 2)
                 skew_p = round( 100*(df1.at[otm_left_p,'iv']-df1.at[atm_p,'iv']) / df1.at[atm_p,'iv'], 2)
 
-                skew_mean_c = round( 100*( df1.at[otm_right_c,'iv'] + df1.at[otm_right_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
-                skew_mean_p = round( 100*( df1.at[otm_left_c,'iv'] + df1.at[otm_left_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
-                # print(skew_c)
-                # print(skew_p)
+                # skew_mean_c = round( 100*( df1.at[otm_right_c,'iv'] + df1.at[otm_right_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
+                # skew_mean_p = round( 100*( df1.at[otm_left_c,'iv'] + df1.at[otm_left_p,'iv'] - df1.at[atm_c,'iv'] - df1.at[atm_p,'iv'] ) / (df1.at[atm_c,'iv'] + df1.at[atm_p,'iv']), 2)
+                skew_mean = round( 100*( df1.at[otm_right_c,'iv'] + df1.at[otm_right_p,'iv'] - df1.at[otm_left_c,'iv'] - df1.at[otm_left_p,'iv'] ) / (df1.at[otm_left_c,'iv'] + df1.at[otm_left_p,'iv']), 2)
 
-                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p, skew_mean_c, skew_mean_p])
+                r.append([date, pz, basic, obj, atm, atm+2*gap, atm-2*gap, skew_c, skew_p, skew_mean])
 
         except:
             pass
 
-    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p', 'skew_mean_c', 'skew_mean_p'])
+    df = pd.DataFrame(r, columns=['date', 'pz', 'basic', 'obj', 'atm', 'otm_c', 'otm_p', 'skew_c', 'skew_p', 'skew_mean'])
     fn = get_dss() + 'opt/skew.csv'
     if os.path.exists(fn):
         df.to_csv(fn, index=False, header=None, mode='a')

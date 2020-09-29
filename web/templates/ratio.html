@@ -13,7 +13,7 @@
          margin-right:18px;
       }
       section {
-         width:550px;
+         width:650px;
          float:left;
          margin-bottom:36px;
       }
@@ -75,19 +75,29 @@
       <fieldset>
 
       <p>
-        symbol_c:<input type="text" name="symbol_c"  required/>
+        symbol_b:<input type="text" name="symbol_b"  required/> &emsp; &emsp;
+        num_b:<input type="number" name="num_b" />
       </p>
+
       <p>
-        symbol_p:<input type="text" name="symbol_p"  required/>
-      </p>
-      <p>
-        fixed_size:<input type="number" name="fixed_size" />
+        symbol_s:<input type="text" name="symbol_s"  required/> &emsp; &emsp;
+        num_s:<input type="number" name="num_s" />
       </p>
       <p>
         gap:<input type="text" name="gap" />
       </p>
       <p>
         profit:<input type="text" name="profit" />
+      </p>      
+      <p>
+        state:
+          <select name="state"/>
+            <option value='run'>run</option>
+            <option value='stop'>stop</option>
+          </select>
+      </p>
+      <p>
+        source:<input type="text" name="source" value="hand" />
       </p>
 
       <p>

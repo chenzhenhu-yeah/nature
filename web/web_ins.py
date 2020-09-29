@@ -465,31 +465,34 @@ def follow():
 def ratio():
     filename = get_dss() + 'fut/engine/ratio/portfolio_ratio_param.csv'
     if request.method == "POST":
-        symbol_c = del_blank( request.form.get('symbol_c') )
-        symbol_p = del_blank( request.form.get('symbol_p') )
-        fixed_size = del_blank( request.form.get('fixed_size') )
+        symbol_b = del_blank( request.form.get('symbol_b') )
+        symbol_s = del_blank( request.form.get('symbol_s') )
+        num_b = del_blank( request.form.get('num_b') )
+        num_s = del_blank( request.form.get('num_s') )
         gap = del_blank( request.form.get('gap') )
         profit = del_blank( request.form.get('profit') )
+        state = del_blank( request.form.get('state') )
+        source = del_blank( request.form.get('source') )
 
         kind = request.form.get('kind')
 
-        r = [[symbol_c,symbol_p,fixed_size,gap,profit]]
-        cols = ['symbol_c','symbol_p','fixed_size','gap','profit']
+        r = [[symbol_b,symbol_s,num_b,num_s,gap,profit,0,0,state,source,'','','','','','','','']]
+        cols = ['symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','profit_b','profit_s','profit_o','tm','delta','theta']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
         if kind == 'del':
             df = pd.read_csv(filename, dtype='str')
-            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            df = df[~( (df.symbol_b == symbol_b) & (df.symbol_s == symbol_s) & (df.num_b == num_b) & (df.num_s == num_s) & (df.source == source) )]
             df.to_csv(filename, index=False)
         if kind == 'alter':
-            # 删
             df = pd.read_csv(filename, dtype='str')
-            df = df[(df.symbol_c != symbol_c) & (df.symbol_p != symbol_p)]
+            for i, row in df.iterrows():
+                if row.symbol_b == symbol_b and row.symbol_s == symbol_s and row.num_b == num_b and row.num_s == num_s and row.source == source:
+                    df.at[i, 'gap'] = gap
+                    df.at[i, 'profit'] = profit
+                    df.at[i, 'state'] = state
             df.to_csv(filename, index=False)
-            # 增
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
 
     df = pd.read_csv(filename, dtype='str')
     r = [ list(df.columns) ]

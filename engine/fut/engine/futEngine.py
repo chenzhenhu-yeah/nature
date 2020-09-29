@@ -185,18 +185,18 @@ class FutEngine(object):
                     if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
                         self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
-        if 'symbols_ratio' in setting:
-            symbols = setting['symbols_ratio']
-            if len(symbols) > 0:
-                ratio_symbol_list = symbols.split(',')
-            else:
-                ratio_symbol_list = []
-            fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
-                        self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
+        # if 'symbols_ratio' in setting:
+        #     symbols = setting['symbols_ratio']
+        #     if len(symbols) > 0:
+        #         ratio_symbol_list = symbols.split(',')
+        #     else:
+        #         ratio_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
+        #                 self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
         if 'symbols_straddle' in setting:
             symbols = setting['symbols_straddle']

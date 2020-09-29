@@ -83,20 +83,33 @@ class Fut_RatioSignal(Signal):
         if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
             self.portfolio.got_dict[self.vtSymbol] = True
 
+            if self.vtSymbol == self.portfolio.symbol_c:
+                if self.portfolio.engine.type == 'backtest':
+                    self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
+                else:
+                    self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.BidPrice - self.portfolio.price_c)
+
+            if self.vtSymbol == self.portfolio.symbol_p:
+                if self.portfolio.engine.type == 'backtest':
+                    self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
+                else:
+                    self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.AskPrice - self.portfolio.price_p)
+
         self.can_buy = False
         self.can_short = False
         self.can_sell = False
         self.can_cover = False
 
         # 记录数据
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice]]
-        df = pd.DataFrame(r)
+        if self.vtSymbol in [self.portfolio.symbol_c, self.portfolio.symbol_p]:
+            r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice,self.portfolio.profit,self.portfolio.profit_c,self.portfolio.profit_p,self.portfolio.profit_c+self.portfolio.profit_p]]
+            df = pd.DataFrame(r)
 
-        filename = get_dss() +  'fut/engine/ratio/bar_ratio_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
+            filename = get_dss() +  'fut/engine/ratio/bar_ratio_'+self.type+ '_' + self.vtSymbol + '.csv'
+            if os.path.exists(filename):
+                df.to_csv(filename, index=False, mode='a', header=False)
+            else:
+                df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -143,12 +156,34 @@ class Fut_RatioPortfolio(Portfolio):
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'ratio'
 
-        self.got_dict = {}
-        for symbol in symbol_list:
-            self.got_dict[symbol] = False
+        assert len(symbol_list) == 2
+        self.symbol_c = symbol_list[0]
+        self.symbol_p = symbol_list[1]
+        self.dual_name = self.symbol_c + '_' + self.symbol_p
 
+        self.got_dict = {}
+        self.got_dict[self.symbol_c] = False
+        self.got_dict[self.symbol_p] = False
+
+
+        self.price_c = 0
+        self.price_p = 0
+
+        self.hold_c = 0
+        self.hold_p = 0
+
+        self.profit_c = 0
+        self.profit_p = 0
+
+        self.fixed_size = 1
+        self.gap = 100
+        self.profit = 100
+        self.load_param(self.symbol_c, self.symbol_p)
 
         Portfolio.__init__(self, Fut_RatioSignal, engine, symbol_list, signal_param)
+
+        self.name_second = 'ratio_' + self.dual_name
+
 
     #----------------------------------------------------------------------
     def load_param(self, s_c, s_p):
@@ -189,81 +224,84 @@ class Fut_RatioPortfolio(Portfolio):
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
-        self.control_in_p(bar)
+        if (bar.time > '09:35:00' and bar.time < '11:25:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
+           (bar.time > '13:05:00' and bar.time < '14:55:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
+           (bar.time > '09:05:00' and bar.time < '11:25:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
+           (bar.time > '13:35:00' and bar.time < '14:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
+           (bar.time > '21:05:00' and bar.time < '22:55:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
+            # 开仓
+            if self.hold_c == 0 and self.hold_p == 0 :
+                self.load_param(self.symbol_c, self.symbol_p)                                             # 加载最新参数
+                if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
+                    self.got_dict[self.symbol_c] = False
+                    self.got_dict[self.symbol_p] = False
+
+                    s_c = self.signalDict[self.symbol_c][0]
+                    s_p = self.signalDict[self.symbol_p][0]
+
+                    if 2*s_p.bar.close - s_c.bar.close >= self.gap:
+                        if self.engine.type == 'backtest':
+                            s_c.buy(s_c.bar.close, self.fixed_size)
+                            s_p.short(s_p.bar.close, 2*self.fixed_size)
+                            self.price_c = s_c.bar.close
+                            self.price_p = s_p.bar.close
+                        else:
+                            s_c.buy(s_c.bar.AskPrice, self.fixed_size)              # 挂卖价
+                            s_p.short(s_p.bar.BidPrice, 2*self.fixed_size)          # 挂买价
+                            self.price_c = s_c.bar.AskPrice
+                            self.price_p = s_p.bar.BidPrice
+
+                        self.hold_c = 1
+                        self.hold_p = -2
+
+            # 获利平仓
+            if self.hold_c == 1 and self.hold_p == -2:
+                self.load_param(self.symbol_c, self.symbol_p)                       # 加载最新参数
+                if self.got_dict[self.symbol_c] == True and self.got_dict[self.symbol_p] == True:
+                    self.got_dict[self.symbol_c] = False
+                    self.got_dict[self.symbol_p] = False
+
+                    s_c = self.signalDict[self.symbol_c][0]
+                    s_p = self.signalDict[self.symbol_p][0]
+
+                    if self.profit_c + self.profit_p >= self.profit:
+                        if self.engine.type == 'backtest':
+                            s_c.sell(s_c.bar.close, self.fixed_size)
+                            s_p.cover(s_p.bar.close, 2*self.fixed_size)
+                        else:
+                            s_c.sell(s_c.bar.BidPrice, self.fixed_size)                          # 挂买价
+                            s_p.cover(s_p.bar.AskPrice, 2*self.fixed_size)                         # 挂卖价
+
+                        self.hold_c = 0
+                        self.hold_p = 0
 
         self.result.updateBar(bar)
         self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
-    def control_in_p(self, bar):
-        if (bar.time > '09:31:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
-           (bar.time > '13:01:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
-           (bar.time > '09:01:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
-           (bar.time > '13:31:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
-           (bar.time > '21:01:00' and bar.time < '22:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
+    def daily_open(self):
+        Portfolio.daily_open(self)
 
-            symbol_got_list = []
-            fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+        fn = get_dss() +  'fut/engine/ratio/portfolio_' + self.name_second + '_save.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            df = df[(df.symbol_c == self.symbol_c) & (df.symbol_p == self.symbol_p)]
+            if len(df) > 0:
+                rec = df.iloc[-1,:]            # 取最近日期的记录
+                self.price_c = rec.price_c
+                self.price_p = rec.price_p
+                self.hold_c = rec.hold_c
+                self.hold_p = rec.hold_p
 
-            df = pd.read_csv(fn)                                                      # 加载最新参数
-            for i, row in df.iterrows():
-                try:
-                    if self.got_dict[row.symbol_b] == False or self.got_dict[row.symbol_s] == False:
-                        continue
-                    else:
-                        symbol_got_list.append(row.symbol_b)
-                        symbol_got_list.append(row.symbol_s)
+    #----------------------------------------------------------------------
+    def daily_close(self):
+        Portfolio.daily_close(self)
 
-                        s_b = self.signalDict[row.symbol_b][0]
-                        s_s = self.signalDict[row.symbol_s][0]
+        r = [ [self.result.date, self.symbol_c, self.symbol_p, self.price_c, self.price_p, self.hold_c, self.hold_p] ]
 
-                        # 开仓
-                        if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
-                            if self.engine.type == 'backtest':
-                                s_b.buy(s_b.bar.close, row.num_b)
-                                s_s.short(s_s.bar.close, row.num_s)
-                                df.at[i, 'price_b'] = s_b.bar.close
-                                df.at[i, 'price_s'] = s_s.bar.close
-                            else:
-                                s_b.buy(s_b.bar.AskPrice, row.num_b)              # 挂卖价
-                                s_s.short(s_s.bar.BidPrice, row.num_s)            # 挂买价
-                                df.at[i, 'price_b'] = round(s_b.bar.AskPrice, 2)
-                                df.at[i, 'price_s'] = round(s_s.bar.BidPrice, 2)
-                            df.at[i, 'hold_b'] = row.num_b
-                            df.at[i, 'hold_s'] = row.num_s
-                            df.at[i, 'tm'] = bar.time
-
-                        # 获利平仓
-                        if row.hold_b > 0 and row.hold_s > 0:
-                            if self.engine.type == 'backtest':
-                                df.at[i, 'profit_b'] = round( (s_b.bar.close - row.price_b), 2)
-                                df.at[i, 'profit_s'] = round( -(s_s.bar.close - row.price_s), 2)
-                                df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
-                                df.at[i, 'tm'] = bar.time
-
-                                if df.at[i, 'profit_o'] >= row.profit:
-                                    s_b.sell(s_b.bar.close, row.num_b)
-                                    s_s.cover(s_s.bar.close, row.num_s)
-                                    df.at[i, 'hold_b'] = 0
-                                    df.at[i, 'hold_s'] = 0
-                                    df.at[i, 'state'] = 'stop'
-                            else:
-                                df.at[i, 'profit_b'] = round( (s_b.bar.BidPrice - row.price_b), 2)
-                                df.at[i, 'profit_s'] = round( -(s_s.bar.AskPrice - row.price_s), 2)
-                                df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
-                                df.at[i, 'tm'] = bar.time
-
-                                if df.at[i, 'profit_o'] >= row.profit:
-                                    s_b.sell(s_b.bar.BidPrice, row.num_b)                          # 挂买价
-                                    s_s.cover(s_s.bar.AskPrice, row.num_s)                         # 挂卖价
-                                    df.at[i, 'hold_b'] = 0
-                                    df.at[i, 'hold_s'] = 0
-                                    df.at[i, 'state'] = 'stop'
-
-                except Exception as e:
-                    s = traceback.format_exc()
-                    to_log(s)
-
-            df.to_csv(fn, index=False)                                        # 回写文件
-            for symbol in symbol_got_list:
-                self.got_dict[symbol] = False
+        df = pd.DataFrame(r, columns=['datetime','symbol_c', 'symbol_p', 'price_c', 'price_p', 'hold_c', 'hold_p'])
+        fn = get_dss() +  'fut/engine/ratio/portfolio_' + self.name_second + '_save.csv'
+        if os.path.exists(fn):
+            df.to_csv(fn, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn, index=False)

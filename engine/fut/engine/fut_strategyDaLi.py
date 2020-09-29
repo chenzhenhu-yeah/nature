@@ -470,7 +470,7 @@ class Fut_DaLiSignal(Signal):
                 pnl_hold += (settle - item) * d * size
 
             for k, item in zip( d_list, sorted(self.price_kong_list) ):
-                pnl_hold += (settle - item) * k * size
+                pnl_hold += (item - settle) * k * size
 
             self.unit = len(self.price_duo_list) - len(self.price_kong_list)
             r = [ [self.portfolio.result.date,self.vtSymbol, settle, self.unit, \

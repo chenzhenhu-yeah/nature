@@ -1096,8 +1096,9 @@ def skew_day_show(basic):
     plt.xticks(rotation=90)
     plt.plot(df.skew_c, label='c')
     plt.plot(df.skew_p, label='p')
-    plt.plot(df.skew_mean_c, label='mean_c')
-    plt.plot(df.skew_mean_p, label='mean_p')
+    # plt.plot(df.skew_mean_c, label='mean_c')
+    # plt.plot(df.skew_mean_p, label='mean_p')
+    plt.plot(df.skew_mean, label='mean')
     plt.legend()
 
     # ax = plt.gca()
@@ -1187,8 +1188,9 @@ def skew_now_show(basic, date):
 
     skew_c_list = []
     skew_p_list = []
-    skew_mean_c_list = []
-    skew_mean_p_list = []
+    # skew_mean_c_list = []
+    # skew_mean_p_list = []
+    skew_mean_list = []
 
     for i, row in df.iterrows():
         try:
@@ -1202,8 +1204,9 @@ def skew_now_show(basic, date):
 
             skew_c_list.append( round( 100*(iv_right_c - iv_atm_c) / iv_atm_c, 2) )
             skew_p_list.append( round( 100*(iv_left_p - iv_atm_p)  / iv_atm_p, 2) )
-            skew_mean_c_list.append( round( 100*( iv_right_c + iv_right_p - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
-            skew_mean_p_list.append( round( 100*( iv_left_c  + iv_left_p  - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
+            # skew_mean_c_list.append( round( 100*( iv_right_c + iv_right_p - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
+            # skew_mean_p_list.append( round( 100*( iv_left_c  + iv_left_p  - iv_atm_c - iv_atm_p ) / (iv_atm_c + iv_atm_p), 2) )
+            skew_mean_list.append( round( 100*( iv_right_c + iv_right_p - iv_left_c - iv_left_p ) / (iv_left_c + iv_left_p), 2) )
         except:
             break
 
@@ -1212,8 +1215,9 @@ def skew_now_show(basic, date):
     plt.xticks(rotation=90)
     plt.plot(skew_c_list, label='c')
     plt.plot(skew_p_list, label='p')
-    plt.plot(skew_mean_c_list, label='mean_c')
-    plt.plot(skew_mean_p_list, label='mean_p')
+    # plt.plot(skew_mean_c_list, label='mean_c')
+    # plt.plot(skew_mean_p_list, label='mean_p')
+    plt.plot(skew_mean_list, label='mean')
     plt.legend()
 
     fn = 'static/skew_show.jpg'
