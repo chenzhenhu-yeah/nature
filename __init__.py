@@ -57,6 +57,8 @@ from nature.engine.fut.engine.fut_strategyFollow import Fut_FollowPortfolio
 from nature.engine.fut.engine.fut_strategyRatio import Fut_RatioPortfolio
 from nature.engine.fut.engine.fut_strategyStraddle import Fut_StraddlePortfolio
 from nature.engine.fut.engine.fut_strategySdiffer import Fut_SdifferPortfolio
+from nature.engine.fut.engine.fut_strategySkew_Strd import Fut_Skew_StrdPortfolio
+from nature.engine.fut.engine.fut_strategySkew_Bili import Fut_Skew_BiliPortfolio
 
 from nature.engine.fut.rd.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.rd.opt_short_put import Opt_Short_PutPortfolio
@@ -78,4 +80,4 @@ from nature.web.check_web import check_symbols_p
 from nature.web import draw_web
 from nature.web.draw_web_plot import ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature.web.draw_web_plot import hs300_spread_show, hv_show, skew_show, book_min5_show, book_min5_now_show
-from nature.web.draw_web_plot import open_interest_show, iv_straddle_show, straddle_diff_show
+from nature.web.draw_web_plot import open_interest_show, iv_straddle_show, straddle_diff_show, iv_show

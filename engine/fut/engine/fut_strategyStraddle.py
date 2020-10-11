@@ -83,8 +83,12 @@ class Fut_StraddleSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
-            self.portfolio.got_dict[self.vtSymbol] = True
+        if self.portfolio.engine.type == 'backtest':
+            if self.bar.close > 0.1 and self.bar.close > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
+        else:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False
         self.can_short = False
@@ -144,7 +148,7 @@ class Fut_StraddlePortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'straddle'
-
+        self.tm = '00:00:00'
         self.got_dict = {}
         for symbol in symbol_list:
             self.got_dict[symbol] = False
@@ -161,6 +165,11 @@ class Fut_StraddlePortfolio(Portfolio):
 
         if minx != 'min1':               # 本策略为min1
             return
+
+        if self.tm != bar.time:
+            self.tm = bar.time
+            for symbol in self.vtSymbolList:
+                self.got_dict[symbol] = False
 
         if self.result.date != bar.date + ' ' + bar.time:
             previousResult = self.result

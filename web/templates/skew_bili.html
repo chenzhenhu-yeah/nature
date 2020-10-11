@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:650px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{title}}</h1>
+       </header>
+
+      <form method="post" action="skew_bili">
+      <fieldset>
+
+      <p>
+        symbol_b:<input type="text" name="symbol_b"  required/>  &emsp; &emsp;
+        num_b:<input type="number" name="num_b"  required/>
+      </p>
+      <p>
+        symbol_s:<input type="text" name="symbol_s"  required/> &emsp; &emsp;
+        num_s:<input type="number" name="num_s"  required/>
+      </p>            
+      <p>
+        skew_low_open:<input type="number" name="skew_low_open" value=-100 />
+      </p>
+      <p>
+        skew_high_open:<input type="number" name="skew_high_open" value=100 />
+      </p>
+      <p>
+        profit:<input type="text" name="profit" />
+      </p>
+      <p>
+        state:
+          <select name="state"/>
+            <option value='run'>run</option>
+            <option value='stop'>stop</option>
+          </select>
+      </p>
+      <p>
+        source:<input type="text" name="source" value="hand" />
+      </p>
+
+      <p>
+        <pre>
+        add<input type="radio" name="kind" value="add" />     del<input type="radio" name="kind" value="del" />     alter<input type="radio" name="kind" value="alter" />
+        </pre>
+      </p>
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+
+       <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
+
+    </section>
+  </body>
+</html>

@@ -177,6 +177,7 @@ def calc_sigma():
 
     fn = get_dss() + 'opt/' + today[:7] + '_greeks.csv'
     df = pd.read_csv(fn)
+    df = df[df.Localtime.str.startswith(today)]
     df = df.drop_duplicates(subset=['Instrument'], keep='last')
     df = df.set_index('Instrument')
     # print(df.head())

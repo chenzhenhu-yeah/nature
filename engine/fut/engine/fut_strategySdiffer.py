@@ -9,7 +9,7 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 import traceback
 
-from nature import to_log, get_dss, get_contract
+from nature import to_log, get_dss, get_contract, send_email
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
 from nature import get_file_lock, release_file_lock
@@ -85,8 +85,12 @@ class Fut_SdifferSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
-            self.portfolio.got_dict[self.vtSymbol] = True
+        if self.portfolio.engine.type == 'backtest':
+            if self.bar.close > 0.1 and self.bar.close > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
+        else:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False
         self.can_short = False
@@ -146,14 +150,20 @@ class Fut_SdifferPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'sdiffer'
-
+        self.tm = '00:00:00'
         self.got_dict = {}
         for symbol in symbol_list:
             self.got_dict[symbol] = False
 
-        self.per_10 = 0
-        self.per_50 = 0
-        self.per_90 = 0
+        self.be_run = 'stop'
+        self.d_low_open = -100.0
+        self.d_high_open = 100.0
+        self.d_low_mail = -100.0
+        self.d_high_mail = 100.0
+        self.mailed_low = False
+        self.mailed_high = False
+        self.load_switch()
+
         self.stop = False
         self.basic_m0 = None
         self.basic_m1 = None
@@ -163,6 +173,20 @@ class Fut_SdifferPortfolio(Portfolio):
         self.d_base_dict = {}
 
         Portfolio.__init__(self, Fut_SdifferSignal, engine, symbol_list, signal_param)
+
+    #----------------------------------------------------------------------
+    def load_switch(self):
+        pass
+        fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_switch.csv'
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            rec = df.iloc[0]
+            self.be_run = rec.be_run
+            self.d_low_open = rec.d_low_open
+            self.d_high_open = rec.d_high_open
+            self.d_low_mail = rec.d_low_mail
+            self.d_high_mail = rec.d_high_mail
+            # print(self.be_run, self.d_low_open, self.d_high_open)
 
     #----------------------------------------------------------------------
     def cacl_vars(self):
@@ -183,18 +207,18 @@ class Fut_SdifferPortfolio(Portfolio):
         if next_day >= mature:
             self.stop = True
 
-        fn = get_dss() + 'opt/straddle_differ.csv'
-        df = pd.read_csv(fn)
-        df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1) & (df.stat == 'y')]
-        if len(df) >= 480:
-            df = df.iloc[-480:, :]
-            self.per_10 = df.differ.quantile(0.01)
-            self.per_50 = df.differ.quantile(0.5)
-            self.per_90 = df.differ.quantile(0.99)
-        else:
-            self.per_10 = -100
-            self.per_50 = 0
-            self.per_90 = 100
+        # fn = get_dss() + 'opt/straddle_differ.csv'
+        # df = pd.read_csv(fn)
+        # df = df[(df.basic_m0 == self.basic_m0) & (df.basic_m1 == self.basic_m1) & (df.stat == 'y')]
+        # if len(df) >= 480:
+        #     df = df.iloc[-480:, :]
+        #     self.per_10 = df.differ.quantile(0.01)
+        #     self.per_50 = df.differ.quantile(0.5)
+        #     self.per_90 = df.differ.quantile(0.99)
+        # else:
+        #     self.per_10 = -100
+        #     self.per_50 = 0
+        #     self.per_90 = 100
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -206,6 +230,11 @@ class Fut_SdifferPortfolio(Portfolio):
 
         if minx != 'min1':               # 本策略为min1
             return
+
+        if self.tm != bar.time:
+            self.tm = bar.time
+            for symbol in self.vtSymbolList:
+                self.got_dict[symbol] = False
 
         if self.result.date != bar.date + ' ' + bar.time:
             previousResult = self.result
@@ -271,8 +300,8 @@ class Fut_SdifferPortfolio(Portfolio):
                             atm = int(round(round(obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
                             r = [[bar.date, self.basic_m0, self.basic_m1, atm, 1, \
                                   0, 0, '','','','', \
-                                  -10.0, 20.0, 0.0,0,0.0,0, \
-                                  13,'stop','sdiffer','','',''] ]
+                                  self.d_low_open, self.d_high_open, 0.0,0,0.0,0, \
+                                  13,self.be_run,'sdiffer','','',''] ]
                             df2 = pd.DataFrame(r, columns=cols)
                             df = pd.concat([df, df2], sort=False)
                             # print(df)
@@ -315,7 +344,15 @@ class Fut_SdifferPortfolio(Portfolio):
                                 diff_m0 = 0.5*(s_c_m0.bar.AskPrice+s_c_m0.bar.BidPrice) + 0.5*(s_p_m0.bar.AskPrice+s_p_m0.bar.BidPrice) - d_base_m0
                                 diff_m1 = 0.5*(s_c_m1.bar.AskPrice+s_c_m1.bar.BidPrice) + 0.5*(s_p_m1.bar.AskPrice+s_p_m1.bar.BidPrice) - d_base_m1
                                 differ  = diff_m1 - diff_m0
-                                # print('differ: ', differ)
+                                print('differ: ', differ)
+
+                                if differ <= self.d_low_mail and self.mailed_low == False:
+                                    self.mailed_low = True
+                                    send_email(get_dss(), 'differ: ' + str(differ), '')
+
+                                if differ >= self.d_high_mail and self.mailed_high == False:
+                                    self.mailed_high = True
+                                    send_email(get_dss(), 'differ: ' + str(differ), '')
 
                                 if differ >= row.d_max:
                                     df.at[i, 'd_max'] = differ
@@ -422,15 +459,11 @@ class Fut_SdifferPortfolio(Portfolio):
     def daily_close(self):
         Portfolio.daily_close(self)
 
-        fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
-        while get_file_lock(fn) == False:
-            time.sleep(1)
-
-        df = pd.read_csv(fn)
-        for i, row in df.iterrows():
-            if row.date == self.result.date[:10] and row.source == 'sdiffer' and row.hold_m0 == 0:
-                df.at[i, 'state'] = 'stop'
-
-        df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
-        df.to_csv(fn, index=False)
-        release_file_lock(fn)
+        # fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
+        # df = pd.read_csv(fn)
+        # for i, row in df.iterrows():
+        #     if row.date == self.result.date[:10] and row.source == 'sdiffer' and row.hold_m0 == 0:
+        #         df.at[i, 'state'] = 'stop'
+        #
+        # df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
+        # df.to_csv(fn, index=False)

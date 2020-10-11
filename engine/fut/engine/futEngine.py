@@ -31,6 +31,7 @@ from nature import Fut_OwlPortfolio, Fut_StraddlePortfolio, Fut_SdifferPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
+from nature import Fut_Skew_StrdPortfolio, Fut_Skew_BiliPortfolio
 
 #from ipdb import set_trace
 
@@ -158,57 +159,63 @@ class FutEngine(object):
                     if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
                         self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
-        if self.seq_tm == 'morning':
-            if 'symbols_avenger' in setting:
-                symbols = setting['symbols_avenger']
-                if len(symbols) > 0:
-                    avenger_symbol_list = symbols.split(',')
-                else:
-                    avenger_symbol_list = []
-                fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
-                if os.path.exists(fn):
-                    df = pd.read_csv(fn)
-                    for i, row in df.iterrows():
-                        if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
-                            self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
-
-        if 'symbols_follow' in setting:
-            symbols = setting['symbols_follow']
-            if len(symbols) > 0:
-                follow_symbol_list = symbols.split(',')
-            else:
-                follow_symbol_list = []
-            fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
-                        self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+        # if self.seq_tm == 'morning':
+        #     if 'symbols_avenger' in setting:
+        #         symbols = setting['symbols_avenger']
+        #         if len(symbols) > 0:
+        #             avenger_symbol_list = symbols.split(',')
+        #         else:
+        #             avenger_symbol_list = []
+        #         fn = get_dss() +  'fut/engine/avenger/portfolio_avenger_param.csv'
+        #         if os.path.exists(fn):
+        #             df = pd.read_csv(fn)
+        #             for i, row in df.iterrows():
+        #                 if row.symbol_o in avenger_symbol_list and row.symbol_c in avenger_symbol_list and row.symbol_p in avenger_symbol_list:
+        #                     self.loadPortfolio(Fut_AvengerPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
+        #
+        # if 'symbols_follow' in setting:
+        #     symbols = setting['symbols_follow']
+        #     if len(symbols) > 0:
+        #         follow_symbol_list = symbols.split(',')
+        #     else:
+        #         follow_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/follow/portfolio_follow_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
+        #                 self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
         # if 'symbols_ratio' in setting:
         #     symbols = setting['symbols_ratio']
         #     if len(symbols) > 0:
         #         ratio_symbol_list = symbols.split(',')
-        #     else:
-        #         ratio_symbol_list = []
-        #     fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
-        #     if os.path.exists(fn):
-        #         df = pd.read_csv(fn)
-        #         for i, row in df.iterrows():
-        #             if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
-        #                 self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
+        #         self.loadPortfolio(Fut_RatioPortfolio, ratio_symbol_list)
+        #
+        # if 'symbols_straddle' in setting:
+        #     symbols = setting['symbols_straddle']
+        #     if len(symbols) > 0:
+        #         straddle_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+        #
+        # if 'symbols_sdiffer' in setting:
+        #     symbols = setting['symbols_sdiffer']
+        #     if len(symbols) > 0:
+        #         sdiffer_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+        #
+        # if 'symbols_skew_strd' in setting:
+        #     symbols = setting['symbols_skew_strd']
+        #     if len(symbols) > 0:
+        #         skew_strd_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
+        #
+        # if 'symbols_skew_bili' in setting:
+        #     symbols = setting['symbols_skew_bili']
+        #     if len(symbols) > 0:
+        #         skew_bili_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
-        if 'symbols_straddle' in setting:
-            symbols = setting['symbols_straddle']
-            if len(symbols) > 0:
-                straddle_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
-
-        if 'symbols_sdiffer' in setting:
-            symbols = setting['symbols_sdiffer']
-            if len(symbols) > 0:
-                sdiffer_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

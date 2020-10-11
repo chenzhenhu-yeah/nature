@@ -29,7 +29,7 @@ from nature import Fut_OwlPortfolio, Fut_StraddlePortfolio, Fut_SdifferPortfolio
 from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
-
+from nature import Fut_Skew_StrdPortfolio, Fut_Skew_BiliPortfolio
 
 #from ipdb import set_trace
 
@@ -174,6 +174,12 @@ class FutEngine(object):
         #             if row.symbol_c in ratio_symbol_list and row.symbol_p in ratio_symbol_list:
         #                 self.loadPortfolio(Fut_RatioPortfolio, [row.symbol_c, row.symbol_p])
 
+        # if 'symbols_ratio' in setting:
+        #     symbols = setting['symbols_ratio']
+        #     if len(symbols) > 0:
+        #         ratio_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_RatioPortfolio, ratio_symbol_list)
+
         # if 'symbols_follow' in setting:
         #     symbols = setting['symbols_follow']
         #     if len(symbols) > 0:
@@ -187,7 +193,7 @@ class FutEngine(object):
         #         for i, row in df.iterrows():
         #             if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
         #                 self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
-        #
+
         # if 'symbols_straddle' in setting:
         #     symbols = setting['symbols_straddle']
         #     if len(symbols) > 0:
@@ -200,6 +206,17 @@ class FutEngine(object):
         #         sdiffer_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
 
+        # if 'symbols_skew_strd' in setting:
+        #     symbols = setting['symbols_skew_strd']
+        #     if len(symbols) > 0:
+        #         skew_strd_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
+
+        # if 'symbols_skew_bili' in setting:
+        #     symbols = setting['symbols_skew_bili']
+        #     if len(symbols) > 0:
+        #         skew_bili_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
     #----------------------------------------------------------------------
     def loadPortfolio(self, PortfolioClass, symbol_list):
@@ -214,14 +231,16 @@ class FutEngine(object):
         """加载数据"""
 
         for vtSymbol in self.vtSymbol_list:
-            test_list = ['m2101','RM101','MA101','p2101']
+            # print(vtSymbol)
+            # test_list = ['IF2010', 'IO2010-C-4700', 'IO2010-P-4700', 'IO2011-C-4700', 'IO2011-P-4700']
+            test_list = ['m2101', 'RM101', 'MA101', 'p2101']
             if vtSymbol in test_list:
 
                 fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'
                 if os.path.exists(fn):
                     df = pd.read_csv(fn)
                     for i, d in df.iterrows():
-                        #print(d)
+                        # print(i)
 
                         bar = VtBarData()
                         bar.vtSymbol = vtSymbol
@@ -264,10 +283,10 @@ class FutEngine(object):
         # for dt, barDict in self.dataDict.items():
         for dt in dt_list:
             barDict = self.dataDict[dt]
-            #print(dt)
+            # print(dt)
             if dt < self.startDt or dt > self.endDt:
                 continue
-            # print(dt)
+            print(dt)
             try:
                 for bar in barDict.values():
 
@@ -382,8 +401,8 @@ def start():
     print(u'期货交易引擎开始回放')
 
     # start_date = '2019-12-01 09:00:00'
-    start_date = '2020-08-10 09:00:00'
-    end_date   = '2020-08-11 15:00:00'
+    start_date = '2020-09-28 09:00:00'
+    end_date   = '2020-09-28 15:00:00'
 
     e = FutEngine()
     e.setPeriod(start_date, end_date)

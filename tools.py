@@ -50,6 +50,7 @@ class Contract(object):
         self.be_opt = False if len(symbol) < 9 else True
         self.strike = self.cacl_strike(symbol)
         self.basic = self.cacl_basic(pz, symbol)
+        self.opt_flag = self.cacl_opt_flag(pz, symbol)
 
     def cacl_strike(self, symbol):
         if self.be_opt:
@@ -65,6 +66,16 @@ class Contract(object):
                 if symbol[n:n+i].isdigit():
                     return symbol[:n+i]
         return symbol
+
+    def cacl_opt_flag(self, pz, symbol):
+        if self.be_opt:
+            for i in [-1,-2,-3,-4,-5,-6,-7,-8,-9]:
+                if symbol[i] == 'C':
+                    return 'C'
+                if symbol[i] == 'P':
+                    return 'P'
+        return 'N'
+
 
 def get_contract(symbol):
     pz = symbol[:2]
@@ -424,9 +435,9 @@ def is_market_date():
         if len(df) > 0:
             morning_state = df.iat[0,1]
             night_state = df.iat[0,2]
-            if tm > '08:30:00' and tm < '09:00:00' and morning_state == 'close':
+            if tm > '08:30:00' and tm < '19:00:00' and morning_state == 'close':
                 r = False
-            if tm > '20:30:00' and tm < '21:00:00' and night_state == 'close':
+            if tm > '20:30:00' and tm < '23:00:00' and night_state == 'close':
                 r = False
 
     return r

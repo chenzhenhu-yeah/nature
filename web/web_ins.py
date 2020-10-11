@@ -15,7 +15,7 @@ from nature import del_blank, check_symbols_p
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
-from nature import open_interest_show, hs300_spread_show, straddle_diff_show
+from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show
 from nature import get_file_lock, release_file_lock
 
 app = Flask(__name__)
@@ -476,7 +476,7 @@ def ratio():
 
         kind = request.form.get('kind')
 
-        r = [[symbol_b,symbol_s,num_b,num_s,gap,profit,0,0,state,source,'','','','','','','','']]
+        r = [[symbol_b,symbol_s,num_b,num_s,gap,profit,0,0,state,source,'','','','','','00:00:00','','']]
         cols = ['symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','profit_b','profit_s','profit_o','tm','delta','theta']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
@@ -596,6 +596,95 @@ def sdiffer():
     # release_file_lock(filename)
 
     return render_template("sdiffer.html",title="sdiffer",rows=r)
+
+
+@app.route('/skew_strd', methods=['get','post'])
+def skew_strd():
+    filename = get_dss() + 'fut/engine/skew_strd/portfolio_skew_strd_param.csv'
+
+    if request.method == "POST":
+        kind = request.form.get('kind')
+        basic_m0 = del_blank( request.form.get('basic_m0') )
+        basic_m1 = del_blank( request.form.get('basic_m1') )
+        strike_m0 = del_blank( request.form.get('strike_m0') )
+        strike_m1 = del_blank( request.form.get('strike_m1') )
+        fixed_size = del_blank( request.form.get('fixed_size') )
+        hold_m0 = del_blank( request.form.get('hold_m0') )
+        hold_m1 = del_blank( request.form.get('hold_m1') )
+        skew_low_open = del_blank( request.form.get('skew_low_open') )
+        skew_high_open= del_blank( request.form.get('skew_high_open') )
+        profit = del_blank( request.form.get('profit') )
+        state = del_blank( request.form.get('state') )
+        source = del_blank( request.form.get('source') )
+
+        now = datetime.now()
+        date = now.strftime('%Y-%m-%d')
+        r = [['00:00:00',basic_m0,basic_m1,strike_m0,strike_m1,fixed_size,profit,state,source,hold_m0,hold_m1,-100.0,100.0,'','','','',100.0,0,-100.0,0,'','','',date]]
+        cols = ['tm','basic_m0','basic_m1','strike_m0','strike_m1','fixed_size','profit','state','source','hold_m0','hold_m1','skew_low_open','skew_high_open','price_c_m0','price_p_m0','price_c_m1','price_p_m1','skew_max','dida_max','skew_min','dida_min','profit_m0','profit_m1','profit_o','date']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[~((df.basic_m0 == basic_m0) & (df.basic_m1 == basic_m1) & (df.strike_m0 == strike_m1) & (df.strike_m1 == strike_m1) & (df.hold_m0 == hold_m0) & (df.hold_m1 == hold_m1) & (df.source == source))]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            df = pd.read_csv(filename, dtype='str')
+            for i, row in df.iterrows():
+                if row.basic_m0 == basic_m0 and row.basic_m1 == basic_m1 and row.strike_m0 == strike_m0 and row.strike_m1 == strike_m1 and row.hold_m0 == hold_m0 and row.hold_m1 == hold_m1 and row.source == source:
+                    df.at[i, 'profit'] = profit
+                    df.at[i, 'state'] = state
+            df.to_csv(filename, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("skew_strd.html",title="skew_strd",rows=r)
+
+@app.route('/skew_bili', methods=['get','post'])
+def skew_bili():
+    filename = get_dss() + 'fut/engine/skew_bili/portfolio_skew_bili_param.csv'
+
+    if request.method == "POST":
+        kind = request.form.get('kind')
+        symbol_b = del_blank( request.form.get('symbol_b') )
+        symbol_s = del_blank( request.form.get('symbol_s') )
+        num_b = del_blank( request.form.get('num_b') )
+        num_s = del_blank( request.form.get('num_s') )
+        skew_low_open = del_blank( request.form.get('skew_low_open') )
+        skew_high_open= del_blank( request.form.get('skew_high_open') )
+        profit = del_blank( request.form.get('profit') )
+        state = del_blank( request.form.get('state') )
+        source = del_blank( request.form.get('source') )
+
+        now = datetime.now()
+        date = now.strftime('%Y-%m-%d')
+        r = [['00:00:00',symbol_b,symbol_s,num_b,num_s,profit,state,source,0,0,-100.0,100.0,'','',100.0,0,-100.0,0,'','','',date]]
+        cols = ['tm','symbol_b','symbol_s','num_b','num_s','profit','state','source','hold_b','hold_s','skew_low_open','skew_high_open','price_b','price_s','skew_max','dida_max','skew_min','dida_min','profit_b','profit_s','profit_o','date']
+        if kind == 'add':
+            df = pd.DataFrame(r, columns=cols)
+            df.to_csv(filename, mode='a', header=False, index=False)
+        if kind == 'del':
+            df = pd.read_csv(filename, dtype='str')
+            df = df[~((df.symbol == symbol_b) & (df.symbol_s == symbol_s)  & (df.num_b == num_b) & (df.num_s == num_s) & (df.source == source))]
+            df.to_csv(filename, index=False)
+        if kind == 'alter':
+            df = pd.read_csv(filename, dtype='str')
+            for i, row in df.iterrows():
+                if row.symbol_b == symbol_b and row.symbol_s == symbol_s and row.num_b == num_b and row.num_s == num_s and row.source == source:
+                    df.at[i, 'profit'] = profit
+                    df.at[i, 'state'] = state
+            df.to_csv(filename, index=False)
+
+    df = pd.read_csv(filename, dtype='str')
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("skew_bili.html",title="skew_bili",rows=r)
+
 
 @app.route('/gateway_trade', methods=['get'])
 def gateway_trade():
@@ -871,6 +960,28 @@ def hv():
     return render_template("hv.html", title="hv")
 
 
+@app.route('/iv', methods=['get', 'post'])
+def iv():
+    if request.method == "POST":
+        basic0 = request.form.get('basic0')
+        basic1 = request.form.get('basic1')
+        both = request.form.get('both')
+        date_end = request.form.get('date_end')
+
+        basic_list = []
+        if basic0 != '':
+            basic_list.append(basic0)
+        if basic1 != '':
+            basic_list.append(basic1)
+
+        if date_end == '':
+            now = datetime.now()
+            date_end = now.strftime('%Y-%m-%d')
+
+        return iv_show(basic_list, both, date_end)
+
+    return render_template("iv.html", title="iv")
+
 @app.route('/skew', methods=['get', 'post'])
 def skew():
     if request.method == "POST":
@@ -900,6 +1011,98 @@ def smile():
         return smile_show(pz, type, date, kind, symbol)
 
     return render_template("smile.html", title='smile')
+
+
+@app.route('/greeks', methods=['get','post'])
+def greeks():
+    tips = ''
+    r = []
+
+    if request.method == "POST":
+        symbol1 = del_blank( request.form.get('symbol1') )
+        symbol2 = del_blank( request.form.get('symbol2') )
+        symbol3 = del_blank( request.form.get('symbol3') )
+        symbol4 = del_blank( request.form.get('symbol4') )
+        num1 = del_blank( request.form.get('num1') )
+        num2 = del_blank( request.form.get('num2') )
+        num3 = del_blank( request.form.get('num3') )
+        num4 = del_blank( request.form.get('num4') )
+
+        symbol_num_list = []
+        if symbol1 != '':
+            symbol_num_list.append( (symbol1, int(num1)) )
+        if symbol2 != '':
+            symbol_num_list.append( (symbol2, int(num2)) )
+        if symbol3 != '':
+            symbol_num_list.append( (symbol3, int(num3)) )
+        if symbol4 != '':
+            symbol_num_list.append( (symbol4, int(num4)) )
+
+        a = ['date', 'price_obj', 'price_p', 'delta', 'gamma', 'theta', 'vega']
+        for symbol, num in symbol_num_list:
+            a.append(symbol)
+            a.append('price')
+            a.append('delta')
+            a.append('gamma')
+            a.append('theta')
+            a.append('vega')
+        r.append(a)
+
+        date_end = del_blank( request.form.get('date_end') )
+        if date_end == '':
+            now = datetime.now()
+            date_end = now.strftime('%Y-%m-%d')
+            # date_end = '2020-09-06'
+
+        now = datetime.strptime(date_end, '%Y-%m-%d')
+        # 本月第一天
+        first_day = datetime(now.year, now.month, 1)
+        #前一个月最后一天
+        pre_month = first_day - timedelta(days = 1)
+        today = now.strftime('%Y-%m-%d')
+        pre = pre_month.strftime('%Y-%m-%d')
+
+        fn = get_dss() + 'opt/' +  pre[:7] + '_greeks.csv'
+        df_pre = pd.read_csv(fn)
+        fn = get_dss() + 'opt/' +  today[:7] + '_greeks.csv'
+        df_today = pd.read_csv(fn)
+        df = pd.concat([df_pre, df_today])
+        df = df[df.Localtime.str[:10] <= date_end]
+
+        date_list = sorted(list(set(df.Localtime.str[:10])), reverse=True)
+        print(date_list)
+
+        for date in date_list:
+            a = [date]
+            price_obj, price_p, delta_p, gamma_p, theta_p, vega_p = 0, 0, 0, 0, 0, 0
+            for symbol, num in symbol_num_list:
+                df1 = df[(df.Instrument == symbol) & (df.Localtime.str[:10] == date)]
+                if df1.empty:
+                    continue
+                rec = df1.iloc[0,:]
+                price_obj = rec.obj
+                price_p += rec.LastPrice * num
+                delta_p += rec.delta * num
+                gamma_p += rec.gamma * num
+                theta_p += rec.theta * num
+                vega_p += rec.vega * num
+                a.append(num)
+                a.append(rec.LastPrice)
+                a.append(int(100*rec.delta))
+                a.append(round(100*rec.gamma,2))
+                a.append(int(100*rec.theta))
+                a.append(int(100*rec.vega))
+            a.insert(1, int(100*vega_p))
+            a.insert(1, int(100*theta_p))
+            a.insert(1, round(100*gamma_p,2))
+            a.insert(1, int(100*delta_p))
+            a.insert(1, int(price_p))
+            a.insert(1, int(price_obj))
+            r.append(a)
+        print(r)
+
+    return render_template("greeks.html",title="greeks",rows=r,tip=tips)
+
 
 @app.route('/iv_straddle', methods=['get', 'post'])
 def iv_straddle():

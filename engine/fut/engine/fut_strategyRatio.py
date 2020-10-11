@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
+import traceback
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
@@ -80,8 +81,12 @@ class Fut_RatioSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
-            self.portfolio.got_dict[self.vtSymbol] = True
+        if self.portfolio.engine.type == 'backtest':
+            if self.bar.close > 0.1 and self.bar.close > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
+        else:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+                self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False
         self.can_short = False
@@ -143,23 +148,13 @@ class Fut_RatioPortfolio(Portfolio):
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'ratio'
 
+        self.tm = '00:00:00'
         self.got_dict = {}
         for symbol in symbol_list:
             self.got_dict[symbol] = False
 
 
         Portfolio.__init__(self, Fut_RatioSignal, engine, symbol_list, signal_param)
-
-    #----------------------------------------------------------------------
-    def load_param(self, s_c, s_p):
-        fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
-        df = pd.read_csv(fn)
-        df = df[(df.symbol_c == s_c) & (df.symbol_p == s_p)]
-        if len(df) > 0:
-            row = df.iloc[-1,:]
-            self.fixed_size = int(row.fixed_size)
-            self.gap = int(row.gap)
-            self.profit = int(row.profit)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -171,6 +166,11 @@ class Fut_RatioPortfolio(Portfolio):
 
         if minx != 'min1':               # 本策略为min1
             return
+
+        if self.tm != bar.time:
+            self.tm = bar.time
+            for symbol in self.vtSymbolList:
+                self.got_dict[symbol] = False
 
         if self.result.date != bar.date + ' ' + bar.time:
             previousResult = self.result
@@ -217,8 +217,10 @@ class Fut_RatioPortfolio(Portfolio):
                         s_b = self.signalDict[row.symbol_b][0]
                         s_s = self.signalDict[row.symbol_s][0]
 
+                        # print('here2')
+
                         # 开仓
-                        if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
+                        if row.hold_b == 0 and row.hold_s == 0 and row.state == 'run' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
                             if self.engine.type == 'backtest':
                                 s_b.buy(s_b.bar.close, row.num_b)
                                 s_s.short(s_s.bar.close, row.num_s)

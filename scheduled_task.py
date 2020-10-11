@@ -12,7 +12,7 @@ import traceback
 import pdfkit
 
 from nature import to_log, pandian_run, book_opt_run, get_dss, get_repo
-from nature import get_trading_dates, send_email
+from nature import get_trading_dates, send_email, is_market_date
 
 from nature.engine.stk.nearboll.use_ma import use_ma
 from nature import has_factor, stk_report
@@ -112,7 +112,7 @@ def run_tick2bar():
         now = datetime.datetime.now()
         today = now.strftime('%Y%m%d')
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " tick2bar begin...")
             tick2bar(today)
             now = datetime.datetime.now()
@@ -127,7 +127,7 @@ def run_iv():
         now = datetime.datetime.now()
         today = now.strftime('%Y%m%d')
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " calc_iv_atm begin...")
             calc_iv_atm()
             now = datetime.datetime.now()
@@ -141,7 +141,7 @@ def run_pandian():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " pandian begin...")
             pandian_run()
             now = datetime.datetime.now()
@@ -155,7 +155,7 @@ def run_sdiffer():
         now = datetime.datetime.now()
         today = now.strftime('%Y-%m-%d')
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " calc sdiffer begin...")
             calc_sdiffer(today)
             now = datetime.datetime.now()
@@ -168,7 +168,7 @@ def run_book_opt():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " book_opt begin...")
             book_opt_run()
             now = datetime.datetime.now()
@@ -180,7 +180,7 @@ def run_book_opt():
 def run_down_data():
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
-    if 1 <= weekday <= 5:
+    if 1 <= weekday <= 5 and is_market_date():
         print('\n' + str(now) + " down_data begin...")
         down_data(dss)
         now = datetime.datetime.now()
@@ -191,7 +191,7 @@ def run_down_opt():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " down_opt begin...")
             down_opt()
             print(" down_opt end ")
@@ -220,7 +220,7 @@ def run_arbitrage():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " arbitrage begin...")
             if calc_pcp():
                 fn = get_dss() + 'opt/pcp.csv'
@@ -249,7 +249,7 @@ def mail_pdf(s):
 def run_mail_pdf():
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
-    if 1 <= weekday <= 5:
+    if 1 <= weekday <= 5 and is_market_date():
         # 先清空static目录下的文件
         repo = get_repo()
         dirname = repo + 'nature/web/static/'
@@ -271,7 +271,7 @@ def run_examine():
     pass
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
-    if 1 <= weekday <= 5:
+    if 1 <= weekday <= 5 and is_market_date():
         print('\n' + str(now) + " examine begin...")
         examine()
         now = datetime.datetime.now()

@@ -1237,6 +1237,51 @@ def skew_show(basic, date, kind):
     else:
         return skew_day_show(basic)
 
+def iv_show(basic_list, both, date):
+
+    now = datetime.strptime(date, '%Y-%m-%d')
+    # now = datetime.now()
+
+    # 本月第一天
+    first_day = datetime(now.year, now.month, 1)
+    #前一个月最后一天
+    pre_month = first_day - timedelta(days = 1)
+    today = now.strftime('%Y-%m-%d')
+    pre = pre_month.strftime('%Y-%m-%d')
+
+    fn = get_dss() + 'opt/' +  pre[:7] + '_sigma.csv'
+    df_pre = pd.read_csv(fn)
+    fn = get_dss() + 'opt/' +  today[:7] + '_sigma.csv'
+    df_today = pd.read_csv(fn)
+    df = pd.concat([df_pre, df_today])
+    df = df[df.date <= today]
+    # df = df.sort_values('date')
+
+    plt.figure(figsize=(12,7))
+    plt.title('iv_' + today)
+
+    for basic in basic_list:
+        df1 = df[df.term == basic]
+        df1 = df1.drop_duplicates(subset=['date'], keep='last')
+        df1 = df1.set_index('date')
+        # print(df1.tail())
+
+        plt.plot(df1.c_iv,  label=basic+'_call')
+        if both == 'yes':
+            plt.plot(df1.p_iv,  label=basic+'_put')
+
+    plt.xticks(rotation=90)
+    plt.legend()
+    fn = 'static/iv_show.jpg'
+    plt.savefig(fn)
+
+    r = ''
+    fn = 'iv_show.jpg'
+    now = str(int(time.time()))
+    r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return r
+
+
 if __name__ == '__main__':
     pass
     # yue()
@@ -1258,4 +1303,6 @@ if __name__ == '__main__':
     # straddle_diff_show('IO2009', 'IO2010','2020-09-01', '2020-09-10')
     # straddle_diff_now_show('IO2010', 'IO2011','2020-09-17')
 
-    skew_show('IO2010', 'no', '2020-09-18', 'now')
+    # skew_show('IO2010', 'no', '2020-09-18', 'now')
+    # iv_show(['IO2012','IO2010'], 'no', '2020-09-28')
+    iv_show(['CF101','CF011'], 'no', '2020-09-28')
