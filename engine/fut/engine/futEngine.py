@@ -191,30 +191,30 @@ class FutEngine(object):
             if len(symbols) > 0:
                 ratio_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_RatioPortfolio, ratio_symbol_list)
-        #
-        # if 'symbols_straddle' in setting:
-        #     symbols = setting['symbols_straddle']
-        #     if len(symbols) > 0:
-        #         straddle_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
-        #
-        # if 'symbols_sdiffer' in setting:
-        #     symbols = setting['symbols_sdiffer']
-        #     if len(symbols) > 0:
-        #         sdiffer_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
-        #
-        # if 'symbols_skew_strd' in setting:
-        #     symbols = setting['symbols_skew_strd']
-        #     if len(symbols) > 0:
-        #         skew_strd_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
-        #
-        # if 'symbols_skew_bili' in setting:
-        #     symbols = setting['symbols_skew_bili']
-        #     if len(symbols) > 0:
-        #         skew_bili_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
+        
+        if 'symbols_straddle' in setting:
+            symbols = setting['symbols_straddle']
+            if len(symbols) > 0:
+                straddle_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+
+        if 'symbols_sdiffer' in setting:
+            symbols = setting['symbols_sdiffer']
+            if len(symbols) > 0:
+                sdiffer_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+
+        if 'symbols_skew_strd' in setting:
+            symbols = setting['symbols_skew_strd']
+            if len(symbols) > 0:
+                skew_strd_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
+
+        if 'symbols_skew_bili' in setting:
+            symbols = setting['symbols_skew_bili']
+            if len(symbols) > 0:
+                skew_bili_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
 
         # 初始化路由

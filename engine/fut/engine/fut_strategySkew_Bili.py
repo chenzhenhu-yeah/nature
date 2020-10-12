@@ -287,7 +287,7 @@ class Fut_Skew_BiliPortfolio(Portfolio):
                                     df.at[i, 'price_s'] = s_s.bar.AskPrice
 
                             # 做多symbol_b，做空symbol_s
-                            if df.at[i, 'skew_max'] >= row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
+                            if df.at[i, 'skew_max'] > row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
                                 r.append( [row.symbol_b,row.symbol_s,row.num_b,row.num_s,-1000,row.profit,0,0,'run','skew_bili',0.0,0.0,0.0,0.0,0.0,'00:00:00',0.0,0.0] )
                                 df.at[i, 'hold_b'] = row.num_b
                                 df.at[i, 'hold_s'] = -row.num_s

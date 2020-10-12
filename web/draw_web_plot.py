@@ -46,7 +46,7 @@ def ic(symbol1, symbol2):
 
     for label in ax.get_xticklabels():
         label.set_visible(False)
-    for label in ax.get_xticklabels()[1::5]:
+    for label in ax.get_xticklabels()[1::30]:
         label.set_visible(True)
     for label in ax.get_xticklabels()[-1:]:
         label.set_visible(True)

@@ -55,7 +55,7 @@ if os.path.exists(filename):
     commission = df.commission.sum()
     slippage = df.slippage.sum()
 
-settle = 2457
+settle = 2530
 pnl_hold = 0
 ct = get_contract(vtSymbol)
 size = ct.size

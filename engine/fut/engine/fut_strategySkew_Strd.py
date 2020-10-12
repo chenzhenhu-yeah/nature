@@ -302,7 +302,7 @@ class Fut_Skew_StrdPortfolio(Portfolio):
                                     df.at[i, 'price_p_m1'] = s_p_m1.bar.AskPrice
 
                             # 做多m0，做空m1
-                            if df.at[i, 'skew_max'] >= row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
+                            if df.at[i, 'skew_max'] > row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
                                 r.append( [row.basic_m0,row.strike_m0,'duo', 1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
                                 r.append( [row.basic_m1,row.strike_m1,'kong',1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
                                 df.at[i, 'hold_m0'] = 1
