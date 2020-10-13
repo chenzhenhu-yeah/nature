@@ -169,6 +169,16 @@ def calc_sigma_CF(df_all, today):
     dash = ''
     calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
 
+
+def calc_sigma_al(df_all, today):
+    df = df_all[df_all.index.str.startswith('al')]
+    term_list = sorted( list(set([ x[:6] for x in df.index ])) )
+    # print(term_list)
+    strike_pos = 7
+    gap = 100
+    dash = ''
+    calc_sigma_common(df, today, term_list, strike_pos, gap, dash)
+
 def calc_sigma():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -188,6 +198,7 @@ def calc_sigma():
         calc_sigma_RM(df, today)
         calc_sigma_MA(df, today)
         calc_sigma_CF(df, today)
+        calc_sigma_al(df, today)
 
 if __name__ == '__main__':
     calc_sigma()

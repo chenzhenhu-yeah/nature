@@ -198,6 +198,8 @@ class Fut_RatioPortfolio(Portfolio):
     def control_in_p(self, bar):
         if (bar.time > '09:31:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
            (bar.time > '13:01:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
+           (bar.time > '21:01:00' and bar.time < '24:00:00' and bar.vtSymbol[:2] in ['al']) or \
+           (bar.time > '00:00:00' and bar.time < '01:00:00' and bar.vtSymbol[:2] in ['al']) or \
            (bar.time > '09:01:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
            (bar.time > '13:31:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
            (bar.time > '21:01:00' and bar.time < '22:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
@@ -238,8 +240,8 @@ class Fut_RatioPortfolio(Portfolio):
                         # 获利平仓
                         if row.hold_b > 0 and row.hold_s > 0:
                             if self.engine.type == 'backtest':
-                                df.at[i, 'profit_b'] = round( (s_b.bar.close - row.price_b), 2)
-                                df.at[i, 'profit_s'] = round( -(s_s.bar.close - row.price_s), 2)
+                                df.at[i, 'profit_b'] = round( (s_b.bar.close - row.price_b)*row.hold_b, 2)
+                                df.at[i, 'profit_s'] = round( -(s_s.bar.close - row.price_s)*row.hold_s, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
                                 df.at[i, 'tm'] = bar.time
 
@@ -250,8 +252,8 @@ class Fut_RatioPortfolio(Portfolio):
                                     df.at[i, 'hold_s'] = 0
                                     df.at[i, 'state'] = 'stop'
                             else:
-                                df.at[i, 'profit_b'] = round( (s_b.bar.BidPrice - row.price_b), 2)
-                                df.at[i, 'profit_s'] = round( -(s_s.bar.AskPrice - row.price_s), 2)
+                                df.at[i, 'profit_b'] = round( (s_b.bar.BidPrice - row.price_b)*row.hold_b, 2)
+                                df.at[i, 'profit_s'] = round( -(s_s.bar.AskPrice - row.price_s)*row.hold_s, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
                                 df.at[i, 'tm'] = bar.time
 

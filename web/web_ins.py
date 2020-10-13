@@ -938,7 +938,7 @@ def T():
                     theory_value_p = theory_value_p if theory_value_p > 0 else 0
                     time_value_p = int( float(row_p.AskPrice) - theory_value_p )
                     obj = row_c.obj
-                    r.append([round(100*row_c.iv,2), time_value_c, theory_value_c,
+                    r.append([round(100*row_c.iv,2), int(time_value_c), int(theory_value_c),
                               row_c.AskPrice, row_c.BidPrice, round(row_c.LastPrice,1),
                               strike_c,
                               round(row_p.LastPrice,1), row_p.BidPrice, row_p.AskPrice,

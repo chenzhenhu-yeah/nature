@@ -162,7 +162,7 @@ def dali_show(pz):
     return r
 
 def mutual():
-    pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm', 'c']
+    pz_list = ['CF', 'SR', 'IO', 'MA', 'RM', 'm', 'c', 'al']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 
@@ -201,7 +201,7 @@ def mutual():
 
 
 def star():
-    pz_list = ['CF', 'IO', 'MA', 'RM', 'm', 'all']
+    pz_list = ['c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'all']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 

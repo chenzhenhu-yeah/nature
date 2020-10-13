@@ -302,7 +302,40 @@ def calc_greeks_CF(df, today, r):
             is_call = True if symbol[5] == 'C' else False
             calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
 
-        # break
+
+def calc_greeks_al(df, today, r):
+    df1 = df[df.index.str.startswith('al')]
+
+    fn = get_dss() + 'fut/cfg/opt_mature.csv'
+    df2 = pd.read_csv(fn)
+    df2 = df2[df2.pz == 'al']                 # 筛选出不为空的记录
+    df2 = df2.set_index('symbol')
+    mature_dict = dict(df2.mature)
+    # print(mature_dict)
+
+    for symbol, row in df1.iterrows():
+        term = symbol[:6]
+        if term not in mature_dict.keys():
+            continue
+        if len(symbol) <= 6:
+            continue
+        symbol_obj = term
+        df_obj = df[df.index == symbol_obj]
+
+        if len(df_obj) == 1:
+            K = float( symbol[-5:] )                                       # 行权价格
+            # S0 = df_obj.at[symbol_obj,'LastPrice']                         # 标的价格
+            ask_price = float(df_obj.at[symbol_obj,'AskPrice'])
+            ask_price = 0 if ask_price < 0 else ask_price
+            ask_price = 100E4 if ask_price > 100E4 else ask_price
+            bid_price = float(df_obj.at[symbol_obj,'BidPrice'])
+            bid_price = 0 if bid_price < 0 else bid_price
+            bid_price = 100E4 if bid_price > 100E4 else bid_price
+            S0 = (ask_price + bid_price) * 0.5                            # 标的价格
+
+            is_call = True if symbol[5] == 'C' else False
+            calc_greeks_common(symbol, row, S0, is_call, r, today, mature_dict, term, K)
+
 
 def calc_greeks():
     r = 0.03
@@ -323,6 +356,7 @@ def calc_greeks():
         calc_greeks_RM(df, today, r)
         calc_greeks_MA(df, today, r)
         calc_greeks_CF(df, today, r)
+        calc_greeks_al(df, today, r)
 
 if __name__ == '__main__':
     # calc_greeks()
