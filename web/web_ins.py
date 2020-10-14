@@ -1046,6 +1046,7 @@ def greeks():
             a.append('gamma')
             a.append('theta')
             a.append('vega')
+            a.append('iv')
         r.append(a)
 
         date_end = del_blank( request.form.get('date_end') )
@@ -1081,17 +1082,18 @@ def greeks():
                     continue
                 rec = df1.iloc[0,:]
                 price_obj = rec.obj
-                price_p += rec.LastPrice * num
-                delta_p += rec.delta * num
-                gamma_p += rec.gamma * num
-                theta_p += rec.theta * num
-                vega_p += rec.vega * num
+                price_p += rec.LastPrice * abs(num)
+                delta_p += rec.delta * abs(num)
+                gamma_p += rec.gamma * abs(num)
+                theta_p += rec.theta * abs(num)
+                vega_p += rec.vega * abs(num)
                 a.append(num)
                 a.append(rec.LastPrice)
                 a.append(int(100*rec.delta))
                 a.append(round(100*rec.gamma,2))
                 a.append(int(100*rec.theta))
                 a.append(int(100*rec.vega))
+                a.append(round(100*rec.iv,2))
             a.insert(1, int(100*vega_p))
             a.insert(1, int(100*theta_p))
             a.insert(1, round(100*gamma_p,2))
