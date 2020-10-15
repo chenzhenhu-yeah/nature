@@ -1071,7 +1071,7 @@ def greeks():
         df = df[df.Localtime.str[:10] <= date_end]
 
         date_list = sorted(list(set(df.Localtime.str[:10])), reverse=True)
-        print(date_list)
+        # print(date_list)
 
         for date in date_list:
             a = [date]
@@ -1091,17 +1091,17 @@ def greeks():
                 a.append(round(rec.LastPrice,2))
                 a.append(int(100*rec.delta))
                 a.append(round(100*rec.gamma,2))
-                a.append(int(100*rec.theta))
-                a.append(int(100*rec.vega))
+                a.append(round(0.1*rec.theta,1))
+                a.append(int(rec.vega))
                 a.append(round(100*rec.iv,2))
-            a.insert(1, int(100*vega_p))
-            a.insert(1, int(100*theta_p))
+            a.insert(1, int(vega_p))
+            a.insert(1, round(0.1*theta_p,1))
             a.insert(1, round(100*gamma_p,2))
             a.insert(1, int(100*delta_p))
             a.insert(1, int(price_p))
             a.insert(1, int(price_obj))
             r.append(a)
-        print(r)
+        # print(r)
 
     return render_template("greeks.html",title="greeks",rows=r,tip=tips)
 
