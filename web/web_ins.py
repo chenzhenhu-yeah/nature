@@ -1223,14 +1223,17 @@ def upload_statement():
             # 指定上传路径
             dirname = get_dss() + 'fut/statement'
             # 拼接文件全路径
-            fn1 = os.path.join(dirname, sm.filename)
+            dt = sm.filename[-12:-4]
+            dt = dt[:4] + '-' + dt[4:6] + '-' + dt[6:8]
+            fn1 = os.path.join(dirname, dt+'.txt')
             # 上传文件到指定路径
             sm.save(fn1)
             tips = '文件上传成功'
 
             #　解读对账单，以df结构保存到临时文件中
             i = 0
-            fw = open(os.path.join(dirname, 'tmp_' + sm.filename), 'w')
+            fn2 = os.path.join(dirname, 'tmp_'+dt+'.txt')
+            fw = open(fn2, 'w')
             with open(fn1, 'r') as f:
                 lines = f.readlines()
                 for line in lines:
@@ -1249,34 +1252,54 @@ def upload_statement():
 
             fw.close()                        # 完成临时文件的写入
 
-            # 分类汇总，计算保证金占用
-            fn2 = os.path.join(dirname, 'tmp_'+sm.filename)
-
+            # 分类汇总，计算保证金占用， 计算greeks值
             df = pd.read_csv(fn2, encoding='gbk', sep='|', skiprows=2, header=None)
             df = df.drop(columns=[0,14])
+            fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
+            df_greeks = pd.read_csv(fn_greeks)
 
             pz_list = []
             opt_list = []
+            delta_list = []
+            gamma_list = []
+            vega_list = []
             for i, row in df.iterrows():
-                pz = get_contract(row[2].strip()).pz
+                symbol = row[2].strip()
+                num = row[3] - row[5]
+                pz = get_contract(symbol).pz
                 pz_list.append(pz)
-                opt = get_contract(row[2].strip()).be_opt
-                if opt == True:
+                if get_contract(symbol).be_opt:
+                    df2 = df_greeks[df_greeks.Instrument == symbol]
+                    # df = df[df.Localtime.str.slice(0,10) == dt]
+                    df2 = df2.drop_duplicates(subset=['Instrument'],keep='last')
+                    if df2.empty:
+                        delta_list.append(0)
+                        gamma_list.append(0)
+                        vega_list.append(0)
+                    else:
+                        rec = df2.iloc[0,:]
+                        # print(rec.Instrument, num, rec.delta, rec.gamma, rec.vega)
+                        delta_list.append(int(100 * num * rec.delta))
+                        gamma_list.append(round(100 * num * rec.gamma,2))
+                        vega_list.append(round(num * rec.vega,2))
+
                     opt_list.append('期权')
                 else:
                     opt_list.append('期货')
+                    delta_list.append(100*num)
+                    gamma_list.append(0)
+                    vega_list.append(0)
 
             df['pz'] = pz_list
             df['opt'] = opt_list
+            df['delta'] = delta_list
+            df['gamma'] = gamma_list
+            df['vega'] = vega_list
             df['magin'] = df[10].apply(int)
 
-            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum})
-            # print(type(g))
-            fn3 = os.path.join(dirname, '风控_'+sm.filename+'.csv')
+            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
+            fn3 = os.path.join(dirname, 'risk_'+dt+'.csv')
             df2.to_csv(fn3)
-
-            # 计算greeks值
-            pass
 
             send_email(get_dss(), '结算单', '', [fn1, fn3])
 
@@ -1312,6 +1335,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')

@@ -22,30 +22,61 @@ dirname = get_dss() + 'fut/statement'
 fn = os.path.join(dirname, 'tmp_结算单_20201016.txt')
 
 df = pd.read_csv(fn, encoding='gbk', sep='|', skiprows=2, header=None)
-# df = df.drop(index=0)
 df = df.drop(columns=[0,14])
+
+dt = '2020-09-28'
+fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
+df_greeks = pd.read_csv(fn_greeks)
 
 pz_list = []
 opt_list = []
+delta_list = []
+gamma_list = []
+vega_list = []
 for i, row in df.iterrows():
-    pz = get_contract(row[2].strip()).pz
+    symbol = row[2].strip()
+    num = row[3] - row[5]
+    pz = get_contract(symbol).pz
     pz_list.append(pz)
-    opt = get_contract(row[2].strip()).be_opt
-    if opt == True:
+    if get_contract(symbol).be_opt:
+        df2 = df_greeks[df_greeks.Instrument == symbol]
+        # df = df[df.Localtime.str.slice(0,10) == dt]
+        df2 = df2.drop_duplicates(subset=['Instrument'],keep='last')
+        if df2.empty:
+            delta_list.append(0)
+            gamma_list.append(0)
+            vega_list.append(0)
+        else:
+            rec = df2.iloc[0,:]
+            # print(rec.Instrument, num, rec.delta, rec.gamma, rec.vega)
+            delta_list.append(int(100 * num * rec.delta))
+            gamma_list.append(round(100 * num * rec.gamma,2))
+            vega_list.append(round(num * rec.vega,2))
+
         opt_list.append('期权')
     else:
         opt_list.append('期货')
+        delta_list.append(100*num)
+        gamma_list.append(0)
+        vega_list.append(0)
+
 
 df['pz'] = pz_list
 df['opt'] = opt_list
+df['delta'] = delta_list
+df['gamma'] = gamma_list
+df['vega'] = vega_list
 df['magin'] = df[10].apply(int)
 
-df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum})
+# print(df)
+
+df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
 # print(type(g))
 fn = os.path.join(dirname, '风控_结算单_20201016.txt.csv')
 df2.to_csv(fn)
 
-send_email(get_dss(), '结算单', '', [fn])
+
+# send_email(get_dss(), '结算单', '', [fn])
 
 # print(df)
 # print(opt_list)
