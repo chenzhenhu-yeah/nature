@@ -271,3 +271,20 @@ class Fut_RatioPortfolio(Portfolio):
             df.to_csv(fn, index=False)                                        # 回写文件
             for symbol in symbol_got_list:
                 self.got_dict[symbol] = False
+
+    #----------------------------------------------------------------------
+    def daily_open(self):
+        Portfolio.daily_open(self)
+
+    #----------------------------------------------------------------------
+    def daily_close(self):
+        Portfolio.daily_close(self)
+
+        # fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+        # df = pd.read_csv(fn)
+        # for i, row in df.iterrows():
+        #     if row.date == self.result.date[:10] and row.source == 'skew_bili' and row.hold_b == 0:
+        #         df.at[i, 'state'] = 'stop'
+        #
+        # df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
+        # df.to_csv(fn, index=False)

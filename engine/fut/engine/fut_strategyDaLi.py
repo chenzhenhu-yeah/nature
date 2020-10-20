@@ -465,23 +465,23 @@ class Fut_DaLiSignal(Signal):
 
             d_list = [2,2,2,2,2] + self.size_duo_list
             k_list = [2,2,2,2,2] + self.size_kong_list
-            print(self.vtSymbol)
-            print(d_list)
-            print(k_list)
+            # print(self.vtSymbol)
+            # print(d_list)
+            # print(k_list)
 
             for d, item in zip( d_list, sorted(self.price_duo_list,reverse=True) ):
                 pnl_hold += (settle - item) * d * size
-                print(d, pnl_hold)
+                # print(d, pnl_hold)
 
             for k, item in zip( k_list, sorted(self.price_kong_list) ):
                 pnl_hold += (item - settle) * k * size
-                print(k, pnl_hold)
+                # print(k, pnl_hold)
 
-            print(pnl_hold)
+            # print(pnl_hold)
 
             self.unit = len(self.price_duo_list) - len(self.price_kong_list)
             print(self.unit)
-            
+
             r = [ [self.portfolio.result.date,self.vtSymbol, settle, self.unit, \
                    pnl_trade+pnl_hold-commission-slippage, pnl_trade, pnl_hold, \
                    commission, slippage, str(self.price_duo_list), str(self.price_kong_list), \

@@ -1,4 +1,5 @@
 
+import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, redirect
 from flask import url_for
@@ -12,7 +13,7 @@ import traceback
 
 
 from nature import del_blank, check_symbols_p
-from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract
+from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show
@@ -1213,9 +1214,73 @@ def show_log():
     items = read_log_today()
     return render_template("show_log.html",title="Show Log",items=items)
 
-@app.route('/file')
-def upload_file():
-    return render_template("upload_file.html",title="upload file")
+@app.route('/upload_statement', methods=['get', 'post'])
+def upload_statement():
+    tips = ''
+    if request.method == "POST":
+        sm = request.files.get('sm')
+        if sm is not None:
+            # 指定上传路径
+            dirname = get_dss() + 'fut/statement'
+            # 拼接文件全路径
+            fn1 = os.path.join(dirname, sm.filename)
+            # 上传文件到指定路径
+            sm.save(fn1)
+            tips = '文件上传成功'
+
+            #　解读对账单，以df结构保存到临时文件中
+            i = 0
+            fw = open(os.path.join(dirname, 'tmp_' + sm.filename), 'w')
+            with open(fn1, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if i > 0:
+                        if line.startswith('--------------------------------'):
+                            i += 1
+                        elif line.strip() == '':
+                            pass
+                        else:
+                            # print(line)
+                            fw.write(line)
+                    if i == 4:
+                        break
+                    if line.strip().startswith('持仓汇总'):
+                        i += 1
+
+            fw.close()                        # 完成临时文件的写入
+
+            # 分类汇总，计算保证金占用
+            fn2 = os.path.join(dirname, 'tmp_'+sm.filename)
+
+            df = pd.read_csv(fn2, encoding='gbk', sep='|', skiprows=2, header=None)
+            df = df.drop(columns=[0,14])
+
+            pz_list = []
+            opt_list = []
+            for i, row in df.iterrows():
+                pz = get_contract(row[2].strip()).pz
+                pz_list.append(pz)
+                opt = get_contract(row[2].strip()).be_opt
+                if opt == True:
+                    opt_list.append('期权')
+                else:
+                    opt_list.append('期货')
+
+            df['pz'] = pz_list
+            df['opt'] = opt_list
+            df['magin'] = df[10].apply(int)
+
+            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum})
+            # print(type(g))
+            fn3 = os.path.join(dirname, '风控_'+sm.filename+'.csv')
+            df2.to_csv(fn3)
+
+            # 计算greeks值
+            pass
+
+            send_email(get_dss(), '结算单', '', [fn1, fn3])
+
+    return render_template("upload_statement.html",title="upload statement",tip=tips)
 
 @app.route('/ins')
 def ins():
