@@ -19,12 +19,12 @@ from nature import rc_file
 
 
 dirname = get_dss() + 'fut/statement'
-fn = os.path.join(dirname, 'tmp_结算单_20201016.txt')
+fn = os.path.join(dirname, 'tmp_2020-10-19.txt')
 
 df = pd.read_csv(fn, encoding='gbk', sep='|', skiprows=2, header=None)
 df = df.drop(columns=[0,14])
 
-dt = '2020-09-28'
+dt = '2020-10-19'
 fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
 df_greeks = pd.read_csv(fn_greeks)
 
@@ -72,7 +72,7 @@ df['magin'] = df[10].apply(int)
 
 df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
 # print(type(g))
-fn = os.path.join(dirname, '风控_结算单_20201016.txt.csv')
+fn = os.path.join(dirname, 'risk_20201019.txt.csv')
 df2.to_csv(fn)
 
 

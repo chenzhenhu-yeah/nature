@@ -85,11 +85,6 @@ def fut_config():
         value = del_blank( request.form.get('value') )
 
         s = check_symbols_p(key, value)
-        # try:
-        #     s = check_symbols_p(key, value)
-        # except:
-        #     s = '该项设置出错了 ！'
-
         if s != '':
             tips += s
         else:
@@ -99,6 +94,15 @@ def fut_config():
             kind = request.form.get('kind')
             if kind in ['add', 'alter']:
                 load_dict[key] = value
+                if key in ['symbols_ratio','symbols_straddle']:
+                    load_dict['symbols_trade'] += ',' + value
+                if key in ['symbols_skew_bili']:
+                    load_dict['symbols_trade'] += ',' + value
+                    load_dict['symbols_ratio'] += ',' + value
+                if key in ['symbols_sdiffer','symbols_skew_strd']:
+                    load_dict['symbols_trade'] += ',' + value
+                    load_dict['symbols_straddle'] += ',' + value
+
             if kind == 'del':
                 load_dict.pop(key)
             with open(filename,"w") as f:
@@ -268,12 +272,18 @@ def opt_mature():
         r = [[pz,symbol,mature,flag,obj,strike_min1,strike_max1,gap1,strike_min2,strike_max2,gap2,dash_c,dash_p]]
         cols = ['pz','symbol','mature','flag','obj','strike_min1','strike_max1','gap1','strike_min2','strike_max2','gap2','dash_c','dash_p']
         if kind == 'add':
-            df = pd.DataFrame(r, columns=cols)
-            df.to_csv(filename, mode='a', header=False, index=False)
+            df = pd.read_csv(filename, dtype='str')
+            df = df[df.symbol == symbol ]
+            if df.empty:
+                df = pd.DataFrame(r, columns=cols)
+                df.to_csv(filename, mode='a', header=False, index=False)
+            else:
+                tips = '合约已存在，无法新增！'
         if kind == 'del':
             df = pd.read_csv(filename, dtype='str')
             df = df[df.symbol != symbol ]
             df.to_csv(filename, index=False)
+            tips = '合约删除成功'
         if kind == 'alter':
             # 删
             df = pd.read_csv(filename, dtype='str')
@@ -282,6 +292,7 @@ def opt_mature():
             # 增
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
+            tips = '合约修改成功'
         if kind == 'query':
             df = pd.read_csv(filename, dtype='str')
             df = df[df.symbol == symbol ]
@@ -1301,7 +1312,7 @@ def upload_statement():
             fn3 = os.path.join(dirname, 'risk_'+dt+'.csv')
             df2.to_csv(fn3)
 
-            send_email(get_dss(), '结算单', '', [fn1, fn3])
+            send_email(get_dss(), '结算单_'+dt, '', [fn1, fn3])
 
     return render_template("upload_statement.html",title="upload statement",tip=tips)
 
