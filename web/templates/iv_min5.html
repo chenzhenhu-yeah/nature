@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:900px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{title}}</h1>
+       </header>
+
+      <form method="post" action="iv_min5">
+      <fieldset>
+
+        <p>
+          symbol1:<input type="text" name="symbol1"  />
+        </p>
+        <p>
+          symbol2:<input type="text" name="symbol2"  />
+        </p>
+        <p>
+          symbol3:<input type="text" name="symbol3"  />
+        </p>
+        <p>
+          symbol4:<input type="text" name="symbol4"  />
+        </p>
+
+
+        <p>
+          date:<input type="text" name="date"/> YYYY-MM-DD
+        </p>
+
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+    </section>
+  </body>
+</html>

@@ -16,7 +16,7 @@ from nature import del_blank, check_symbols_p
 from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
-from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show
+from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
 from nature import get_file_lock, release_file_lock
 
 app = Flask(__name__)
@@ -993,6 +993,34 @@ def iv():
         return iv_show(basic_list, both, date_end)
 
     return render_template("iv.html", title="iv")
+
+
+@app.route('/iv_min5', methods=['get', 'post'])
+def iv_min5():
+    if request.method == "POST":
+        symbol1 = request.form.get('symbol1')
+        symbol2 = request.form.get('symbol2')
+        symbol3 = request.form.get('symbol3')
+        symbol4 = request.form.get('symbol4')
+        date = request.form.get('date')
+
+        symbol_list = []
+        if symbol1 != '':
+            symbol_list.append(symbol1)
+        if symbol2 != '':
+            symbol_list.append(symbol2)
+        if symbol3 != '':
+            symbol_list.append(symbol3)
+        if symbol4 != '':
+            symbol_list.append(symbol4)
+
+        if date == '':
+            now = datetime.now()
+            date = now.strftime('%Y-%m-%d')
+
+        return iv_min5_show(symbol_list, date)
+
+    return render_template("iv_min5.html", title="iv_min5")
 
 @app.route('/skew', methods=['get', 'post'])
 def skew():

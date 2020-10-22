@@ -155,6 +155,7 @@ class Fut_RatioPortfolio(Portfolio):
 
 
         Portfolio.__init__(self, Fut_RatioSignal, engine, symbol_list, signal_param)
+        self.promote = True
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -210,6 +211,9 @@ class Fut_RatioPortfolio(Portfolio):
             df = pd.read_csv(fn)                                                      # 加载最新参数
             for i, row in df.iterrows():
                 try:
+                    if row.symbol_b not in self.got_dict or row.symbol_s not in self.got_dict:
+                        continue
+
                     if self.got_dict[row.symbol_b] == False or self.got_dict[row.symbol_s] == False:
                         continue
                     else:

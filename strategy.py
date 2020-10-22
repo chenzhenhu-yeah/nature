@@ -85,7 +85,7 @@ class Signal(object):
                 if self.vtSymbol in symbol_list:
                     self.paused = True
                     print(self.vtSymbol + ' paused in ' + self.portfolio.name)
-                
+
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.portfolio.engine._bc_loadInitBar(self.vtSymbol, self.initBars, self.minx)
         for bar in initData:
@@ -187,6 +187,7 @@ class Portfolio(object):
         self.signalDict = defaultdict(list)  # 信号字典，code为键, signal列表为值
         self.posDict = {}
         self.name_second = self.name
+        self.promote = False
 
         self.result = DailyResult('00-00-00 00:00:00')
         self.resultList = []
@@ -271,7 +272,7 @@ class Portfolio(object):
 
         now = datetime.now()
         tm = now.strftime('%H:%M:%S')
-        if (tm > '14:45:00' and tm < '15:00:00') or (tm > '22:45:00' and tm < '23:00:00'):
+        if (tm > '14:45:00' and tm < '15:00:00') or (tm > '22:45:00' and tm < '23:00:00') or self.promote:
             if direction == DIRECTION_LONG:
                 price += priceTick
             if direction == DIRECTION_SHORT:

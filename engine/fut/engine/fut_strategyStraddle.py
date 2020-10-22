@@ -154,6 +154,7 @@ class Fut_StraddlePortfolio(Portfolio):
             self.got_dict[symbol] = False
 
         Portfolio.__init__(self, Fut_StraddleSignal, engine, symbol_list, signal_param)
+        self.promote = True
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -219,6 +220,9 @@ class Fut_StraddlePortfolio(Portfolio):
                     else:
                         symbol_c = row.basic + 'C' + str(row.strike)
                         symbol_p = row.basic + 'P' + str(row.strike)
+
+                    if symbol_c not in self.got_dict or symbol_p not in self.got_dict:
+                        continue
 
                     if self.got_dict[symbol_c] == False or self.got_dict[symbol_p] == False:
                         continue

@@ -1,6 +1,7 @@
 #  -*- coding: utf-8 -*-
 
 import os
+import zipfile
 import pandas as pd
 import smtplib
 from email.mime.text import MIMEText
@@ -75,16 +76,25 @@ def mail_1815():
         s = traceback.format_exc()
         to_log(s)
 
-def mail_0200():
+def mail_bak():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 2 <= weekday <= 6:
-            print('\n' + str(now) + " mail_ma begin...")
-            r = use_ma(dss)
-            #print(r)
-            #print(type(r))
-            send_email(dss, str(len(r))+' setting items ', '')
+        if 1 <= weekday <= 5:
+            dirname = os.path.join(get_dss(), 'fut')
+            # 压缩文件路径
+            zip_file = os.path.join(dirname, 'cfg_engine.zip')
+            # 在指定zip压缩文件目录下创建zip文件
+            create_zip_file = zipfile.ZipFile(zip_file, mode='w', compression=zipfile.ZIP_DEFLATED)
+            for d in ['cfg', 'engine/']:
+                path = os.path.join(get_dss(), 'fut/'+d)
+                for folderName,subfolders,filenames in os.walk(path):
+                    for file_name in filenames:
+                        fn = os.path.join(folderName, file_name)
+                        create_zip_file.write(fn, d+folderName[len(path):]+'/'+file_name)
+            create_zip_file.close()
+
+            send_email(get_dss(), 'cfg_engine.zip', '', [zip_file])
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -300,6 +310,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:28").do(run_mail_pdf)
         schedule.every().day.at("15:29").do(run_examine)
         schedule.every().day.at("15:30").do(mail_log)
+        schedule.every().day.at("15:31").do(mail_bak)
 
         print('schedule begin...')
         while True:

@@ -1119,6 +1119,77 @@ def skew_day_show(basic):
     r = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
     return r
 
+def iv_min5_show(symbol_list, date):
+    plt.figure(figsize=(13,7))
+    plt.title(date)
+
+    for symbol in symbol_list:
+        basic = get_contract(symbol).basic
+        strike = get_contract(symbol).strike
+        opt_flag = get_contract(symbol).opt_flag
+
+        if basic[:2] == 'IO':
+            symbol_obj = 'IF' + basic[2:]
+        else:
+            symbol_obj = basic
+
+        fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
+        df_obj = pd.read_csv(fn)
+        df_obj = df_obj.set_index(['date', 'time'])
+        df_obj['close_obj'] = df_obj['close']
+        df_obj = df_obj[['close_obj']]
+        # print(df_obj.tail())
+
+        fn = get_dss() + 'fut/put/rec/min5_' + symbol + '.csv'
+        df = pd.read_csv(fn)
+        df = df[df.date == date]
+        df = df.set_index(['date', 'time'])
+        # print(df.tail())
+
+        df = df.join(df_obj)
+        df = df.dropna()
+        df = df.reset_index()
+        df = df.set_index('time')
+        # print(df.tail())
+
+        r = 0.03
+        fn = get_dss() + 'fut/cfg/opt_mature.csv'
+        df2 = pd.read_csv(fn)
+        df2 = df2[df2.pz == df2.pz]                 # 筛选出不为空的记录
+        df2 = df2.set_index('symbol')
+        mature_dict = dict(df2.mature)
+        date_mature = mature_dict[ basic ]
+        date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+        td = datetime.strptime(date, '%Y-%m-%d')
+        T = float((date_mature - td).days) / 365                       # 剩余期限
+
+        iv_list = []
+        for i, row in df.iterrows():
+            try:
+                if opt_flag == 'C':
+                    iv = bsm_call_imp_vol(row.close_obj, strike, T, r, row.close)
+                else:
+                    iv = bsm_put_imp_vol(row.close_obj, strike, T, r, row.close)
+                iv_list.append( round(100*iv, 2) )
+            except:
+                break
+        df['iv'] = iv_list
+        plt.plot(df.iv, label=symbol)
+
+    plt.xticks(rotation=90)
+    plt.legend()
+
+    fn = 'static/iv_min5_show.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
+    rr = ''
+    fn = 'iv_min5_show.jpg'
+    now = str(int(time.time()))
+    rr = '<img src=\"static/' + fn + '?rand=' + now + '\" />'
+    return rr
+
+
 def skew_now_show(basic, date):
     # 获得上一个交易日，用于确定差值的基准
     symbol_obj = 'IF' + basic[2:]
@@ -1305,4 +1376,5 @@ if __name__ == '__main__':
 
     # skew_show('IO2010', 'no', '2020-09-18', 'now')
     # iv_show(['IO2012','IO2010'], 'no', '2020-09-28')
-    iv_show(['CF101','CF011'], 'no', '2020-09-28')
+    # iv_show(['CF101','CF011'], 'no', '2020-09-28')
+    iv_min5_show(['IO2011-C-4700','IO2011-C-4800'], '2020-09-28')
