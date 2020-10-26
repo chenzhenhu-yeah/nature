@@ -277,7 +277,7 @@ class Fut_SdifferPortfolio(Portfolio):
             # while get_file_lock(fn) == False:
             #     time.sleep(0.01)
 
-            cols_straddle = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','tm']
+            cols_straddle = ['tm','basic_c','strike_c','basic_p','strike_p','num_c','num_p','direction','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','date']
             fn_straddle = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
             # while get_file_lock(fn_straddle) == False:
             #     time.sleep(0.01)
@@ -373,8 +373,8 @@ class Fut_SdifferPortfolio(Portfolio):
                                 # 做多
                                 # if differ < 9:
                                 if df.at[i, 'd_min'] <= row.d_low_open and differ >= row.d_low_open and df.at[i, 'dida_min'] > 0:
-                                    r.append( [row.basic_m0,row.strike,'kong',1,0,0,1000,'run','sdiffer','','','','','','00:00:00'] )
-                                    r.append( [row.basic_m1,row.strike,'duo', 1,0,0,1000,'run','sdiffer','','','','','','00:00:00'] )
+                                    r.append( ['00:00:00',row.basic_m0,row.strike,row.basic_m0,row.strike,1,1,'kong',0,0,1000,'run','sdiffer','','','','','',bar.date] )
+                                    r.append( ['00:00:00',row.basic_m1,row.strike,row.basic_m1,row.strike,1,1,'duo', 0,0,1000,'run','sdiffer','','','','','',bar.date] )
                                     df.at[i, 'hold_m0'] = -1
                                     df.at[i, 'hold_m1'] = 1
                                     df.at[i, 'price_c_m0'] = s_c_m0.bar.BidPrice
@@ -385,8 +385,8 @@ class Fut_SdifferPortfolio(Portfolio):
                                 # 做空
                                 # if differ > 9:
                                 if df.at[i, 'd_max'] >= row.d_high_open and differ <= row.d_high_open and df.at[i, 'dida_max'] > 0:
-                                    r.append( [row.basic_m1,row.strike,'kong',1,0,0,1000,'run','sdiffer','','','','','','00:00:00'] )
-                                    r.append( [row.basic_m0,row.strike,'duo', 1,0,0,1000,'run','sdiffer','','','','','','00:00:00'] )
+                                    r.append( ['00:00:00',row.basic_m1,row.strike,row.basic_m1,row.strike,1,1,'kong',0,0,1000,'run','sdiffer','','','','','',bar.date] )
+                                    r.append( ['00:00:00',row.basic_m0,row.strike,row.basic_m0,row.strike,1,1,'duo', 0,0,1000,'run','sdiffer','','','','','',bar.date] )
                                     df.at[i, 'hold_m0'] = 1
                                     df.at[i, 'hold_m1'] = -1
                                     df.at[i, 'price_c_m0'] = s_c_m0.bar.AskPrice
@@ -461,11 +461,11 @@ class Fut_SdifferPortfolio(Portfolio):
     def daily_close(self):
         Portfolio.daily_close(self)
 
-        # fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
-        # df = pd.read_csv(fn)
-        # for i, row in df.iterrows():
-        #     if row.date == self.result.date[:10] and row.source == 'sdiffer' and row.hold_m0 == 0:
-        #         df.at[i, 'state'] = 'stop'
-        #
-        # df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
-        # df.to_csv(fn, index=False)
+        fn = get_dss() +  'fut/engine/sdiffer/portfolio_sdiffer_param.csv'
+        df = pd.read_csv(fn)
+        for i, row in df.iterrows():
+            if row.date == self.result.date[:10] and row.source == 'sdiffer' and row.hold_m0 == 0:
+                df.at[i, 'state'] = 'stop'
+
+        df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
+        df.to_csv(fn, index=False)

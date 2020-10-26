@@ -214,7 +214,7 @@ class Fut_Skew_StrdPortfolio(Portfolio):
             # cols = ['tm','basic_m0','basic_m1','strike_m0','strike_m1','fixed_size','profit','state','source','hold_m0','hold_m1','skew_low_open','skew_high_open','price_c_m0','price_p_m0','price_c_m1','price_p_m1','skew_max','dida_max','skew_min','dida_min','profit_m0','profit_m1','profit_o','date']
             fn = get_dss() +  'fut/engine/skew_strd/portfolio_skew_strd_param.csv'
 
-            cols_straddle = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','tm']
+            cols_straddle = ['tm','basic_c','strike_c','basic_p','strike_p','num_c','num_p','direction','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','date']
             fn_straddle = get_dss() +  'fut/engine/straddle/portfolio_straddle_param.csv'
 
             df = pd.read_csv(fn)
@@ -288,8 +288,8 @@ class Fut_Skew_StrdPortfolio(Portfolio):
 
                             # 做空m0，做多m1
                             if df.at[i, 'skew_min'] < row.skew_low_open and skew >= row.skew_low_open and df.at[i, 'dida_min'] > 0:
-                                r.append( [row.basic_m0,row.strike_m0,'kong',1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
-                                r.append( [row.basic_m1,row.strike_m1,'duo', 1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
+                                r.append( ['00:00:00',row.basic_m0,row.strike_m0,row.basic_m0,row.strike_m0,row.fixed_size,row.fixed_size,'kong',0,0,1000,'run','skew_strd','','','','','',bar.date] )
+                                r.append( ['00:00:00',row.basic_m1,row.strike_m1,row.basic_m1,row.strike_m1,row.fixed_size,row.fixed_size,'duo', 0,0,1000,'run','skew_strd','','','','','',bar.date] )
                                 df.at[i, 'hold_m0'] = -1
                                 df.at[i, 'hold_m1'] = 1
                                 if self.engine.type == 'backtest':
@@ -305,8 +305,8 @@ class Fut_Skew_StrdPortfolio(Portfolio):
 
                             # 做多m0，做空m1
                             if df.at[i, 'skew_max'] > row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
-                                r.append( [row.basic_m0,row.strike_m0,'duo', 1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
-                                r.append( [row.basic_m1,row.strike_m1,'kong',1,0,0,1000,'run','skew_strd','','','','','','00:00:00'] )
+                                r.append( ['00:00:00',row.basic_m0,row.strike_m0,row.basic_m0,row.strike_m0,row.fixed_size,row.fixed_size,'duo', 0,0,1000,'run','skew_strd','','','','','',bar.date] )
+                                r.append( ['00:00:00',row.basic_m1,row.strike_m1,row.basic_m1,row.strike_m1,row.fixed_size,row.fixed_size,'kong',0,0,1000,'run','skew_strd','','','','','',bar.date] )
                                 df.at[i, 'hold_m0'] = 1
                                 df.at[i, 'hold_m1'] = -1
                                 if self.engine.type == 'backtest':

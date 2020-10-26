@@ -191,7 +191,7 @@ class FutEngine(object):
             if len(symbols) > 0:
                 ratio_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_RatioPortfolio, ratio_symbol_list)
-        
+
         if 'symbols_straddle' in setting:
             symbols = setting['symbols_straddle']
             if len(symbols) > 0:
@@ -309,6 +309,15 @@ class FutEngine(object):
                 if d['vtSymbol'] in self.vtSymbol_list:
                     bar = VtBarData()
                     bar.__dict__ = d
+
+                    bar.close = float('nan') if bar.close == sys.float_info.max else bar.close
+                    bar.AskPrice = float('nan') if bar.AskPrice == sys.float_info.max else bar.AskPrice
+                    # if bar.AskPrice != bar.AskPrice:
+                    #     print(bar.AskPrice)
+                    bar.BidPrice = float('nan') if bar.BidPrice == sys.float_info.max else bar.BidPrice
+                    # if np.isnan(bar.BidPrice):
+                    #     print(bar.BidPrice)
+
                     self.lock.acquire()
                     self.bar_list.append(bar)
                     self.lock.release()

@@ -71,7 +71,7 @@ def check_symbols_p(key, value):
             else:
                 r = 'day_' + symbol + '.csv 记录数不足100'
 
-    if key in ['symbols_dali', 'symbols_owl']:
+    if key in ['symbols_dali']:
         if len(value) > 0:
             symbol_list = value.split(',')
         else:

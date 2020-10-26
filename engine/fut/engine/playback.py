@@ -194,11 +194,11 @@ class FutEngine(object):
         #             if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
         #                 self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
-        # if 'symbols_straddle' in setting:
-        #     symbols = setting['symbols_straddle']
-        #     if len(symbols) > 0:
-        #         straddle_symbol_list = symbols.split(',')
-        #         self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
+        if 'symbols_straddle' in setting:
+            symbols = setting['symbols_straddle']
+            if len(symbols) > 0:
+                straddle_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
         #
         # if 'symbols_sdiffer' in setting:
         #     symbols = setting['symbols_sdiffer']
@@ -232,8 +232,8 @@ class FutEngine(object):
 
         for vtSymbol in self.vtSymbol_list:
             # print(vtSymbol)
-            # test_list = ['IF2010', 'IO2010-C-4700', 'IO2010-P-4700', 'IO2011-C-4700', 'IO2011-P-4700']
-            test_list = ['m2101', 'RM101', 'MA101', 'p2101']
+            test_list = ['IF2011', 'IO2011-C-4700', 'IO2011-P-4700']
+            # test_list = ['m2101', 'RM101', 'MA101', 'p2101']
             if vtSymbol in test_list:
 
                 fn = get_dss( )+ 'fut/bar/min1_' + vtSymbol + '.csv'

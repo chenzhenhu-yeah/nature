@@ -13,11 +13,11 @@ import traceback
 
 
 from nature import del_blank, check_symbols_p
-from nature import read_log_today, a_file, get_dss, get_symbols_quote, get_contract, send_email
+from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
-from nature import get_file_lock, release_file_lock
+from nature import get_file_lock, release_file_lock, r_file, a_file
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -336,13 +336,27 @@ def fut_owl():
             # 历史维护记录
             now = datetime.now()
             today = now.strftime('%Y-%m-%d %H:%M:%S')
-            ins = str({'date':today,'ins':ins_type,'price':price,'num':num})
+            ins = str({'date':today,'code':code,'ins':ins_type,'price':price,'num':num})
             fn = get_dss() + 'fut/engine/owl/history.csv'
             a_file(fn,ins)
 
             tips = 'append success'
 
-    return render_template("owl.html",tip=tips)
+
+    # 动态加载新维护的symbol
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    symbols = setting['symbols_owl']
+    symbols_list = symbols.split(',')
+
+    r = [['code', 'ins', 'price', 'num']]
+    for symbol in symbols_list:
+        fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + symbol + '.csv'
+        ins_list = r_file(fn)
+        for ins in ins_list:
+            r.append([symbol] + list(dict(ins).values()))
+
+    return render_template("owl.html",tip=tips,rows=r)
 
 @app.route('/opt_trade', methods=['get','post'])
 def opt_trade():
@@ -522,30 +536,34 @@ def straddle():
     try:
         if request.method == "POST":
             kind = request.form.get('kind')
-            basic = del_blank( request.form.get('basic') )
-            strike = del_blank( request.form.get('strike') )
+            basic_c = del_blank( request.form.get('basic_c') )
+            strike_c = del_blank( request.form.get('strike_c') )
+            basic_p = del_blank( request.form.get('basic_p') )
+            strike_p = del_blank( request.form.get('strike_p') )
+            num_c = del_blank( request.form.get('num_c') )
+            num_p = del_blank( request.form.get('num_p') )
             direction = del_blank( request.form.get('direction') )
-            fixed_size = del_blank( request.form.get('fixed_size') )
             hold_c = del_blank( request.form.get('hold_c') )
             hold_p = del_blank( request.form.get('hold_p') )
             profit = del_blank( request.form.get('profit') )
             state = del_blank( request.form.get('state') )
             source = del_blank( request.form.get('source') )
 
-
-            r = [[basic,strike,direction,fixed_size,hold_c,hold_p,profit,state,source,'','','','','','00:00:00']]
-            cols = ['basic','strike','direction','fixed_size','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','tm']
+            now = datetime.now()
+            date = now.strftime('%Y-%m-%d')
+            r = [['00:00:00',basic_c,strike_c,basic_p,strike_p,num_c,num_p,direction,hold_c,hold_p,profit,state,source,'','','','','',date]]
+            cols = ['tm','basic_c','strike_c','basic_p','strike_p','num_c','num_p','direction','hold_c','hold_p','profit','state','source','price_c','price_p','profit_c','profit_p','profit_o','date']
             if kind == 'add':
                 df = pd.DataFrame(r, columns=cols)
                 df.to_csv(filename, mode='a', header=False, index=False)
             if kind == 'del':
                 df = pd.read_csv(filename, dtype='str')
-                df = df[~( (df.basic == basic) & (df.strike == strike) & (df.direction == direction) & (df.source == source) )]
+                df = df[~( (df.basic_c == basic_c) & (df.strike_c == strike_c) & (df.basic_p == basic_p) & (df.strike_p == strike_p) & (df.direction == direction) & (df.source == source) )]
                 df.to_csv(filename, index=False)
             if kind == 'alter':
                 df = pd.read_csv(filename, dtype='str')
                 for i, row in df.iterrows():
-                    if row.basic == basic and row.strike == strike and row.direction == direction and row.source == source:
+                    if row.basic_c == basic_c and row.strike_c == strike_c and row.basic_p == basic_p and row.strike_p == strike_p and row.direction == direction and row.source == source:
                         df.at[i, 'profit'] = profit
                         df.at[i, 'state'] = state
                 df.to_csv(filename, index=False)
@@ -713,6 +731,97 @@ def gateway_trade():
         r.append( list(row) )
 
     return render_template("gateway_trade.html", rows=r)
+
+
+@app.route('/upload_statement', methods=['get', 'post'])
+def upload_statement():
+    tips = ''
+    if request.method == "POST":
+        sm = request.files.get('sm')
+        if sm is not None:
+            # 指定上传路径
+            dirname = get_dss() + 'fut/statement'
+            # 拼接文件全路径
+            dt = sm.filename[-12:-4]
+            dt = dt[:4] + '-' + dt[4:6] + '-' + dt[6:8]
+            fn1 = os.path.join(dirname, dt+'.txt')
+            # 上传文件到指定路径
+            sm.save(fn1)
+            tips = '文件上传成功'
+
+            #　解读对账单，以df结构保存到临时文件中
+            i = 0
+            fn2 = os.path.join(dirname, 'tmp_'+dt+'.txt')
+            fw = open(fn2, 'w')
+            with open(fn1, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if i > 0:
+                        if line.startswith('--------------------------------'):
+                            i += 1
+                        elif line.strip() == '':
+                            pass
+                        else:
+                            # print(line)
+                            fw.write(line)
+                    if i == 4:
+                        break
+                    if line.strip().startswith('持仓汇总'):
+                        i += 1
+            fw.close()                        # 完成临时文件的写入
+
+            # 分类汇总，计算保证金占用， 计算greeks值
+            df = pd.read_csv(fn2, encoding='gbk', sep='|', skiprows=2, header=None)
+            df = df.drop(columns=[0,14])
+            fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
+            df_greeks = pd.read_csv(fn_greeks)
+
+            pz_list = []
+            opt_list = []
+            delta_list = []
+            gamma_list = []
+            vega_list = []
+            for i, row in df.iterrows():
+                symbol = row[2].strip()
+                num = row[3] - row[5]
+                pz = get_contract(symbol).pz
+                pz_list.append(pz)
+                if get_contract(symbol).be_opt:
+                    df2 = df_greeks[df_greeks.Instrument == symbol]
+                    # df = df[df.Localtime.str.slice(0,10) == dt]
+                    df2 = df2.drop_duplicates(subset=['Instrument'],keep='last')
+                    if df2.empty:
+                        delta_list.append(0)
+                        gamma_list.append(0)
+                        vega_list.append(0)
+                    else:
+                        rec = df2.iloc[0,:]
+                        # print(rec.Instrument, num, rec.delta, rec.gamma, rec.vega)
+                        delta_list.append(int(100 * num * rec.delta))
+                        gamma_list.append(round(100 * num * rec.gamma,2))
+                        vega_list.append(round(num * rec.vega,2))
+
+                    opt_list.append('期权')
+                else:
+                    opt_list.append('期货')
+                    delta_list.append(100*num)
+                    gamma_list.append(0)
+                    vega_list.append(0)
+
+            df['pz'] = pz_list
+            df['opt'] = opt_list
+            df['delta'] = delta_list
+            df['gamma'] = gamma_list
+            df['vega'] = vega_list
+            df['magin'] = df[10].apply(int)
+
+            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
+            fn3 = os.path.join(dirname, 'risk_'+dt+'.csv')
+            df2.to_csv(fn3)
+
+            send_email(get_dss(), '结算单_'+dt, '', [fn1, fn3])
+
+    return render_template("upload_statement.html",title="upload statement",tip=tips)
 
 
 @app.route('/value_dali_csv', methods=['get','post'])
@@ -1252,97 +1361,6 @@ def straddle_diff():
 def show_log():
     items = read_log_today()
     return render_template("show_log.html",title="Show Log",items=items)
-
-@app.route('/upload_statement', methods=['get', 'post'])
-def upload_statement():
-    tips = ''
-    if request.method == "POST":
-        sm = request.files.get('sm')
-        if sm is not None:
-            # 指定上传路径
-            dirname = get_dss() + 'fut/statement'
-            # 拼接文件全路径
-            dt = sm.filename[-12:-4]
-            dt = dt[:4] + '-' + dt[4:6] + '-' + dt[6:8]
-            fn1 = os.path.join(dirname, dt+'.txt')
-            # 上传文件到指定路径
-            sm.save(fn1)
-            tips = '文件上传成功'
-
-            #　解读对账单，以df结构保存到临时文件中
-            i = 0
-            fn2 = os.path.join(dirname, 'tmp_'+dt+'.txt')
-            fw = open(fn2, 'w')
-            with open(fn1, 'r') as f:
-                lines = f.readlines()
-                for line in lines:
-                    if i > 0:
-                        if line.startswith('--------------------------------'):
-                            i += 1
-                        elif line.strip() == '':
-                            pass
-                        else:
-                            # print(line)
-                            fw.write(line)
-                    if i == 4:
-                        break
-                    if line.strip().startswith('持仓汇总'):
-                        i += 1
-
-            fw.close()                        # 完成临时文件的写入
-
-            # 分类汇总，计算保证金占用， 计算greeks值
-            df = pd.read_csv(fn2, encoding='gbk', sep='|', skiprows=2, header=None)
-            df = df.drop(columns=[0,14])
-            fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
-            df_greeks = pd.read_csv(fn_greeks)
-
-            pz_list = []
-            opt_list = []
-            delta_list = []
-            gamma_list = []
-            vega_list = []
-            for i, row in df.iterrows():
-                symbol = row[2].strip()
-                num = row[3] - row[5]
-                pz = get_contract(symbol).pz
-                pz_list.append(pz)
-                if get_contract(symbol).be_opt:
-                    df2 = df_greeks[df_greeks.Instrument == symbol]
-                    # df = df[df.Localtime.str.slice(0,10) == dt]
-                    df2 = df2.drop_duplicates(subset=['Instrument'],keep='last')
-                    if df2.empty:
-                        delta_list.append(0)
-                        gamma_list.append(0)
-                        vega_list.append(0)
-                    else:
-                        rec = df2.iloc[0,:]
-                        # print(rec.Instrument, num, rec.delta, rec.gamma, rec.vega)
-                        delta_list.append(int(100 * num * rec.delta))
-                        gamma_list.append(round(100 * num * rec.gamma,2))
-                        vega_list.append(round(num * rec.vega,2))
-
-                    opt_list.append('期权')
-                else:
-                    opt_list.append('期货')
-                    delta_list.append(100*num)
-                    gamma_list.append(0)
-                    vega_list.append(0)
-
-            df['pz'] = pz_list
-            df['opt'] = opt_list
-            df['delta'] = delta_list
-            df['gamma'] = gamma_list
-            df['vega'] = vega_list
-            df['magin'] = df[10].apply(int)
-
-            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
-            fn3 = os.path.join(dirname, 'risk_'+dt+'.csv')
-            df2.to_csv(fn3)
-
-            send_email(get_dss(), '结算单_'+dt, '', [fn1, fn3])
-
-    return render_template("upload_statement.html",title="upload statement",tip=tips)
 
 @app.route('/ins')
 def ins():

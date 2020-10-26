@@ -1,14 +1,14 @@
 # encoding: UTF-8
 
 import os
+import json
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 
 from nature import to_log, get_dss, get_contract, send_email
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
-from nature import ArrayManager, Signal, Portfolio, TradeData, SignalResult
-
+from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
 from nature import a_file, rc_file
 
 
@@ -21,7 +21,7 @@ class Fut_OwlSignal(Signal):
 
         # 策略参数
         self.fixedSize = 1            # 每次交易的数量
-        self.initBars = 10           # 初始化数据所用的天数
+        self.initBars = 0             # 初始化数据所用的天数
         self.minx = 'min5'
 
         # 策略临时变量
@@ -35,6 +35,8 @@ class Fut_OwlSignal(Signal):
         self.ins_list = []
 
         Signal.__init__(self, portfolio, vtSymbol)
+
+        print('come here : ' + vtSymbol)
 
     #----------------------------------------------------------------------
     def load_param(self):
@@ -166,34 +168,41 @@ class Fut_OwlPortfolio(Portfolio):
         Portfolio.__init__(self, Fut_OwlSignal, engine, symbol_list, signal_param)
 
     #----------------------------------------------------------------------
-    def _bc_newSignal(self, signal, direction, offset, price, volume):
-        """
-        对交易信号进行过滤，符合条件的才发单执行。
-        计算真实交易价格和数量。
-        """
-        multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
-        multiplier = int(round(multiplier, 0))
-        #print(multiplier)
-        multiplier = 1
+    def onBar(self, bar, minx='min5'):
+        """引擎新推送过来bar，传递给每个signal"""
 
-        #print(self.posDict)
-        # 计算合约持仓
-        if direction == DIRECTION_LONG:
-            self.posDict[signal.vtSymbol] += volume*multiplier
-        else:
-            self.posDict[signal.vtSymbol] -= volume*multiplier
+        # 不处理不相关的品种
+        if bar.vtSymbol not in self.vtSymbolList:
+            return
 
-        #print(self.posDict)
+        if minx != 'min5':
+            return
 
-        # 对价格四舍五入
-        priceTick = get_contract(signal.vtSymbol).price_tick
-        price = int(round(price/priceTick, 0)) * priceTick
-        self.engine._bc_sendOrder(signal.vtSymbol, direction, offset, price, volume*multiplier, self.name)
+        # 动态加载新维护的symbol
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols_owl']
+        symbols_list = symbols.split(',')
 
-        # 记录成交数据
-        trade = TradeData(self.result.date, signal.vtSymbol, direction, offset, price, volume*multiplier)
-        # l = self.tradeDict.setdefault(self.result.date, [])
-        # l.append(trade)
+        for vtSymbol in symbols_list:
+            if vtSymbol not in self.vtSymbolList:
+                self.vtSymbolList.append(vtSymbol)
+                self.posDict[vtSymbol] = 0
+                signal1 = Fut_OwlSignal(self, vtSymbol)
 
-        self.result.updateTrade(trade)
-        #print('here')
+                l = self.signalDict[vtSymbol]
+                l.append(signal1)
+
+        if self.result.date != bar.date + ' ' + bar.time:
+            previousResult = self.result
+            self.result = DailyResult(bar.date + ' ' + bar.time)
+            self.resultList.append(self.result)
+            if previousResult:
+                self.result.updateClose(previousResult.closeDict)
+
+        # 将bar推送给signal
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar, minx)
+
+        self.result.updateBar(bar)
+        self.result.updatePos(self.posDict)

@@ -108,6 +108,16 @@
         </div>
       </form>
 
+      <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
 
     </section>
   </body>

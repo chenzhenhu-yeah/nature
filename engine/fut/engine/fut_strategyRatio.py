@@ -5,6 +5,7 @@ import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
 import traceback
+import json
 
 from nature import to_log, get_dss, get_contract
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
@@ -167,6 +168,22 @@ class Fut_RatioPortfolio(Portfolio):
 
         if minx != 'min1':               # 本策略为min1
             return
+
+        # 动态加载新维护的symbol
+        config = open(get_dss()+'fut/cfg/config.json')
+        setting = json.load(config)
+        symbols = setting['symbols_ratio']
+        symbols_list = symbols.split(',')
+
+        for vtSymbol in symbols_list:
+            if vtSymbol not in self.vtSymbolList:
+                self.vtSymbolList.append(vtSymbol)
+                self.posDict[vtSymbol] = 0
+                self.got_dict[vtSymbol] = False
+                signal1 = Fut_RatioSignal(self, vtSymbol)
+
+                l = self.signalDict[vtSymbol]
+                l.append(signal1)
 
         if self.tm != bar.time:
             self.tm = bar.time

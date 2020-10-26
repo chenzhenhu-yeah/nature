@@ -48,7 +48,6 @@ def release_file_lock(fn):
 
     return r
 
-#{'ins':'r','filename':'ins.txt'}
 #{'ins':'rc','filename':'ins.txt'}
 def rc_file(filename):
     r = []
@@ -66,6 +65,22 @@ def rc_file(filename):
 
     return r
 
+#{'ins':'r','filename':'ins.txt'}
+def r_file(filename):
+    r = []
+    ins_dict = {'ins':'r','filename':filename}
+    again = True
+    while again:
+        time.sleep(1)
+        try :
+            with Client(address, authkey=b'secret password') as conn:
+                conn.send(ins_dict)
+                r = conn.recv()
+                again = False
+        except:
+            pass
+
+    return r
 
 #{'ins':'a','filename':'ins.txt','content':'aaaaaa'}
 def a_file(filename, content):
@@ -92,8 +107,13 @@ def deal_file(ins):
 
     r = []
     fn = ins['filename']
+
+    if ins['ins']=='a':
+        with open(fn, 'a', encoding='utf-8') as f:
+            f.write(str(ins['content'])+'\n')
+
     if os.path.exists(fn) == False:
-        return False
+        return r
 
     if ins['ins']=='r':
         with open(fn, 'r', encoding='utf-8') as f:
@@ -115,10 +135,6 @@ def deal_file(ins):
             #清空文件内容
             f.seek(0)
             f.truncate()
-
-    if ins['ins']=='a':
-        with open(fn, 'a', encoding='utf-8') as f:
-            f.write(str(ins['content'])+'\n')
 
     if ins['ins']=='get_file_lock':
             if fn not in file_lock:
