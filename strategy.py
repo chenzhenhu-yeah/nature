@@ -247,11 +247,27 @@ class Portfolio(object):
             self.result.updatePos(self.posDict)
 
     #----------------------------------------------------------------------
+    def check_order_risk(self, signal, price, volume):
+        r = ''
+        if volume > 10:
+            r = ' : volume > 10'
+
+        if abs(signal.bar.close - price) > 20:
+            r = ' : price gap > 20 '
+
+        if r != '':
+            to_log('order risk check error: ' + signal.vtSymbol + r )
+            raise ValueError
+
+    #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
         """
         对交易信号进行过滤，符合条件的才发单执行。
         计算真实交易价格和数量。
         """
+        # 下单风控
+        self.check_order_risk(signal, price, volume)
+
         multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
         multiplier = int(round(multiplier, 0))
         #print(multiplier)

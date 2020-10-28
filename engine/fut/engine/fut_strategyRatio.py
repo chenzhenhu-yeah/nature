@@ -86,7 +86,7 @@ class Fut_RatioSignal(Signal):
             if self.bar.close > 0.1 and self.bar.close > 0.1:
                 self.portfolio.got_dict[self.vtSymbol] = True
         else:
-            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 20:
                 self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False
@@ -228,35 +228,40 @@ class Fut_RatioPortfolio(Portfolio):
             df = pd.read_csv(fn)                                                      # 加载最新参数
             for i, row in df.iterrows():
                 try:
+                    if row.state == 'stop':
+                            continue
+
                     if row.symbol_b not in self.got_dict or row.symbol_s not in self.got_dict:
                         continue
 
                     if self.got_dict[row.symbol_b] == False or self.got_dict[row.symbol_s] == False:
                         continue
                     else:
+                        df.at[i, 'tm'] = bar.time
+
                         symbol_got_list.append(row.symbol_b)
                         symbol_got_list.append(row.symbol_s)
 
                         s_b = self.signalDict[row.symbol_b][0]
                         s_s = self.signalDict[row.symbol_s][0]
 
-                        # print('here2')
-
                         # 开仓
-                        if row.hold_b == 0 and row.hold_s == 0 and row.state == 'run' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
-                            if self.engine.type == 'backtest':
+                        if row.hold_b == 0 and row.hold_s == 0:
+                            if self.engine.type == 'backtest' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
                                 s_b.buy(s_b.bar.close, row.num_b)
                                 s_s.short(s_s.bar.close, row.num_s)
                                 df.at[i, 'price_b'] = s_b.bar.close
                                 df.at[i, 'price_s'] = s_s.bar.close
-                            else:
+                                df.at[i, 'hold_b'] = row.num_b
+                                df.at[i, 'hold_s'] = row.num_s
+
+                            elif row.num_s*s_s.bar.BidPrice - row.num_b*s_b.bar.AskPrice >= row.gap:
                                 s_b.buy(s_b.bar.AskPrice, row.num_b)              # 挂卖价
                                 s_s.short(s_s.bar.BidPrice, row.num_s)            # 挂买价
                                 df.at[i, 'price_b'] = round(s_b.bar.AskPrice, 2)
                                 df.at[i, 'price_s'] = round(s_s.bar.BidPrice, 2)
-                            df.at[i, 'hold_b'] = row.num_b
-                            df.at[i, 'hold_s'] = row.num_s
-                            df.at[i, 'tm'] = bar.time
+                                df.at[i, 'hold_b'] = row.num_b
+                                df.at[i, 'hold_s'] = row.num_s
 
                         # 获利平仓
                         if row.hold_b > 0 and row.hold_s > 0:
@@ -264,7 +269,6 @@ class Fut_RatioPortfolio(Portfolio):
                                 df.at[i, 'profit_b'] = round( (s_b.bar.close - row.price_b)*row.hold_b, 2)
                                 df.at[i, 'profit_s'] = round( -(s_s.bar.close - row.price_s)*row.hold_s, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
-                                df.at[i, 'tm'] = bar.time
 
                                 if df.at[i, 'profit_o'] >= row.profit:
                                     s_b.sell(s_b.bar.close, row.num_b)
@@ -276,7 +280,6 @@ class Fut_RatioPortfolio(Portfolio):
                                 df.at[i, 'profit_b'] = round( (s_b.bar.BidPrice - row.price_b)*row.hold_b, 2)
                                 df.at[i, 'profit_s'] = round( -(s_s.bar.AskPrice - row.price_s)*row.hold_s, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_b'] + df.at[i, 'profit_s'], 2)
-                                df.at[i, 'tm'] = bar.time
 
                                 if df.at[i, 'profit_o'] >= row.profit:
                                     s_b.sell(s_b.bar.BidPrice, row.num_b)                          # 挂买价

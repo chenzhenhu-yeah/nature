@@ -74,6 +74,16 @@ class Fut_OwlSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
+        # 记录数据
+        r = [[self.bar.date,self.bar.time,self.bar.close]]
+        df = pd.DataFrame(r)
+
+        filename = get_dss() +  'fut/engine/owl/bar_owl_'+self.type+ '_' + self.vtSymbol + '.csv'
+        if os.path.exists(filename):
+            df.to_csv(filename, index=False, mode='a', header=False)
+        else:
+            df.to_csv(filename, index=False)
+
         r = []
         fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
         # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'

@@ -129,7 +129,7 @@ def alter_book_by_rec(row):
         if row.Direction == 'Sell':
             net_pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
 
-    if row.Offset == 'Close':
+    if row.Offset in ['Close', 'CloseToday']:
             net_pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
 
     net_pnl -= abs(row.Volume * fixed_commission)

@@ -96,15 +96,21 @@ def fut_config():
                 load_dict[key] = value
                 if key in ['symbols_ratio','symbols_straddle']:
                     load_dict['symbols_trade'] += ',' + value
+                    symbol_set = sorted(set(load_dict['symbols_trade'].split(',')))
+                    load_dict['symbols_trade'] = ','.join(symbol_set)
                 if key in ['symbols_skew_bili']:
-                    load_dict['symbols_trade'] += ',' + value
                     load_dict['symbols_ratio'] += ',' + value
-                if key in ['symbols_sdiffer','symbols_skew_strd']:
                     load_dict['symbols_trade'] += ',' + value
+                    symbol_set = sorted(set(load_dict['symbols_trade'].split(',')))
+                    load_dict['symbols_trade'] = ','.join(symbol_set)
+                if key in ['symbols_sdiffer','symbols_skew_strd']:
                     load_dict['symbols_straddle'] += ',' + value
-
+                    load_dict['symbols_trade'] += ',' + value
+                    symbol_set = sorted(set(load_dict['symbols_trade'].split(',')))
+                    load_dict['symbols_trade'] = ','.join(symbol_set)
             if kind == 'del':
                 load_dict.pop(key)
+
             with open(filename,"w") as f:
                 json.dump(load_dict,f)
 
@@ -507,6 +513,15 @@ def ratio():
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
+
+            # 自动增加symbol到symbols_ratio、symbols_trade
+            fn = get_dss() + 'fut/cfg/config.json'
+            with open(fn,'r') as f:
+                load_dict = json.load(f)
+                load_dict['symbols_ratio'] += ',' + symbol_b + ',' + symbol_s
+                load_dict['symbols_trade'] += ',' + symbol_b + ',' + symbol_s
+            with open(fn,"w") as f:
+                json.dump(load_dict,f)
         if kind == 'del':
             df = pd.read_csv(filename, dtype='str')
             df = df[~( (df.symbol_b == symbol_b) & (df.symbol_s == symbol_s) & (df.num_b == num_b) & (df.num_s == num_s) & (df.source == source) )]
@@ -556,6 +571,22 @@ def straddle():
             if kind == 'add':
                 df = pd.DataFrame(r, columns=cols)
                 df.to_csv(filename, mode='a', header=False, index=False)
+
+                # 自动增加symbol到symbols_straddle、symbols_trade
+                fn = get_dss() + 'fut/cfg/config.json'
+                with open(fn,'r') as f:
+                    exchangeID = str(get_contract(basic_c).exchangeID)
+                    if exchangeID in ['CFFEX', 'DCE']:
+                        symbol_c = basic_c + '-C-' + str(strike_c)
+                        symbol_p = basic_p + '-P-' + str(strike_p)
+                    else:
+                        symbol_c = basic_c + 'C' + str(strike_c)
+                        symbol_p = basic_p + 'P' + str(strike_p)
+                    load_dict = json.load(f)
+                    load_dict['symbols_straddle'] += ',' + symbol_c + ',' + symbol_p
+                    load_dict['symbols_trade'] += ',' + symbol_c + ',' + symbol_p
+                with open(fn,"w") as f:
+                    json.dump(load_dict,f)
             if kind == 'del':
                 df = pd.read_csv(filename, dtype='str')
                 df = df[~( (df.basic_c == basic_c) & (df.strike_c == strike_c) & (df.basic_p == basic_p) & (df.strike_p == strike_p) & (df.direction == direction) & (df.source == source) )]

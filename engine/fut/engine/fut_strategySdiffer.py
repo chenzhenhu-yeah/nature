@@ -89,7 +89,7 @@ class Fut_SdifferSignal(Signal):
             if self.bar.close > 0.1 and self.bar.close > 0.1:
                 self.portfolio.got_dict[self.vtSymbol] = True
         else:
-            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 10:
                 self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False

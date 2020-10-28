@@ -333,6 +333,9 @@ class FutEngine(object):
     def on_bar_service(self):
         print('on_bar_service 线程开始工作')
 
+        i = 0
+        period_list = ['00','05','10','15','20','25','30','35','40','45','50','55']
+
         vtSymbol_dict = {}         # 缓存中间bar
         g5 = BarGenerator('min5')
         g15 = BarGenerator('min15')
@@ -346,6 +349,10 @@ class FutEngine(object):
                     bar = self.bar_list.pop(0)
                     id = bar.vtSymbol
                     self.lock.release()
+
+                    if bar.time[3:5] == period_list[i]:
+                        i = (i+1) % 12
+                        self.vtSymbol_list = get_symbols_trade()                        
 
                     if id not in vtSymbol_dict:
                         vtSymbol_dict[id] = bar

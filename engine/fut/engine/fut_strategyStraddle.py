@@ -87,7 +87,7 @@ class Fut_StraddleSignal(Signal):
             if self.bar.close > 0.1 and self.bar.close > 0.1:
                 self.portfolio.got_dict[self.vtSymbol] = True
         else:
-            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 20:
                 self.portfolio.got_dict[self.vtSymbol] = True
 
         self.can_buy = False
@@ -229,6 +229,9 @@ class Fut_StraddlePortfolio(Portfolio):
             df = pd.read_csv(fn)                                                      # 加载最新参数
             for i, row in df.iterrows():
                 try:
+                    if row.state == 'stop':
+                            continue
+
                     exchangeID = str(get_contract(row.basic_c).exchangeID)
                     if exchangeID in ['CFFEX', 'DCE']:
                         symbol_c = row.basic_c + '-C-' + str(row.strike_c)
@@ -243,6 +246,8 @@ class Fut_StraddlePortfolio(Portfolio):
                     if self.got_dict[symbol_c] == False or self.got_dict[symbol_p] == False:
                         continue
                     else:
+                        df.at[i, 'tm'] = bar.time
+
                         symbol_got_list.append(symbol_c)
                         symbol_got_list.append(symbol_p)
 
@@ -250,7 +255,7 @@ class Fut_StraddlePortfolio(Portfolio):
                         s_p = self.signalDict[symbol_p][0]
 
                         # 开仓
-                        if row.hold_c == 0 and row.hold_p == 0 and row.state == 'run':
+                        if row.hold_c == 0 and row.hold_p == 0:
                             # print('come here ')
                             if row.direction == 'duo':
                                 if self.engine.type == 'backtest':
@@ -265,7 +270,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                     df.at[i, 'price_p'] = round( s_p.bar.AskPrice, 2)
                                 df.at[i, 'hold_c'] = row.num_c
                                 df.at[i, 'hold_p'] = row.num_p
-                                df.at[i, 'tm'] = bar.time
 
                             if row.direction == 'kong':
                                 if self.engine.type == 'backtest':
@@ -280,7 +284,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                     df.at[i, 'price_p'] = round( s_p.bar.BidPrice, 2)
                                 df.at[i, 'hold_c'] = -row.num_c
                                 df.at[i, 'hold_p'] = -row.num_p
-                                df.at[i, 'tm'] = bar.time
 
                         # 多单获利平仓
                         if row.hold_c >= 1 and row.hold_p >= 1:
@@ -288,7 +291,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                 df.at[i, 'profit_c'] = (s_c.bar.close - row.price_c) * row.hold_c
                                 df.at[i, 'profit_p'] = (s_p.bar.close - row.price_p) * row.hold_p
                                 df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
-                                df.at[i, 'tm'] = bar.time
 
                                 if row.profit_o >= row.profit:
                                     s_c.sell(s_c.bar.close, abs(row.hold_c))
@@ -300,8 +302,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                 df.at[i, 'profit_c'] = round( (s_c.bar.BidPrice - row.price_c) * row.hold_c, 2)
                                 df.at[i, 'profit_p'] = round( (s_p.bar.BidPrice - row.price_p) * row.hold_p, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_c'] + df.at[i, 'profit_p'], 2)
-                                df.at[i, 'tm'] = bar.time
-                                # print('come here 1')
 
                                 if row.profit_o >= row.profit:
                                     s_c.sell(s_c.bar.BidPrice, abs(row.hold_c))
@@ -316,7 +316,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                 df.at[i, 'profit_c'] = (s_c.bar.close - row.price_c) * row.hold_c
                                 df.at[i, 'profit_p'] = (s_p.bar.close - row.price_p) * row.hold_p
                                 df.at[i, 'profit_o'] = df.at[i, 'profit_c'] + df.at[i, 'profit_p']
-                                df.at[i, 'tm'] = bar.time
 
                                 if row.profit_o >= row.profit:
                                     s_c.cover(s_c.bar.close, abs(row.hold_c))
@@ -328,8 +327,6 @@ class Fut_StraddlePortfolio(Portfolio):
                                 df.at[i, 'profit_c'] = round( (s_c.bar.AskPrice - row.price_c) * row.hold_c, 2)
                                 df.at[i, 'profit_p'] = round( (s_p.bar.AskPrice - row.price_p) * row.hold_p, 2)
                                 df.at[i, 'profit_o'] = round( df.at[i, 'profit_c'] + df.at[i, 'profit_p'], 2)
-                                df.at[i, 'tm'] = bar.time
-                                # print('come here -1')
 
                                 if row.profit_o >= row.profit:
                                     s_c.cover(s_c.bar.AskPrice, abs(row.hold_c))

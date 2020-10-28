@@ -71,15 +71,16 @@ class Fut_AvengerSignal(Signal):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        self.portfolio.got_dict[self.vtSymbol] = True
+        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 10:
+            self.portfolio.got_dict[self.vtSymbol] = True
 
-        # if self.vtSymbol == self.portfolio.symbol_c and self.portfolio.hold_c != 0:
-        if self.vtSymbol == self.portfolio.symbol_c:
-            self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
+            # if self.vtSymbol == self.portfolio.symbol_c and self.portfolio.hold_c != 0:
+            if self.vtSymbol == self.portfolio.symbol_c:
+                self.portfolio.profit_c = self.portfolio.hold_c * (self.bar.close - self.portfolio.price_c)
 
-        # if self.vtSymbol == self.portfolio.symbol_p and self.portfolio.hold_p != 0:
-        if self.vtSymbol == self.portfolio.symbol_p:
-            self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
+            # if self.vtSymbol == self.portfolio.symbol_p and self.portfolio.hold_p != 0:
+            if self.vtSymbol == self.portfolio.symbol_p:
+                self.portfolio.profit_p = self.portfolio.hold_p * (self.bar.close - self.portfolio.price_p)
 
         self.can_buy = False
         self.can_short = False
