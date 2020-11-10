@@ -34,8 +34,8 @@ def ic(symbol1, symbol2):
     n = 10          # 均线周期
     df1['ma'] = df1['close'].rolling(n).mean()
 
-    plt.figure(figsize=(13,7))
-    plt.xticks(rotation=45)
+    plt.figure(figsize=(15,7))
+    plt.xticks(rotation=90)
     plt.plot(df1.close)
     plt.plot(df1.ma)
 
@@ -201,7 +201,7 @@ def mutual():
 
 
 def star():
-    pz_list = ['c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'all']
+    pz_list = ['ru', 'c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'all']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 
@@ -608,7 +608,6 @@ def open_interest_show_total(basic, date):
     return r
 
 def open_interest_show(basic, type, date, kind):
-    """期权微笑曲线"""
     if kind == 'distribution':
         return open_interest_show_distribution(basic, type, date)
     elif kind == 'total':

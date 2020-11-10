@@ -29,6 +29,7 @@ from nature.engine.fut.risk.skew import calc_skew
 from nature.engine.fut.risk.arbitrage import calc_pcp, calc_die
 from nature.engine.fut.risk.iv_atm import calc_iv_atm
 from nature.engine.fut.risk.sdiffer import calc_sdiffer
+from nature.engine.fut.risk.compass import compass
 
 dss = r'../data/'
 
@@ -94,7 +95,7 @@ def mail_bak():
                         create_zip_file.write(fn, d+folderName[len(path):]+'/'+file_name)
             create_zip_file.close()
 
-            send_email(get_dss(), 'cfg_engine.zip', '', [zip_file])
+            # send_email(get_dss(), 'cfg_engine.zip', '', [zip_file])
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -276,6 +277,10 @@ def run_mail_pdf():
                 mail_pdf(s)
             except:
                 continue
+
+        # 发送品种指南
+        date = now.strftime('%Y-%m-%d')
+        compass(date)
 
 def run_examine():
     pass

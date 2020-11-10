@@ -51,6 +51,8 @@ class Contract(object):
         self.strike = self.cacl_strike(symbol)
         self.basic = self.cacl_basic(pz, symbol)
         self.opt_flag = self.cacl_opt_flag(pz, symbol)
+        self.opt_flag_C = self.cacl_opt_flag_C(symbol)
+        self.opt_flag_P = self.cacl_opt_flag_P(symbol)
 
     def cacl_strike(self, symbol):
         if self.be_opt:
@@ -75,6 +77,18 @@ class Contract(object):
                 if symbol[i] == 'P':
                     return 'P'
         return 'N'
+
+    def cacl_opt_flag_C(self, symbol):
+        if self.exchangeID in ['CFFEX', 'DCE']:
+            return '-C-'
+        else:
+            return 'C'
+
+    def cacl_opt_flag_P(self, symbol):
+        if self.exchangeID in ['CFFEX', 'DCE']:
+            return '-P-'
+        else:
+            return 'P'
 
 
 def get_contract(symbol):
@@ -171,7 +185,7 @@ def get_symbols_quote():
         # 加载 期权，对于IO还要加载IF
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
         df = pd.read_csv(fn)
-        for pz in ['IO', 'm', 'RM', 'MA', 'CF', 'c']:
+        for pz in ['IO', 'm', 'RM', 'MA', 'CF', 'c', 'al']:
             df2 = df[df.pz == pz]
             df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
             df2 = df2[df2.mature >= today]

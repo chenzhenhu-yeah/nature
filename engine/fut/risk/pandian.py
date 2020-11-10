@@ -101,7 +101,7 @@ def fresh_star():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
 
-    pz_list = ['CF','m','IO','MA','RM','c','al']
+    pz_list = ['CF','m','IO','MA','RM','c','al','ru']
     for pz in pz_list:
         fn = get_dss() + 'fut/engine/star/portfolio_star_' + pz + '_var.csv'
         if os.path.exists(fn) == False:
