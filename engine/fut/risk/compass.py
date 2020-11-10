@@ -319,7 +319,7 @@ def df_atm_plus_obj_min5(basic, date, gap, shift=0):
         symbol_p = basic + get_contract(basic).opt_flag_P + str(atm+shift*gap)
         fn = get_dss() + 'fut/bar/min5_' + symbol_p + '.csv'
         df_atm_p = pd.read_csv(fn)
-        df_atm_p = df_atm_p[(df_atm_p.date == date) & (df_atm_c.time <= '14:54:00')]
+        df_atm_p = df_atm_p[(df_atm_p.date == date) & (df_atm_p.time <= '14:54:00')]
 
         if df_atm_c.empty or df_atm_p.empty:
             pass
@@ -502,7 +502,7 @@ def RM(date, df):
     m1 = df[(df.pz == 'RM') & (df.flag == 'm1')].iloc[0,:].symbol
 
     code = m0
-    gap = 25
+    gap = 50
 
     common(date, code, gap)
 
@@ -523,7 +523,7 @@ def IO(date, df):
     m1 = df[(df.pz == 'IO') & (df.flag == 'm1')].iloc[0,:].symbol
 
     code = m0
-    gap = 50
+    gap = 100
 
     common(date, code, gap)
 
