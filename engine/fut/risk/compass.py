@@ -544,7 +544,7 @@ def compass(date):
     df2 = pd.read_csv(fn)
     df2 = df2[pd.notnull(df2.flag)]
 
-    CF(date, df2)
+    # CF(date, df2)
     m(date, df2)
     RM(date, df2)
     IO(date, df2)
