@@ -357,7 +357,10 @@ def send_email(dss, subject, content, attach_list=[]):
                 att = MIMEText(open(attach, "rb").read(), "base64", "utf-8")
                 att["Content-Type"] = "application/octet-stream"
                 # 附件名称非中文时的写法
-                att["Content-Disposition"] = 'attachment; filename=' + today+str(i)+attach[-4:]
+                # att["Content-Disposition"] = 'attachment; filename=' + today+str(i)+attach[-4:]
+                fn = os.path.basename(attach)
+                att["Content-Disposition"] = 'attachment; filename=' + fn
+
                 # 附件名称为中文时的写法
                 # att.add_header("Content-Disposition", "attachment", filename=("gbk", "", "测试结果.txt"))
                 # att.add_header("Content-Disposition", "attachment", filename="测试结果.txt")

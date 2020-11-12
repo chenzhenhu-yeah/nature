@@ -9,7 +9,7 @@ import talib
 import fitz
 import traceback
 
-from nature import get_dss, get_inx, get_contract, get_repo, to_log
+from nature import get_dss, get_inx, get_contract, get_repo, to_log, send_email
 from nature import bsm_call_value, bsm_put_value, bsm_call_imp_vol, bsm_put_imp_vol
 
 
@@ -487,7 +487,7 @@ def CF(date, df):
     # ic
     show_ic(m0, m1, code)
 
-    img2pdf('CF_'+date+'.pdf',
+    img2pdf('compass_CF_'+date+'.pdf',
             [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
@@ -511,7 +511,7 @@ def m(date, df):
     show_ic(m0, m1, code)
     show_ic(y0, m0, code)
 
-    img2pdf('m_'+date+'.pdf',
+    img2pdf('compass_m_'+date+'.pdf',
             [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
@@ -534,7 +534,7 @@ def RM(date, df):
     # ic
     show_ic(m0, m1, code)
 
-    img2pdf('RM_'+date+'.pdf',
+    img2pdf('compass_RM_'+date+'.pdf',
             [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
@@ -552,7 +552,7 @@ def IO(date, df):
 
     common(date, code, gap)
 
-    img2pdf('IO_'+date+'.pdf',
+    img2pdf('compass_IO_'+date+'.pdf',
             [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
@@ -578,11 +578,18 @@ def compass(date):
             s = traceback.format_exc()
             to_log(s)
 
+    send_email(get_dss(), 'compass', '',
+               [dirname+'compass_CF_'+date+'.pdf',
+               dirname+'compass_m_'+date+'.pdf',
+               # dirname+'compass_RM_'+date+'.pdf',
+               dirname+'compass_IO_'+date+'.pdf',
+               ])
+
 
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-10'
+    date = '2020-11-11'
     # date = '2020-09-28'
 
     compass(date)
