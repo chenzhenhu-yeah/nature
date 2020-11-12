@@ -7,8 +7,9 @@ import time
 from datetime import datetime, timedelta
 import talib
 import fitz
+import traceback
 
-from nature import get_dss, get_inx, get_contract, get_repo
+from nature import get_dss, get_inx, get_contract, get_repo, to_log
 from nature import bsm_call_value, bsm_put_value, bsm_call_imp_vol, bsm_put_imp_vol
 
 
@@ -176,13 +177,12 @@ def df_hv(code):
     start_day = now - timedelta(days = 480)
     start_day = start_day.strftime('%Y-%m-%d')
 
-    if code == '000300':
+    if code[:2] == 'IO':
         df = get_inx('000300', start_day)
     else:
         fn = get_dss() + 'fut/bar/day_' + code + '.csv'
         df = pd.read_csv(fn)
-        df = df[df.date >= start_day]
-
+    df = df[df.date >= start_day]
     df = df.set_index('date')
     df = df.sort_index()
 
@@ -248,34 +248,46 @@ def df_atm_plus_obj_day(basic, gap, shift=0):
     else:
         symbol_obj = basic
 
-    # fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
-    fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
+    # # fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
+    # fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
+    # df_obj = pd.read_csv(fn)
+    # # print(df_obj.head())
+
+    fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
     df_obj = pd.read_csv(fn)
-    # print(df_obj.head())
+    date_list = sorted(list(set(df_obj.date)))
+
 
     r_c = []
     r_p = []
-    for i, row in df_obj.iterrows():
-        close_obj = row.open
+    for date in date_list:
+        df2 = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
+        if df2.empty:
+            print(basic, date)
+            continue
+        close_obj = df2.iloc[-1,:].close
         atm = int(round(round(close_obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
+        # if date == '2020-11-10':
+        #     print(basic, '-------------------------', close_obj, atm )
 
         symbol_c = basic + get_contract(basic).opt_flag_C + str(atm+shift*gap)
         fn = get_dss() + 'fut/bar/min5_' + symbol_c + '.csv'
         df_atm_c = pd.read_csv(fn)
-        df_atm_c = df_atm_c[(df_atm_c.date == row.date) & (df_atm_c.time == '14:54:00')]
+        df_atm_c = df_atm_c[(df_atm_c.date == date) & (df_atm_c.time == '14:54:00')]
 
         symbol_p = basic + get_contract(basic).opt_flag_P + str(atm+shift*gap)
         fn = get_dss() + 'fut/bar/min5_' + symbol_p + '.csv'
         df_atm_p = pd.read_csv(fn)
-        df_atm_p = df_atm_p[(df_atm_p.date == row.date) & (df_atm_c.time == '14:54:00')]
+        df_atm_p = df_atm_p[(df_atm_p.date == date) & (df_atm_c.time == '14:54:00')]
+
 
         if df_atm_c.empty or df_atm_p.empty:
             pass
         else:
             rec = df_atm_c.iloc[0,:]
-            r_c.append([row.date, symbol_c, rec.close, close_obj])
+            r_c.append([date, symbol_c, rec.close, close_obj])
             rec = df_atm_p.iloc[0,:]
-            r_p.append([row.date, symbol_p, rec.close, close_obj])
+            r_p.append([date, symbol_p, rec.close, close_obj])
 
 
     cols = ['dt', 'symbol', 'close', 'close_obj']
@@ -283,6 +295,8 @@ def df_atm_plus_obj_day(basic, gap, shift=0):
     df_p = pd.DataFrame(r_p, columns=cols)
     df_c.index.name = 'iv_c'
     df_p.index.name = 'iv_p'
+    # print(df_c.tail())
+    # print(df_p.tail())
 
     return df_c, df_p
 
@@ -308,8 +322,10 @@ def df_atm_plus_obj_min5(basic, date, gap, shift=0):
     if df_obj.empty:
         pass
     else:
-        close_obj = df_obj.iloc[0,:].open
+        close_obj = df_obj.iloc[-1,:].close
         atm = int(round(round(close_obj*(100/gap)/1E4,2) * 1E4/(100/gap), 0))     # 获得平值
+        # if date == '2020-11-10':
+        #     print(basic, '-------------------------', close_obj, atm )
 
         symbol_c = basic + get_contract(basic).opt_flag_C + str(atm+shift*gap)
         fn = get_dss() + 'fut/bar/min5_' + symbol_c + '.csv'
@@ -335,6 +351,9 @@ def df_atm_plus_obj_min5(basic, date, gap, shift=0):
     df_p = pd.DataFrame(r_p, columns=cols)
     df_c.index.name = 'iv_c'
     df_p.index.name = 'iv_p'
+    # print(df_c.tail())
+    # print(df_p.tail())
+
     return df_c, df_p
 
 def df_open_interest(basic):
@@ -399,13 +418,19 @@ def common(date, code, gap):
     df1 = df_hv(code)
     df2, dud = df_atm_plus_obj_day(code, gap)
     df2 = df_iv(code, df2)
-    show_11([df1, df2], code)
+    # show_11([df1, df2], code)
+    show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:]], code)
 
     # 当月合约当天隐波分时图
     df31, df32  = df_atm_plus_obj_min5(code, date, gap)
     df31 = df_iv(code, df31)
     df32 = df_iv(code, df32)
-    fn = get_dss() + 'fut/bar/min5_' + code + '.csv'
+
+    if code[:2] == 'IO':
+        symbol_obj = 'IF' + code[2:]
+    else:
+        symbol_obj = code
+    fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
     df_obj = pd.read_csv(fn)
     df_obj = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
     df_obj = df_obj.set_index('time')
@@ -427,8 +452,8 @@ def common(date, code, gap):
     # print(df_left_p)
     # print(df_right_c)
     # print(df_right_p)
-    df_right_c['value'] = df_right_c['value']/df_left_c['value'] - 1
-    df_left_p['value'] = df_left_p['value']/df_right_p['value'] - 1
+    df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
+    df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
     df_right_c.index.name = 'skew_day_c'
     df_left_p.index.name = 'skew_day_p'
     # print(df_right_c)
@@ -442,8 +467,8 @@ def common(date, code, gap):
     df_right_p = df_iv(code, df_right_p)
     df_left_c = df_iv(code, df_left_c)
     df_left_p = df_iv(code, df_left_p)
-    df_right_c['value'] = df_right_c['value']/df_left_c['value'] - 1
-    df_left_p['value'] = df_left_p['value']/df_right_p['value'] - 1
+    df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
+    df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
     df_right_c.index.name = 'skew_min5_c'
     df_left_p.index.name = 'skew_min5_p'
     # print(df_right_c)
@@ -463,7 +488,7 @@ def CF(date, df):
     show_ic(m0, m1, code)
 
     img2pdf('CF_'+date+'.pdf',
-            [m0+'_hv_'+m0+'_iv_c.jpg' ,
+            [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
@@ -487,7 +512,7 @@ def m(date, df):
     show_ic(y0, m0, code)
 
     img2pdf('m_'+date+'.pdf',
-            [m0+'_hv_'+m0+'_iv_c.jpg' ,
+            [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
@@ -510,7 +535,7 @@ def RM(date, df):
     show_ic(m0, m1, code)
 
     img2pdf('RM_'+date+'.pdf',
-            [m0+'_hv_'+m0+'_iv_c.jpg' ,
+            [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
@@ -527,16 +552,12 @@ def IO(date, df):
 
     common(date, code, gap)
 
-    # ic
-    show_ic(m0, m1, code)
-
-    img2pdf('RM_'+date+'.pdf',
-            [m0+'_hv_'+m0+'_iv_c.jpg' ,
+    img2pdf('IO_'+date+'.pdf',
+            [m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_iv_c_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m0+'_openinterest_c_openinterest_p.jpg',
-             m0+'_ic_'+m0+'_'+m1+'.jpg',
             ])
 
 def compass(date):
@@ -545,9 +566,17 @@ def compass(date):
     df2 = df2[pd.notnull(df2.flag)]
 
     # CF(date, df2)
-    m(date, df2)
-    RM(date, df2)
-    IO(date, df2)
+    # m(date, df2)
+    # RM(date, df2)
+    # IO(date, df2)
+
+    for func in [CF, m, IO]:
+    # for func in [IO]:
+        try:
+            func(date, df2)
+        except Exception as e:
+            s = traceback.format_exc()
+            to_log(s)
 
 
 if __name__ == '__main__':
