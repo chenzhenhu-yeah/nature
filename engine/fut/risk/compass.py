@@ -248,11 +248,6 @@ def df_atm_plus_obj_day(basic, gap, shift=0):
     else:
         symbol_obj = basic
 
-    # # fn = get_dss() + 'fut/put/rec/min5_' + symbol_obj + '.csv'
-    # fn = get_dss() + 'fut/bar/day_' + symbol_obj + '.csv'
-    # df_obj = pd.read_csv(fn)
-    # # print(df_obj.head())
-
     fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
     df_obj = pd.read_csv(fn)
     date_list = sorted(list(set(df_obj.date)))
@@ -589,7 +584,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-11'
+    date = '2020-11-12'
     # date = '2020-09-28'
 
     compass(date)
