@@ -167,7 +167,7 @@ def get_symbols_trade():
            ]
     yymm = today[2:4] + today[5:7]
     index = yymm_list.index(yymm)
-    for s in ['cu', 'al', 'zn']:
+    for s in ['al']:
         for i in range(index, index+9):
             symbols_list.append( s + yymm_list[i] )
 
@@ -226,7 +226,7 @@ def get_symbols_quote():
         index = yymm_list.index(yymm)
         # print(index)
 
-        for s in ['cu', 'al', 'zn']:
+        for s in ['al']:
             for i in range(index, index+9):
                 symbols_list.append( s + yymm_list[i] )
     except Exception as e:

@@ -11,7 +11,6 @@ import json
 import os
 import traceback
 
-
 from nature import del_blank, check_symbols_p
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
@@ -346,6 +345,15 @@ def fut_owl():
             fn = get_dss() + 'fut/engine/owl/history.csv'
             a_file(fn,ins)
 
+            # 自动增加symbol到symbols_owl、symbols_trade
+            fn = get_dss() + 'fut/cfg/config.json'
+            with open(fn,'r') as f:
+                load_dict = json.load(f)
+                load_dict['symbols_owl'] += ',' + code
+                load_dict['symbols_trade'] += ',' + code
+            with open(fn,"w") as f:
+                json.dump(load_dict,f)
+
             tips = 'append success'
 
 
@@ -361,8 +369,19 @@ def fut_owl():
         ins_list = r_file(fn)
         for ins in ins_list:
             r.append([symbol] + list(dict(ins).values()))
+    # print(r)
 
-    return render_template("owl.html",tip=tips,rows=r)
+    # 显示维护历史
+    h = [['date', 'code', 'ins', 'price', 'num']]
+    fn = get_dss() + 'fut/engine/owl/history.csv'
+    ins_list = r_file(fn)
+    ins_list.reverse()
+    for ins in ins_list:
+        h.append(list(dict(ins).values()))
+    h = h[:9]
+    # print(h)
+
+    return render_template("owl.html", tip=tips, rows=r, hs=h)
 
 @app.route('/opt_trade', methods=['get','post'])
 def opt_trade():

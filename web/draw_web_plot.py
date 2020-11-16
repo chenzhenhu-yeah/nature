@@ -13,7 +13,7 @@ import talib
 from nature import get_dss, get_inx, get_contract
 from nature import bsm_call_imp_vol, bsm_put_imp_vol
 
-def ic(symbol1, symbol2):
+def ic(symbol1, symbol2): 
     fn = get_dss() +'fut/bar/day_' + symbol1 + '.csv'
     df1 = pd.read_csv(fn)
     fn = get_dss() +'fut/bar/day_' + symbol2 + '.csv'

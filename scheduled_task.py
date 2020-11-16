@@ -282,8 +282,25 @@ def run_mail_pdf():
         date = now.strftime('%Y-%m-%d')
         compass(date)
 
+
+def get_free_space_mb(folder):
+  """
+  Return folder/drive free space (in GB)
+  """
+  if platform.system() == 'Windows':
+    free_bytes = ctypes.c_ulonglong(0)
+    ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
+    return free_bytes.value/1024/1024/1024
+  else:
+    st = os.statvfs(folder)
+    return st.f_bavail * st.f_frsize/1024/1024
+
 def run_examine():
-    pass
+    kj = round(get_free_space_mb('C:\\'), 2)
+    # print(kj,'GB')
+    if kj < 3:
+        send_email(dss, '预警：磁盘空间不足3G', str(kj)+'GB')
+
     now = datetime.datetime.now()
     weekday = int(now.strftime('%w'))
     if 1 <= weekday <= 5 and is_market_date():
