@@ -276,6 +276,7 @@ def tick2bar(tradeDay):
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
+            to_log('error: ' + symbol)
             continue
 
 if __name__ == "__main__":
