@@ -13,7 +13,7 @@ import talib
 import fitz
 import traceback
 
-from nature import get_dss, get_inx, get_contract, get_repo, to_log, send_email
+from nature import get_dss, get_inx, get_contract, get_repo, to_log, send_email, get_trade_preday
 from nature import bsm_call_value, bsm_put_value, bsm_call_imp_vol, bsm_put_imp_vol
 
 
@@ -446,6 +446,77 @@ def df_open_interest(basic):
 
         return None, None
 
+
+def df_smile(date, basic):
+    try:
+        fn = get_dss() + 'opt/' +  date[:7] + '_greeks.csv'
+        df = pd.read_csv(fn)
+        df['date'] = df.Localtime.str.slice(0,10)
+        df = df[df.date == date]
+        df = df[df.Instrument.str.slice(0,len(basic)) == basic]
+
+        strike_list = []
+        for i, row in df.iterrows():
+            strike_list.append( get_contract(row.Instrument).strike )
+        strike_list = sorted(list(set(strike_list)))
+        # print(strike_list)
+
+        if basic[:2] == 'IO':
+            symbol_obj = 'IF' + basic[2:]
+        else:
+            symbol_obj = basic
+
+        fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
+        df = pd.read_csv(fn)
+        df = df[(df.date == date) & (df.time == '14:54:00')]
+        close_obj = df.iat[0,5]
+        # print(obj_close)
+
+        r_c = []
+        r_p = []
+        for strike in strike_list:
+            # print(strike)
+            symbol_c = basic + get_contract(basic).opt_flag_C + str(strike)
+            fn = get_dss() + 'fut/bar/min5_' + symbol_c + '.csv'
+            df = pd.read_csv(fn)
+            df = df[(df.date == date) & (df.time == '14:54:00')]
+            r_c.append([date, symbol_c, df.iat[0,5], close_obj])
+
+            symbol_p = basic + get_contract(basic).opt_flag_P + str(strike)
+            fn = get_dss() + 'fut/bar/min5_' + symbol_p + '.csv'
+            df = pd.read_csv(fn)
+            df = df[(df.date == date) & (df.time == '14:54:00')]
+            # print(date, symbol_p, df.tail())
+            r_p.append([date, symbol_p, df.iat[0,5], close_obj])
+
+        df_c = pd.DataFrame(r_c, columns=['dt', 'symbol', 'close', 'close_obj'])
+        df_p = pd.DataFrame(r_p, columns=['dt', 'symbol', 'close', 'close_obj'])
+        # print(df_c)
+        # print(df_p)
+
+        df_c = df_iv(basic, df_c)
+        df_p = df_iv(basic, df_p)
+
+        # 支掉深度虚值的干扰项
+        for i in [0,1,2]:
+            df_c.iat[i,0] = np.nan
+            df_p.iat[-i-1,0] = np.nan
+
+        df_c.index = [str(x) for x in strike_list]
+        df_c.index.name = date + '_iv_c'
+        df_p.index = [str(x) for x in strike_list]
+        df_p.index.name = date + '_iv_p'
+
+        print(df_c)
+        print(df_p)
+        return df_c, df_p
+
+    except Exception as e:
+        s = traceback.format_exc()
+        to_log(s)
+
+        return None, None
+
 def implied_dist(date, basic, gap):
     try:
         fn = get_dss() + 'opt/' +  date[:7] + '_greeks.csv'
@@ -516,50 +587,72 @@ def implied_dist(date, basic, gap):
         return None
 
 
+def smile(date, m0, m1=None):
+    preday = get_trade_preday(date)
+
+    df00_c, df00_p = df_smile(date, m0)
+    df01_c, df01_p = df_smile(preday, m0)
+    if df00_c is not None and df01_c is not None and df00_p is not None and  df01_p is not None:
+        # show_21([df00_c], [df00_p], m0, False, m0+'_smile')
+        show_21([df00_c, df01_c], [df00_p, df01_p], m0, False, m0+'_smile')
+
+    if m1 is not None:
+        df10_c, df10_p = df_smile(date, m1)
+        df11_c, df11_p = df_smile(preday, m1)
+        if df10_c is not None and df11_c is not None and df10_p is not None and  df11_p is not None:
+            show_21([df10_c, df11_c], [df10_p, df11_p], m0, False, m0+'_'+m1+'_smile')
+
+
 def term_structure(m0, m1, m2, m3, date, gap):
     df01, df02 = df_atm_plus_obj_day(m0, date, gap)
+    if df01 is None or df02 is None:
+        return
     df01 = df_iv(m0, df01)
     df02 = df_iv(m0, df02)
     # print(df02.tail())
+
     df11, df12 = df_atm_plus_obj_day(m1, date, gap)
+    if df11 is None or df12 is None:
+        return
     df11 = df_iv(m1, df11)
     df12 = df_iv(m1, df12)
     # print(df12.tail())
+
     df21, df22 = df_atm_plus_obj_day(m2, date, gap)
+    if df21 is None or df22 is None:
+        return
     df21 = df_iv(m2, df21)
     df22 = df_iv(m2, df22)
     # print(df22.tail())
+
     df31, df32 = df_atm_plus_obj_day(m3, date, gap)
+    if df31 is None or df32 is None:
+        return
     df31 = df_iv(m3, df31)
     df32 = df_iv(m3, df32)
     # print(df32.tail())
 
-    if df01 is not None and df02 is not None and \
-       df11 is not None and df12 is not None and \
-       df21 is not None and df22 is not None and \
-       df31 is not None and df32 is not None:
+    df_c = pd.DataFrame({'iv_c':[m0,m1,m2,m3],'value': [df01.iat[-1,0], df11.iat[-1,0], df21.iat[-1,0], df31.iat[-1,0]]})
+    df_c = df_c.set_index('iv_c')
+    df_c.index.name = df01.index[-1]+'_iv_c'
+    # print(df_c)
 
-        df_c = pd.DataFrame({'iv_c':[m0,m1,m2,m3],'value': [df01.iat[-1,0], df11.iat[-1,0], df21.iat[-1,0], df31.iat[-1,0]]})
-        df_c = df_c.set_index('iv_c')
-        df_c.index.name = df01.index[-1]+'_iv_c'
-        # print(df_c)
+    df_c2 = pd.DataFrame({'iv_c':[m0,m1,m2,m3],'value': [df01.iat[-2,0], df11.iat[-2,0], df21.iat[-2,0], df31.iat[-2,0]]})
+    df_c2 = df_c2.set_index('iv_c')
+    df_c2.index.name = df01.index[-2]+'_iv_c'
+    # print(df_c2)
 
-        df_c2 = pd.DataFrame({'iv_c':[m0,m1,m2,m3],'value': [df01.iat[-2,0], df11.iat[-2,0], df21.iat[-2,0], df31.iat[-2,0]]})
-        df_c2 = df_c2.set_index('iv_c')
-        df_c2.index.name = df01.index[-2]+'_iv_c'
-        # print(df_c2)
+    df_p = pd.DataFrame({'iv_p':[m0,m1,m2,m3],'value': [df02.iat[-1,0], df12.iat[-1,0], df22.iat[-1,0], df32.iat[-1,0]]})
+    df_p = df_p.set_index('iv_p')
+    df_p.index.name = df01.index[-1]+'_iv_p'
+    # print(df_p)
 
-        df_p = pd.DataFrame({'iv_p':[m0,m1,m2,m3],'value': [df02.iat[-1,0], df12.iat[-1,0], df22.iat[-1,0], df32.iat[-1,0]]})
-        df_p = df_p.set_index('iv_p')
-        df_p.index.name = df01.index[-1]+'_iv_p'
-        # print(df_p)
+    df_p2 = pd.DataFrame({'iv_p':[m0,m1,m2,m3],'value': [df02.iat[-2,0], df12.iat[-2,0], df22.iat[-2,0], df32.iat[-2,0]]})
+    df_p2 = df_p2.set_index('iv_p')
+    df_p2.index.name = df01.index[-2]+'_iv_p'
+    # print(df_p2)
 
-        df_p2 = pd.DataFrame({'iv_p':[m0,m1,m2,m3],'value': [df02.iat[-2,0], df12.iat[-2,0], df22.iat[-2,0], df32.iat[-2,0]]})
-        df_p2 = df_p2.set_index('iv_p')
-        df_p2.index.name = df01.index[-2]+'_iv_p'
-        # print(df_p2)
-
-        show_21([df_c2, df_c], [df_p2, df_p], m0, False, m0+'_term_structure')
+    show_21([df_c2, df_c], [df_p2, df_p], m0, False, m0+'_term_structure')
 
 
 def sdiffer(m0, m1, date, gap):
@@ -808,12 +901,15 @@ def IO(date, df):
     common(date, code, gap, m1)
     term_structure(m0, m1, m2, m3, date, gap)
     sdiffer(m0, m1, date, gap)
+    smile(date, m0, m1)
 
     img2pdf('compass_IO_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c_'+m1+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m1+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m1+'_iv_p_'+m0+'_obj.jpg',
              m0+'_sdiffer.jpg',
              m0+'_term_structure.jpg',
+             m0+'_smile.jpg',
+             m0+'_'+m1+'_smile.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m1+'_skew_day_p_'+m1+'_skew_day_c.jpg',
@@ -850,11 +946,6 @@ def compass(date):
     df2 = pd.read_csv(fn)
     df2 = df2[pd.notnull(df2.flag)]
 
-    # CF(date, df2)
-    # m(date, df2)
-    # RM(date, df2)
-    # IO(date, df2)
-
     for func in [CF, m, RM, IO]:
     # for func in [IO]:
         try:
@@ -873,7 +964,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-16'
+    date = '2020-11-18'
     # date = '2020-09-28'
 
     compass(date)

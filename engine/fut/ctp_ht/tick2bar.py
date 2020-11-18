@@ -115,7 +115,7 @@ def proc_segment(df1,begin,end,num,symbol):
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    # if num == 240:
+    # if num != 240:
     #     # print(r)
     #     print(len(r), num)
 

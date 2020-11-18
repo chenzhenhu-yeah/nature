@@ -12,6 +12,10 @@ from multiprocessing.connection import Client
 import traceback
 import pdfkit
 
+import ctypes
+import platform
+import sys
+
 from nature import to_log, pandian_run, book_opt_run, get_dss, get_repo
 from nature import get_trading_dates, send_email, is_market_date
 

@@ -427,6 +427,18 @@ def get_nature_day():
     today = now.strftime('%Y-%m-%d')
     return today
 
+def get_trade_preday(date):
+    from nature import get_inx
+
+    df = get_inx('000300')
+    date_list = list(df.date)
+
+    try:
+        i = date_list.index(date)
+    except:
+        i = -1
+    return date_list[i + 1]
+
 #----------------------------------------------------------------------
 def get_ts_code(code):
     if code[0] == '6':
@@ -544,6 +556,9 @@ def bsm_put_imp_vol(S0, K, T, r, C0):
 
 
 if __name__ == '__main__':
-    get_symbols_trade()
+    # get_symbols_trade()
     # get_symbols_quote()
     pass
+
+    # r = get_trade_preday('2020-11-01')
+    # print(r)
