@@ -32,6 +32,7 @@ from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
 from nature import Fut_Skew_StrdPortfolio, Fut_Skew_BiliPortfolio
+from nature import Fut_ArbitragePortfolio
 
 #from ipdb import set_trace
 
@@ -133,18 +134,18 @@ class FutEngine(object):
         #         cci_raw_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_Cci_RawPortfolio, cci_raw_symbol_list)
 
-        if 'symbols_ic' in setting:
-            symbols = setting['symbols_ic']
-            if len(symbols) > 0:
-                ic_symbol_list = symbols.split(',')
-            else:
-                ic_symbol_list = []
-            fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
-                        self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
+        # if 'symbols_ic' in setting:
+        #     symbols = setting['symbols_ic']
+        #     if len(symbols) > 0:
+        #         ic_symbol_list = symbols.split(',')
+        #     else:
+        #         ic_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/ic/portfolio_ic_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
+        #                 self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
 
         if 'symbols_yue' in setting:
             symbols = setting['symbols_yue']
@@ -186,6 +187,8 @@ class FutEngine(object):
         #             if row.symbol_o in follow_symbol_list and row.symbol_c in follow_symbol_list and row.symbol_p in follow_symbol_list:
         #                 self.loadPortfolio(Fut_FollowPortfolio, [row.symbol_o, row.symbol_c, row.symbol_p])
 
+# --------------------------------------------------------------------------------
+
         if 'symbols_ratio' in setting:
             symbols = setting['symbols_ratio']
             if len(symbols) > 0:
@@ -216,6 +219,9 @@ class FutEngine(object):
                 skew_bili_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
+# --------------------------------------------------------------------------------
+
+        self.loadPortfolio(Fut_ArbitragePortfolio, [])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
@@ -352,7 +358,7 @@ class FutEngine(object):
 
                     if bar.time[3:5] == period_list[i]:
                         i = (i+1) % 12
-                        self.vtSymbol_list = get_symbols_trade()                        
+                        self.vtSymbol_list = get_symbols_trade()
 
                     if id not in vtSymbol_dict:
                         vtSymbol_dict[id] = bar

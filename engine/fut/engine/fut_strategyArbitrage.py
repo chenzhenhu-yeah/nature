@@ -2,6 +2,7 @@
 
 import os
 import time
+from datetime import datetime
 import pandas as pd
 from csv import DictReader
 from collections import OrderedDict, defaultdict
@@ -96,14 +97,14 @@ class Fut_ArbitrageSignal(Signal):
         self.can_cover = False
 
         # 记录数据
-        r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice]]
-        df = pd.DataFrame(r)
-
-        filename = get_dss() +  'fut/engine/arbitrage/bar_arbitrage_'+self.type+ '_' + self.vtSymbol + '.csv'
-        if os.path.exists(filename):
-            df.to_csv(filename, index=False, mode='a', header=False)
-        else:
-            df.to_csv(filename, index=False)
+        # r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice]]
+        # df = pd.DataFrame(r)
+        #
+        # filename = get_dss() +  'fut/engine/arbitrage/bar_arbitrage_'+self.type+ '_' + self.vtSymbol + '.csv'
+        # if os.path.exists(filename):
+        #     df.to_csv(filename, index=False, mode='a', header=False)
+        # else:
+        #     df.to_csv(filename, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -157,10 +158,9 @@ class Fut_ArbitragePortfolio(Portfolio):
         setting = json.load(config)
         symbols = setting['symbols_arbitrage']
         self.pz_list = symbols.split(',')
-        slice_dict = {}
+        self.slice_dict = {}
 
         Portfolio.__init__(self, Fut_ArbitrageSignal, engine, symbol_list, signal_param)
-        self.promote = True
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -174,6 +174,7 @@ class Fut_ArbitragePortfolio(Portfolio):
             return
 
         # 动态加载symbol对应的signal
+        vtSymbol = bar.vtSymbol
         if vtSymbol not in self.vtSymbolList:
             self.vtSymbolList.append(vtSymbol)
             self.got_dict[vtSymbol] = False
@@ -184,17 +185,24 @@ class Fut_ArbitragePortfolio(Portfolio):
 
         if self.tm != bar.time:
             self.tm = bar.time
+
+            for pz in self.pz_list:
+                self.slice_dict[pz] = []
+
             for symbol in self.vtSymbolList:
-                self.got_dict[symbol] = False
+                # if self.got_dict[symbol] == False:
+                #     continue
 
                 s = self.signalDict[symbol][0]
-                pz = get_contract(symbol).pz
-                if pz in slice_dict:
-                    slice_dict[pz].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
-                else:
-                    slice_dict[pz] = []
+                if s.bar is not None:
+                    pz = get_contract(symbol).pz
+                    if pz in self.slice_dict:
+                        self.slice_dict[pz].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
+
+                self.got_dict[symbol] = False
             # 输出slice_dict
             pass
+            self.pcp()
 
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:
@@ -206,7 +214,95 @@ class Fut_ArbitragePortfolio(Portfolio):
         为每一个品种来检查是否触发下单条件
         # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
         """
-        self.control_in_p(bar)
+        # self.control_in_p(bar)
+
+    #----------------------------------------------------------------------
+    def get_rec_from_slice(self, symbol):
+        pz = get_contract(symbol).pz
+        v = self.slice_dict[pz]
+        for row in v:
+            if row[0] == symbol:
+                return row
+
+        return None
+
+    #----------------------------------------------------------------------
+    def pcp(self):
+        k_dict = {}
+        now = datetime.now()
+        today = now.strftime('%Y-%m-%d')
+        fn = get_dss() + 'fut/cfg/opt_mature.csv'
+        df2 = pd.read_csv(fn)
+        df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
+        df2 = df2.set_index('symbol')
+        mature_dict = dict(df2.mature)
+
+        for pz in self.slice_dict.keys():
+            # print(pz)
+            v = self.slice_dict[pz]
+            for row in v:
+                # print(row)
+                symbol = row[0]
+                ask_price = row[2]
+                bid_price = row[3]
+                opt_flag = get_contract(symbol).opt_flag
+                basic = get_contract(symbol).basic
+                strike = get_contract(symbol).strike
+                if basic[:2] == 'IO':
+                    symbol_obj = 'IF' + basic[2:]
+                else:
+                    symbol_obj = basic
+
+                if basic+str(strike) not in k_dict.keys():
+                    if opt_flag == 'C':
+                        symbol_p = basic + get_contract(symbol).opt_flag_P + str(strike)
+                        rec_p = self.get_rec_from_slice(symbol_p)
+                        rec_obj = self.get_rec_from_slice(symbol_obj)
+                        if rec_p is not None and rec_obj is not None:
+                            k_dict[basic+str(strike)] = [basic, strike, ask_price, bid_price, rec_p[2], rec_p[3], rec_obj[2], rec_obj[3]]
+                    if opt_flag == 'P':
+                        symbol_c = basic + get_contract(symbol).opt_flag_C + str(strike)
+                        rec_c = self.get_rec_from_slice(symbol_c)
+                        rec_obj = self.get_rec_from_slice(symbol_obj)
+                        if rec_c is not None and rec_obj is not None:
+                            k_dict[basic+str(strike)] = [basic, strike, rec_c[2], rec_c[3], ask_price, bid_price, rec_obj[2], rec_obj[3]]
+        # 逐条记录验证pcp规则
+        for k in k_dict.keys():
+            rec = k_dict[k]
+            term = rec[0]
+            x = rec[1]
+            date_mature = mature_dict[ term ]
+            date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
+            td = datetime.strptime(today, '%Y-%m-%d')
+            T = float((date_mature - td).days) / 365                              # 剩余期限
+            if T == 0 or T >= 0.2:
+                continue
+
+            # 正向套利
+            S = rec[6]
+            cb = rec[3]
+            pa = rec[4]
+            if cb > 1E8 or cb == 0 or cb != cb or pa > 1E8 or pa == 0 or pa != pa:
+                pass
+            else:
+                pSc_forward = int( pa + S - cb )
+                diff_forward = float(x) - pSc_forward
+                rt_forward = round( diff_forward/(S*2*0.1)/T, 2 )
+                if rt_forward > 0.12:
+                    to_log( 'pcp: ' + str([today, 'forward', term, x, S, cb, pa, pSc_forward, diff_forward, rt_forward]) )
+
+            # # 反向套利
+            # S = rec[7]
+            # ca = rec[2]
+            # pb = rec[5]
+            # if ca > 1E8 or ca == 0 or ca != ca or pb > 1E8 or pb == 0 or pb != pb:
+            #     pass
+            # else:
+            #     pSc_back = int( pb + S - ca )
+            #     diff_back = float(x) - pSc_back
+            #     rt_back = round( diff_back/(S*2*0.1)/T, 2 )
+            #     if rt_back < -0.01:
+            #         to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, diff_back, rt_back]) )
 
 
     #----------------------------------------------------------------------

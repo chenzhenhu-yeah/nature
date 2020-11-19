@@ -128,7 +128,7 @@ def check_symbols_p(key, value):
                     r = pz + '未在trade_time中维护'
 
     # 判读策略将交易的品种是否在symbols_trade中维护
-    if key not in ['symbols_ratio','symbols_straddle','symbols_sdiffer','symbols_skew_strd','symbols_skew_bili','symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12','symbols_trade','gateway_pz','gateway_pf']:
+    if key not in ['symbols_arbitrage','symbols_ratio','symbols_straddle','symbols_sdiffer','symbols_skew_strd','symbols_skew_bili','symbols_quote','symbols_quote_01','symbols_quote_05','symbols_quote_06','symbols_quote_09','symbols_quote_10','symbols_quote_12','symbols_trade','gateway_pz','gateway_pf']:
         if len(value) > 0:
             symbols_trade_list = get_symbols_trade()
             symbol_list = value.split(',')
@@ -141,6 +141,7 @@ def check_symbols_p(key, value):
                    'symbols_cciboll','symbols_dali','symbols_rsiboll','symbols_atrrsi','symbols_turtle','symbols_dalicta',
                    'symbols_dualband','symbols_ic','symbols_ma','symbols_yue','symbols_avenger','symbols_follow','symbols_quote_canary',
                    'symbols_ratio','symbols_straddle','symbols_sdiffer','symbols_skew_strd','symbols_skew_bili',
+                   'symbols_arbitrage',
                   ]
     if key not in symbols_all:
         r = '新symbols，未在web端进行风控'

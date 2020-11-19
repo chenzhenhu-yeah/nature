@@ -59,6 +59,7 @@ from nature.engine.fut.engine.fut_strategyStraddle import Fut_StraddlePortfolio
 from nature.engine.fut.engine.fut_strategySdiffer import Fut_SdifferPortfolio
 from nature.engine.fut.engine.fut_strategySkew_Strd import Fut_Skew_StrdPortfolio
 from nature.engine.fut.engine.fut_strategySkew_Bili import Fut_Skew_BiliPortfolio
+from nature.engine.fut.engine.fut_strategyArbitrage import Fut_ArbitragePortfolio
 
 from nature.engine.fut.rd.fut_strategyAtrRsi import Fut_AtrRsiPortfolio
 from nature.engine.fut.rd.opt_short_put import Opt_Short_PutPortfolio

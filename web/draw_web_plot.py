@@ -13,7 +13,7 @@ import talib
 from nature import get_dss, get_inx, get_contract
 from nature import bsm_call_imp_vol, bsm_put_imp_vol
 
-def ic(symbol1, symbol2): 
+def ic(symbol1, symbol2):
     fn = get_dss() +'fut/bar/day_' + symbol1 + '.csv'
     df1 = pd.read_csv(fn)
     fn = get_dss() +'fut/bar/day_' + symbol2 + '.csv'
@@ -1154,7 +1154,7 @@ def iv_min5_show(symbol_list, date):
         r = 0.03
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
         df2 = pd.read_csv(fn)
-        df2 = df2[df2.pz == df2.pz]                 # 筛选出不为空的记录
+        df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
         df2 = df2.set_index('symbol')
         mature_dict = dict(df2.mature)
         date_mature = mature_dict[ basic ]

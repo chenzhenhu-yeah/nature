@@ -3,3 +3,4 @@ __pycache__/
 log/
 /web/static/
 /engine/fut/risk/img/
+/engine/fut/rd/USDA/esr/

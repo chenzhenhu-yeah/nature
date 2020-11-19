@@ -480,6 +480,8 @@ def df_smile(date, basic):
             fn = get_dss() + 'fut/bar/min5_' + symbol_c + '.csv'
             df = pd.read_csv(fn)
             df = df[(df.date == date) & (df.time == '14:54:00')]
+            if df.empty:
+                continue
             r_c.append([date, symbol_c, df.iat[0,5], close_obj])
 
             symbol_p = basic + get_contract(basic).opt_flag_P + str(strike)
@@ -487,6 +489,8 @@ def df_smile(date, basic):
             df = pd.read_csv(fn)
             df = df[(df.date == date) & (df.time == '14:54:00')]
             # print(date, symbol_p, df.tail())
+            if df.empty:
+                continue
             r_p.append([date, symbol_p, df.iat[0,5], close_obj])
 
         df_c = pd.DataFrame(r_c, columns=['dt', 'symbol', 'close', 'close_obj'])
