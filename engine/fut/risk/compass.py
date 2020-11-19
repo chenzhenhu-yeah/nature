@@ -503,12 +503,12 @@ def df_smile(date, basic):
             df_p.iat[-i-1,0] = np.nan
 
         df_c.index = [str(x) for x in strike_list]
-        df_c.index.name = date + '_iv_c'
+        df_c.index.name = date + '_smile_c'
         df_p.index = [str(x) for x in strike_list]
-        df_p.index.name = date + '_iv_p'
+        df_p.index.name = date + '_smile_p'
 
-        print(df_c)
-        print(df_p)
+        # print(df_c)
+        # print(df_p)
         return df_c, df_p
 
     except Exception as e:
@@ -600,7 +600,7 @@ def smile(date, m0, m1=None):
         df10_c, df10_p = df_smile(date, m1)
         df11_c, df11_p = df_smile(preday, m1)
         if df10_c is not None and df11_c is not None and df10_p is not None and  df11_p is not None:
-            show_21([df10_c, df11_c], [df10_p, df11_p], m0, False, m0+'_'+m1+'_smile')
+            show_21([df10_c, df11_c], [df10_p, df11_p], m1, False, m1+'_smile')
 
 
 def term_structure(m0, m1, m2, m3, date, gap):
@@ -724,61 +724,61 @@ def img2pdf(pdfname, img_list):
 def common(date, m0, gap, m1=None):
     code = m0
 
-    # 历波及当月合约隐波图
-    df1 = df_hv(code, date)
-    df2, dud = df_atm_plus_obj_day(code, date, gap)
-    if df1 is not None and df2 is not None:
-        df2 = df_iv(code, df2)
-        if m1 is None:
-            show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:]], code)
-        else:
-            df3, dud = df_atm_plus_obj_day(m1, date, gap)
-            # print(df3.tail())
-            df3 = df_iv(m1, df3)
-            # print(df3.tail())
-            if df3 is not None:
-                show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:], df3.iloc[-60:,:]], code)
-
-
-    # 当月（次月）合约当天隐波分时图
-    df31, df32  = df_atm_plus_obj_min5(code, date, gap)
-    if df31 is not None and df32 is not None:
-        df31 = df_iv(code, df31)
-        df32 = df_iv(code, df32)
-
-        if code[:2] == 'IO':
-            symbol_obj = 'IF' + code[2:]
-        else:
-            symbol_obj = code
-        fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
-        df_obj = pd.read_csv(fn)
-        df_obj = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
-        df_obj = df_obj.set_index('time')
-        df_obj['value'] = df_obj['close']
-        df_obj.index.name = 'obj'
-        if df_obj is not None:
-            if m1 is None:
-                show_31([df31], [df32], [df_obj], code)
-            else:
-                df41, df42  = df_atm_plus_obj_min5(m1, date, gap)
-                df41 = df_iv(m1, df41)
-                df42 = df_iv(m1, df42)
-                if df41 is not None and df42 is not None:
-                    show_31([df31, df41], [df32, df42], [df_obj], code)
-
-    # 持仓量
-    df_c, df_p = df_open_interest(code)
-    if df_c is not None and df_p is not None:
-        show_11([df_c, df_p], code)
-    if m1 is not None:
-        df_c, df_p = df_open_interest(m1)
-        if df_c is not None and df_p is not None:
-            show_11([df_c, df_p], m1)
-
-    # 隐含分布
-    df = implied_dist(date, code, gap)
-    if df is not None:
-        show_11([df], code, False)
+    # # 历波及当月合约隐波图
+    # df1 = df_hv(code, date)
+    # df2, dud = df_atm_plus_obj_day(code, date, gap)
+    # if df1 is not None and df2 is not None:
+    #     df2 = df_iv(code, df2)
+    #     if m1 is None:
+    #         show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:]], code)
+    #     else:
+    #         df3, dud = df_atm_plus_obj_day(m1, date, gap)
+    #         # print(df3.tail())
+    #         df3 = df_iv(m1, df3)
+    #         # print(df3.tail())
+    #         if df3 is not None:
+    #             show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:], df3.iloc[-60:,:]], code)
+    #
+    #
+    # # 当月（次月）合约当天隐波分时图
+    # df31, df32  = df_atm_plus_obj_min5(code, date, gap)
+    # if df31 is not None and df32 is not None:
+    #     df31 = df_iv(code, df31)
+    #     df32 = df_iv(code, df32)
+    #
+    #     if code[:2] == 'IO':
+    #         symbol_obj = 'IF' + code[2:]
+    #     else:
+    #         symbol_obj = code
+    #     fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
+    #     df_obj = pd.read_csv(fn)
+    #     df_obj = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
+    #     df_obj = df_obj.set_index('time')
+    #     df_obj['value'] = df_obj['close']
+    #     df_obj.index.name = 'obj'
+    #     if df_obj is not None:
+    #         if m1 is None:
+    #             show_31([df31], [df32], [df_obj], code)
+    #         else:
+    #             df41, df42  = df_atm_plus_obj_min5(m1, date, gap)
+    #             df41 = df_iv(m1, df41)
+    #             df42 = df_iv(m1, df42)
+    #             if df41 is not None and df42 is not None:
+    #                 show_31([df31, df41], [df32, df42], [df_obj], code)
+    #
+    # # 持仓量
+    # df_c, df_p = df_open_interest(code)
+    # if df_c is not None and df_p is not None:
+    #     show_11([df_c, df_p], code)
+    # if m1 is not None:
+    #     df_c, df_p = df_open_interest(m1)
+    #     if df_c is not None and df_p is not None:
+    #         show_11([df_c, df_p], m1)
+    #
+    # # 隐含分布
+    # df = implied_dist(date, code, gap)
+    # if df is not None:
+    #     show_11([df], code, False)
 
     # skew_day
     for symbol in [m0, m1]:
@@ -791,12 +791,15 @@ def common(date, m0, gap, m1=None):
                 df_right_p = df_iv(code, df_right_p)
                 df_left_c = df_iv(code, df_left_c)
                 df_left_p = df_iv(code, df_left_p)
+                # print(df_right_c.tail())
+                # print(df_left_c.tail())
                 df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
                 df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
                 df_right_c.index.name = 'skew_day_c'
                 df_left_p.index.name = 'skew_day_p'
                 if df_right_c is not None and df_left_p is not None:
                     show_21([df_left_p], [df_right_c], code)
+                    # print(df_right_c.tail())
 
     # skew__min5
     for symbol in [m0, m1]:
@@ -815,6 +818,7 @@ def common(date, m0, gap, m1=None):
                 df_left_p.index.name = 'skew_min5_p'
                 if df_right_c is not None and df_left_p is not None:
                     show_21([df_left_p], [df_right_c], code)
+                    # print(df_right_c.tail())
 
 def CF(date, df):
     m0 = df[(df.pz == 'CF') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -825,19 +829,22 @@ def CF(date, df):
     gap = 200
 
     common(date, code, gap)
+    smile(date, m0)
 
     # ic
     show_ic(m0, m1, code, date)
-    # show_ic(m0, cy0, code, date)
+    show_ic(m0, cy0, code, date)
 
     img2pdf('compass_CF_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
+             m0+'_smile.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m0+'_'+m0+'_implied_dist.jpg',
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
              m0+'_ic_'+m0+'_'+m1+'.jpg',
+             m0+'_ic_'+m0+'_'+cy0+'.jpg',
             ])
 
 def m(date, df):
@@ -850,6 +857,7 @@ def m(date, df):
     gap = 50
 
     common(date, code, gap)
+    smile(date, m0)
 
     # ic
     show_ic(m0, m1, code, date)
@@ -858,6 +866,7 @@ def m(date, df):
     img2pdf('compass_m_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
+             m0+'_smile.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m0+'_'+m0+'_implied_dist.jpg',
@@ -875,6 +884,7 @@ def RM(date, df):
     gap = 50
 
     common(date, code, gap)
+    smile(date, m0)
 
     # ic
     show_ic(m0, m1, code, date)
@@ -882,6 +892,7 @@ def RM(date, df):
     img2pdf('compass_RM_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
+             m0+'_smile.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m0+'_'+m0+'_implied_dist.jpg',
@@ -909,7 +920,7 @@ def IO(date, df):
              m0+'_sdiffer.jpg',
              m0+'_term_structure.jpg',
              m0+'_smile.jpg',
-             m0+'_'+m1+'_smile.jpg',
+             m1+'_smile.jpg',
              m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
              m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m1+'_skew_day_p_'+m1+'_skew_day_c.jpg',
@@ -947,7 +958,7 @@ def compass(date):
     df2 = df2[pd.notnull(df2.flag)]
 
     for func in [CF, m, RM, IO]:
-    # for func in [IO]:
+    # for func in [m]:
         try:
             func(date, df2)
         except Exception as e:
@@ -964,7 +975,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-18'
+    date = '2020-11-19'
     # date = '2020-09-28'
 
     compass(date)
