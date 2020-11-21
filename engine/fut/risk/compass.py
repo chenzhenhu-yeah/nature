@@ -474,6 +474,8 @@ def df_smile(date, basic):
 
         r_c = []
         r_p = []
+        strike_c = []
+        strike_p = []
         for strike in strike_list:
             # print(strike)
             symbol_c = basic + get_contract(basic).opt_flag_C + str(strike)
@@ -483,6 +485,7 @@ def df_smile(date, basic):
             if df.empty:
                 continue
             r_c.append([date, symbol_c, df.iat[0,5], close_obj])
+            strike_c.append(str(strike))
 
             symbol_p = basic + get_contract(basic).opt_flag_P + str(strike)
             fn = get_dss() + 'fut/bar/min5_' + symbol_p + '.csv'
@@ -492,6 +495,7 @@ def df_smile(date, basic):
             if df.empty:
                 continue
             r_p.append([date, symbol_p, df.iat[0,5], close_obj])
+            strike_p.append(str(strike))
 
         df_c = pd.DataFrame(r_c, columns=['dt', 'symbol', 'close', 'close_obj'])
         df_p = pd.DataFrame(r_p, columns=['dt', 'symbol', 'close', 'close_obj'])
@@ -501,14 +505,14 @@ def df_smile(date, basic):
         df_c = df_iv(basic, df_c)
         df_p = df_iv(basic, df_p)
 
-        # 支掉深度虚值的干扰项
+        # 去掉深度虚值的干扰项
         for i in [0,1,2]:
             df_c.iat[i,0] = np.nan
             df_p.iat[-i-1,0] = np.nan
 
-        df_c.index = [str(x) for x in strike_list]
+        df_c.index = strike_c
         df_c.index.name = date + '_smile_c'
-        df_p.index = [str(x) for x in strike_list]
+        df_p.index = strike_p
         df_p.index.name = date + '_smile_p'
 
         # print(df_c)
@@ -586,7 +590,7 @@ def implied_dist(date, basic, gap):
     except Exception as e:
         s = traceback.format_exc()
         # to_log(s)
-        to_log(date + ' 数据缺失 in implied_dist from file compass.py')
+        to_log(date + ' ' + basic + ' 数据缺失 in implied_dist from file compass.py')
 
         return None
 
@@ -728,61 +732,61 @@ def img2pdf(pdfname, img_list):
 def common(date, m0, gap, m1=None):
     code = m0
 
-    # # 历波及当月合约隐波图
-    # df1 = df_hv(code, date)
-    # df2, dud = df_atm_plus_obj_day(code, date, gap)
-    # if df1 is not None and df2 is not None:
-    #     df2 = df_iv(code, df2)
-    #     if m1 is None:
-    #         show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:]], code)
-    #     else:
-    #         df3, dud = df_atm_plus_obj_day(m1, date, gap)
-    #         # print(df3.tail())
-    #         df3 = df_iv(m1, df3)
-    #         # print(df3.tail())
-    #         if df3 is not None:
-    #             show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:], df3.iloc[-60:,:]], code)
-    #
-    #
-    # # 当月（次月）合约当天隐波分时图
-    # df31, df32  = df_atm_plus_obj_min5(code, date, gap)
-    # if df31 is not None and df32 is not None:
-    #     df31 = df_iv(code, df31)
-    #     df32 = df_iv(code, df32)
-    #
-    #     if code[:2] == 'IO':
-    #         symbol_obj = 'IF' + code[2:]
-    #     else:
-    #         symbol_obj = code
-    #     fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
-    #     df_obj = pd.read_csv(fn)
-    #     df_obj = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
-    #     df_obj = df_obj.set_index('time')
-    #     df_obj['value'] = df_obj['close']
-    #     df_obj.index.name = 'obj'
-    #     if df_obj is not None:
-    #         if m1 is None:
-    #             show_31([df31], [df32], [df_obj], code)
-    #         else:
-    #             df41, df42  = df_atm_plus_obj_min5(m1, date, gap)
-    #             df41 = df_iv(m1, df41)
-    #             df42 = df_iv(m1, df42)
-    #             if df41 is not None and df42 is not None:
-    #                 show_31([df31, df41], [df32, df42], [df_obj], code)
-    #
-    # # 持仓量
-    # df_c, df_p = df_open_interest(code)
-    # if df_c is not None and df_p is not None:
-    #     show_11([df_c, df_p], code)
-    # if m1 is not None:
-    #     df_c, df_p = df_open_interest(m1)
-    #     if df_c is not None and df_p is not None:
-    #         show_11([df_c, df_p], m1)
-    #
-    # # 隐含分布
-    # df = implied_dist(date, code, gap)
-    # if df is not None:
-    #     show_11([df], code, False)
+    # 历波及当月合约隐波图
+    df1 = df_hv(code, date)
+    df2, dud = df_atm_plus_obj_day(code, date, gap)
+    if df1 is not None and df2 is not None:
+        df2 = df_iv(code, df2)
+        if m1 is None:
+            show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:]], code)
+        else:
+            df3, dud = df_atm_plus_obj_day(m1, date, gap)
+            # print(df3.tail())
+            df3 = df_iv(m1, df3)
+            # print(df3.tail())
+            if df3 is not None:
+                show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:], df3.iloc[-60:,:]], code)
+
+
+    # 当月（次月）合约当天隐波分时图
+    df31, df32  = df_atm_plus_obj_min5(code, date, gap)
+    if df31 is not None and df32 is not None:
+        df31 = df_iv(code, df31)
+        df32 = df_iv(code, df32)
+
+        if code[:2] == 'IO':
+            symbol_obj = 'IF' + code[2:]
+        else:
+            symbol_obj = code
+        fn = get_dss() + 'fut/bar/min5_' + symbol_obj + '.csv'
+        df_obj = pd.read_csv(fn)
+        df_obj = df_obj[(df_obj.date == date) & (df_obj.time <= '14:54:00')]
+        df_obj = df_obj.set_index('time')
+        df_obj['value'] = df_obj['close']
+        df_obj.index.name = 'obj'
+        if df_obj is not None:
+            if m1 is None:
+                show_31([df31], [df32], [df_obj], code)
+            else:
+                df41, df42  = df_atm_plus_obj_min5(m1, date, gap)
+                df41 = df_iv(m1, df41)
+                df42 = df_iv(m1, df42)
+                if df41 is not None and df42 is not None:
+                    show_31([df31, df41], [df32, df42], [df_obj], code)
+
+    # 持仓量
+    df_c, df_p = df_open_interest(code)
+    if df_c is not None and df_p is not None:
+        show_11([df_c, df_p], code)
+    if m1 is not None:
+        df_c, df_p = df_open_interest(m1)
+        if df_c is not None and df_p is not None:
+            show_11([df_c, df_p], m1)
+
+    # 隐含分布
+    df = implied_dist(date, code, gap)
+    if df is not None:
+        show_11([df], code, False)
 
     # skew_day
     for symbol in [m0, m1]:
@@ -979,7 +983,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-19'
+    date = '2020-11-23'
     # date = '2020-09-28'
 
     compass(date)

@@ -274,7 +274,7 @@ class Fut_ArbitragePortfolio(Portfolio):
             date_mature = mature_dict[ term ]
             date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
             td = datetime.strptime(today, '%Y-%m-%d')
-            T = float((date_mature - td).days) / 365                              # 剩余期限
+            T = round(float((date_mature - td).days) / 365, 4)                              # 剩余期限
             if T == 0 or T >= 0.2:
                 continue
 
@@ -287,22 +287,22 @@ class Fut_ArbitragePortfolio(Portfolio):
             else:
                 pSc_forward = int( pa + S - cb )
                 diff_forward = float(x) - pSc_forward
-                rt_forward = round( diff_forward/(S*2*0.1)/T, 2 )
+                rt_forward = round( diff_forward/(S*2*0.15)/T, 2 )
                 if rt_forward > 0.12:
-                    to_log( 'pcp: ' + str([today, 'forward', term, x, S, cb, pa, pSc_forward, diff_forward, rt_forward]) )
+                    to_log( 'pcp: ' + str([today, 'forward', term, x, S, cb, pa, pSc_forward, T, diff_forward, rt_forward]) )
 
-            # # 反向套利
-            # S = rec[7]
-            # ca = rec[2]
-            # pb = rec[5]
-            # if ca > 1E8 or ca == 0 or ca != ca or pb > 1E8 or pb == 0 or pb != pb:
-            #     pass
-            # else:
-            #     pSc_back = int( pb + S - ca )
-            #     diff_back = float(x) - pSc_back
-            #     rt_back = round( diff_back/(S*2*0.1)/T, 2 )
-            #     if rt_back < -0.01:
-            #         to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, diff_back, rt_back]) )
+            # 反向套利
+            S = rec[7]
+            ca = rec[2]
+            pb = rec[5]
+            if ca > 1E8 or ca == 0 or ca != ca or pb > 1E8 or pb == 0 or pb != pb:
+                pass
+            else:
+                pSc_back = int( pb + S - ca )
+                diff_back = pSc_back - float(x)
+                rt_back = round( diff_back/(S*2*0.15)/T, 2 )
+                if rt_back > 0.12:
+                    to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, T, diff_back, rt_back]) )
 
 
     #----------------------------------------------------------------------
