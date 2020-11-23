@@ -9,7 +9,7 @@ from collections import OrderedDict, defaultdict
 import traceback
 import json
 
-from nature import to_log, get_dss, get_contract
+from nature import to_log, get_dss, get_contract, send_email
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
 from nature import get_file_lock, release_file_lock
@@ -159,6 +159,7 @@ class Fut_ArbitragePortfolio(Portfolio):
         symbols = setting['symbols_arbitrage']
         self.pz_list = symbols.split(',')
         self.slice_dict = {}
+        self.id = 100
 
         Portfolio.__init__(self, Fut_ArbitrageSignal, engine, symbol_list, signal_param)
 
@@ -229,6 +230,7 @@ class Fut_ArbitragePortfolio(Portfolio):
     #----------------------------------------------------------------------
     def pcp(self):
         k_dict = {}
+        tm = '00:00:00'
         now = datetime.now()
         today = now.strftime('%Y-%m-%d')
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
@@ -243,6 +245,7 @@ class Fut_ArbitragePortfolio(Portfolio):
             for row in v:
                 # print(row)
                 symbol = row[0]
+                tm = row[1]
                 ask_price = row[2]
                 bid_price = row[3]
                 opt_flag = get_contract(symbol).opt_flag
@@ -259,18 +262,21 @@ class Fut_ArbitragePortfolio(Portfolio):
                         rec_p = self.get_rec_from_slice(symbol_p)
                         rec_obj = self.get_rec_from_slice(symbol_obj)
                         if rec_p is not None and rec_obj is not None:
-                            k_dict[basic+str(strike)] = [basic, strike, ask_price, bid_price, rec_p[2], rec_p[3], rec_obj[2], rec_obj[3]]
+                            k_dict[basic+str(strike)] = [basic, strike, ask_price, bid_price, rec_p[2], rec_p[3], rec_obj[2], rec_obj[3], tm]
                     if opt_flag == 'P':
                         symbol_c = basic + get_contract(symbol).opt_flag_C + str(strike)
                         rec_c = self.get_rec_from_slice(symbol_c)
                         rec_obj = self.get_rec_from_slice(symbol_obj)
                         if rec_c is not None and rec_obj is not None:
-                            k_dict[basic+str(strike)] = [basic, strike, rec_c[2], rec_c[3], ask_price, bid_price, rec_obj[2], rec_obj[3]]
+                            k_dict[basic+str(strike)] = [basic, strike, rec_c[2], rec_c[3], ask_price, bid_price, rec_obj[2], rec_obj[3], tm]
+
+        r = []
         # 逐条记录验证pcp规则
         for k in k_dict.keys():
             rec = k_dict[k]
             term = rec[0]
             x = rec[1]
+            tm = rec[8]
             date_mature = mature_dict[ term ]
             date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
             td = datetime.strptime(today, '%Y-%m-%d')
@@ -289,7 +295,10 @@ class Fut_ArbitragePortfolio(Portfolio):
                 diff_forward = float(x) - pSc_forward
                 rt_forward = round( diff_forward/(S*2*0.15)/T, 2 )
                 if rt_forward > 0.12:
-                    to_log( 'pcp: ' + str([today, 'forward', term, x, S, cb, pa, pSc_forward, T, diff_forward, rt_forward]) )
+                    self.id += 1
+                    seq = today[-5:-3] + today[-2:] + str(self.id)
+                    r.append( [seq, today, tm, 'pcp', ['forward', term, S, cb, pa, T, x, pSc_forward, diff_forward, rt_forward]] )
+                    # to_log( 'pcp: ' + str([today, 'forward', term, x, S, cb, pa, pSc_forward, T, diff_forward, rt_forward]) )
 
             # 反向套利
             S = rec[7]
@@ -302,8 +311,20 @@ class Fut_ArbitragePortfolio(Portfolio):
                 diff_back = pSc_back - float(x)
                 rt_back = round( diff_back/(S*2*0.15)/T, 2 )
                 if rt_back > 0.12:
-                    to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, T, diff_back, rt_back]) )
+                    self.id += 1
+                    seq = today[-5:-3] + today[-2:] + str(self.id)
+                    r.append( [seq, today, tm, 'pcp', ['back', term, S, ca, pb, T, x, pSc_back, diff_back, rt_back]] )
+                    # to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, T, diff_back, rt_back]) )
 
+        df = pd.DataFrame(r, columns=['seq', 'date', 'time', 'type', 'content'])
+        fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
+        if os.path.exists(fn):
+            df.to_csv(fn, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fn, index=False)
+
+        if tm > '09:00:00' and tm < '15:00:00' and r != []:
+            send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
 
     #----------------------------------------------------------------------
     def control_in_p(self, bar):

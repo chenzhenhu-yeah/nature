@@ -966,7 +966,7 @@ def compass(date):
     df2 = df2[pd.notnull(df2.flag)]
 
     for func in [CF, m, RM, IO]:
-    # for func in [m]:
+    # for func in [al]:
         try:
             func(date, df2)
         except Exception as e:
@@ -983,7 +983,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-23'
-    # date = '2020-09-28'
+    date = '2020-11-20'
+    # date = '2020-11-23'
 
     compass(date)

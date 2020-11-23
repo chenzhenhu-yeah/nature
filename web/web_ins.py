@@ -11,7 +11,7 @@ import json
 import os
 import traceback
 
-from nature import del_blank, check_symbols_p
+from nature import del_blank, check_symbols_p, get_tick
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
@@ -765,6 +765,69 @@ def skew_bili():
 
     return render_template("skew_bili.html",title="skew_bili",rows=r)
 
+@app.route('/arbitrage', methods=['get','post'])
+def arbitrage():
+    pz = ''
+    tips = '提示：'
+    s_dict = {'seq':'','profit':'','rt':'','grade':'','type':'','sub':'','group':1}
+    filename = get_dss() + 'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
+    if request.method == "POST":
+        try:
+            seq = del_blank( request.form.get('seq') )
+            kind = request.form.get('kind')
+
+            if kind == 'order':
+                if request.form.get('token') != '9999':
+                    tips = 'token error'
+                else:
+                    pass
+                # df = pd.read_csv(filename, dtype='str')
+                # df = df[df.symbol == symbol ]
+                # if df.empty:
+                #     df = pd.DataFrame(r, columns=cols)
+                #     df.to_csv(filename, mode='a', header=False, index=False)
+                # else:
+                #     tips = '合约已存在，无法新增！'
+            if kind == 'query':
+                s_dict['seq'] = seq
+                df = pd.read_csv(filename, dtype='str')
+                df = df[df.seq == seq]
+                if len(df) > 0:
+                    rec = df.iloc[0,:]
+                    s_dict['type'] = rec.type
+                    if rec.type == 'pcp':
+                        content = eval(rec.content)
+                        s_dict['sub'] = content[0]
+                        basic = content[1]
+                        price_obj = content[2]
+                        price_c = content[3]
+                        price_p = content[4]
+                        strike =  content[5]
+                        if s_dict['sub'] == 'forward':
+
+                            # tips = str(content)
+                            tips = str(strike )
+                            s_dict['symbol1'] = basic
+                            s_dict['price1'] = get_tick(basic)['AskPrice']
+                            s_dict['symbol2'] = basic + get_contract(basic).opt_flag_P + str(strike)
+                            s_dict['price2'] = get_tick(s_dict['symbol2'])['AskPrice']
+                            s_dict['symbol3'] = basic + get_contract(basic).opt_flag_C + str(strike)
+                            s_dict['price3'] = get_tick(s_dict['symbol3'])['BidPrice']
+                            s_dict['profit'] = strike - (s_dict['price1'] + s_dict['price2'] - s_dict['price3'])
+
+                else:
+                    tips = '查询无此记录'
+        except:
+            tips = '出错了，获取行情数据异常'
+
+    # 显示配置文件的内容
+    # df = pd.read_csv(filename, dtype='str')
+    df = pd.read_csv(filename)
+    r = [ list(df.columns) ]
+    for i, row in df.iterrows():
+        r.append( list(row) )
+
+    return render_template("arbitrage.html",tip=tips,rows=r,words=s_dict)
 
 @app.route('/gateway_trade', methods=['get'])
 def gateway_trade():

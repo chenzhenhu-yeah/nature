@@ -13,22 +13,35 @@ import time
 import sys
 import json
 import tushare as ts
-
-from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
-from nature import rc_file, get_symbols_quote
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
-
 import ctypes
 import os
 import platform
 import sys
 
-r = get_symbols_quote()
-print(r)
+from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
+from nature import rc_file, get_symbols_quote, get_tick, send_order
+#
+# symbol = 'm2101-C-3200'
+# symbol = 'p2105'
+#
+# r = get_tick(symbol)
+#
+# print(r)
+#
+# ins = {'vtSymbol':'p2105',
+#        'direction':'Buy',
+#        'offset':'Open',
+#        'price':6336,
+#        'volume':1,
+#        'pfName':'web'
+#        }
+# send_order(ins)
+
+send_email(get_dss(), 'test3', '')
 
 # df = pd.DataFrame(np.random.randn(3, 3), columns=list('ABC'))
 #

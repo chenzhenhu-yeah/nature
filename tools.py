@@ -316,7 +316,7 @@ def send_email_old(dss, subject, content):
         to_log(s)
 
 
-def send_email(dss, subject, content, attach_list=[]):
+def send_email(dss, subject, content, attach_list=[], receivers=None):
     try:
 
         # # 第三方 SMTP 服务
@@ -338,7 +338,8 @@ def send_email(dss, subject, content, attach_list=[]):
         # mail_auth_password = "pwqgqmexjvhbbhjd"       # 授权密码
 
         sender = setting['sender']
-        receivers = setting['receivers']
+        if receivers is None:
+            receivers = setting['receivers']
         #receivers = '270114497@qq.com, zhenghaishu@126.com' # 多个收件人
 
         message = MIMEMultipart()

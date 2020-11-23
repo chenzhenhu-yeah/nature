@@ -7,12 +7,10 @@ import numpy as np
 import pandas as pd
 import schedule
 import threading
-from multiprocessing.connection import Listener
 from multiprocessing.connection import Client
 import traceback
 from csv import DictReader
 import sys
-
 
 from nature import CtpTrade
 from nature import CtpQuote
@@ -22,22 +20,6 @@ from nature import VtBarData
 from nature import SOCKET_BAR, get_dss, to_log, get_contract, is_market_date
 from nature import get_symbols_quote
 
-from nature import SOCKET_GET_TICK
-address = ('localhost', SOCKET_GET_TICK)
-
-
-def get_tick(symbol):
-    try :
-        with Client(address, authkey=b'secret password') as conn:
-            conn.send(symbol)
-            r = conn.recv()
-            if r != '':
-                r = eval(r)
-                return r
-    except:
-        pass
-
-    raise ValueError
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
@@ -45,8 +27,6 @@ class HuQuote(CtpQuote):
     def __init__(self):
         """Constructor"""
         CtpQuote.__init__(self)
-
-        threading.Thread( target=self.get_tick_service, args=() ).start()
 
         # 加载配置
         # config = open(get_dss()+'fut/cfg/config.json')
@@ -64,26 +44,6 @@ class HuQuote(CtpQuote):
         self.ticks_dict = {}
         self.tm100 = 0
         self.cc = 0
-
-    #----------------------------------------------------------------------
-    def get_tick_service(self):
-        print('in get_tick_service ')
-
-        while True:
-            try:
-                with Listener(address, authkey=b'secret password') as listener:
-                    with listener.accept() as conn:
-                        s = conn.recv()
-                        tick = ''
-                        if s in self.ticks_dict:
-                            tick = self.ticks_dict[s][-1]
-                            cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
-                            tick = dict(zip(cols, tick))
-                        conn.send( str(tick) )
-            except Exception as e:
-                # print(e)
-                s = traceback.format_exc()
-                to_log(s)
 
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
@@ -123,13 +83,70 @@ class HuQuote(CtpQuote):
             #threading.Thread( target=self.OnTick, args=(tick,) ).start()
             #多线程容易出错。
 
+            # t0 = time.time()
             self.OnTick(tick)
+            # t1 = time.time()
+
+            # if self.cc < 1000:
+            #     self.tm100 += t1-t0
+            #     self.cc += 1
+            # else:
+            #     print(self.tm100)
+            #     self.tm100 = 0
+            #     self.cc = 0
+
+    # 保存tick到文件 -----------------------------------------------------------
+    def save_tick_file_origin(self, f, UpdateDate):
+        df = pd.DataFrame([f.__dict__])
+        df['Localtime'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        df['UpdateDate'] = UpdateDate
+        cols = ['Localtime','LastPrice','Instrument','AskPrice','AskVolume','BidPrice','BidVolume','AveragePrice','UpperLimitPrice','LowerLimitPrice','PreSettlementPrice','PreClosePrice','OpenPrice','PreDelta','CurrDelta','PreOpenInterest','OpenInterest','UpdateMillisec','Volume','UpdateDate','UpdateTime']
+        df = df[cols]
+
+        fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
+        if os.path.exists(fname):
+            df.to_csv(fname, index=False, mode='a', header=False)
+        else:
+            df.to_csv(fname, index=False, mode='a')
+
+    # 保存tick到文件 -----------------------------------------------------------
+    def save_tick_file_second(self, f, UpdateDate):
+        fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + f.Instrument + '.csv'
+
+        df = pd.DataFrame([f.__dict__])
+        df['Localtime'] = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+        df['UpdateDate'] = UpdateDate
+        cols = ['Localtime','LastPrice','Instrument','AskPrice','AskVolume','BidPrice','BidVolume','AveragePrice','UpperLimitPrice','LowerLimitPrice','PreSettlementPrice','PreClosePrice','OpenPrice','PreDelta','CurrDelta','PreOpenInterest','OpenInterest','UpdateMillisec','Volume','UpdateDate','UpdateTime']
+        df = df[cols]
+
+        if f.Instrument in self.ticks_dict:
+            df1 = self.ticks_dict[f.Instrument]
+            df = pd.concat([df1, df])
+            self.ticks_dict[f.Instrument] = df
+        else:
+            # 时段首笔，判断是否需要建文件
+            if os.path.exists(fname):
+                df.to_csv(fname, index=False, mode='a', header=False)
+            else:
+                df.to_csv(fname, index=False)
+
+            # 清空df, 建字典键值
+            df = df.drop(index=df.index)
+            self.ticks_dict[f.Instrument] = df
+
+        # if len(df) >= 360:
+        if (f.UpdateTime >= '11:29:50' and f.UpdateTime <= '12:00:00') or (f.UpdateTime >= '22:59:50' and f.UpdateTime <= '23:02:59') :
+            df.to_csv(fname, index=False, mode='a', header=False)
+
+            # 清空df
+            df = df.drop(index=df.index)
+            self.ticks_dict[f.Instrument] = df
 
     # 保存tick到文件 -----------------------------------------------------------
     def save_tick_file(self, symbol):
 
         fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + symbol + '.csv'
-        cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
+        cols = ['Localtime','Instrument','LastPrice','Volume','UpdateDate','UpdateTime']
         df = pd.DataFrame(self.ticks_dict[symbol], columns=cols)
         if os.path.exists(fname):
             df.to_csv(fname, index=False, mode='a', header=False)
@@ -143,7 +160,7 @@ class HuQuote(CtpQuote):
     # 缓存tick -----------------------------------------------------------
     def cache_tick(self, f, UpdateDate):
         Localtime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        rec =  [Localtime, f.Instrument, f.LastPrice, f.Volume, f.OpenInterest, f.AskPrice, f.AskVolume, f.BidPrice, f.BidVolume, UpdateDate, f.UpdateTime]
+        rec =  [Localtime, f.Instrument, f.LastPrice, f.Volume, UpdateDate, f.UpdateTime]
 
         if f.Instrument in self.ticks_dict:
             self.ticks_dict[f.Instrument].append( rec )
@@ -353,7 +370,6 @@ class TestQuote(object):
 
         now = datetime.now()
         print( 'in release, now time is: ', now )
-        self.q = None
 
 
     #----------------------------------------------------------------------

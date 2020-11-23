@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:950px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{tip}}</h1>
+       </header>
+
+      <form method="post" action="arbitrage">
+      <fieldset>
+
+      <p>seq:<input type="text" name="seq" value="{{words.seq}}"  /></p>
+      <p>
+        买  symbol:<input type="text" name="symbol1" value="{{words.symbol1}}" /> &emsp; &emsp;
+        price:<input type="text" name="price1" value="{{words.price1}}" />
+      </p>
+      <p>
+        买  symbol:<input type="text" name="symbol2" value="{{words.symbol2}}" /> &emsp; &emsp;
+        price:<input type="text" name="price2" value="{{words.price2}}" />
+      </p>
+      <p>
+        卖 symbol:<input type="text" name="symbol3" value="{{words.symbol3}}" /> &emsp; &emsp;
+        price:<input type="text" name="price3" value="{{words.price3}}" />
+      </p>
+      <p>
+        卖 symbol:<input type="text" name="symbol4" value="{{words.symbol4}}" /> &emsp; &emsp;
+        price:<input type="text" name="price4" value="{{words.price4}}" />
+      </p>
+      <p>
+        盈利点数:<input type="text" name="profit" value="{{words.profit}}" /> &emsp; &emsp;
+        年化收益:<input type="text" name="rt" value="{{words.rt}}" /> &emsp; &emsp;
+        评级:<input type="text" name="grade" value="{{words.grade}}" />
+      </p>
+      <p>
+        套利类型:<input type="text" name="type" value="{{words.type}}" /> &emsp; &emsp;
+        子类型:<input type="text" name="sub" value="{{words.sub}}" /> &emsp; &emsp;
+        交易数量（组）:<input type="number" name="group" value="{{words.group}}" />
+      </p>
+      <p>
+          token:<input type="password" name="token"/>
+      </p>
+      <p>
+        <pre>
+        order<input type="radio" name="kind" value="order" />     query<input type="radio" name="kind" value="query" />
+        </pre>
+      </p>
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+
+       <p>清单:</p>
+       <table>
+        {% for row in rows %}
+        <tr>
+          {% for d in row %}
+          <td class="description">{{ d }}</td>
+          {% endfor %}
+        <tr>
+        {% endfor %}
+       </table>
+
+    </section>
+  </body>
+</html>

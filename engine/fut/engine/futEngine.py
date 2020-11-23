@@ -19,7 +19,7 @@ from multiprocessing.connection import Client
 import traceback
 import sys
 
-from nature import SOCKET_BAR
+
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date, get_symbols_trade
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
 from nature import Book, a_file
@@ -35,7 +35,15 @@ from nature import Fut_Skew_StrdPortfolio, Fut_Skew_BiliPortfolio
 from nature import Fut_ArbitragePortfolio
 
 #from ipdb import set_trace
+from nature import SOCKET_BAR, SOCKET_ORDER
+address = ('localhost', SOCKET_ORDER)
 
+def send_order(ins):
+    try :
+        with Client(address, authkey=b'secret password') as conn:
+            conn.send(str(ins))
+    except:
+        pass
 
 ########################################################################
 class FutEngine(object):
@@ -63,6 +71,7 @@ class FutEngine(object):
         threading.Thread( target=self.traded_service, args=() ).start()
         threading.Thread( target=self.bar_listen_service, args=() ).start()
         threading.Thread( target=self.on_bar_service, args=() ).start()
+        threading.Thread( target=self.send_order_service, args=() ).start()
 
     #----------------------------------------------------------------------
     def init_daily(self):
@@ -239,6 +248,22 @@ class FutEngine(object):
             s = traceback.format_exc()
             to_log(s)
             to_log('加载投资组合出现异常')
+
+    #----------------------------------------------------------------------
+    def send_order_service(self):
+        print('下单服务线程开始工作')
+
+        while True:
+            try:
+                with Listener(address, authkey=b'secret password') as listener:
+                    with listener.accept() as conn:
+                        ins = conn.recv()
+                        ins = eval(ins)
+                        self._bc_sendOrder(ins['vtSymbol'], ins['direction'],ins['offset'],ins['price'],ins['volume'],ins['pfName'])
+            except Exception as e:
+                # print(e)
+                s = traceback.format_exc()
+                to_log(s)
 
     #----------------------------------------------------------------------
     def traded_service(self):

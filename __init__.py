@@ -5,6 +5,8 @@ SOCKET_ORDER  = 9002
 SOCKET_BAR    = 9003
 SOCKET_KQ_SIMNOW = 9004
 SOCKET_KQ_HT  = 9005
+SOCKET_GET_TICK  = 9006
+SOCKET_ORDER  = 9007
 
 from nature.logger import to_log, read_log_today
 
@@ -36,7 +38,6 @@ from nature.strategy import Signal, Portfolio, TradeData, SignalResult
 
 from nature.engine.stk.nearboll.stk_nearBollStrategy import stk_NearBollPortfolio
 from nature.engine.stk.stkEngine import StkEngine
-
 
 from nature.engine.fut.engine.fut_strategyRsiBoll import Fut_RsiBollPortfolio
 #from nature.engine.fut.engine.fut_strategyCci import Fut_CciPortfolio
@@ -71,10 +72,12 @@ from nature.engine.fut.py_ctp.trade import CtpTrade
 from nature.engine.fut.py_ctp.quote import CtpQuote
 from nature.engine.fut.py_ctp.enums import DirectType, OffsetType
 
+from nature.engine.fut.ctp_ht.subscribe_quote import get_tick
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP
 from nature.engine.fut.risk.pandian import pandian_run
 from nature.engine.fut.risk.book_opt import book_opt_run
 from nature.engine.fut.backtest.backtest_result import Backtest_Result
+from nature.engine.fut.engine.futEngine import send_order
 
 from nature.web.check_web import del_blank
 from nature.web.check_web import check_symbols_p
