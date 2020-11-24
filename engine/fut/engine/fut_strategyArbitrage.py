@@ -185,8 +185,6 @@ class Fut_ArbitragePortfolio(Portfolio):
             l.append(signal1)
 
         if self.tm != bar.time:
-            self.tm = bar.time
-
             for pz in self.pz_list:
                 self.slice_dict[pz] = []
 
@@ -197,13 +195,16 @@ class Fut_ArbitragePortfolio(Portfolio):
                 s = self.signalDict[symbol][0]
                 if s.bar is not None:
                     pz = get_contract(symbol).pz
-                    if pz in self.slice_dict:
+                    if pz in self.slice_dict and s.bar.time == self.tm:
                         self.slice_dict[pz].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
 
                 self.got_dict[symbol] = False
+
+            self.tm = bar.time
+
             # 输出slice_dict
-            pass
             self.pcp()
+
 
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:

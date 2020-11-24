@@ -46,8 +46,6 @@ class HuQuote(CtpQuote):
         """Constructor"""
         CtpQuote.__init__(self)
 
-        threading.Thread( target=self.get_tick_service, args=() ).start()
-
         # 加载配置
         # config = open(get_dss()+'fut/cfg/config.json')
         # setting = json.load(config)
@@ -64,26 +62,6 @@ class HuQuote(CtpQuote):
         self.ticks_dict = {}
         self.tm100 = 0
         self.cc = 0
-
-    #----------------------------------------------------------------------
-    def get_tick_service(self):
-        print('in get_tick_service ')
-
-        while True:
-            try:
-                with Listener(address, authkey=b'secret password') as listener:
-                    with listener.accept() as conn:
-                        s = conn.recv()
-                        tick = ''
-                        if s in self.ticks_dict:
-                            tick = self.ticks_dict[s][-1]
-                            cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
-                            tick = dict(zip(cols, tick))
-                        conn.send( str(tick) )
-            except Exception as e:
-                # print(e)
-                s = traceback.format_exc()
-                to_log(s)
 
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
@@ -313,6 +291,29 @@ class TestQuote(object):
         self.q = None
         self.working = False
         self.dss = get_dss()
+
+        threading.Thread( target=self.get_tick_service, args=() ).start()
+
+    #----------------------------------------------------------------------
+    def get_tick_service(self):
+        print('in get_tick_service ')
+
+        while True:
+            try:
+                with Listener(address, authkey=b'secret password') as listener:
+                    with listener.accept() as conn:
+                        s = conn.recv()
+                        tick = ''
+                        if self.q is not None:
+                            if s in self.q.ticks_dict:
+                                tick = self.q.ticks_dict[s][-1]
+                                cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
+                                tick = dict(zip(cols, tick))
+                        conn.send( str(tick) )
+            except Exception as e:
+                # print(e)
+                s = traceback.format_exc()
+                to_log(s)
 
     #----------------------------------------------------------------------
     def run(self):
