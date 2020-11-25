@@ -41,7 +41,7 @@ from nature import rc_file, get_symbols_quote, get_tick, send_order
 #        }
 # send_order(ins)
 
-send_email(get_dss(), 'test3', '')
+# send_email(get_dss(), 'test3', '')
 
 # df = pd.DataFrame(np.random.randn(3, 3), columns=list('ABC'))
 #

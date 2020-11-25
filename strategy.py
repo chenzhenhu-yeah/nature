@@ -248,16 +248,18 @@ class Portfolio(object):
 
     #----------------------------------------------------------------------
     def check_order_risk(self, signal, price, volume):
-        r = ''
-        if volume > 10:
-            r = ' : volume > 10'
+        r = None
+        if volume > 30:
+            r = ' : volume > 30'
 
-        if abs(signal.bar.close - price) > 20:
-            r = ' : price gap > 20 '
+        if abs(signal.bar.close - price) > 30:
+            r = ' : price gap > 30 '
 
-        if r != '':
+        if r is not None:
             to_log('order risk check error: ' + signal.vtSymbol + r )
-            raise ValueError
+            # raise ValueError
+
+        return None
 
     #----------------------------------------------------------------------
     def _bc_newSignal(self, signal, direction, offset, price, volume):
@@ -266,7 +268,8 @@ class Portfolio(object):
         计算真实交易价格和数量。
         """
         # 下单风控
-        self.check_order_risk(signal, price, volume)
+        if self.check_order_risk(signal, price, volume) is not None:
+            return 
 
         multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
         multiplier = int(round(multiplier, 0))

@@ -11,7 +11,7 @@ import json
 import os
 import traceback
 
-from nature import del_blank, check_symbols_p, get_tick
+from nature import del_blank, check_symbols_p, get_tick, send_order
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
@@ -777,17 +777,47 @@ def arbitrage():
             kind = request.form.get('kind')
 
             if kind == 'order':
-                if request.form.get('token') != '9999':
+                token = del_blank( request.form.get('token') )
+                symbol1 = del_blank( request.form.get('symbol1') )
+                symbol2 = del_blank( request.form.get('symbol2') )
+                symbol3 = del_blank( request.form.get('symbol3') )
+                symbol4 = del_blank( request.form.get('symbol4') )
+                group = int( del_blank( request.form.get('group') ) )
+
+                if token != '9999':
                     tips = 'token error'
+                elif symbol1 == '' or symbol3 == '' :
+                    tips = '交易合约不能为空'
                 else:
-                    pass
-                # df = pd.read_csv(filename, dtype='str')
-                # df = df[df.symbol == symbol ]
-                # if df.empty:
-                #     df = pd.DataFrame(r, columns=cols)
-                #     df.to_csv(filename, mode='a', header=False, index=False)
-                # else:
-                #     tips = '合约已存在，无法新增！'
+                    # symbol1
+                    s_dict['symbol1'] = symbol1
+                    s_dict['price1'] = get_tick(symbol1)['AskPrice']
+                    ins = [symbol1, 'Buy', 'Open', float(s_dict['price1']), group, 'web']
+                    send_order(ins)
+
+                    # symbol2
+                    if symbol2 != '':
+                        s_dict['symbol2'] = symbol2
+                        s_dict['price2'] = get_tick(symbol2)['AskPrice']
+                        ins = [symbol2, 'Buy', 'Open', float(s_dict['price2']), group, 'web']
+                        send_order(ins)
+
+                    # symbol3
+                    s_dict['symbol3'] = symbol3
+                    s_dict['price3'] = get_tick(symbol3)['BidPrice']
+                    ins = [symbol3, 'Sell', 'Open', float(s_dict['price3']), group, 'web']
+                    send_order(ins)
+
+                    # symbol4
+                    if symbol4 != '':
+                        s_dict['symbol4'] = symbol4
+                        s_dict['price4'] = get_tick(symbol4)['BidPrice']
+                        # ins = {'vtSymbol':symbol4, 'direction':'Sell', 'offset':'Open', 'price':float(s_dict['price4']), 'volume':group, 'pfName':'web'}
+                        ins = [symbol4, 'Sell', 'Open', float(s_dict['price4']), group, 'web']
+                        send_order(ins)
+
+                    tips = '下单成功！'
+
             if kind == 'query':
                 s_dict['seq'] = seq
                 df = pd.read_csv(filename, dtype='str')
@@ -802,11 +832,9 @@ def arbitrage():
                         price_obj = content[2]
                         price_c = content[3]
                         price_p = content[4]
-                        strike =  content[5]
+                        T =  content[5]
+                        strike =  content[6]
                         if s_dict['sub'] == 'forward':
-
-                            # tips = str(content)
-                            tips = str(strike )
                             s_dict['symbol1'] = basic
                             s_dict['price1'] = get_tick(basic)['AskPrice']
                             s_dict['symbol2'] = basic + get_contract(basic).opt_flag_P + str(strike)
@@ -814,6 +842,16 @@ def arbitrage():
                             s_dict['symbol3'] = basic + get_contract(basic).opt_flag_C + str(strike)
                             s_dict['price3'] = get_tick(s_dict['symbol3'])['BidPrice']
                             s_dict['profit'] = strike - (s_dict['price1'] + s_dict['price2'] - s_dict['price3'])
+                            s_dict['rt'] = round( s_dict['profit']/(s_dict['price1']*2*0.15)/T, 2 )
+                            s_dict['grade'] = 'bad'
+                            if s_dict['profit'] > 3:
+                                if s_dict['price1']/s_dict['profit'] < 900:
+                                    if s_dict['rt'] > 0.3:
+                                        s_dict['grade'] = 'excellent'
+                                    elif s_dict['rt'] > 0.2:
+                                        s_dict['grade'] = 'good'
+                                    elif s_dict['rt'] > 0.12:
+                                        s_dict['grade'] = 'normal'
 
                 else:
                     tips = '查询无此记录'
@@ -824,8 +862,11 @@ def arbitrage():
     # df = pd.read_csv(filename, dtype='str')
     df = pd.read_csv(filename)
     r = [ list(df.columns) ]
-    for i, row in df.iterrows():
-        r.append( list(row) )
+    n = len(df)
+    for i in range(1,n):
+        r.append( list(df.iloc[-i,:]) )
+        if i == 30:
+            break
 
     return render_template("arbitrage.html",tip=tips,rows=r,words=s_dict)
 

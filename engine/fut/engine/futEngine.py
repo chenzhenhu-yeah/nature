@@ -36,14 +36,24 @@ from nature import Fut_ArbitragePortfolio
 
 #from ipdb import set_trace
 from nature import SOCKET_BAR, SOCKET_ORDER
-address = ('localhost', SOCKET_ORDER)
+
 
 def send_order(ins):
-    try :
-        with Client(address, authkey=b'secret password') as conn:
-            conn.send(str(ins))
-    except:
-        pass
+    again = True
+    while again:
+        try :
+            client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            client.connect(('localhost', SOCKET_ORDER))
+            s = str(ins)
+            b = bytes(s, encoding='utf-8')
+            client.send(b)
+            client.close()
+
+            again = False
+            time.sleep(0.01)            
+        except:
+            s = traceback.format_exc()
+            to_log(s)
 
 ########################################################################
 class FutEngine(object):
@@ -253,13 +263,18 @@ class FutEngine(object):
     def send_order_service(self):
         print('下单服务线程开始工作')
 
+        server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        server.bind(('localhost', SOCKET_ORDER))
+        server.listen(5)
+
         while True:
             try:
-                with Listener(address, authkey=b'secret password') as listener:
-                    with listener.accept() as conn:
-                        ins = conn.recv()
-                        ins = eval(ins)
-                        self._bc_sendOrder(ins['vtSymbol'], ins['direction'],ins['offset'],ins['price'],ins['volume'],ins['pfName'])
+                conn,addr = server.accept()
+                b = conn.recv(1024)
+                s = str(b, encoding='utf-8')
+                ins = eval(s)
+                self._bc_sendOrder(ins[0], ins[1],ins[2],ins[3],ins[4],ins[5])
+                conn.close()
             except Exception as e:
                 # print(e)
                 s = traceback.format_exc()
@@ -527,7 +542,7 @@ class FutEngine(object):
 
         # 记录成交数据
         dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        time.sleep(0.01)
+        # time.sleep(0.01)
         order_id = str(int(time.time()))
 
         r = [[dt,pfName,order_id,'minx',vtSymbol, direction, offset, price, volume]]
