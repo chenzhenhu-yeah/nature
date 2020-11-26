@@ -50,7 +50,7 @@ def send_order(ins):
             client.close()
 
             again = False
-            time.sleep(0.01)            
+            time.sleep(0.01)
         except:
             s = traceback.format_exc()
             to_log(s)
@@ -557,6 +557,7 @@ class FutEngine(object):
         if self.gateway is not None:
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
             threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
+            send_email(get_dss(), '引擎下单：'+vtSymbol+' '+str(direction)+' '+str(offset), '')
 
 
     #----------------------------------------------------------------------

@@ -7,7 +7,7 @@ from collections import OrderedDict, defaultdict
 import traceback
 import json
 
-from nature import to_log, get_dss, get_contract
+from nature import to_log, get_dss, get_contract, get_trade_preday
 from nature import DIRECTION_LONG,DIRECTION_SHORT,OFFSET_OPEN,OFFSET_CLOSE,OFFSET_CLOSETODAY,OFFSET_CLOSEYESTERDAY
 from nature import VtBarData, ArrayManager, Signal, Portfolio, TradeData, SignalResult, DailyResult
 
@@ -156,7 +156,7 @@ class Fut_RatioPortfolio(Portfolio):
 
 
         Portfolio.__init__(self, Fut_RatioSignal, engine, symbol_list, signal_param)
-        self.promote = True
+        # self.promote = True
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
@@ -247,21 +247,24 @@ class Fut_RatioPortfolio(Portfolio):
 
                         # 开仓
                         if row.hold_b == 0 and row.hold_s == 0:
-                            if self.engine.type == 'backtest' and row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
-                                s_b.buy(s_b.bar.close, row.num_b)
-                                s_s.short(s_s.bar.close, row.num_s)
-                                df.at[i, 'price_b'] = s_b.bar.close
-                                df.at[i, 'price_s'] = s_s.bar.close
-                                df.at[i, 'hold_b'] = row.num_b
-                                df.at[i, 'hold_s'] = row.num_s
-
-                            elif row.num_s*s_s.bar.BidPrice - row.num_b*s_b.bar.AskPrice >= row.gap:
-                                s_b.buy(s_b.bar.AskPrice, row.num_b)              # 挂卖价
-                                s_s.short(s_s.bar.BidPrice, row.num_s)            # 挂买价
+                            if self.engine.type == 'backtest':
+                                if row.num_s*s_s.bar.close - row.num_b*s_b.bar.close >= row.gap:
+                                    s_b.buy(s_b.bar.close, row.num_b)
+                                    s_s.short(s_s.bar.close, row.num_s)
+                                    df.at[i, 'price_b'] = s_b.bar.close
+                                    df.at[i, 'price_s'] = s_s.bar.close
+                                    df.at[i, 'hold_b'] = row.num_b
+                                    df.at[i, 'hold_s'] = row.num_s
+                            else:
+                                gap_open = row.num_s*s_s.bar.BidPrice - row.num_b*s_b.bar.AskPrice
+                                df.at[i, 'gap_open'] = gap_open
                                 df.at[i, 'price_b'] = round(s_b.bar.AskPrice, 2)
                                 df.at[i, 'price_s'] = round(s_s.bar.BidPrice, 2)
-                                df.at[i, 'hold_b'] = row.num_b
-                                df.at[i, 'hold_s'] = row.num_s
+                                if gap_open >= row.gap:
+                                    s_b.buy(s_b.bar.AskPrice, row.num_b)              # 挂卖价
+                                    s_s.short(s_s.bar.BidPrice, row.num_s)            # 挂买价
+                                    df.at[i, 'hold_b'] = row.num_b
+                                    df.at[i, 'hold_s'] = row.num_s
 
                         # 获利平仓
                         if row.hold_b > 0 and row.hold_s > 0:
@@ -304,11 +307,11 @@ class Fut_RatioPortfolio(Portfolio):
     def daily_close(self):
         Portfolio.daily_close(self)
 
-        # fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
-        # df = pd.read_csv(fn)
-        # for i, row in df.iterrows():
-        #     if row.date == self.result.date[:10] and row.source == 'skew_bili' and row.hold_b == 0:
-        #         df.at[i, 'state'] = 'stop'
-        #
-        # df = df[(df.state == 'run') | (df.date == self.result.date[:10])]
-        # df.to_csv(fn, index=False)
+        fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
+        df = pd.read_csv(fn)
+        for i, row in df.iterrows():
+            if row.date == self.result.date[:10] and row.hold_c == 0 and row.hold_p == 0:
+                df.at[i, 'state'] = 'stop'
+
+        df = df[(df.state == 'run') | (df.date >= get_trade_preday(self.result.date[:10]))]
+        df.to_csv(fn, index=False)

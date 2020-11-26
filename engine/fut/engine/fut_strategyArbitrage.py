@@ -295,7 +295,8 @@ class Fut_ArbitragePortfolio(Portfolio):
                 pSc_forward = int( pa + S - cb )
                 diff_forward = float(x) - pSc_forward
                 rt_forward = round( diff_forward/(S*2*0.15)/T, 2 )
-                if rt_forward > 0.12:
+                # if rt_forward > 0.12:
+                if rt_forward > 0.03:
                     self.id += 1
                     seq = today[-5:-3] + today[-2:] + str(self.id)
                     r.append( [seq, today, tm, 'pcp', ['forward', term, S, cb, pa, T, x, pSc_forward, diff_forward, rt_forward]] )
@@ -311,7 +312,8 @@ class Fut_ArbitragePortfolio(Portfolio):
                 pSc_back = int( pb + S - ca )
                 diff_back = pSc_back - float(x)
                 rt_back = round( diff_back/(S*2*0.15)/T, 2 )
-                if rt_back > 0.12:
+                # if rt_back > 0.12:
+                if rt_back > 0.03:
                     self.id += 1
                     seq = today[-5:-3] + today[-2:] + str(self.id)
                     r.append( [seq, today, tm, 'pcp', ['back', term, S, ca, pb, T, x, pSc_back, diff_back, rt_back]] )
@@ -325,7 +327,8 @@ class Fut_ArbitragePortfolio(Portfolio):
             df.to_csv(fn, index=False)
 
         if tm > '09:00:00' and tm < '15:00:00' and r != []:
-            send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
+            pass
+            # send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
 
     #----------------------------------------------------------------------
     def control_in_p(self, bar):

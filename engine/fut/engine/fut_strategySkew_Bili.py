@@ -212,7 +212,7 @@ class Fut_Skew_BiliPortfolio(Portfolio):
            (bar.time > '21:01:00' and bar.time < '22:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
 
             fn = get_dss() +  'fut/engine/skew_bili/portfolio_skew_bili_param.csv'
-            cols_ratio = ['symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','profit_b','profit_s','profit_o','tm','delta','theta']
+            cols_ratio = ['tm','symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','gap_open','profit_b','profit_s','profit_o','date','delta','theta']
             fn_ratio = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
 
             df = pd.read_csv(fn)
@@ -278,7 +278,7 @@ class Fut_Skew_BiliPortfolio(Portfolio):
 
                             # 做多symbol_s，做空symbol_b
                             if df.at[i, 'skew_min'] < row.skew_low_open and skew >= row.skew_low_open and df.at[i, 'dida_min'] > 0:
-                                r.append( [row.symbol_s,row.symbol_b,row.num_s,row.num_b,-1000,row.profit,0,0,'run','skew_bili',0.0,0.0,0.0,0.0,0.0,'00:00:00',0.0,0.0] )
+                                r.append( ['00:00:00',row.symbol_s,row.symbol_b,row.num_s,row.num_b,-1000,row.profit,0,0,'run','skew_bili',0.0,0.0,0.0,0.0,0.0,0.0,bar.date,0.0,0.0] )
                                 df.at[i, 'hold_b'] = -row.num_b
                                 df.at[i, 'hold_s'] = row.num_s
                                 if self.engine.type == 'backtest':
@@ -290,7 +290,7 @@ class Fut_Skew_BiliPortfolio(Portfolio):
 
                             # 做多symbol_b，做空symbol_s
                             if df.at[i, 'skew_max'] > row.skew_high_open and skew <= row.skew_high_open and df.at[i, 'dida_max'] > 0:
-                                r.append( [row.symbol_b,row.symbol_s,row.num_b,row.num_s,-1000,row.profit,0,0,'run','skew_bili',0.0,0.0,0.0,0.0,0.0,'00:00:00',0.0,0.0] )
+                                r.append( ['00:00:00',row.symbol_b,row.symbol_s,row.num_b,row.num_s,-1000,row.profit,0,0,'run','skew_bili',0.0,0.0,0.0,0.0,0.0,0.0,bar.date,0.0,0.0] )
                                 df.at[i, 'hold_b'] = row.num_b
                                 df.at[i, 'hold_s'] = -row.num_s
                                 if self.engine.type == 'backtest':

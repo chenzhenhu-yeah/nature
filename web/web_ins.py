@@ -527,8 +527,10 @@ def ratio():
 
         kind = request.form.get('kind')
 
-        r = [[symbol_b,symbol_s,num_b,num_s,gap,profit,0,0,state,source,'','','','','','00:00:00','','']]
-        cols = ['symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','profit_b','profit_s','profit_o','tm','delta','theta']
+        now = datetime.now()
+        date = now.strftime('%Y-%m-%d')
+        r = [['00:00:00',symbol_b,symbol_s,num_b,num_s,gap,profit,0,0,state,source,'','','','','','',date,'','']]
+        cols = ['tm','symbol_b','symbol_s','num_b','num_s','gap','profit','hold_b','hold_s','state','source','price_b','price_s','gap_open','profit_b','profit_s','profit_o','date','delta','theta']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)
