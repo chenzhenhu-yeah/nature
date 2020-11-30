@@ -24,24 +24,23 @@ import sys
 
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
 from nature import rc_file, get_symbols_quote, get_tick, send_order
-#
-# symbol = 'm2101-C-3200'
-# symbol = 'p2105'
-#
-# r = get_tick(symbol)
-#
-# print(r)
-#
-# ins = {'vtSymbol':'p2105',
-#        'direction':'Buy',
-#        'offset':'Open',
-#        'price':6336,
-#        'volume':1,
-#        'pfName':'web'
-#        }
-# send_order(ins)
 
-# send_email(get_dss(), 'test3', '')
+fn = 'ExportSalesDataByCommodity.xls'
+
+df = pd.read_excel(fn, dtype='str')
+print(df.iat[6,0])
+print(df.iat[9,0].strip()[:10])
+df = df.iloc[9:-1,:]
+df = df.dropna(how='all')                     # 该行全部元素为空时，删除该行
+# df = df.dropna(axis=1, how='all')             # 该列全部元素为空时，删除该列
+df.columns = ['Date','MarketYear','unnamed','Commodity','Country','WeeklyExports','AccumulatedExports','OutstandingSales','GrossNewSales','NetSales','TotalCommitment','NMY_OutstandingSales','NMY_NetSales','UnitDesc']
+df['Date'] = df['Date'].str.slice(0,10)
+del df['unnamed']
+
+print(df.head())
+print(df.tail())
+
+# send_email(get_dss(), '统计局数据', '', ['t1.py'])
 
 # df = pd.DataFrame(np.random.randn(3, 3), columns=list('ABC'))
 #

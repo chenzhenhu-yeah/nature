@@ -93,16 +93,9 @@ class Fut_DaLiSignal(Signal):
         self.lock.acquire()
 
         self.bar = bar
-        if minx == 'min1':
-            self.on_bar_min1(bar)
-        if minx == 'min5':
-            self.on_bar_minx(bar)
+        self.on_bar_minx(bar)
 
         self.lock.release()
-
-    def on_bar_min1(self, bar):
-        # 按照新逻辑，不再做跳空处理
-        pass
 
     def on_bar_minx(self, bar):
         self.am.updateBar(bar)
@@ -122,7 +115,6 @@ class Fut_DaLiSignal(Signal):
             self.counter += 1
             if self.counter == 3:
                 send_email(get_dss(), self.vtSymbol + ' 挂单未成交！！！', '')
-
             return
 
         self.calculateIndicator()     # 计算指标
@@ -181,6 +173,7 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
+
         self.can_buy = False
         self.can_short = False
 
@@ -569,3 +562,24 @@ class Fut_DaLiPortfolio(Portfolio):
 
         Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, signal_param)
         #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, {})
+
+
+    #----------------------------------------------------------------------
+    def onBar(self, bar, minx='min1'):
+        """引擎新推送过来bar，传递给每个signal"""
+
+        # 不处理不相关的品种
+        if bar.vtSymbol not in self.vtSymbolList:
+            return
+
+        if minx != 'min5':               # 本策略为min1
+            return
+
+        # if self.tm != bar.time:
+        #     self.tm = bar.time
+        #     for symbol in self.vtSymbolList:
+        #         self.got_dict[symbol] = False
+
+        # 将bar推送给signal
+        for signal in self.signalDict[bar.vtSymbol]:
+            signal.onBar(bar, minx)

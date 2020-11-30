@@ -11,12 +11,15 @@ import json
 import os
 import traceback
 
-from nature import del_blank, check_symbols_p, get_tick, send_order
+from nature import del_blank, check_symbols_p, get_tick, send_order, append_symbol, set_symbol, get_symbols_setting
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
 from nature import get_file_lock, release_file_lock, r_file, a_file
+
+from nature.web.nbs import nbs_industry_product
+from nature.web.usda import usda_esr
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -74,6 +77,225 @@ def show_fut_csv():
     r = reversed(r)
 
     return render_template("show_fut_csv.html",title="Show Log",rows=r)
+
+
+@app.route('/NBS_upload', methods=['get','post'])
+def NBS_upload():
+    tips = ''
+    dirname = get_dss() + 'info/NBS'
+    indicator_dict = {'工业主要产品产量及增长速度':[],}
+    for k in indicator_dict.keys():
+        fn = os.path.join(dirname, k+'.csv')
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            indicator_dict[k] = list(set(list(df.dt)))
+
+    if request.method == "POST":
+        try:
+            f = request.files.get('f')
+            if f is not None:
+                # 上传文件到指定路径
+                fn = os.path.join(dirname, 'native/temp.xls')
+                f.save(fn)
+
+                # 若是新数据，导入数据库
+                df = pd.read_excel(fn)
+                dt = df.iat[0,0][3:].strip()
+                indicator = df.iat[1,0].strip()
+                if dt not in indicator_dict[indicator]:
+                    indicator_dict[indicator].append(dt)
+
+                    df = df.iloc[4:-1,:]
+                    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+                    df.columns = cols
+                    df.insert(0,'month',dt[5:-1].zfill(2)+'M')
+                    df.insert(0,'year',dt[:4])
+                    df.insert(0,'dt',dt)
+                    for col in cols:
+                        df[col] = df[col].str.strip()
+                    fn = os.path.join(dirname, indicator+'.csv')
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    # 保留原始文件
+                    try:
+                        fn1 = os.path.join(dirname, 'native/temp.xls')
+                        fn2 = os.path.join(dirname, 'native/'+dt+'_'+indicator+'.xls')
+                        os.rename(fn1, fn2)
+                    except:
+                        pass
+
+                    # 写入上传记录文件
+                    now = datetime.now()
+                    today = now.strftime('%Y-%m-%d %H:%M:%S')
+                    fn = os.path.join(dirname, 'history.csv')
+                    df = pd.DataFrame([[today,dt,indicator]], columns=['done_dt','data_dt','indicator'])
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    tips = '文件上传成功'
+                else:
+                    tips = '文件已存在，未上传'
+            else:
+                tips = '未选择文件'
+        except:
+            tips = '文件出错了'
+
+    # 显示维护历史
+    fn = os.path.join(dirname, 'history.csv')
+    df = pd.read_csv(fn)
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
+    h = h[:4]
+
+    # 数据清单
+    r = [['数据', '最近日期列表']]
+    for k in indicator_dict.keys():
+        r.append([k, sorted(indicator_dict[k])[-12:]])
+
+    return render_template("NBS_upload.html", title="NBS", tip=tips, hs=h, rows=r)
+
+@app.route('/NBS_mail', methods=['get','post'])
+def NBS_mail():
+    tips = ''
+    dirname = get_dss() + 'info/NBS/img/'
+    if request.method == "POST":
+        listfile = os.listdir(dirname)
+        for fn in listfile:
+            os.remove(dirname+fn)
+
+        k_list = request.form.getlist('k')
+        mailto = del_blank( request.form.get('mailto') )
+        pdf_list =[]
+        for k in k_list:
+            if k == '工业主要产品产量及增长速度':
+                nbs_industry_product()
+                pdf_list.append(dirname+k+'.pdf')
+            tips = '邮件已发送'
+        if pdf_list != []:
+            if mailto == '':
+                send_email(get_dss(), '统计局数据', '', pdf_list)
+            else:
+                send_email(get_dss(), '统计局数据', '', pdf_list, mailto)
+
+    return render_template("NBS_mail.html",title="",tip=tips)
+
+@app.route('/USDA_upload', methods=['get','post'])
+def USDA_upload():
+    tips = ''
+    dirname = get_dss() + 'info/USDA'
+    indicator_dict = {'esr':[],}
+    for k in indicator_dict.keys():
+        fn = os.path.join(dirname, k+'.csv')
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            indicator_dict[k] = sorted(list(set(list(df.Date))))[-12:]
+
+    if request.method == "POST":
+        try:
+            f = request.files.get('f')
+            if f is not None:
+                # 上传文件到指定路径
+                fn = os.path.join(dirname, 'native/temp.xls')
+                f.save(fn)
+
+                # 若是新数据，导入数据库
+                df = pd.read_excel(fn, dtype='str')
+                dt = df.iat[9,0].strip()[:10]
+                indicator = 'esr'
+                if dt not in indicator_dict[indicator]:
+                    indicator_dict[indicator].append(dt)
+                    df = df.iloc[9:-1,:]
+                    cols = ['Date','MarketYear','unnamed','Commodity','Country','WeeklyExports','AccumulatedExports','OutstandingSales','GrossNewSales','NetSales','TotalCommitment','NMY_OutstandingSales','NMY_NetSales','UnitDesc']
+                    df.columns = cols
+                    for col in cols:
+                        df[col] = df[col].str.strip()
+                    df['Date'] = df['Date'].str.slice(0,10)
+                    del df['unnamed']
+                    df = df.dropna(how='all')                                 # 该行全部元素为空时，删除该行
+
+                    fn = os.path.join(dirname, indicator+'.csv')
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    # 保留原始文件
+                    try:
+                        fn1 = os.path.join(dirname, 'native/temp.xls')
+                        fn2 = os.path.join(dirname, 'native/'+dt+'_'+indicator+'.xls')
+                        os.rename(fn1, fn2)
+                    except:
+                        pass
+
+                    # 写入上传记录文件
+                    now = datetime.now()
+                    today = now.strftime('%Y-%m-%d %H:%M:%S')
+                    fn = os.path.join(dirname, 'history.csv')
+                    df = pd.DataFrame([[today,dt,indicator]], columns=['done_dt','data_dt','indicator'])
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    tips = '文件上传成功'
+                else:
+                    tips = '文件已存在，未上传'
+            else:
+                tips = '未选择文件'
+        except:
+            tips = '文件出错了'
+
+    # 显示维护历史
+    fn = os.path.join(dirname, 'history.csv')
+    df = pd.read_csv(fn)
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
+    h = h[:4]
+
+    # 数据清单
+    r = [['数据', '最近日期列表']]
+    for k in indicator_dict.keys():
+        r.append([k, sorted(indicator_dict[k])[-12:]])
+
+    return render_template("USDA_upload.html", title="USDA", tip=tips, hs=h, rows=r)
+
+@app.route('/USDA_mail', methods=['get','post'])
+def USDA_mail():
+    tips = ''
+    dirname = get_dss() + 'info/USDA/img/'
+    if request.method == "POST":
+        listfile = os.listdir(dirname)
+        for fn in listfile:
+            os.remove(dirname+fn)
+
+        k_list = request.form.getlist('k')
+        mailto = del_blank( request.form.get('mailto') )
+        pdf_list =[]
+        for k in k_list:
+            if k == 'esr':
+                usda_esr()
+                pdf_list.append(dirname+'corn.pdf')
+                pdf_list.append(dirname+'cotton.pdf')
+                pdf_list.append(dirname+'soybeans.pdf')
+            tips = '邮件已发送'
+        if pdf_list != []:
+            if mailto == '':
+                send_email(get_dss(), 'usda', '', pdf_list)
+            else:
+                send_email(get_dss(), 'usda', '', pdf_list, mailto)
+
+    return render_template("USDA_mail.html",title="",tip=tips)
 
 @app.route('/fut_config', methods=['get','post'])
 def fut_config():
@@ -256,7 +478,7 @@ def fut_signal_pause():
 def opt_mature():
     pz = ''
     tips = '提示：'
-    setting_dict = {'pz':'','symbol':'','mature':'','flag':'','obj':'','strike_min1':'','strike_max1':'','gap1':'','strike_min2':'','strike_max2':'','gap2':'','dash_c':'','dash_p':''}
+    setting_dict = {'pz':'','symbol':'','mature':'','flag':'','obj':'','strike_min1':'','strike_max1':'','gap1':'','strike_min2':'','strike_max2':'','gap2':'','dash_c':'','dash_p':'','opt_price_tick':''}
     filename = get_dss() + 'fut/cfg/opt_mature.csv'
     if request.method == "POST":
         pz = del_blank( request.form.get('pz') )
@@ -272,10 +494,12 @@ def opt_mature():
         gap2 = del_blank( request.form.get('gap2') )
         dash_c = del_blank( request.form.get('dash_c') )
         dash_p = del_blank( request.form.get('dash_p') )
+        opt_price_tick = del_blank( request.form.get('opt_price_tick') )
+
         kind = request.form.get('kind')
 
-        r = [[pz,symbol,mature,flag,obj,strike_min1,strike_max1,gap1,strike_min2,strike_max2,gap2,dash_c,dash_p]]
-        cols = ['pz','symbol','mature','flag','obj','strike_min1','strike_max1','gap1','strike_min2','strike_max2','gap2','dash_c','dash_p']
+        r = [[pz,symbol,mature,flag,obj,strike_min1,strike_max1,gap1,strike_min2,strike_max2,gap2,dash_c,dash_p,opt_price_tick]]
+        cols = ['pz','symbol','mature','flag','obj','strike_min1','strike_max1','gap1','strike_min2','strike_max2','gap2','dash_c','dash_p','opt_price_tick']
         if kind == 'add':
             df = pd.read_csv(filename, dtype='str')
             df = df[df.symbol == symbol ]
@@ -333,53 +557,46 @@ def fut_owl():
             price = del_blank( float(request.form.get('price')) )
             num = del_blank( int(request.form.get('num')) )
 
-            ins = str({'ins':ins_type,'price':price,'num':num})
-            fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
-            # fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + code + '.csv'
-            a_file(fn,ins)
-
             # 历史维护记录
             now = datetime.now()
             today = now.strftime('%Y-%m-%d %H:%M:%S')
-            ins = str({'date':today,'code':code,'ins':ins_type,'price':price,'num':num})
             fn = get_dss() + 'fut/engine/owl/history.csv'
-            a_file(fn,ins)
+            df = pd.DataFrame([[today,code,ins_type,price,num,'no']], columns=['dt','code','ins','price','num','got'])
+            if os.path.exists(fn):
+                df.to_csv(fn, mode='a', header=False, index=False)
+            else:
+                df.to_csv(fn, index=False)
 
             # 自动增加symbol到symbols_owl、symbols_trade
-            fn = get_dss() + 'fut/cfg/config.json'
-            with open(fn,'r') as f:
-                load_dict = json.load(f)
-                load_dict['symbols_owl'] += ',' + code
-                load_dict['symbols_trade'] += ',' + code
-            with open(fn,"w") as f:
-                json.dump(load_dict,f)
+            append_symbol('symbols_owl', code)
+            append_symbol('symbols_trade', code)
 
             tips = 'append success'
 
-
     # 动态加载新维护的symbol
-    config = open(get_dss()+'fut/cfg/config.json')
-    setting = json.load(config)
-    symbols = setting['symbols_owl']
+    # config = open(get_dss()+'fut/cfg/config.json')
+    # setting = json.load(config)
+    # symbols = setting['symbols_owl']
+    symbols = get_symbols_setting('symbols_owl')
     symbols_list = symbols.split(',')
 
     r = [['code', 'ins', 'price', 'num']]
-    for symbol in symbols_list:
+    for symbol in set(symbols_list):
         fn = get_dss() + 'fut/engine/owl/signal_owl_mix_var_' + symbol + '.csv'
-        ins_list = r_file(fn)
-        for ins in ins_list:
-            r.append([symbol] + list(dict(ins).values()))
-    # print(r)
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            for i, row in df.iterrows():
+                r.append([symbol] + [row.ins] + [row.price] + [row.num])
 
     # 显示维护历史
-    h = [['date', 'code', 'ins', 'price', 'num']]
     fn = get_dss() + 'fut/engine/owl/history.csv'
-    ins_list = r_file(fn)
-    ins_list.reverse()
-    for ins in ins_list:
-        h.append(list(dict(ins).values()))
+    df = pd.read_csv(fn, dtype='str')
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
     h = h[:9]
-    # print(h)
 
     return render_template("owl.html", tip=tips, rows=r, hs=h)
 

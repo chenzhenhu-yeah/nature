@@ -310,7 +310,7 @@ class Fut_RatioPortfolio(Portfolio):
         fn = get_dss() +  'fut/engine/ratio/portfolio_ratio_param.csv'
         df = pd.read_csv(fn)
         for i, row in df.iterrows():
-            if row.date == self.result.date[:10] and row.hold_c == 0 and row.hold_p == 0:
+            if row.date == self.result.date[:10] and row.hold_b == 0 and row.hold_s == 0:
                 df.at[i, 'state'] = 'stop'
 
         df = df[(df.state == 'run') | (df.date >= get_trade_preday(self.result.date[:10]))]

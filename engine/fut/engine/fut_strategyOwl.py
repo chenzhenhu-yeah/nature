@@ -77,7 +77,6 @@ class Fut_OwlSignal(Signal):
         # 记录数据
         r = [[self.bar.date,self.bar.time,self.bar.close]]
         df = pd.DataFrame(r)
-
         filename = get_dss() +  'fut/engine/owl/bar_owl_'+self.type+ '_' + self.vtSymbol + '.csv'
         if os.path.exists(filename):
             df.to_csv(filename, index=False, mode='a', header=False)
@@ -86,46 +85,56 @@ class Fut_OwlSignal(Signal):
 
         r = []
         fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        self.ins_list += rc_file(fn)
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            for i, row in df.iterrows():
+                self.can_buy = False
+                self.can_sell = False
+                self.can_short = False
+                self.can_cover = False
 
-        for row in self.ins_list:
-            self.can_buy = False
-            self.can_sell = False
-            self.can_short = False
-            self.can_cover = False
+                ins = row['ins']
+                price = float( row['price'] )
+                self.fixedSize = int( row['num'] )
+                # print(ins, price, self.fixedSize)
 
-            ins = row['ins']
-            price = float( row['price'] )
-            self.fixedSize = int( row['num'] )
-            # print(ins, price, self.fixedSize)
+                if ins == 'up_buy' and self.bar.close >= price:
+                    self.can_buy = True
+                elif ins == 'down_buy' and self.bar.close <= price:
+                    self.can_buy = True
+                elif ins == 'up_sell' and self.bar.close >= price:
+                    self.can_sell = True
+                elif ins == 'down_sell' and self.bar.close <= price:
+                    self.can_sell = True
+                elif ins == 'up_short' and self.bar.close >= price:
+                    self.can_short = True
+                elif ins == 'down_short' and self.bar.close <= price:
+                    self.can_short = True
+                elif ins == 'up_cover' and self.bar.close >= price:
+                    self.can_cover = True
+                elif ins == 'down_cover' and self.bar.close <= price:
+                    self.can_cover = True
+                elif ins == 'up_warn' and self.bar.close >= price:
+                    send_email(get_dss(), self.bar.vtSymbol+' up_warn: '+str(price), '')
+                elif ins == 'down_warn' and self.bar.close <= price:
+                    send_email(get_dss(), self.bar.vtSymbol+' down_warn: '+str(price), '')
+                else:
+                    r.append([row.ins, row.price, row.num])
 
-            if ins == 'up_buy' and self.bar.close >= price:
-                self.can_buy = True
-            elif ins == 'down_buy' and self.bar.close <= price:
-                self.can_buy = True
-            elif ins == 'up_sell' and self.bar.close >= price:
-                self.can_sell = True
-            elif ins == 'down_sell' and self.bar.close <= price:
-                self.can_sell = True
-            elif ins == 'up_short' and self.bar.close >= price:
-                self.can_short = True
-            elif ins == 'down_short' and self.bar.close <= price:
-                self.can_short = True
-            elif ins == 'up_cover' and self.bar.close >= price:
-                self.can_cover = True
-            elif ins == 'down_cover' and self.bar.close <= price:
-                self.can_cover = True
-            elif ins == 'up_warn' and self.bar.close >= price:
-                send_email(get_dss(), self.bar.vtSymbol+' up_warn: '+str(price), '')
-            elif ins == 'down_warn' and self.bar.close <= price:
-                send_email(get_dss(), self.bar.vtSymbol+' down_warn: '+str(price), '')
-            else:
-                r.append(row)
+                self.generateSignal(self.bar)      # 触发信号，产生交易指令
 
-            self.generateSignal(self.bar)      # 触发信号，产生交易指令
+        fn = get_dss() + 'fut/engine/owl/history.csv'
+        df = pd.read_csv(fn)
+        df1 = df[(df.code == self.bar.vtSymbol) & (df.got == 'no')]
+        if len(df1) > 0:
+            for i, row in df1.iterrows():
+                r.append([row.ins, row.price, row.num])
+                df.at[i,'got'] = 'yes'
+            df.to_csv(fn, index=False)
 
-        self.ins_list = r
+        fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
+        df = pd.DataFrame(r, columns=['ins','price','num'])
+        df.to_csv(fn, index=False)
 
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
@@ -155,10 +164,7 @@ class Fut_OwlSignal(Signal):
 
     #----------------------------------------------------------------------
     def save_var(self):
-        fn = get_dss() + 'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        # fn = get_dss() +  'fut/engine/owl/signal_owl_'+self.type+ '_var_' + self.vtSymbol + '.csv'
-        for ins in self.ins_list:
-            a_file(fn, str(ins))
+        pass
 
     #----------------------------------------------------------------------
     def open(self, price, change):
@@ -175,7 +181,7 @@ class Fut_OwlPortfolio(Portfolio):
     #----------------------------------------------------------------------
     def __init__(self, engine, symbol_list, signal_param={}):
         self.name = 'owl'
-        Portfolio.__init__(self, Fut_OwlSignal, engine, symbol_list, signal_param)
+        Portfolio.__init__(self, Fut_OwlSignal, engine, list(set(symbol_list)), signal_param)
 
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min5'):
@@ -194,7 +200,7 @@ class Fut_OwlPortfolio(Portfolio):
         symbols = setting['symbols_owl']
         symbols_list = symbols.split(',')
 
-        for vtSymbol in symbols_list:
+        for vtSymbol in set(symbols_list):
             if vtSymbol not in self.vtSymbolList:
                 self.vtSymbolList.append(vtSymbol)
                 self.posDict[vtSymbol] = 0

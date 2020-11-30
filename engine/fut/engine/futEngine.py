@@ -166,18 +166,18 @@ class FutEngine(object):
         #             if row.symbol_g in ic_symbol_list and row.symbol_d in ic_symbol_list:
         #                 self.loadPortfolio(Fut_IcPortfolio, [row.symbol_g, row.symbol_d])
 
-        if 'symbols_yue' in setting:
-            symbols = setting['symbols_yue']
-            if len(symbols) > 0:
-                yue_symbol_list = symbols.split(',')
-            else:
-                yue_symbol_list = []
-            fn = get_dss() +  'fut/engine/yue/portfolio_yue_param.csv'
-            if os.path.exists(fn):
-                df = pd.read_csv(fn)
-                for i, row in df.iterrows():
-                    if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
-                        self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
+        # if 'symbols_yue' in setting:
+        #     symbols = setting['symbols_yue']
+        #     if len(symbols) > 0:
+        #         yue_symbol_list = symbols.split(',')
+        #     else:
+        #         yue_symbol_list = []
+        #     fn = get_dss() +  'fut/engine/yue/portfolio_yue_param.csv'
+        #     if os.path.exists(fn):
+        #         df = pd.read_csv(fn)
+        #         for i, row in df.iterrows():
+        #             if row.symbol_a in yue_symbol_list and row.symbol_b in yue_symbol_list:
+        #                 self.loadPortfolio(Fut_YuePortfolio, [row.symbol_a, row.symbol_b])
 
         # if self.seq_tm == 'morning':
         #     if 'symbols_avenger' in setting:
@@ -220,23 +220,23 @@ class FutEngine(object):
                 straddle_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_StraddlePortfolio, straddle_symbol_list)
 
-        if 'symbols_sdiffer' in setting:
-            symbols = setting['symbols_sdiffer']
-            if len(symbols) > 0:
-                sdiffer_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
-
-        if 'symbols_skew_strd' in setting:
-            symbols = setting['symbols_skew_strd']
-            if len(symbols) > 0:
-                skew_strd_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
-
-        if 'symbols_skew_bili' in setting:
-            symbols = setting['symbols_skew_bili']
-            if len(symbols) > 0:
-                skew_bili_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
+        # if 'symbols_sdiffer' in setting:
+        #     symbols = setting['symbols_sdiffer']
+        #     if len(symbols) > 0:
+        #         sdiffer_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_SdifferPortfolio, sdiffer_symbol_list)
+        #
+        # if 'symbols_skew_strd' in setting:
+        #     symbols = setting['symbols_skew_strd']
+        #     if len(symbols) > 0:
+        #         skew_strd_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_StrdPortfolio, skew_strd_symbol_list)
+        #
+        # if 'symbols_skew_bili' in setting:
+        #     symbols = setting['symbols_skew_bili']
+        #     if len(symbols) > 0:
+        #         skew_bili_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
 # --------------------------------------------------------------------------------
 
@@ -293,6 +293,10 @@ class FutEngine(object):
             try:
                 time.sleep(23)
                 if self.working == True:
+                    q = len(self.bar_list)
+                    if q > 99:
+                        to_log('引擎排队指数： ' + str(q))
+
                     df_trade = pd.read_csv(fn_trade, skiprows=n)
                     df_trade.columns = ['Direction','ExchangeID','InstrumentID','Offset','OrderID','Price','SysID','TradeID','TradeTime','TradingDay','Volume']
                     # print(df_trade)

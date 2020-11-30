@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:900px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{title}}</h1>
+       <h1>{{tip}}</h1>
+       </header>
+
+      <form method="post" action="NBS_mail">
+      <fieldset>
+
+        <p><input type="checkbox" name="k" value="工业主要产品产量及增长速度"/>工业主要产品产量及增长速度 </p>
+        <p><input type="checkbox" name="k" value="2"/>2 </p>
+        <p><input type="checkbox" name="k" value="3"/>3 </p>
+        <p><input type="checkbox" name="k" value="4"/>4 </p>
+
+       <p>
+          截至日期:<input type="text" name="enddate"/> YYYYMM
+       </p>
+
+       <p>
+          邮箱:
+          <select name="mailto"/>
+            <option value=''></option>
+            <option value='25617680@qq.com'>逍逍法王^-^</option>
+          </select>
+      </p>
+
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+    </section>
+  </body>
+</html>

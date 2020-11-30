@@ -19,6 +19,7 @@ import traceback
 
 from nature import to_log
 
+
 #----------------------------------------------------------------------
 def get_dss():
     path = os.getcwd()
@@ -33,13 +34,27 @@ def get_repo():
     #print(path[:i])
     return path[:i] + 'repo\\'
 
+contract_dict = {}
+fn_mature = get_dss() + 'fut/cfg/opt_mature.csv'
+date_df = '0000-00-00'
+df_mature = pd.read_csv(fn_mature)
+
+def get_df_mature():
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    if date_df != today:
+        df_mature = pd.read_csv(fn_mature)
+        date_df = today
+    return df_mature
+
 
 class Contract(object):
     def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin,symbol):
         """Constructor"""
         self.pz = pz
         self.size = size
-        self.price_tick = price_tick
+        self.be_opt = False if len(symbol) < 9 else True
+        self.price_tick = self.calc_price_tick(symbol, price_tick)
         self.variable_commission = variable_commission
         self.fixed_commission = fixed_commission
         self.slippage = slippage
@@ -47,12 +62,35 @@ class Contract(object):
         self.margin = margin
 
         self.symbol = symbol
-        self.be_opt = False if len(symbol) < 9 else True
         self.strike = self.cacl_strike(symbol)
         self.basic = self.cacl_basic(pz, symbol)
         self.opt_flag = self.cacl_opt_flag(pz, symbol)
         self.opt_flag_C = self.cacl_opt_flag_C(symbol)
         self.opt_flag_P = self.cacl_opt_flag_P(symbol)
+        self.mature = self.get_mature(symbol)
+        self.ask_bid_gap = self.calc_ask_bid_gap(symbol)
+
+    def get_mature(self, symbol):
+        if self.be_opt:
+            df = get_df_mature()
+            df1 = df[df.symbol == symbol]
+            mature_list = list(df1.mature)
+            if len(mature_list) > 0:
+                return mature_list[0]
+
+        return None
+
+    def calc_price_tick(self, symbol, price_tick):
+        if self.be_opt:
+            df = get_df_mature()
+            df1 = df[df.symbol == symbol]
+            opt_price_tick_list = list(df1.opt_price_tick)
+            if len(opt_price_tick_list) > 0:
+                return float(opt_price_tick_list[0])
+        return price_tick
+
+    def calc_ask_bid_gap(self, symbol):
+        return self.price_tick * 30
 
     def cacl_strike(self, symbol):
         if self.be_opt:
@@ -90,7 +128,6 @@ class Contract(object):
         else:
             return 'P'
 
-
 def get_contract(symbol):
     pz = symbol[:2]
     if pz.isalpha():
@@ -98,18 +135,49 @@ def get_contract(symbol):
     else:
         pz = symbol[:1]
 
-    contract_dict = {}
-    filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-    with open(filename_setting_fut,encoding='utf-8') as f:
-        r = DictReader(f)
-        for d in r:
-            contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
+    if pz not in contract_dict:
+        filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+        with open(filename_setting_fut,encoding='utf-8') as f:
+            r = DictReader(f)
+            for d in r:
+                contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
 
     if pz in contract_dict:
         return contract_dict[pz]
     else:
         return None
         #assert False
+
+#----------------------------------------------------------------------
+def append_symbol(symbol_name, symbol_value):
+    fn = get_dss() + 'fut/cfg/config.json'
+    f = open(fn,'r')
+    load_dict = json.load(f)
+    symbols = load_dict[symbol_name]
+    symbols_list = symbols.split(',')
+    if symbol_value not in symbols_list:
+        load_dict[symbol_name] += ',' + symbol_value
+
+        with open(fn,"w") as f:
+            json.dump(load_dict,f)
+
+#----------------------------------------------------------------------
+def set_symbol(symbol_name, symbol_value):
+    fn = get_dss() + 'fut/cfg/config.json'
+    with open(fn,'r') as f:
+        load_dict = json.load(f)
+        load_dict[symbol_name] = symbol_value
+
+    with open(fn,"w") as f:
+        json.dump(load_dict,f)
+
+#----------------------------------------------------------------------
+def get_symbols_setting(symbol_name):
+    config = open(get_dss()+'fut/cfg/config.json')
+    setting = json.load(config)
+    symbols = setting[symbol_name]
+
+    return symbols
 
 #----------------------------------------------------------------------
 def get_symbols_trade():
@@ -127,7 +195,7 @@ def get_symbols_trade():
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df1 = pd.read_csv(fn)
     strike_list = []
-    for pz in ['IO', 'm', 'RM', 'CF', 'al']:
+    for pz in ['IO', 'm', 'RM', 'CF', 'c', 'al']:
         for flag in ['m0', 'm1', 'm2', 'm3']:
             df2 = df1[df1.pz == pz]
             df2 = df2[df2.flag == flag]
@@ -357,14 +425,15 @@ def send_email(dss, subject, content, attach_list=[], receivers=None):
             for i, attach in enumerate(attach_list):
                 att = MIMEText(open(attach, "rb").read(), "base64", "utf-8")
                 att["Content-Type"] = "application/octet-stream"
+                fn = os.path.basename(attach)
+
                 # 附件名称非中文时的写法
                 # att["Content-Disposition"] = 'attachment; filename=' + today+str(i)+attach[-4:]
-                fn = os.path.basename(attach)
-                att["Content-Disposition"] = 'attachment; filename=' + fn
+                # att["Content-Disposition"] = 'attachment; filename=' + fn
 
                 # 附件名称为中文时的写法
                 # att.add_header("Content-Disposition", "attachment", filename=("gbk", "", "测试结果.txt"))
-                # att.add_header("Content-Disposition", "attachment", filename="测试结果.txt")
+                att.add_header("Content-Disposition", "attachment", filename=fn)
                 message.attach(att)
 
         #smtpObj = smtplib.SMTP(mail_host, 25)                               # 生成smtpObj对象，使用非SSL协议端口号25
@@ -373,6 +442,7 @@ def send_email(dss, subject, content, attach_list=[], receivers=None):
         smtpObj.sendmail(sender, receivers, message.as_string())             # 发送给一人
         # smtpObj.sendmail(sender, receivers.split(','), message.as_string()) # 发送给多人
         print ("邮件发送成功")
+        # time.sleep(0.1)
 
     except smtplib.SMTPException as e:
         print ("Error: 无法发送邮件")

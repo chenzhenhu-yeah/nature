@@ -115,7 +115,7 @@ def proc_segment(df1,begin,end,num,symbol):
             tick.UpdateTime = end[:-2] + '00'
             _Generate_Bar_MinOne(tick, temp_bar, r, end_day)
 
-    # if num != 240:
+    # if num == 240:
     #     # print(r)
     #     print(len(r), num)
 
@@ -259,7 +259,7 @@ def tick2bar(tradeDay):
                     df1 = pd.concat([df11, df12])
 
                 # 加工生成该时段的 bar_min1 数据，至少有2根tick才能加工成bar
-                if len(df1) >= 2:
+                if len(df1) > 3:
                     # 排序很重要，因为tick送过来的顺序可能是乱的
                     df1 = df1.sort_values(by=['UpdateDate','UpdateTime'])
                     df1 = df1.reset_index()
@@ -282,6 +282,6 @@ def tick2bar(tradeDay):
 if __name__ == "__main__":
     now = datetime.datetime.now()
     tradeDay = now.strftime('%Y%m%d')
-    # tradeDay = '20200515'
+    tradeDay = '20201127'
 
     tick2bar(tradeDay)
