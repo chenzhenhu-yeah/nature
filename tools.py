@@ -42,6 +42,9 @@ df_mature = pd.read_csv(fn_mature)
 def get_df_mature():
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
+
+    global date_df
+    global df_mature
     if date_df != today:
         df_mature = pd.read_csv(fn_mature)
         date_df = today
