@@ -90,6 +90,9 @@ class Fut_DaLiSignal(Signal):
     #----------------------------------------------------------------------
     def onBar(self, bar, minx='min1'):
         """新推送过来一个bar，进行处理"""
+        if minx != 'min5':               # 本策略为min5
+            return
+
         self.lock.acquire()
 
         self.bar = bar
@@ -562,24 +565,3 @@ class Fut_DaLiPortfolio(Portfolio):
 
         Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, signal_param)
         #Portfolio.__init__(self, Fut_DaLiSignal, engine, symbol_list, {}, Fut_DaLiSignal, {})
-
-
-    #----------------------------------------------------------------------
-    def onBar(self, bar, minx='min1'):
-        """引擎新推送过来bar，传递给每个signal"""
-
-        # 不处理不相关的品种
-        if bar.vtSymbol not in self.vtSymbolList:
-            return
-
-        if minx != 'min5':               # 本策略为min1
-            return
-
-        # if self.tm != bar.time:
-        #     self.tm = bar.time
-        #     for symbol in self.vtSymbolList:
-        #         self.got_dict[symbol] = False
-
-        # 将bar推送给signal
-        for signal in self.signalDict[bar.vtSymbol]:
-            signal.onBar(bar, minx)
