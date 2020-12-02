@@ -77,12 +77,21 @@
          <input type="file" name="sm">
       </fieldset>
 
-      <p></p>
-
       <div>
       <input type="submit" value="Submit"/>
       </div>
       </form>
+
+     <p>历史维护记录:</p>
+     <table>
+      {% for row in hs %}
+      <tr>
+        {% for d in row %}
+        <td class="description">{{ d }}</td>
+        {% endfor %}
+      <tr>
+      {% endfor %}
+      </table>
 
     </section>
   </body>

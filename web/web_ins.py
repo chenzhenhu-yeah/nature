@@ -16,7 +16,7 @@ from nature import read_log_today, get_dss, get_symbols_quote, get_contract, sen
 from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
-from nature import get_file_lock, release_file_lock, r_file, a_file
+from nature import get_file_lock, release_file_lock, r_file, a_file, to_log
 
 from nature.web.nbs import nbs_industry_product
 from nature.web.usda import usda_esr
@@ -83,6 +83,7 @@ def show_fut_csv():
 def NBS_upload():
     tips = ''
     dirname = get_dss() + 'info/NBS'
+    ch_en_dict = {'工业主要产品产量及增长速度':'industry', }
     indicator_dict = {'工业主要产品产量及增长速度':[],}
     for k in indicator_dict.keys():
         fn = os.path.join(dirname, k+'.csv')
@@ -113,7 +114,7 @@ def NBS_upload():
                     df.insert(0,'dt',dt)
                     for col in cols:
                         df[col] = df[col].str.strip()
-                    fn = os.path.join(dirname, indicator+'.csv')
+                    fn = os.path.join(dirname, ch_en_dict[indicator]+'.csv')
                     if os.path.exists(fn):
                         df.to_csv(fn, mode='a', header=False, index=False)
                     else:
@@ -122,7 +123,7 @@ def NBS_upload():
                     # 保留原始文件
                     try:
                         fn1 = os.path.join(dirname, 'native/temp.xls')
-                        fn2 = os.path.join(dirname, 'native/'+dt+'_'+indicator+'.xls')
+                        fn2 = os.path.join(dirname, 'native/'+dt[:4]+dt[5:-1].zfill(2)+'_'+ch_en_dict[indicator]+'.xls')
                         os.rename(fn1, fn2)
                     except:
                         pass
@@ -143,7 +144,10 @@ def NBS_upload():
             else:
                 tips = '未选择文件'
         except:
+            s = traceback.format_exc()
+            to_log(s)
             tips = '文件出错了'
+
 
     # 显示维护历史
     fn = os.path.join(dirname, 'history.csv')
@@ -175,7 +179,7 @@ def NBS_mail():
         mailto = del_blank( request.form.get('mailto') )
         pdf_list =[]
         for k in k_list:
-            if k == '工业主要产品产量及增长速度':
+            if k == 'industry':
                 nbs_industry_product()
                 pdf_list.append(dirname+k+'.pdf')
             tips = '邮件已发送'
@@ -1109,11 +1113,11 @@ def gateway_trade():
 @app.route('/upload_statement', methods=['get', 'post'])
 def upload_statement():
     tips = ''
+    dirname = get_dss() + 'fut/statement'                         # 指定上传路径
+
     if request.method == "POST":
         sm = request.files.get('sm')
         if sm is not None:
-            # 指定上传路径
-            dirname = get_dss() + 'fut/statement'
             # 拼接文件全路径
             dt = sm.filename[-12:-4]
             dt = dt[:4] + '-' + dt[4:6] + '-' + dt[6:8]
@@ -1146,6 +1150,7 @@ def upload_statement():
             # 分类汇总，计算保证金占用， 计算greeks值
             df = pd.read_csv(fn2, encoding='gbk', sep='|', skiprows=2, header=None)
             df = df.drop(columns=[0,14])
+            # print(df)
             fn_greeks = get_dss() + 'opt/' + dt[:7] + '_greeks.csv'
             df_greeks = pd.read_csv(fn_greeks)
 
@@ -1159,6 +1164,8 @@ def upload_statement():
                 num = row[3] - row[5]
                 pz = get_contract(symbol).pz
                 pz_list.append(pz)
+                # print(symbol, get_contract(symbol).be_opt)
+
                 if get_contract(symbol).be_opt:
                     df2 = df_greeks[df_greeks.Instrument == symbol]
                     # df = df[df.Localtime.str.slice(0,10) == dt]
@@ -1194,7 +1201,28 @@ def upload_statement():
 
             send_email(get_dss(), '结算单_'+dt, '', [fn1, fn3])
 
-    return render_template("upload_statement.html",title="upload statement",tip=tips)
+            # 写入上传记录文件
+            now = datetime.now()
+            today = now.strftime('%Y-%m-%d %H:%M:%S')
+            fn = os.path.join(dirname, 'history.csv')
+            df = pd.DataFrame([[today,dt,sm.filename]], columns=['done_dt','data_dt','filename'])
+            if os.path.exists(fn):
+                df.to_csv(fn, mode='a', header=False, index=False)
+            else:
+                df.to_csv(fn, index=False)
+
+    # 显示维护历史
+    h = []
+    fn = os.path.join(dirname, 'history.csv')
+    if os.path.exists(fn):
+        df = pd.read_csv(fn)
+        for i, row in df.iterrows():
+            h.append( list(row) )
+        h.append(list(df.columns))
+        h.reverse()
+        h = h[:9]
+
+    return render_template("upload_statement.html",title="upload statement",tip=tips,hs=h)
 
 
 @app.route('/value_dali_csv', methods=['get','post'])

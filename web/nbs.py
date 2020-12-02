@@ -61,15 +61,17 @@ def img2pdf(pdfname, img_list):
     doc.close()
 
 def nbs_industry_product():
-    indicator = '工业主要产品产量及增长速度'
+    indicator = 'industry'
     fn = os.path.join(get_dss()+'info/NBS/', indicator+'.csv')
     df = pd.read_csv(fn, dtype={'value_cur':'float', 'value_cum':'float'})
-    product_list = ['原铝（电解铝）(万吨)', '纱(万吨)', '布(亿米)']
+    product_list = ['饲料(万吨)', '布(亿米)', '纱(万吨)', '精制食用植物油(万吨)', \
+                    '成品糖(万吨)', '鲜、冷藏肉(万吨)', '纯碱（碳酸钠）(万吨)', '合成橡胶(万吨)', \
+                    '橡胶轮胎外胎(万条)', ]
 
     # 生成图片
     for product in product_list:
         df0 = df[df['product'] == product]
-        year_list = sorted(set(list(df0.year)))[-3:]
+        year_list = sorted(set(list(df0.year)))[-5:]
         for value in ['value_cur', 'value_cum']:
             df0['value'] = df0[value]
             df_list = []

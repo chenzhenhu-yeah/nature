@@ -34,7 +34,6 @@ def get_repo():
     #print(path[:i])
     return path[:i] + 'repo\\'
 
-contract_dict = {}
 fn_mature = get_dss() + 'fut/cfg/opt_mature.csv'
 date_df = '0000-00-00'
 df_mature = pd.read_csv(fn_mature)
@@ -131,6 +130,23 @@ class Contract(object):
         else:
             return 'P'
 
+fn_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+date_setting_pz = '0000-00-00'
+df_setting_pz = None
+
+def get_df_setting_pz():
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+
+    global date_setting_pz
+    global df_setting_pz
+    if date_setting_pz != today:
+        df_setting_pz = pd.read_csv(fn_setting_fut)
+        df_setting_pz = df_setting_pz.set_index('pz')
+        date_setting_pz = today
+
+    return df_setting_pz
+
 def get_contract(symbol):
     pz = symbol[:2]
     if pz.isalpha():
@@ -138,18 +154,29 @@ def get_contract(symbol):
     else:
         pz = symbol[:1]
 
-    if pz not in contract_dict:
-        filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-        with open(filename_setting_fut,encoding='utf-8') as f:
-            r = DictReader(f)
-            for d in r:
-                contract_dict[ d['pz'] ] = Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
+    df = get_df_setting_pz()
+    if pz in df.index:
+        d = df.loc[pz,:]
+        return Contract( pz,int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
 
-    if pz in contract_dict:
-        return contract_dict[pz]
-    else:
-        return None
-        #assert False
+    return None
+
+
+# DictReader版
+# def get_contract(symbol):
+#     pz = symbol[:2]
+#     if pz.isalpha():
+#         pass
+#     else:
+#         pz = symbol[:1]
+#
+#     filename_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
+#     r = DictReader(open(filename_setting_fut,encoding='utf-8'))
+#     for d in r:
+#         if d['pz'] == pz:
+#             return Contract( d['pz'],int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
+#
+#     return None
 
 #----------------------------------------------------------------------
 def append_symbol(symbol_name, symbol_value):
