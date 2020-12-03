@@ -41,16 +41,8 @@ for dt in df.index:
     rec = df.loc[dt,:]
     print([dt, dt[:4], dt[5:-1].zfill(2)+'M', rec.value_cur, rec.value_cum, rec.ratio_cur, rec.ratio_cum])
 
-# print(df)
-
-# symbol = 'IO2012'
-# print(symbol, get_contract(symbol).be_opt)
-#
-# symbol = 'IO2012-C-4900'
-# print(symbol, get_contract(symbol).be_opt)
 
 
-#
 # fn = 'ExportSalesDataByCommodity.xls'
 #
 # df = pd.read_excel(fn, dtype='str')

@@ -83,8 +83,9 @@ def show_fut_csv():
 def NBS_upload():
     tips = ''
     dirname = get_dss() + 'info/NBS'
-    ch_en_dict = {'工业主要产品产量及增长速度':'industry', }
-    indicator_dict = {'工业主要产品产量及增长速度':[],}
+    ch_en_dict = {'工业主要产品产量及增长速度':'industry', '能源产品产量':'energy', '全社会客货运输量':'transport'}
+    indicator_dict = {'工业主要产品产量及增长速度':[], '能源产品产量':[], '全社会客货运输量':[]}
+
     for k in indicator_dict.keys():
         fn = os.path.join(dirname, k+'.csv')
         if os.path.exists(fn):
@@ -99,16 +100,18 @@ def NBS_upload():
                 fn = os.path.join(dirname, 'native/temp.xls')
                 f.save(fn)
 
-                # 若是新数据，导入数据库
+                # 读入文件数据
                 df = pd.read_excel(fn)
                 dt = df.iat[0,0][3:].strip()
                 indicator = df.iat[1,0].strip()
+                df = df.iloc[4:-1,:]
+                cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+                df.columns = cols
+
+                # 若是新数据，导入数据库
                 if dt not in indicator_dict[indicator]:
                     indicator_dict[indicator].append(dt)
 
-                    df = df.iloc[4:-1,:]
-                    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
-                    df.columns = cols
                     df.insert(0,'month',dt[5:-1].zfill(2)+'M')
                     df.insert(0,'year',dt[:4])
                     df.insert(0,'dt',dt)
