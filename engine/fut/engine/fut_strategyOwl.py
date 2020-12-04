@@ -74,6 +74,12 @@ class Fut_OwlSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
+        # 行情正常时，才继续逻辑
+        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 20:
+            pass
+        else:
+            return
+
         # 记录数据
         r = [[self.bar.date,self.bar.time,self.bar.close]]
         df = pd.DataFrame(r)
@@ -140,22 +146,26 @@ class Fut_OwlSignal(Signal):
     def generateSignal(self, bar):
         # 开多仓
         if self.can_buy == True:
-            self.buy(bar.close, self.fixedSize)
+            priceTick = get_contract(bar.vtSymbol).price_tick
+            self.buy(bar.close+10*priceTick, self.fixedSize)
             self.cost = bar.close
 
         # 开空仓
         if self.can_short == True:
-            self.short(bar.close, self.fixedSize)
+            priceTick = get_contract(bar.vtSymbol).price_tick
+            self.short(bar.close-10*priceTick, self.fixedSize)
             self.cost = bar.close
 
         # 平多仓
         if self.can_sell == True:
-            self.sell(bar.close, self.fixedSize)
+            priceTick = get_contract(bar.vtSymbol).price_tick
+            self.sell(bar.close-10*priceTick, self.fixedSize)
             self.cost = 0
 
         # 平空仓
         if self.can_cover == True:
-            self.cover(bar.close, self.fixedSize)
+            priceTick = get_contract(bar.vtSymbol).price_tick
+            self.cover(bar.close+10*priceTick, self.fixedSize)
             self.cost = 0
 
     #----------------------------------------------------------------------

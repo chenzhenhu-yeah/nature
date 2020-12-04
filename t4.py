@@ -26,20 +26,49 @@ from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_m
 from nature import rc_file, get_symbols_quote, get_tick, send_order
 
 
-fn = '饲料.csv'
-df = pd.read_csv(fn, encoding='gbk', skiprows=2, dtype='str')
-df = df.iloc[:4,:]
-df = df.set_index('指标')
-df = df.T
+fn = '2020年9月能源产品产量.xls'
+# fn = '2020年9月货物运输量.xls'
+# fn = '2020年10.xls'
 
-cols = ['value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
-df.columns = cols
-for col in cols:
-    df[col] = df[col].str.strip()
+df = pd.read_excel(fn)
+dt = df.iat[0,0][3:].strip()
+indicator = df.iat[1,0].strip()
 
-for dt in df.index:
-    rec = df.loc[dt,:]
-    print([dt, dt[:4], dt[5:-1].zfill(2)+'M', rec.value_cur, rec.value_cum, rec.ratio_cur, rec.ratio_cum])
+if indicator == '工业主要产品产量及增长速度':
+    df = df.iloc[4:-1,:]
+    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+    df.columns = cols
+elif indicator == '能源产品产量':
+    df = df.iloc[3:-1,:]
+    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+    df.columns = cols
+elif indicator == '全社会客货运输量':
+    df = df.iloc[3:-1,:]
+    cols = ['product', 'value_cur', 'ratio_cur', 'value_cum', 'ratio_cum']
+    df.columns = cols
+    df = df.loc[:, ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']]
+else:
+    raise ValueError
+
+print(df.head())
+print(df.tail())
+
+
+#
+# fn = '饲料.csv'
+# df = pd.read_csv(fn, encoding='gbk', skiprows=2, dtype='str')
+# df = df.iloc[:4,:]
+# df = df.set_index('指标')
+# df = df.T
+#
+# cols = ['value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+# df.columns = cols
+# for col in cols:
+#     df[col] = df[col].str.strip()
+#
+# for dt in df.index:
+#     rec = df.loc[dt,:]
+#     print([dt, dt[:4], dt[5:-1].zfill(2)+'M', rec.value_cur, rec.value_cum, rec.ratio_cur, rec.ratio_cum])
 
 
 

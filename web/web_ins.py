@@ -87,7 +87,7 @@ def NBS_upload():
     indicator_dict = {'工业主要产品产量及增长速度':[], '能源产品产量':[], '全社会客货运输量':[]}
 
     for k in indicator_dict.keys():
-        fn = os.path.join(dirname, k+'.csv')
+        fn = os.path.join(dirname, ch_en_dict[k]+'.csv')
         if os.path.exists(fn):
             df = pd.read_csv(fn)
             indicator_dict[k] = list(set(list(df.dt)))
@@ -104,9 +104,21 @@ def NBS_upload():
                 df = pd.read_excel(fn)
                 dt = df.iat[0,0][3:].strip()
                 indicator = df.iat[1,0].strip()
-                df = df.iloc[4:-1,:]
-                cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
-                df.columns = cols
+                if indicator == '工业主要产品产量及增长速度':
+                    df = df.iloc[4:-1,:]
+                    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+                    df.columns = cols
+                elif indicator == '能源产品产量':
+                    df = df.iloc[3:-1,:]
+                    cols = ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']
+                    df.columns = cols
+                elif indicator == '全社会客货运输量':
+                    df = df.iloc[3:-1,:]
+                    cols = ['product', 'value_cur', 'ratio_cur', 'value_cum', 'ratio_cum']
+                    df.columns = cols
+                    df = df.loc[:, ['product', 'value_cur', 'value_cum', 'ratio_cur', 'ratio_cum']]
+                else:
+                    raise ValueError
 
                 # 若是新数据，导入数据库
                 if dt not in indicator_dict[indicator]:

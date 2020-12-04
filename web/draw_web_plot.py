@@ -201,7 +201,7 @@ def mutual():
 
 
 def star():
-    pz_list = ['ru', 'c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'all']
+    pz_list = ['ru', 'c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'p', 'FG', 'all']
     for pz in pz_list:
         # 读取品种每日盈亏情况，清洗数据为每日一个记录
 

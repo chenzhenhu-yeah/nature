@@ -302,7 +302,7 @@ def get_free_space_mb(folder):
 def run_examine():
     kj = round(get_free_space_mb('C:\\'), 2)
     # print(kj,'GB')
-    if kj < 6:
+    if kj < 3:
         send_email(dss, '预警：磁盘空间不足, 仅剩余', str(kj)+'GB')
 
     now = datetime.datetime.now()
