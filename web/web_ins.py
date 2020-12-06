@@ -1,4 +1,7 @@
 
+import warnings
+warnings.filterwarnings("ignore")
+
 import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, redirect
@@ -10,6 +13,7 @@ import tushare as ts
 import json
 import os
 import traceback
+import zipfile
 
 from nature import del_blank, check_symbols_p, get_tick, send_order, append_symbol, set_symbol, get_symbols_setting
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
@@ -205,6 +209,285 @@ def NBS_mail():
                 send_email(get_dss(), '统计局数据', '', pdf_list, mailto)
 
     return render_template("NBS_mail.html",title="",tip=tips)
+
+
+def fit_df(df, type):
+    df.columns = ['date', 'symbol', 'name', 'value', 'change']
+    for col in df.columns:
+        df[col] = df[col].str.strip()
+    # df = df.replace(',', '')
+    df = df.replace('', np.nan)
+    df['name'] = df['name'].replace('-', np.nan)
+    df = df.dropna()                                           # 该行有元素为空时，删除该行
+    # print(df)
+    if len(df) > 0:
+        date = df.iat[0,0]
+        if date.find('-') == -1:
+            date = date[:4] + '-' + date[4:6] + '-' + date[6:]
+        df['date'] = date
+        df['symbol'] = df['symbol'].str.strip()
+        df['name'] = df['name'].str.strip()
+        df['value'] = df['value'].str.replace(',', '')
+        df['value'] = df['value'].astype('int')
+        df['change'] = df['change'].str.replace(',', '')
+        df['change'] = df['change'].astype('int')
+        rec = [date, df.iat[0,1], '总计', df.value.sum() , df.change.sum()]
+        # print(rec)
+
+        df1 = pd.DataFrame([rec], columns=['date', 'symbol', 'name', 'value', 'change'])
+        df = pd.concat([df,df1])
+        df = df.sort_values('value', ascending=False)
+        df.insert(0, 'seq', range(0, int(len(df))) )
+        df.insert(0, 'type', type)
+        # print(df.tail())
+        df = df.loc[:,['date', 'symbol', 'type', 'seq', 'name', 'value', 'change']]
+        # print(df)
+
+    return df
+
+@app.route('/hold_upload', methods=['get','post'])
+def hold_upload():
+    tips = ''
+    dirname = get_dss() + 'info/hold/'
+    ch_en_dict = {'IF':'IF', 'IO':'IO', '上期所':'shfe', '郑商所':'czce', '大商所':'dce'}
+    indicator_dict = {'IF':[], 'IO':[], '上期所':[], '郑商所':[], '大商所':[]}
+
+    for k in indicator_dict.keys():
+        fn = os.path.join(dirname, 'hold_'+ch_en_dict[k]+'.csv')
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            indicator_dict[k] = list(set(list(df.date)))
+
+    if request.method == "POST":
+        try:
+            f = request.files.get('f')
+            if f is not None:
+                # 上传文件到指定路径
+                fn = os.path.join(dirname, 'native/temp')
+                f.save(fn)
+
+                df_r = None
+                indicator = del_blank( request.form.get('exchange') )
+                if indicator == 'IF':
+                    fn2 = '.csv'
+                    df = pd.read_csv(fn, encoding='gbk', dtype='str')
+                    checker = df.columns[0]
+                    assert checker == '交易日'
+                    df = df.dropna(axis=1, how='all')             # 该列全部元素为空时，删除该列
+                    df = df.iloc[1:,:]
+
+                    symbol_set = set(df['合约'])
+                    # print(symbol_set)
+                    for symbol in symbol_set:
+                        df0 = df[df['合约'] == symbol]
+                        df1 = fit_df( df0.iloc[:,[0,1,3,4,5]], 'deal' )
+                        df2 = fit_df( df0.iloc[:,[0,1,6,7,8]], 'long' )
+                        df3 = fit_df( df0.iloc[:,[0,1,9,10,11]], 'short' )
+                        if df_r is None:
+                            df_r = pd.concat([df1,df2,df3], sort=False)
+                        else:
+                            df_r = pd.concat([df_r,df1,df2,df3], sort=False)
+
+                if indicator == 'IO':
+                    fn2 = '.csv'
+                    df = pd.read_csv(fn, encoding='gbk', dtype='str')
+                    checker = df.columns[0]
+                    assert checker == '交易日'
+                    df = df.dropna(axis=1, how='all')             # 该列全部元素为空时，删除该列
+                    df = df.iloc[1:,:]
+
+                    symbol_set = set(df['合约系列'])
+                    # print(symbol_set)
+                    for symbol in symbol_set:
+                        df0 = df[df['合约系列'] == symbol]
+                        df1 = fit_df( df0.iloc[:,[0,1,3,4,5]], 'deal' )
+                        df2 = fit_df( df0.iloc[:,[0,1,6,7,8]], 'long' )
+                        df3 = fit_df( df0.iloc[:,[0,1,9,10,11]], 'short' )
+                        if df_r is None:
+                            df_r = pd.concat([df1,df2,df3], sort=False)
+                        else:
+                            df_r = pd.concat([df_r,df1,df2,df3], sort=False)
+
+                if indicator == '上期所':
+                    fn2 = '.csv'
+                    df = pd.read_csv(fn, encoding='gbk', dtype='str')
+                    checker = df.columns[0].strip()
+                    date = checker[-10:]
+                    checker = checker[:4]
+                    assert checker == '商品名称'
+
+                    begin = 0
+                    end = 0
+                    symbol = ''
+                    for i, row in df.iterrows():
+                        if row[0].strip()[:4] == '合约代码':
+                            begin = i
+                            symbol = row[0].strip()[6:12].strip()
+                        if row[0].strip() == '合计':
+                            end = i
+                        if end > begin:
+                            df0 = df.loc[begin+2:end-1, :]
+                            df0.insert(0,'symbol',symbol)
+                            df0.insert(0,'date',date)
+
+                            df1 = df0.iloc[:,[0,1,3,4,5]]
+                            df1 = fit_df( df1, 'deal' )
+                            df2 = df0.iloc[:,[0,1,7,8,9]]
+                            df2 = fit_df( df2, 'long' )
+                            df3 = df0.iloc[:,[0,1,11,12,13]]
+                            df3 = fit_df( df3, 'short' )
+                            if df_r is None:
+                                df_r = pd.concat([df1,df2,df3], sort=False)
+                            else:
+                                df_r = pd.concat([df_r,df1,df2,df3], sort=False)
+
+                            begin = end
+
+                if indicator == '郑商所':
+                    fn2 = '.xls'
+                    df = pd.read_excel(fn)
+                    checker = df.columns[0].strip()
+                    date = checker[-11:-1]
+                    checker = checker[:14]
+                    assert checker == '郑州商品交易所期货持仓排名表'
+
+                    begin = 0
+                    end = 0
+                    symbol = ''
+                    for i, row in df.iterrows():
+                        if row[0].strip()[:2] == '合约':
+                            begin = i
+                            symbol = row[0].strip()[3:8].strip()
+
+                        if row[0].strip() == '合计':
+                            if begin > 0:
+                                end = i
+
+                        if end > begin:
+                            # print(symbol)
+                            df0 = df.loc[begin+2:end-1, :]
+                            df0.insert(0,'symbol',symbol)
+                            df0.insert(0,'date',date)
+
+                            df1 = df0.iloc[:,[0,1,3,4,5]]
+                            df1 = fit_df( df1, 'deal' )
+                            df2 = df0.iloc[:,[0,1,6,7,8]]
+                            df2 = fit_df( df2, 'long' )
+                            df3 = df0.iloc[:,[0,1,9,10,11]]
+                            df3 = fit_df( df3, 'short' )
+
+                            if df_r is None:
+                                df_r = pd.concat([df1,df2,df3], sort=False)
+                            else:
+                                df_r = pd.concat([df_r,df1,df2,df3], sort=False)
+
+                            begin = end
+
+                if indicator == '大商所':
+                    fn2 = '.zip'
+                    z = zipfile.ZipFile(fn, 'r')
+                    for f_name in z.namelist():
+                        data = z.read(f_name)
+                        fn_d = dirname+'native/duoduo.txt'
+                        with open(fn_d,'wb') as f:
+                            f.write(data)
+
+                        df = pd.read_csv(fn_d, sep='\t', dtype='str')
+                        df = df.dropna(how='all')                     # 该行全部元素为空时，删除该行
+                        df = df.dropna(axis=1, how='all')             # 该列全部元素为空时，删除该列
+
+                        checker = df.iat[0,0].strip()
+                        symbol = checker[5:].strip()
+                        date = df.iat[0,2].strip()[5:].strip()
+                        checker = checker[:4]
+                        assert checker == '合约代码'
+
+                        begin = 0
+                        end = 0
+                        t = 0
+                        type_list = ['deal', 'long', 'short']
+                        for i, row in df.iterrows():
+                            if str(row[0]).strip() == '名次':
+                                begin = i
+                            if str(row[0]).strip() == '总计':
+                                if begin > 0:
+                                    end = i
+
+                            if end > begin:
+                                df0 = df.loc[begin+1:end-1, :]
+                                df0.insert(0,'symbol',symbol)
+                                df0.insert(0,'date',date)
+
+                                df1 = df0.iloc[:,[0,1,4,5,7]]
+                                df1 = fit_df( df1, type_list[t])
+                                t += 1
+
+                                if df_r is None:
+                                    df_r = df1
+                                else:
+                                    df_r = pd.concat([df_r,df1], sort=False)
+
+                                begin = end
+                    z.close()
+
+                df = df_r.loc[:,['date','symbol','type','seq','name','value','change']]
+                dt = df.iat[0,0]
+                # 若是新数据，导入数据库
+                if dt not in indicator_dict[indicator]:
+                    indicator_dict[indicator].append(dt)
+
+                    fn = os.path.join(dirname, 'hold_'+ch_en_dict[indicator]+'.csv')
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    # 保留原始文件
+                    try:
+                        fn1 = os.path.join(dirname, 'native/temp')
+                        fn2 = os.path.join(dirname, 'native/'+dt+'_'+ch_en_dict[indicator]+fn2)
+                        os.rename(fn1, fn2)
+                    except:
+                        pass
+
+                    # 写入上传记录文件
+                    now = datetime.now()
+                    today = now.strftime('%Y-%m-%d %H:%M:%S')
+                    fn = os.path.join(dirname, 'history.csv')
+                    df = pd.DataFrame([[today,dt,indicator]], columns=['done_dt','data_dt','indicator'])
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    tips = '文件上传成功'
+                else:
+                    tips = '文件已存在，未上传'
+            else:
+                tips = '未选择文件'
+        except:
+            s = traceback.format_exc()
+            to_log(s)
+            tips = '文件出错了'
+
+
+    # 显示维护历史
+    fn = os.path.join(dirname, 'history.csv')
+    df = pd.read_csv(fn)
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
+    h = h[:4]
+
+    # 数据清单
+    r = [['数据', '最近日期列表']]
+    for k in indicator_dict.keys():
+        r.append([k, sorted(indicator_dict[k])[-12:]])
+
+    return render_template("hold_upload.html", title="成交及持仓", tip=tips, hs=h, rows=r)
+
 
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():
