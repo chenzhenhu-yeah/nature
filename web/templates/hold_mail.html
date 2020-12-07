@@ -13,7 +13,7 @@
          margin-right:18px;
       }
       section {
-         width:950px;
+         width:900px;
          float:left;
          margin-bottom:36px;
       }
@@ -72,44 +72,40 @@
        <h1>{{tip}}</h1>
        </header>
 
-
-      <form method="post" enctype="multipart/form-data" action="NBS_upload" >
+      <form method="post" action="hold_mail">
       <fieldset>
-         <input type="file" name="f">
-      </fieldset>
+      <p>
+        交易所:
+          <select name="exchange"/>
+            <option value=''></option>
+            <option value='IF'>IF</option>
+            <option value='IO'>IO</option>
+            <option value='上期所'>上期所</option>
+            <option value='郑商所'>郑商所</option>
+            <option value='大商所'>大商所</option>
+          </select>
+       </p>
+       <p>
+          symbol:<input type="text" name="symbol" required/>
+       </p>
+       <p>
+          截至日期:<input type="text" name="enddate"/> YYYYMM
+       </p>
 
-      <p></p>
+       <p>
+          邮箱:
+          <select name="mailto"/>
+            <option value=''></option>
+            <option value='25617680@qq.com'>逍逍法王^-^</option>
+          </select>
+      </p>
+
+      </fieldset>
 
       <div>
       <input type="submit" value="Submit"/>
       </div>
       </form>
-
-     <p>历史上传记录:</p>
-     <table>
-      {% for row in hs %}
-      <tr>
-        {% for d in row %}
-        <td class="description">{{ d }}</td>
-        {% endfor %}
-      <tr>
-      {% endfor %}
-     </table>
-
-
-      <p>数据清单:</p>
-      <table>
-      {% for row in rows %}
-      <tr>
-        {% for d in row %}
-        <td class="description">{{ d }}</td>
-        {% endfor %}
-      <tr>
-      {% endfor %}
-     </table>
-
-
     </section>
-
   </body>
 </html>

@@ -22,8 +22,9 @@ from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_mi
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
 from nature import get_file_lock, release_file_lock, r_file, a_file, to_log
 
-from nature.web.nbs import nbs_industry_product
+from nature.web.nbs import nbs_product
 from nature.web.usda import usda_esr
+from nature.web.hold import hold_product
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -189,24 +190,28 @@ def NBS_upload():
 def NBS_mail():
     tips = ''
     dirname = get_dss() + 'info/NBS/img/'
+    ch_en_dict = {'工业主要产品产量及增长速度':'industry', '能源产品产量':'energy', '全社会客货运输量':'transport'}
+
     if request.method == "POST":
         listfile = os.listdir(dirname)
         for fn in listfile:
             os.remove(dirname+fn)
 
+        pdf_list =[]
+        kind = request.form.get('kind')
         k_list = request.form.getlist('k')
         mailto = del_blank( request.form.get('mailto') )
-        pdf_list =[]
-        for k in k_list:
-            if k == 'industry':
-                nbs_industry_product()
-                pdf_list.append(dirname+k+'.pdf')
-            tips = '邮件已发送'
+
+        if kind is not None:
+            nbs_product(ch_en_dict[kind], k_list)
+            pdf_list.append(dirname+ch_en_dict[kind]+'.pdf')
+
         if pdf_list != []:
             if mailto == '':
                 send_email(get_dss(), '统计局数据', '', pdf_list)
             else:
                 send_email(get_dss(), '统计局数据', '', pdf_list, mailto)
+            tips = '邮件已发送'
 
     return render_template("NBS_mail.html",title="",tip=tips)
 
@@ -436,31 +441,34 @@ def hold_upload():
                 if dt not in indicator_dict[indicator]:
                     indicator_dict[indicator].append(dt)
 
-                    fn = os.path.join(dirname, 'hold_'+ch_en_dict[indicator]+'.csv')
-                    if os.path.exists(fn):
-                        df.to_csv(fn, mode='a', header=False, index=False)
-                    else:
-                        df.to_csv(fn, index=False)
-
                     # 保留原始文件
                     try:
                         fn1 = os.path.join(dirname, 'native/temp')
                         fn2 = os.path.join(dirname, 'native/'+dt+'_'+ch_en_dict[indicator]+fn2)
                         os.rename(fn1, fn2)
+
+                        fn = os.path.join(dirname, 'hold_'+ch_en_dict[indicator]+'.csv')
+                        if os.path.exists(fn):
+                            df_date = pd.read_csv(fn)
+                            date_set = set(df_date.date)
+                            if dt not in date_set:
+                                df.to_csv(fn, mode='a', header=False, index=False)
+                        else:
+                            df.to_csv(fn, index=False)
+
+                        # 写入上传记录文件
+                        now = datetime.now()
+                        today = now.strftime('%Y-%m-%d %H:%M:%S')
+                        fn = os.path.join(dirname, 'history.csv')
+                        df = pd.DataFrame([[today,dt,indicator]], columns=['done_dt','data_dt','indicator'])
+                        if os.path.exists(fn):
+                            df.to_csv(fn, mode='a', header=False, index=False)
+                        else:
+                            df.to_csv(fn, index=False)
+
+                        tips = '文件上传成功'
                     except:
-                        pass
-
-                    # 写入上传记录文件
-                    now = datetime.now()
-                    today = now.strftime('%Y-%m-%d %H:%M:%S')
-                    fn = os.path.join(dirname, 'history.csv')
-                    df = pd.DataFrame([[today,dt,indicator]], columns=['done_dt','data_dt','indicator'])
-                    if os.path.exists(fn):
-                        df.to_csv(fn, mode='a', header=False, index=False)
-                    else:
-                        df.to_csv(fn, index=False)
-
-                    tips = '文件上传成功'
+                        tips = '文件已存在，未上传'
                 else:
                     tips = '文件已存在，未上传'
             else:
@@ -479,7 +487,7 @@ def hold_upload():
         h.append( list(row) )
     h.append(list(df.columns))
     h.reverse()
-    h = h[:4]
+    h = h[:6]
 
     # 数据清单
     r = [['数据', '最近日期列表']]
@@ -488,6 +496,34 @@ def hold_upload():
 
     return render_template("hold_upload.html", title="成交及持仓", tip=tips, hs=h, rows=r)
 
+@app.route('/hold_mail', methods=['get','post'])
+def hold_mail():
+    tips = ''
+    dirname = get_dss() + 'info/hold/img/'
+    ch_en_dict = {'IF':'IF', 'IO':'IO', '上期所':'shfe', '郑商所':'czce', '大商所':'dce'}
+
+    if request.method == "POST":
+        listfile = os.listdir(dirname)
+        for fn in listfile:
+            os.remove(dirname+fn)
+
+        pdf_list =[]
+        indicator = del_blank( request.form.get('exchange') )
+        symbol = del_blank( request.form.get('symbol') )
+        mailto = del_blank( request.form.get('mailto') )
+
+        if indicator != '':
+            hold_product(ch_en_dict[indicator], symbol)
+            pdf_list.append(dirname+ch_en_dict[indicator]+'.pdf')
+
+        if pdf_list != []:
+            if mailto == '':
+                send_email(get_dss(), '成交及持仓数据', '', pdf_list)
+            else:
+                send_email(get_dss(), '成交及持仓数据', '', pdf_list, mailto)
+            tips = '邮件已发送'
+
+    return render_template("hold_mail.html",title="",tip=tips)
 
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():
@@ -498,7 +534,7 @@ def USDA_upload():
         fn = os.path.join(dirname, k+'.csv')
         if os.path.exists(fn):
             df = pd.read_csv(fn)
-            indicator_dict[k] = sorted(list(set(list(df.Date))))[-12:]
+            indicator_dict[k] = sorted(list(set(list(df.Date))))
 
     if request.method == "POST":
         try:

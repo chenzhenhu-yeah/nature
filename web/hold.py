@@ -60,36 +60,49 @@ def img2pdf(pdfname, img_list):
     doc.save(os.path.join(dirname, pdfname))
     doc.close()
 
-def nbs_product(indicator, k_list):
-    fn = os.path.join(get_dss()+'info/NBS/', indicator+'.csv')
-    df = pd.read_csv(fn, dtype={'value_cur':'float', 'value_cum':'float'})
+def hold_product(indicator, symbol):
+    fn = os.path.join(get_dss(), 'info/hold/hold_'+indicator+'.csv')
+    df = pd.read_csv(fn)
+    date_list = sorted(set(df.date))
+    date_list = date_list[-2:]
+    print(date_list)
 
-    # 生成图片
-    for product in k_list:
-        df0 = df[df['product'] == product]
-        year_list = sorted(set(list(df0.year)))[-5:]
-        for value in ['value_cur', 'value_cum']:
-            df0['value'] = df0[value]
-            df_list = []
-            df2 = pd.DataFrame([[np.nan]]*12, index=['01M','02M','03M','04M','05M','06M','07M','08M','09M','10M','11M','12M'], columns=['value'])
-            df2.index.name = ''
-            df_list.append(df2)
-            for year in year_list:
-                df1 = df0[df0['year'] == year]
-                df1 = df1.set_index('month')
-                df1 = df1.sort_index()
-                df1.index.name = str(year)
-                df_list.append(df1)
-                # print(df1)
-            show_11(df_list, product+' '+value, xticks_filter=False, filename=indicator+'_'+product+value)
 
-    # 生成pdf
-    listfile = os.listdir(dirname)
-    img_list = []
-    for fn in listfile:
-        if fn.startswith(indicator):
-            img_list.append(fn)
-    img2pdf(indicator+'.pdf', img_list)
+    df = df[(df.date.isin(date_list)) & (df.seq.isin([0,1,2,3])) & (df.symbol == symbol) ]
+    # print(df.head())
+
+    for type in ['deal', 'long', 'short']:
+        df0 = df[(df.type == type) & (df.seq == 0)]
+        print(df0.head())
+
+
+
+    # # 生成图片
+    # for product in k_list:
+    #     df0 = df[df['product'] == product]
+    #     year_list = sorted(set(list(df0.year)))[-5:]
+    #     for value in ['value_cur', 'value_cum']:
+    #         df0['value'] = df0[value]
+    #         df_list = []
+    #         df2 = pd.DataFrame([[np.nan]]*12, index=['01M','02M','03M','04M','05M','06M','07M','08M','09M','10M','11M','12M'], columns=['value'])
+    #         df2.index.name = ''
+    #         df_list.append(df2)
+    #         for year in year_list:
+    #             df1 = df0[df0['year'] == year]
+    #             df1 = df1.set_index('month')
+    #             df1 = df1.sort_index()
+    #             df1.index.name = str(year)
+    #             df_list.append(df1)
+    #             # print(df1)
+    #         show_11(df_list, product+' '+value, xticks_filter=False, filename=indicator+'_'+product+value)
+    #
+    # # 生成pdf
+    # listfile = os.listdir(dirname)
+    # img_list = []
+    # for fn in listfile:
+    #     if fn.startswith(indicator):
+    #         img_list.append(fn)
+    # img2pdf(indicator+'.pdf', img_list)
 
 if __name__ == '__main__':
-    nbs_product()
+    hold_product('shfe', 'al2101')
