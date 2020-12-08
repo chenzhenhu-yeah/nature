@@ -294,7 +294,7 @@ class FutEngine(object):
                 time.sleep(23)
                 if self.working == True:
                     q = len(self.bar_list)
-                    if q > 99:
+                    if q > 199:
                         to_log('引擎排队指数： ' + str(q))
 
                     df_trade = pd.read_csv(fn_trade, skiprows=n)
