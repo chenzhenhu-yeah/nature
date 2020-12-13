@@ -531,7 +531,7 @@ def hold_mail():
 def USDA_upload():
     tips = ''
     dirname = get_dss() + 'info/USDA'
-    indicator_dict = {'esr':[],}
+    indicator_dict = {'esr':[], }
     for k in indicator_dict.keys():
         fn = os.path.join(dirname, k+'.csv')
         if os.path.exists(fn):
@@ -547,19 +547,22 @@ def USDA_upload():
                 f.save(fn)
 
                 # 若是新数据，导入数据库
-                df = pd.read_excel(fn, dtype='str')
-                dt = df.iat[9,0].strip()[:10]
+                # df = pd.read_excel(fn, dtype='str')
+                df = pd.read_excel(fn)
+                dt = str(df.iat[9,0]).strip()[:10]
                 indicator = 'esr'
                 if dt not in indicator_dict[indicator]:
                     indicator_dict[indicator].append(dt)
-                    df = df.iloc[9:-1,:]
+                    df = df.iloc[9:,:]
                     cols = ['Date','MarketYear','unnamed','Commodity','Country','WeeklyExports','AccumulatedExports','OutstandingSales','GrossNewSales','NetSales','TotalCommitment','NMY_OutstandingSales','NMY_NetSales','UnitDesc']
                     df.columns = cols
+                    df = df.dropna(how='all')                                 # 该行全部元素为空时，删除该行
+                    df = df.replace(np.nan, ' ')
+                    # for col in ['Date','MarketYear','Commodity','Country','UnitDesc']:
                     for col in cols:
-                        df[col] = df[col].str.strip()
+                        df[col] = df[col].astype('str').str.strip()
                     df['Date'] = df['Date'].str.slice(0,10)
                     del df['unnamed']
-                    df = df.dropna(how='all')                                 # 该行全部元素为空时，删除该行
 
                     fn = os.path.join(dirname, indicator+'.csv')
                     if os.path.exists(fn):
@@ -592,6 +595,8 @@ def USDA_upload():
                 tips = '未选择文件'
         except:
             tips = '文件出错了'
+            s = traceback.format_exc()
+            to_log(s)
 
     # 显示维护历史
     fn = os.path.join(dirname, 'history.csv')
