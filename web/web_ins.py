@@ -489,12 +489,12 @@ def hold_upload():
         h.append( list(row) )
     h.append(list(df.columns))
     h.reverse()
-    h = h[:6]
+    h = h[:9]
 
     # 数据清单
     r = [['数据', '最近日期列表']]
     for k in indicator_dict.keys():
-        r.append([k, sorted(indicator_dict[k])[-12:]])
+        r.append([k, sorted(indicator_dict[k])[-7:]])
 
     return render_template("hold_upload.html", title="成交及持仓", tip=tips, hs=h, rows=r)
 
@@ -536,7 +536,7 @@ def USDA_upload():
         fn = os.path.join(dirname, k+'.csv')
         if os.path.exists(fn):
             df = pd.read_csv(fn)
-            indicator_dict[k] = sorted(list(set(list(df.Date))))
+            indicator_dict[k] = sorted(set(df.Date))
 
     if request.method == "POST":
         try:
