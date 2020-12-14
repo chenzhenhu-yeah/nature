@@ -238,15 +238,13 @@ class FutEngine(object):
         #         skew_bili_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
+        # self.loadPortfolio(Fut_ArbitragePortfolio, [])
+        
         if 'symbols_spread' in setting:
             symbols = setting['symbols_spread']
             if len(symbols) > 0:
                 spread_symbol_list = symbols.split(',')
                 self.loadPortfolio(Fut_SpreadPortfolio, spread_symbol_list)
-
-# --------------------------------------------------------------------------------
-
-        self.loadPortfolio(Fut_ArbitragePortfolio, [])
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()

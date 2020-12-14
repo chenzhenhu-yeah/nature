@@ -645,6 +645,34 @@ def custom_upload():
 
     return render_template("custom_upload.html", title="海关", tip=tips, hs=h, rows=r)
 
+@app.route('/custom_mail', methods=['get','post'])
+def custom_mail():
+    tips = ''
+    dirname = get_dss() + 'info/custom/img/'
+
+    if request.method == "POST":
+        listfile = os.listdir(dirname)
+        for fn in listfile:
+            os.remove(dirname+fn)
+
+        pdf_list =[]
+        indicator = del_blank( request.form.get('exchange') )
+        symbol = del_blank( request.form.get('symbol') )
+        mailto = del_blank( request.form.get('mailto') )
+
+        if indicator != '':
+            hold_product(ch_en_dict[indicator], symbol)
+            pdf_list.append(dirname+ch_en_dict[indicator]+'.pdf')
+
+        if pdf_list != []:
+            if mailto == '':
+                send_email(get_dss(), '成交及持仓数据', '', pdf_list)
+            else:
+                send_email(get_dss(), '成交及持仓数据', '', pdf_list, mailto)
+            tips = '邮件已发送'
+
+    return render_template("custom_mail.html",title="",tip=tips)
+
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():
     tips = ''
@@ -2252,6 +2280,6 @@ def confirm_ins():
     return 'success: ' + ins
 
 if __name__ == '__main__':
-    # app.run(debug=True)
+    app.run(debug=True)
 
-    app.run(host='0.0.0.0')
+    # app.run(host='0.0.0.0')
