@@ -146,26 +146,26 @@ class Fut_OwlSignal(Signal):
     def generateSignal(self, bar):
         # 开多仓
         if self.can_buy == True:
-            priceTick = get_contract(bar.vtSymbol).price_tick
-            self.buy(bar.close+10*priceTick, self.fixedSize)
+            # priceTick = get_contract(bar.vtSymbol).price_tick
+            self.buy(bar.close, self.fixedSize)
             self.cost = bar.close
 
         # 开空仓
         if self.can_short == True:
-            priceTick = get_contract(bar.vtSymbol).price_tick
-            self.short(bar.close-10*priceTick, self.fixedSize)
+            # priceTick = get_contract(bar.vtSymbol).price_tick
+            self.short(bar.close, self.fixedSize)
             self.cost = bar.close
 
         # 平多仓
         if self.can_sell == True:
-            priceTick = get_contract(bar.vtSymbol).price_tick
-            self.sell(bar.close-10*priceTick, self.fixedSize)
+            # priceTick = get_contract(bar.vtSymbol).price_tick
+            self.sell(bar.close, self.fixedSize)
             self.cost = 0
 
         # 平空仓
         if self.can_cover == True:
-            priceTick = get_contract(bar.vtSymbol).price_tick
-            self.cover(bar.close+10*priceTick, self.fixedSize)
+            # priceTick = get_contract(bar.vtSymbol).price_tick
+            self.cover(bar.close, self.fixedSize)
             self.cost = 0
 
     #----------------------------------------------------------------------

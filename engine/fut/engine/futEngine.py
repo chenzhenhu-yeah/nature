@@ -32,7 +32,7 @@ from nature import Fut_Aberration_EnhancePortfolio, Fut_Cci_RawPortfolio
 from nature import Fut_IcPortfolio, Fut_YuePortfolio
 from nature import Fut_AvengerPortfolio, Fut_FollowPortfolio, Fut_RatioPortfolio
 from nature import Fut_Skew_StrdPortfolio, Fut_Skew_BiliPortfolio
-from nature import Fut_ArbitragePortfolio
+from nature import Fut_ArbitragePortfolio, Fut_SpreadPortfolio
 
 #from ipdb import set_trace
 from nature import SOCKET_BAR, SOCKET_ORDER
@@ -237,6 +237,12 @@ class FutEngine(object):
         #     if len(symbols) > 0:
         #         skew_bili_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
+
+        if 'symbols_spread' in setting:
+            symbols = setting['symbols_spread']
+            if len(symbols) > 0:
+                spread_symbol_list = symbols.split(',')
+                self.loadPortfolio(Fut_SpreadPortfolio, spread_symbol_list)
 
 # --------------------------------------------------------------------------------
 
@@ -561,8 +567,7 @@ class FutEngine(object):
         if self.gateway is not None:
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
             threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
-            send_email(get_dss(), '引擎下单：'+vtSymbol+' '+str(direction)+' '+str(offset), '')
-
+            # send_email(get_dss(), '引擎下单：'+vtSymbol+' '+str(direction)+' '+str(offset), '')
 
     #----------------------------------------------------------------------
     def worker_open(self):

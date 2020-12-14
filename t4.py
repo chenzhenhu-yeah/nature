@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 import smtplib
 from email.mime.text import MIMEText
 

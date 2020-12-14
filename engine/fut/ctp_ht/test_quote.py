@@ -24,9 +24,9 @@ class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        
+
         CtpQuote.__init__(self)
-        self.id_list = ['c1909','c2001']
+        self.id_list = ['RM101','SP m2101&m2105', 'SPC y2105&p2105', 'SPD SR101&SR105', 'IPS CF105&CY105']
 
         #self.id_list = ['IC1909','c1909','CF909']
         self.dss = get_dss()

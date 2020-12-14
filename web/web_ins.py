@@ -185,7 +185,7 @@ def NBS_upload():
     for k in indicator_dict.keys():
         r.append([k, sorted(indicator_dict[k])[-12:]])
 
-    return render_template("NBS_upload.html", title="NBS", tip=tips, hs=h, rows=r)
+    return render_template("NBS_upload.html", title="统计局", tip=tips, hs=h, rows=r)
 
 @app.route('/NBS_mail', methods=['get','post'])
 def NBS_mail():
@@ -526,6 +526,124 @@ def hold_mail():
             tips = '邮件已发送'
 
     return render_template("hold_mail.html",title="",tip=tips)
+
+def custom_fit_df(df, date):
+    df.columns = ['product', 'unit', 'value_cur', 'amount_cur', 'value_cum', 'amount_cum', 'value_cur_ratio', 'amount_cur_ratio', 'value_cum_ratio', 'amount_cum_ratio']
+    for col in df.columns:
+        df[col] = df[col].str.strip()
+    df = df.replace('-', np.nan)
+    df = df.replace('', np.nan)
+
+    df.insert(0,'month',date[5:-1].zfill(2)+'M')
+    df.insert(0,'year',date[:4])
+    df.insert(0,'date', date)
+    # print(df.head())
+
+    df['value_cur'] = df['value_cur'].str.replace(',', '')
+    df['amount_cur'] = df['amount_cur'].str.replace(',', '')
+    df['value_cum'] = df['value_cum'].str.replace(',', '')
+    df['amount_cum'] = df['amount_cum'].str.replace(',', '')
+
+    return df
+
+@app.route('/custom_upload', methods=['get','post'])
+def custom_upload():
+    tips = ''
+    dirname = get_dss() + 'info/custom'
+    indicator_dict = {'import':[], 'export':[]}
+    for k in indicator_dict.keys():
+        fn = os.path.join(dirname, k+'.csv')
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            indicator_dict[k] = sorted(set(df.date))
+
+    if request.method == "POST":
+        try:
+            f = request.files.get('f')
+            indicator = del_blank( request.form.get('type') )
+            if f is not None and indicator != '':
+                # 上传文件到指定路径
+                fn = os.path.join(dirname, 'native/temp.xls')
+                f.save(fn)
+
+                df = pd.read_excel(fn, dtype='str')
+                df = df.dropna(how='all')                     # 该行全部元素为空时，删除该行
+                df = df.dropna(axis=1, how='all')             # 该列全部元素为空时，删除该列
+
+                checker = str(df.iat[0,0]).strip()
+                date = checker[4:-14].strip()
+                checker = checker[-14:].strip()
+                # print(checker)
+                # print(date)
+                assert date != ''
+                if indicator == 'import':
+                    assert checker == '进口主要商品量值表（美元值）'
+                elif indicator == 'export':
+                    assert checker == '出口主要商品量值表（美元值）'
+                else:
+                    assert False
+
+                if date not in indicator_dict[indicator]:
+                    indicator_dict[indicator].append(date)
+
+                    df = df.iloc[4:-1,:]
+                    checker = str(df.iat[0,0]).strip()
+                    assert checker == '农产品*'
+                    df = custom_fit_df(df, date)
+
+                    fn = os.path.join(dirname, indicator+'.csv')
+                    if os.path.exists(fn):
+                        df2 = pd.read_csv(fn)
+                        date_set = set( df2.date )
+                        if date not in date_set:
+                            df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    # 保留原始文件
+                    try:
+                        fn1 = os.path.join(dirname, 'native/temp.xls')
+                        fn2 = os.path.join(dirname, 'native/'+date+'_'+indicator+'.xls')
+                        os.rename(fn1, fn2)
+                    except:
+                        pass
+
+                    # 写入上传记录文件
+                    now = datetime.now()
+                    today = now.strftime('%Y-%m-%d %H:%M:%S')
+                    fn = os.path.join(dirname, 'history.csv')
+                    df = pd.DataFrame([[today,date,indicator]], columns=['done_dt','data_dt','indicator'])
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    tips = '文件上传成功'
+                else:
+                    tips = '文件已存在，未上传'
+            else:
+                tips = '未选择文件'
+        except:
+            tips = '文件出错了'
+            s = traceback.format_exc()
+            to_log(s)
+
+    # 显示维护历史
+    fn = os.path.join(dirname, 'history.csv')
+    df = pd.read_csv(fn)
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
+    h = h[:4]
+
+    # 数据清单
+    r = [['数据', '最近日期列表']]
+    for k in indicator_dict.keys():
+        r.append([k, sorted(indicator_dict[k])[-12:]])
+
+    return render_template("custom_upload.html", title="海关", tip=tips, hs=h, rows=r)
 
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():

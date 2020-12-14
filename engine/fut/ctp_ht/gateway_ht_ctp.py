@@ -223,6 +223,7 @@ class Gateway_Ht_CTP(object):
                 self.t.ReqOrderInsert(code, DirectType.Buy, OffsetType.Close, price, volume, exchangeID)
             if direction == DIRECTION_SHORT and offset == 'Close':
                 self.t.ReqOrderInsert(code, DirectType.Sell, OffsetType.Close, price, volume, exchangeID)
+            send_email(get_dss(), '引擎下单：'+code+' '+str(direction)+' '+str(offset), '')
 
         except Exception as e:
             s = traceback.format_exc()

@@ -117,7 +117,11 @@ class Fut_DaLiSignal(Signal):
         if self.paused == True and self.backtest == False:
             self.counter += 1
             if self.counter == 3:
-                send_email(get_dss(), self.vtSymbol + ' 挂单未成交！！！', '')
+                filename = get_dss() +  'gateway_closed.csv'
+                if os.path.exists(filename):
+                    pass
+                else:
+                    send_email(get_dss(), self.vtSymbol + ' 挂单未成交！！！', '')
             return
 
         self.calculateIndicator()     # 计算指标

@@ -64,8 +64,12 @@ if __name__ == "__main__":
     #tt.t.ReqOrderInsert('ag1912', DirectType.Buy, OffsetType.Open, 1811, 1, 'SHFE')
     #tt.t.ReqOrderInsert('ag1912', DirectType.Sell, OffsetType.Open, 4433.0, 1, 'SHFE')
     #tt.t.ReqOrderInsert('rb2001', DirectType.Sell, OffsetType.Open, 4297.0, 1, 'SHFE')
-    #tt.t.ReqOrderInsert('CF001', DirectType.Sell, OffsetType.Open, 13000.0, 1, 'CZCE')
+    # tt.t.ReqOrderInsert('CF105', DirectType.Buy, OffsetType.Open, 11000, 1, 'CZCE')
 
+    # tt.t.ReqOrderInsert('IPS CF105&CY105', DirectType.Buy, OffsetType.Open, -8000, 1, 'CZCE')
+    # tt.t.ReqOrderInsert('SPD CF101&CF105', DirectType.Buy, OffsetType.Open, -1000, 1, 'CZCE')
+    # tt.t.ReqOrderInsert('SP m2101&m2105', DirectType.Buy, OffsetType.Open, -300, 1, 'DCE')
+    # tt.t.ReqOrderInsert('SPC y2105&p2105', DirectType.Buy, OffsetType.Open, -100, 1, 'DCE')
 
     input()
     tt.release()
