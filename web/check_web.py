@@ -13,8 +13,8 @@ from nature import get_dss, get_symbols_trade
 
 def del_blank(c):
     s = str(c).strip()
-    s = s.replace('\t','')
-    s = s.replace(' ','')
+    # s = s.replace('\t','')
+    # s = s.replace(' ','')
     return s
 
 def check_symbols_p(key, value):
