@@ -44,10 +44,6 @@ class Fut_ArbitrageSignal(Signal):
     #----------------------------------------------------------------------
     def set_param(self, param_dict):
         if 'fixedSize' in param_dict:
-            # self.fixedSize = param_dict['fixedSize']
-            # if self.fixedSize > 1:
-            #     self.type = 'multi'
-            # print('成功设置策略参数 self.fixedSize: ',self.fixedSize)
             pass
 
     #----------------------------------------------------------------------
@@ -58,43 +54,19 @@ class Fut_ArbitrageSignal(Signal):
             self.on_bar_minx(bar)
 
     def on_bar_minx(self, bar):
-        filename = get_dss() + 'fut/cfg/signal_pause_var.csv'
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            df = df[df.signal == self.portfolio.name]
-            if len(df) > 0:
-                symbol_list = str(df.iat[0,1]).split(',')
-                if self.vtSymbol in symbol_list:
-                    self.paused = True
-                    # print(self.vtSymbol + ' right now paused in ' + self.portfolio.name)
-                    return
-        self.paused = False
-
         self.am.updateBar(bar)
         if not self.am.inited:
             return
 
-        #print('here')
-
         self.calculateIndicator()     # 计算指标
-        self.generateSignal(bar)      # 触发信号，产生交易指令
 
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
 
         # 告知组合层，已获得最新行情
-        if self.portfolio.engine.type == 'backtest':
-            if self.bar.close > 0.1 and self.bar.close > 0.1:
-                self.portfolio.got_dict[self.vtSymbol] = True
-        else:
-            if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 20:
-                self.portfolio.got_dict[self.vtSymbol] = True
-
-        self.can_buy = False
-        self.can_short = False
-        self.can_sell = False
-        self.can_cover = False
+        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1:
+            self.portfolio.got_dict[self.vtSymbol] = True
 
         # 记录数据
         # r = [[self.bar.date,self.bar.time,self.bar.close,self.bar.AskPrice,self.bar.BidPrice]]
@@ -105,24 +77,6 @@ class Fut_ArbitrageSignal(Signal):
         #     df.to_csv(filename, index=False, mode='a', header=False)
         # else:
         #     df.to_csv(filename, index=False)
-
-    #----------------------------------------------------------------------
-    def generateSignal(self, bar):
-        # 开多仓
-        if self.can_buy == True:
-            self.buy(bar.close, self.fixedSize)
-
-        # 平多仓
-        if self.can_sell == True:
-            self.sell(bar.close, self.fixedSize)
-
-        # 开空仓
-        if self.can_short == True:
-            self.short(bar.close, self.fixedSize)
-
-        # 平空仓
-        if self.can_cover == True:
-            self.cover(bar.close, self.fixedSize)
 
     #----------------------------------------------------------------------
     def load_var(self):
@@ -157,9 +111,9 @@ class Fut_ArbitragePortfolio(Portfolio):
         config = open(get_dss()+'fut/cfg/config.json')
         setting = json.load(config)
         symbols = setting['symbols_arbitrage']
-        self.pz_list = symbols.split(',')
-        self.slice_dict = {}
-        self.id = 100
+        self.pz_list = symbols.split(',')                     # 进行套利监控的品种
+        self.slice_dict = {}                                  # 每分种产生一个行情切片
+        self.id = 100                                         # 唯一标识套利机会，便于后续手工下单
 
         Portfolio.__init__(self, Fut_ArbitrageSignal, engine, symbol_list, signal_param)
 
@@ -184,13 +138,18 @@ class Fut_ArbitragePortfolio(Portfolio):
             l = self.signalDict[vtSymbol]
             l.append(signal1)
 
+        # 每分种加工切片，输出slice_dict
         if self.tm != bar.time:
+            # 清空切片字典
             for pz in self.pz_list:
                 self.slice_dict[pz] = []
 
             for symbol in self.vtSymbolList:
-                # if self.got_dict[symbol] == False:
-                #     continue
+                # 本时间段行情没有更新
+                if self.got_dict[symbol] == False:
+                    continue
+                else:
+                    self.got_dict[symbol] = False
 
                 s = self.signalDict[symbol][0]
                 if s.bar is not None:
@@ -198,28 +157,20 @@ class Fut_ArbitragePortfolio(Portfolio):
                     if pz in self.slice_dict and s.bar.time == self.tm:
                         self.slice_dict[pz].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
 
-                self.got_dict[symbol] = False
-
             self.tm = bar.time
-
-            # 输出slice_dict
             self.pcp()
-
+            # self.die()
 
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:
             signal.onBar(bar, minx)
             # print(bar.vtSymbol, bar.time)
 
-        """
-        在此实现P层的业务控制逻辑
-        为每一个品种来检查是否触发下单条件
-        # 开始处理组合关心的bar , 尤其是品种对价差的加工和处理
-        """
-        # self.control_in_p(bar)
-
     #----------------------------------------------------------------------
     def get_rec_from_slice(self, symbol):
+        """
+        从数据结构中获取symbol对应的最新行情
+        """
         pz = get_contract(symbol).pz
         v = self.slice_dict[pz]
         for row in v:
@@ -282,7 +233,7 @@ class Fut_ArbitragePortfolio(Portfolio):
             date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
             td = datetime.strptime(today, '%Y-%m-%d')
             T = round(float((date_mature - td).days) / 365, 4)                              # 剩余期限
-            if T == 0 or T >= 0.2:
+            if T == 0 or T >= 0.3:
                 continue
 
             # 正向套利
@@ -295,8 +246,8 @@ class Fut_ArbitragePortfolio(Portfolio):
                 pSc_forward = int( pa + S - cb )
                 diff_forward = float(x) - pSc_forward
                 rt_forward = round( diff_forward/(S*2*0.15)/T, 2 )
-                # if rt_forward > 0.12:
-                if rt_forward > 0.03:
+
+                if rt_forward >= 0.12 and diff_forward >= 3:
                     self.id += 1
                     seq = today[-5:-3] + today[-2:] + str(self.id)
                     r.append( [seq, today, tm, 'pcp', ['forward', term, S, cb, pa, T, x, pSc_forward, diff_forward, rt_forward]] )
@@ -331,68 +282,5 @@ class Fut_ArbitragePortfolio(Portfolio):
             # send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
 
     #----------------------------------------------------------------------
-    def control_in_p(self, bar):
-        if (bar.time > '09:31:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
-           (bar.time > '13:01:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] in ['IF','IO']) or \
-           (bar.time > '21:01:00' and bar.time < '24:00:00' and bar.vtSymbol[:2] in ['al']) or \
-           (bar.time > '00:00:00' and bar.time < '01:00:00' and bar.vtSymbol[:2] in ['al']) or \
-           (bar.time > '09:01:00' and bar.time < '11:27:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
-           (bar.time > '13:31:00' and bar.time < '14:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) or \
-           (bar.time > '21:01:00' and bar.time < '22:57:00' and bar.vtSymbol[:2] not in ['IF','IO']) :    # 因第一根K线的价格为0
-
-            symbol_got_list = []
-            fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_param.csv'
-            # while get_file_lock(fn) == False:
-            #     time.sleep(0.01)
-
-            df = pd.read_csv(fn)                                                      # 加载最新参数
-            for i, row in df.iterrows():
-                try:
-                    if row.state == 'stop':
-                            continue
-
-                    exchangeID = str(get_contract(row.basic_c).exchangeID)
-                    if exchangeID in ['CFFEX', 'DCE']:
-                        symbol_c = row.basic_c + '-C-' + str(row.strike_c)
-                        symbol_p = row.basic_p + '-P-' + str(row.strike_p)
-                    else:
-                        symbol_c = row.basic_c + 'C' + str(row.strike_c)
-                        symbol_p = row.basic_p + 'P' + str(row.strike_p)
-
-                    if symbol_c not in self.got_dict or symbol_p not in self.got_dict:
-                        continue
-
-                    if self.got_dict[symbol_c] == False or self.got_dict[symbol_p] == False:
-                        continue
-                    else:
-                        df.at[i, 'tm'] = bar.time
-
-                        symbol_got_list.append(symbol_c)
-                        symbol_got_list.append(symbol_p)
-
-                        s_c = self.signalDict[symbol_c][0]
-                        s_p = self.signalDict[symbol_p][0]
-
-                        # 开仓
-                        if row.hold_c == 0 and row.hold_p == 0:
-                            # print('come here ')
-                            if row.direction == 'duo':
-                                if self.engine.type == 'backtest':
-                                    s_c.buy(s_c.bar.close, row.num_c)
-                                    s_p.buy(s_p.bar.close, row.num_p)
-                                    df.at[i, 'price_c'] = s_c.bar.close
-                                    df.at[i, 'price_p'] = s_p.bar.close
-                                else:
-                                    s_c.buy(s_c.bar.AskPrice, row.num_c)              # 挂卖价
-                                    s_p.buy(s_p.bar.AskPrice, row.num_p)              # 挂卖价
-                                    df.at[i, 'price_c'] = round( s_c.bar.AskPrice, 2)
-                                    df.at[i, 'price_p'] = round( s_p.bar.AskPrice, 2)
-
-                except Exception as e:
-                    s = traceback.format_exc()
-                    to_log(s)
-
-            df.to_csv(fn, index=False)                                        # 回写文件
-            # release_file_lock(fn)
-            for symbol in symbol_got_list:
-                self.got_dict[symbol] = False
+    def die(self):
+        pass

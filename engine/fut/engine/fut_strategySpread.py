@@ -155,7 +155,7 @@ class Fut_SpreadPortfolio(Portfolio):
                 s0 = self.spread_dict[k][0]
                 s1 = self.spread_dict[k][1]
                 if s0 not in self.got_dict or s1 not in self.got_dict:
-                    continue 
+                    continue
                 if self.got_dict[s0] and self.got_dict[s1] and self.process_dict[k] == False:
                     self.process_dict[k] = True
                     s0 = self.signalDict[s0][0]
@@ -172,7 +172,7 @@ class Fut_SpreadPortfolio(Portfolio):
                     bar_s.AskPrice = s0.bar.AskPrice - s1.bar.BidPrice
                     bar_s.BidPrice = s0.bar.BidPrice - s1.bar.AskPrice
 
-                    print(bar_s.time, bar_s.vtSymbol, bar_s.close, bar_s.AskPrice, bar_s.BidPrice)
+                    # print(bar_s.time, bar_s.vtSymbol, bar_s.close, bar_s.AskPrice, bar_s.BidPrice)
 
                     self.engine.lock.acquire()
                     self.engine.bar_list.append(bar_s)

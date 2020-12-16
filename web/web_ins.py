@@ -26,6 +26,7 @@ from nature import get_file_lock, release_file_lock, r_file, a_file, to_log
 from nature.web.nbs import nbs_product
 from nature.web.usda import usda_esr
 from nature.web.hold import hold_product
+from nature.web.custom import custom_product
 
 app = Flask(__name__)
 # app = Flask(__name__, static_url_path="/render")
@@ -603,7 +604,7 @@ def custom_upload():
                     # 保留原始文件
                     try:
                         fn1 = os.path.join(dirname, 'native/temp.xls')
-                        fn2 = os.path.join(dirname, 'native/'+date+'_'+indicator+'.xls')
+                        fn2 = os.path.join(dirname, 'native/'+date[:4]+date[5:-1].zfill(2)+'_'+indicator+'.xls')
                         os.rename(fn1, fn2)
                     except:
                         pass
@@ -656,22 +657,38 @@ def custom_mail():
             os.remove(dirname+fn)
 
         pdf_list =[]
-        indicator = del_blank( request.form.get('exchange') )
-        symbol = del_blank( request.form.get('symbol') )
+        indicator = del_blank( request.form.get('type') )
+        p1 = del_blank( request.form.get('p1') )
+        p2 = del_blank( request.form.get('p2') )
+        p3 = del_blank( request.form.get('p3') )
+        p4 = del_blank( request.form.get('p4') )
+        p5 = del_blank( request.form.get('p5') )
         mailto = del_blank( request.form.get('mailto') )
 
         if indicator != '':
-            hold_product(ch_en_dict[indicator], symbol)
-            pdf_list.append(dirname+ch_en_dict[indicator]+'.pdf')
+            custom_product(indicator, [p1,p2,p3,p4,p5])
+            pdf_list.append(dirname+indicator+'.pdf')
 
         if pdf_list != []:
             if mailto == '':
-                send_email(get_dss(), '成交及持仓数据', '', pdf_list)
+                send_email(get_dss(), '海关数据', '', pdf_list)
             else:
-                send_email(get_dss(), '成交及持仓数据', '', pdf_list, mailto)
+                send_email(get_dss(), '海关数据', '', pdf_list, mailto)
             tips = '邮件已发送'
 
-    return render_template("custom_mail.html",title="",tip=tips)
+
+    # 数据清单
+    fn1 = get_dss() + 'info/custom/import.csv'
+    fn2 = get_dss() + 'info/custom/export.csv'
+    df1 = pd.read_csv(fn1)
+    df2 = pd.read_csv(fn2)
+    p1_list = sorted(set((df1['product']+','+df1['unit']).astype('str')))
+    p2_list = sorted(set((df2['product']+','+df2['unit']).astype('str')))
+    r = [['进口产品', '出口产品']]
+    for p1, p2 in zip(p1_list, p2_list):
+        r.append([p1, p2])
+
+    return render_template("custom_mail.html",title="",tip=tips, rows=r)
 
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():

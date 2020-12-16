@@ -76,7 +76,7 @@
       <fieldset>
       <p>
         类型:
-          <select name="exchange"/>
+          <select name="type"/>
             <option value=''></option>
             <option value='import'>进口</option>
             <option value='export'>出口</option>
@@ -105,6 +105,18 @@
       <input type="submit" value="Submit"/>
       </div>
       </form>
+      <p>数据清单:</p>
+
+     <table>
+      {% for row in rows %}
+      <tr>
+        {% for d in row %}
+        <td class="description">{{ d }}</td>
+        {% endfor %}
+      <tr>
+      {% endfor %}
+     </table>
+
     </section>
   </body>
 </html>

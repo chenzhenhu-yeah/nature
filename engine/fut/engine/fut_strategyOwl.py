@@ -74,12 +74,6 @@ class Fut_OwlSignal(Signal):
     #----------------------------------------------------------------------
     def calculateIndicator(self):
         """计算技术指标"""
-        # 行情正常时，才继续逻辑
-        if self.bar.AskPrice > 0.1 and self.bar.BidPrice > 0.1 and abs(self.bar.AskPrice - self.bar.BidPrice) < 20:
-            pass
-        else:
-            return
-
         # 记录数据
         r = [[self.bar.date,self.bar.time,self.bar.close]]
         df = pd.DataFrame(r)
@@ -219,16 +213,16 @@ class Fut_OwlPortfolio(Portfolio):
                 l = self.signalDict[vtSymbol]
                 l.append(signal1)
 
-        if self.result.date != bar.date + ' ' + bar.time:
-            previousResult = self.result
-            self.result = DailyResult(bar.date + ' ' + bar.time)
-            self.resultList.append(self.result)
-            if previousResult:
-                self.result.updateClose(previousResult.closeDict)
+        # if self.result.date != bar.date + ' ' + bar.time:
+        #     previousResult = self.result
+        #     self.result = DailyResult(bar.date + ' ' + bar.time)
+        #     self.resultList.append(self.result)
+        #     if previousResult:
+        #         self.result.updateClose(previousResult.closeDict)
 
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:
             signal.onBar(bar, minx)
 
-        self.result.updateBar(bar)
-        self.result.updatePos(self.posDict)
+        # self.result.updateBar(bar)
+        # self.result.updatePos(self.posDict)

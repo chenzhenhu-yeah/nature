@@ -147,7 +147,13 @@ def get_df_setting_pz():
 
     return df_setting_pz
 
-def get_contract(symbol):
+def get_contract(code):
+    symbol = code
+    if code[:3] in ['SPC', 'SPD', 'IPS', 'CUS']:
+        symbol = code[4:]
+    elif code[:3] == 'SP ':
+        symbol = code[3:]
+
     pz = symbol[:2]
     if pz.isalpha():
         pass
@@ -159,6 +165,8 @@ def get_contract(symbol):
         d = df.loc[pz,:]
         return Contract( pz,int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
 
+    # to_log(symbol)
+    # to_log(pz)
     return None
 
 

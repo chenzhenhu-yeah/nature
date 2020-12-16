@@ -1,4 +1,3 @@
-# encoding: UTF-8
 
 import os
 import pandas as pd
@@ -9,9 +8,7 @@ from csv import DictReader
 from collections import OrderedDict, defaultdict
 import threading
 from datetime import datetime
-
-# import traceback
-
+import traceback
 
 from nature import send_instruction, get_dss, to_log, get_contract
 
@@ -269,7 +266,7 @@ class Portfolio(object):
         """
         # 下单风控
         if self.check_order_risk(signal, price, volume) is not None:
-            return 
+            return
 
         multiplier = self.portfolioValue * 0.01 / get_contract(signal.vtSymbol).size
         multiplier = int(round(multiplier, 0))
