@@ -141,7 +141,8 @@ class Fut_ArbitragePortfolio(Portfolio):
         # 每分种加工切片，输出slice_dict
         if self.tm != bar.time:
             # 清空切片字典
-            self.slice_dict = {}
+            for pz in self.pz_list:
+                self.slice_dict[pz] = []
 
             for symbol in self.vtSymbolList:
                 # 本时间段行情没有更新
@@ -152,15 +153,13 @@ class Fut_ArbitragePortfolio(Portfolio):
 
                 s = self.signalDict[symbol][0]
                 if s.bar is not None:
-                    if s.bar.time == self.tm:
-                        basic = get_contract(symbol).basic
-                        if basic not in self.slice_dict:
-                            self.slice_dict[basic] = []
-                        self.slice_dict[basic].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
+                    pz = get_contract(symbol).pz
+                    if pz in self.slice_dict and s.bar.time == self.tm:
+                        self.slice_dict[pz].append([symbol, s.bar.time, s.bar.AskPrice, s.bar.BidPrice, s.bar.close])
 
-            self.pcp()
-            self.die()
             self.tm = bar.time
+            self.pcp()
+            # self.die()
 
         # 将bar推送给signal
         for signal in self.signalDict[bar.vtSymbol]:
@@ -172,12 +171,11 @@ class Fut_ArbitragePortfolio(Portfolio):
         """
         从数据结构中获取symbol对应的最新行情
         """
-        basic = get_contract(symbol).basic
-        if basic in self.slice_dict:
-            v = self.slice_dict[basic]
-            for row in v:
-                if row[0] == symbol:
-                    return row
+        pz = get_contract(symbol).pz
+        v = self.slice_dict[pz]
+        for row in v:
+            if row[0] == symbol:
+                return row
 
         return None
 
@@ -199,17 +197,17 @@ class Fut_ArbitragePortfolio(Portfolio):
         df2 = df2.set_index('symbol')
         mature_dict = dict(df2.mature)
 
-        for basic in self.slice_dict.keys():
+        for pz in self.slice_dict.keys():
             # print(pz)
-            v = self.slice_dict[basic]
+            v = self.slice_dict[pz]
             for row in v:
-                # if basic == 'm2105':
-                #     print(row)
+                # print(row)
                 symbol = row[0]
                 tm = row[1]
                 ask_price = row[2]
                 bid_price = row[3]
                 opt_flag = get_contract(symbol).opt_flag
+                basic = get_contract(symbol).basic
                 strike = get_contract(symbol).strike
                 if basic[:2] == 'IO':
                     symbol_obj = 'IF' + basic[2:]
@@ -272,11 +270,12 @@ class Fut_ArbitragePortfolio(Portfolio):
                 pSc_back = int( pb + S - ca )
                 diff_back = pSc_back - float(x)
                 rt_back = round( diff_back/(S*2*0.15)/T, 2 )
-
+                
                 if rt_back >= 0.12 and diff_back >= 3:
                     self.id += 1
                     seq = today[-5:-3] + today[-2:] + str(self.id)
                     r.append( [seq, today, tm, 'pcp', ['back', term, S, ca, pb, T, x, pSc_back, diff_back, rt_back]] )
+                    # to_log( 'pcp: ' + str([today, 'back', term, x, S, ca, pb, pSc_back, T, diff_back, rt_back]) )
 
         df = pd.DataFrame(r, columns=['seq', 'date', 'time', 'type', 'content'])
         fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
@@ -291,93 +290,4 @@ class Fut_ArbitragePortfolio(Portfolio):
 
     #----------------------------------------------------------------------
     def die(self):
-        r = []
-        tm = self.tm
-        now = datetime.now()
-        today = now.strftime('%Y-%m-%d')
-
-        # 获取期权的到期日
-        fn = get_dss() + 'fut/cfg/opt_mature.csv'
-        df2 = pd.read_csv(fn)
-        df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
-        df2 = df2.set_index('symbol')
-        mature_dict = dict(df2.mature)
-
-        for basic in self.slice_dict.keys():
-            date_mature = mature_dict[ basic ]
-            date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
-            td = datetime.strptime(today, '%Y-%m-%d')
-            T = round(float((date_mature - td).days) / 365, 4)                              # 剩余期限
-            if T >= 0.2:
-                continue
-
-            strike_list = []
-            v = self.slice_dict[basic]
-            for row in v:
-                # if basic == 'm2105':
-                #     print(row)
-                symbol = row[0]
-                if get_contract(symbol).be_opt:
-                    strike_list.append( get_contract(symbol).strike )
-
-            strike_list = sorted(set(strike_list))
-            n = len(strike_list)
-            for gap in [1,2,3]:
-                for i in range(n-2*gap):
-                    try:
-                        s1 = strike_list[i]
-                        s2 = strike_list[i+gap]
-                        s3 = strike_list[i+2*gap]
-                        if s2 -s1 != s3 -s2:
-                            continue
-
-                        c1 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_C+str(s1))[2]  # AskPrice
-                        c2 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_C+str(s2))[3]  # BidPrice
-                        c3 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_C+str(s3))[2]  # AskPrice
-                        if c1 == 0 or c2 == 0 or c3 == 0 or c1 != c1 or c2 != c2 or c3 != c3:
-                            pass
-                        else:
-                            cost = round(c1 - 2*c2 + c3, 2)
-                            if cost <= 3:
-                                self.id += 1
-                                seq = today[-5:-3] + today[-2:] + str(self.id)
-                                r.append( [seq, today, tm, 'die', ['forward', basic, 'C', s1, c1, s2, c2, s3, c3, cost]] )
-
-                        p1 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_P+str(s1))[2]  # AskPrice
-                        p2 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_P+str(s2))[3]  # BidPrice
-                        p3 = self.get_rec_from_slice(basic+get_contract(basic).opt_flag_P+str(s3))[2]  # AskPrice
-                        if p1 == 0 or p2 == 0 or p3 == 0 or p1 != p1 or p2 != p2 or p3 != p3:
-                            pass
-                        else:
-                            cost = round(p1 - 2*p2 + p3, 2)
-                            if cost <= 3:
-                                self.id += 1
-                                seq = today[-5:-3] + today[-2:] + str(self.id)
-                                r.append( [seq, today, tm, 'die', ['forward', basic, 'P', s1, p1, s2, p2, s3, p3, cost]] )
-                    except:
-                        pass
-                        # s = traceback.format_exc()
-                        # to_log(s)
-
-
-        df = pd.DataFrame(r, columns=['seq', 'date', 'time', 'type', 'content'])
-        fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
-        if os.path.exists(fn):
-            df.to_csv(fn, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fn, index=False)
-
-        if tm > '09:00:00' and tm < '15:00:00' and r != []:
-            df = pd.read_csv(fn)
-            df = df[(df.date== today) & (df.type=='die')]
-            for result in r:
-                rec = result[4]
-                zai = False
-                for i, row in df.iterrows():
-                    c = eval(row['content'])
-                    # print(type(c), c)
-                    if c[1] == rec[1] and c[2] == rec[2] and c[3] == rec[3] and c[5] == rec[5] and c[7] == rec[7]:
-                        zai = True
-                if zai == False :
-                    # send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
-                    break
+        pass
