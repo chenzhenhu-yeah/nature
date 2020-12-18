@@ -304,6 +304,8 @@ class Fut_ArbitragePortfolio(Portfolio):
         mature_dict = dict(df2.mature)
 
         for basic in self.slice_dict.keys():
+            if basic not in mature_dict:
+                continue
             date_mature = mature_dict[ basic ]
             date_mature = datetime.strptime(date_mature, '%Y-%m-%d')
             td = datetime.strptime(today, '%Y-%m-%d')
