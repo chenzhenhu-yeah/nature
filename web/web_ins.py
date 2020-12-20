@@ -18,7 +18,7 @@ import threading
 
 from nature import del_blank, check_symbols_p, get_tick, send_order, append_symbol, set_symbol, get_symbols_setting
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
-from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star
+from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star, extract_trade
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
 from nature import get_file_lock, release_file_lock, r_file, a_file, to_log
@@ -1108,32 +1108,41 @@ def fut_owl():
 
     return render_template("owl.html", tip=tips, rows=r, hs=h)
 
-@app.route('/opt_trade', methods=['get','post'])
-def opt_trade():
+@app.route('/book', methods=['get','post'])
+def book():
     tips = '提示：'
-    fn = get_dss() + 'fut/engine/opt/opt_trade.csv'
+    fn = get_dss() + 'fut/engine/book/got_trade.csv'
     if request.method == "POST":
         index = int( del_blank(request.form.get('index')) )
-        book = del_blank( request.form.get('book') )
-        portfolio = del_blank( request.form.get('portfolio') )
-        margin = del_blank( request.form.get('margin') )
+        current = del_blank( request.form.get('current') )
         kind = request.form.get('kind')
 
         if kind == 'alter':
             df = pd.read_csv(fn, dtype='str')
-            df.at[index, 'book'] = book
-            df.at[index, 'portfolio'] = portfolio
-            df.at[index, 'margin'] = margin
+            if df.at[index, 'got'] == 'no' and df.at[index, 'wipe'] == 'no':
+                df.at[index, 'current'] = current
+            if df.at[index, 'got'] == 'yes':
+                df.at[index, 'wipe'] = 'yes'
+                df.at[index, 'before'] = df.at[index, 'current']
+                df.at[index, 'current'] = current
+                df.at[index, 'got'] = 'no'
             df.to_csv(fn, index=False)
 
     # 显示文件的内容
-    df = pd.read_csv(fn, dtype='str')
+    extract_trade()
+    df = pd.read_csv(fn)
+    df = df.iloc[-100:, :]
     df = df.reset_index()
-    r = [ list(df.columns) ]
+    del df['OrderID']
+    del df['TradeID']
+    del df['seq']
+    r = []
     for i, row in df.iterrows():
         r.append( list(row) )
+    r.append(list(df.columns))
+    r.reverse()
 
-    return render_template("opt_trade.html",tip=tips,rows=r)
+    return render_template("book.html",tip=tips,rows=r)
 
 @app.route('/opt_book', methods=['get','post'])
 def opt_book():

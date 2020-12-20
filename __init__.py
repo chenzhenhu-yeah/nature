@@ -78,6 +78,7 @@ from nature.engine.fut.ctp_ht.subscribe_quote import get_tick
 from nature.engine.fut.ctp_ht.gateway_ht_ctp import Gateway_Ht_CTP
 from nature.engine.fut.risk.pandian import pandian_run
 from nature.engine.fut.risk.book_opt import book_opt_run
+from nature.engine.fut.risk.book import extract_trade
 from nature.engine.fut.backtest.backtest_result import Backtest_Result
 from nature.engine.fut.engine.futEngine import send_order
 

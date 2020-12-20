@@ -34,6 +34,7 @@ from nature.engine.fut.risk.arbitrage import calc_pcp, calc_die
 from nature.engine.fut.risk.iv_atm import calc_iv_atm
 from nature.engine.fut.risk.sdiffer import calc_sdiffer
 from nature.engine.fut.risk.compass import compass
+from nature.engine.fut.risk.book import book_run
 
 dss = r'../data/'
 
@@ -186,6 +187,7 @@ def run_book_opt():
         if 1 <= weekday <= 5 and is_market_date():
             print('\n' + str(now) + " book_opt begin...")
             book_opt_run()
+            book_run()                                            # 新的盈亏统计体系
             now = datetime.datetime.now()
             print('\n' + str(now) + " book_opt end ")
     except Exception as e:
