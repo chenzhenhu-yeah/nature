@@ -51,17 +51,19 @@ def get_df_mature():
 
 
 class Contract(object):
-    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin,symbol):
+    def __init__(self,pz,size,price_tick,variable_commission,fixed_commission,slippage,exchangeID,margin,sp,symbol):
         """Constructor"""
         self.pz = pz
         self.size = size
-        self.be_opt = False if len(symbol) < 9 else True
+        self.be_spread = True if '&' in symbol else False
+        self.be_opt = False if len(symbol) < 9 or self.be_spread else True
         self.price_tick = self.calc_price_tick(symbol, price_tick)
         self.variable_commission = variable_commission
         self.fixed_commission = fixed_commission
         self.slippage = slippage
         self.exchangeID = exchangeID
         self.margin = margin
+        self.sp = sp
 
         self.symbol = symbol
         self.strike = self.cacl_strike(symbol)
@@ -147,23 +149,34 @@ def get_df_setting_pz():
 
     return df_setting_pz
 
-def get_contract(code):
-    symbol = code
-    if code[:3] in ['SPC', 'SPD', 'IPS', 'CUS']:
-        symbol = code[4:]
-    elif code[:3] == 'SP ':
-        symbol = code[3:]
-
-    pz = symbol[:2]
+def get_pz(symbol_single):
+    pz = symbol_single[:2]
     if pz.isalpha():
         pass
     else:
-        pz = symbol[:1]
+        pz = symbol_single[:1]
+
+    return pz
+
+def get_contract(code):
+    symbol = code
+    # if code[:3] in ['SPC', 'SPD', 'IPS', 'CUS']:
+    #     symbol = code[4:]
+    # elif code[:3] == 'SP ':
+    #     symbol = code[3:]
+
+    pz = symbol[:2]
+    if '&' in symbol:
+        s_list = symbol.split('&')
+        assert len(s_list) == 2
+        pz = get_pz(s_list[0]) + get_pz(s_list[1])
+    else:
+        pz = get_pz(symbol)
 
     df = get_df_setting_pz()
     if pz in df.index:
         d = df.loc[pz,:]
-        return Contract( pz,int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),symbol )
+        return Contract( pz,int(d['size']),float(d['priceTick']),float(d['variableCommission']),float(d['fixedCommission']),float(d['slippage']),d['exchangeID'],float(d['margin']),d['sp'],symbol )
 
     # to_log(symbol)
     # to_log(pz)

@@ -855,7 +855,7 @@ def fut_config():
 
 @app.route('/fut_setting_pz', methods=['get','post'])
 def fut_setting_pz():
-    setting_dict = {'pz':'','size':'','priceTick':'','variableCommission':'','fixedCommission':'','slippage':'','exchangeID':'','margin':''}
+    setting_dict = {'pz':'','size':'','priceTick':'','variableCommission':'','fixedCommission':'','slippage':'','exchangeID':'','margin':'','sp':''}
     filename = get_dss() + 'fut/cfg/setting_pz.csv'
     if request.method == "POST":
         pz = del_blank( request.form.get('pz') )
@@ -866,11 +866,12 @@ def fut_setting_pz():
         slippage = del_blank( request.form.get('slippage') )
         exchangeID = del_blank( request.form.get('exchangeID') )
         margin = del_blank( request.form.get('margin') )
+        sp = del_blank( request.form.get('sp') )
 
         kind = request.form.get('kind')
 
-        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID,margin]]
-        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID','margin']
+        r = [[pz,size,priceTick,variableCommission,fixedCommission,slippage,exchangeID,margin,sp]]
+        cols = ['pz','size','priceTick','variableCommission','fixedCommission','slippage','exchangeID','margin','sp']
         if kind == 'add':
             df = pd.DataFrame(r, columns=cols)
             df.to_csv(filename, mode='a', header=False, index=False)

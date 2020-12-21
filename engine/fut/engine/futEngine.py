@@ -547,6 +547,12 @@ class FutEngine(object):
     #----------------------------------------------------------------------
     def _bc_sendOrder(self, vtSymbol, direction, offset, price, volume, pfName):
         """记录交易数据（由portfolio调用）"""
+        priceTick = get_contract(vtSymbol).price_tick
+        price = int(round(price/priceTick, 0)) * priceTick
+
+        sp = get_contract(vtSymbol).sp
+        if sp in ['SP', 'SPC', 'SPD', 'IPS', 'CUS']:
+            vtSymbol = sp + ' ' + vtSymbol
 
         # 记录成交数据
         dt = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
@@ -559,8 +565,8 @@ class FutEngine(object):
         fn = get_dss() + 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
-        priceTick = get_contract(vtSymbol).price_tick
-        price = int(round(price/priceTick, 0)) * priceTick
+        if sp == 'CUS':
+            return
 
         if self.gateway is not None:
             # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)

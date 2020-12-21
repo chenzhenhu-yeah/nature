@@ -82,10 +82,7 @@ def alter_book_by_rec(row):
             pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
 
     if row.Offset == 'Open':
-        if row.Direction == 'Buy':
-            pnl += (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
-        if row.Direction == 'Sell':
-            pnl -= (row.Price - close_dict[row.InstrumentID]) * row.Volume * size
+        pnl += (row.Price - close_dict[row.InstrumentID]) * pos_dict[row.InstrumentID] * size
 
 
     pnl -= abs(row.Volume * fixed_commission)
@@ -97,7 +94,7 @@ def alter_book_by_rec(row):
     if row.Direction == 'Buy':
         pos_dict[row.InstrumentID] += row.Volume
     if row.Direction == 'Sell':
-        pos_dict[row.InstrumentID] += -row.Volume
+        pos_dict[row.InstrumentID] -= row.Volume
 
     df_book = pd.DataFrame([[row.TradingDay,pnl,str(pos_dict),str(close_dict)]], columns=['date','pnl','posDict','closeDict'])
     if os.path.exists(fn_book):

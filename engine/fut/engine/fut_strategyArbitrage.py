@@ -340,7 +340,7 @@ class Fut_ArbitragePortfolio(Portfolio):
                             pass
                         else:
                             cost = round(c1 - 2*c2 + c3, 2)
-                            if cost <= 3:
+                            if cost <= 0:
                                 self.id += 1
                                 seq = today[-5:-3] + today[-2:] + str(self.id)
                                 r.append( [seq, today, tm, 'die', ['forward', basic, 'C', s1, c1, s2, c2, s3, c3, cost]] )
@@ -352,7 +352,7 @@ class Fut_ArbitragePortfolio(Portfolio):
                             pass
                         else:
                             cost = round(p1 - 2*p2 + p3, 2)
-                            if cost <= 3:
+                            if cost <= 0:
                                 self.id += 1
                                 seq = today[-5:-3] + today[-2:] + str(self.id)
                                 r.append( [seq, today, tm, 'die', ['forward', basic, 'P', s1, p1, s2, p2, s3, p3, cost]] )
