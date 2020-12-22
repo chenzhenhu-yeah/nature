@@ -1,3 +1,7 @@
+
+import warnings
+warnings.filterwarnings("ignore")
+
 import numpy as np
 import pandas as pd
 
@@ -144,6 +148,43 @@ def fresh_star():
     df.to_csv(fn, index=False, header=None, mode='a')
 
 
+def fresh_focus():
+    all = 0
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+
+    dirname = get_dss() + 'fut/engine/focus/'
+    listfile = os.listdir(dirname)
+    for fn in listfile:
+        if fn.startswith('focus'):
+            fn = dirname + fn
+            df = pd.read_csv(fn)
+            if len(df) == 0:
+                continue
+
+        rec = df.iloc[-1,:]
+        book_list = eval(rec.book_list)
+        pnl = 0
+        for book in book_list:
+            fn1 = get_dss() + 'fut/engine/book/book_' + book + '.csv'
+            if os.path.exists(fn1) == False:
+                continue
+            df1 = pd.read_csv(fn1)
+            row = df.iloc[-1,:]
+            pnl += row.pnl
+
+        rec.datetime = today + ' 15:00:00'
+        rec.pnl = pnl
+        df = pd.DataFrame([rec])
+        df.to_csv(fn, index=False, header=None, mode='a')
+
+        all += pnl
+
+    df = pd.DataFrame([[today, all]], columns=['date','pnl'])
+    fn = get_dss() + 'fut/engine/focus/all.csv'
+    df.to_csv(fn, index=False, header=None, mode='a')
+
+
 def pandian_run():
     try:
         now = datetime.now()
@@ -152,6 +193,7 @@ def pandian_run():
         pandian_dali(today)
         fresh_mutual()
         fresh_star()
+        fresh_focus()
 
     except Exception as e:
         s = traceback.format_exc()
@@ -161,4 +203,4 @@ if __name__ == '__main__':
     # pandian_run()
     pass
 
-    fresh_star()
+    fresh_focus()

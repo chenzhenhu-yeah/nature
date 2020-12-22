@@ -18,7 +18,7 @@ import threading
 
 from nature import del_blank, check_symbols_p, get_tick, send_order, append_symbol, set_symbol, get_symbols_setting
 from nature import read_log_today, get_dss, get_symbols_quote, get_contract, send_email
-from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star, extract_trade
+from nature import draw_web, ic_show, ip_show, smile_show, opt, dali_show, yue, mates, iv_ts, star, focus, extract_trade
 from nature import iv_straddle_show, hv_show, skew_show, book_min5_show, book_min5_now_show
 from nature import open_interest_show, hs300_spread_show, straddle_diff_show, iv_show, iv_min5_show
 from nature import get_file_lock, release_file_lock, r_file, a_file, to_log
@@ -1866,6 +1866,19 @@ def show_dali():
 
     # return str(r)
     return render_template("show_jpg.html",header="dali",items=r)
+
+@app.route('/show_focus', methods=['get'])
+def show_focus():
+    focus()
+    r = []
+    dirname = 'static/'
+    file_list = os.listdir(dirname)
+    for fn in file_list:
+        if fn.startswith('focus'):
+            r.append(dirname + fn)
+
+    # return str(r)
+    return render_template("show_jpg.html",header="focus",items=r)
 
 @app.route('/show_star', methods=['get'])
 def show_star():

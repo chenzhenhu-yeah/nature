@@ -276,7 +276,7 @@ def run_mail_pdf():
             # print(dirname+fn)
 
         # 分主题发送邮件
-        s_list = ['star', 'yue']
+        s_list = ['star', 'focus']
         for s in s_list:
             try:
                 time.sleep(3)

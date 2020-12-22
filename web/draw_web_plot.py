@@ -199,6 +199,46 @@ def mutual():
         plt.savefig(fn)
         plt.cla()
 
+def focus():
+    dirname = get_dss() + 'fut/engine/focus/'
+    listfile = os.listdir(dirname)
+    for fname in listfile:
+        if fname.startswith('all'):
+            fn = dirname + fname
+            df3 = pd.read_csv(fn)
+            df3['focus'] = df3['pnl']
+        elif fname.startswith('focus'):
+            fn = dirname + fname
+            df3 = pd.read_csv(fn)
+            df3['date'] = df3.datetime.str.slice(0,10)
+            df3['time'] = df3.datetime.str.slice(11,19)
+            df3 = df3[df3.time.isin(['14:59:00', '15:00:00'])]
+            df3 = df3.drop_duplicates(subset=['date'],keep='last')
+            df3['focus'] = df3['pnl']
+
+        df3 = df3.loc[:, ['date', 'focus']]
+        df3 = df3.set_index('date')
+        df = df3
+
+        plt.figure(figsize=(12,7))
+        plt.title(fname)
+        plt.plot(df.focus)
+
+        plt.xticks(rotation=90)
+        plt.grid(True, axis='y')
+        ax = plt.gca()
+
+        for label in ax.get_xticklabels():
+            label.set_visible(False)
+        for label in ax.get_xticklabels()[1::25]:
+            label.set_visible(True)
+        for label in ax.get_xticklabels()[-1:]:
+            label.set_visible(True)
+
+        plt.legend()
+        fn = 'static/focus_' + fname + '.jpg'
+        plt.savefig(fn)
+        plt.cla()
 
 def star():
     pz_list = ['ru', 'c', 'al', 'CF', 'IO', 'MA', 'RM', 'm', 'p', 'y', 'FG', 'SR', 'all']
@@ -1376,4 +1416,5 @@ if __name__ == '__main__':
     # skew_show('IO2010', 'no', '2020-09-18', 'now')
     # iv_show(['IO2012','IO2010'], 'no', '2020-09-28')
     # iv_show(['CF101','CF011'], 'no', '2020-09-28')
-    iv_min5_show(['IO2011-C-4700','IO2011-C-4800'], '2020-09-28')
+    # iv_min5_show(['IO2011-C-4700','IO2011-C-4800'], '2020-09-28')
+    # focus()

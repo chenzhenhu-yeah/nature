@@ -124,7 +124,7 @@ def trade2book():
 
     df0.to_csv(fn, index=False)
 
-def update_rec_price(rec):
+def fresh_rec_price(rec):
     dss = get_dss()
     pnl = rec.pnl
     pos_dict = eval(rec.posDict)
@@ -133,6 +133,13 @@ def update_rec_price(rec):
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     rec.date = today
+
+    # 对于已到期的期权合约，将期持仓置为0
+    for symbol in pos_dict:
+        mature = get_contract(symbol).mature
+        if mature is not None:
+            if mature < today:
+                pos_dict[symbol] = 0
 
     # 将持仓为0的品种清理掉
     s_list = []
@@ -151,11 +158,19 @@ def update_rec_price(rec):
         df = pd.read_csv(fn)
         for symbol in pos_dict:
             df2 = df[df.Instrument == symbol]
+            size = int(get_contract(symbol).size)
             if len(df2) > 0:
                 row = df2.iloc[-1,:]
-                size = int(get_contract(symbol).size)
                 pnl += (row.LastPrice - close_dict[symbol]) * pos_dict[symbol] * size
                 close_dict[symbol] = row.LastPrice
+            else:
+                # 从bar文件中读取行情数据
+                fn = get_dss() + 'fut/bar/day_' + symbol + '.csv'
+                if os.path.exists(fn):
+                    df2 = pd.read_csv(fn)
+                    row = df2.iloc[-1,:]
+                    pnl += (row.close - close_dict[symbol]) * pos_dict[symbol] * size
+                    close_dict[symbol] = row.close
 
     rec.pnl = pnl
     rec.posDict = str(pos_dict)
@@ -174,7 +189,7 @@ def fresh_book():
             df = pd.read_csv(fn)
             rec = df.iloc[-1,:]
 
-            update_rec_price(rec)
+            fresh_rec_price(rec)
             df = pd.DataFrame([rec])
             df.to_csv(fn, index=False, header=None, mode='a')
 
