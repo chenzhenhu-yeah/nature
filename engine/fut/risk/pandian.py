@@ -170,7 +170,7 @@ def fresh_focus():
                 if os.path.exists(fn1) == False:
                     continue
                 df1 = pd.read_csv(fn1)
-                row = df.iloc[-1,:]
+                row = df1.iloc[-1,:]
                 pnl += row.pnl
 
             rec.datetime = today + ' 15:00:00'
