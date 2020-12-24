@@ -113,7 +113,7 @@ def trade2book():
         try:
             if row.got == 'no':
                 if row.wipe == 'yes':
-                    rec = row
+                    rec = row.copy()
                     rec.current = rec.before
                     rec.Volume = -rec.Volume
                     alter_book_by_rec(rec)

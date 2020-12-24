@@ -162,23 +162,23 @@ def fresh_focus():
             if len(df) == 0:
                 continue
 
-        rec = df.iloc[-1,:]
-        book_list = eval(rec.book_list)
-        pnl = 0
-        for book in book_list:
-            fn1 = get_dss() + 'fut/engine/book/book_' + book + '.csv'
-            if os.path.exists(fn1) == False:
-                continue
-            df1 = pd.read_csv(fn1)
-            row = df.iloc[-1,:]
-            pnl += row.pnl
+            rec = df.iloc[-1,:]
+            book_list = eval(rec.book_list)
+            pnl = 0
+            for book in book_list:
+                fn1 = get_dss() + 'fut/engine/book/book_' + book + '.csv'
+                if os.path.exists(fn1) == False:
+                    continue
+                df1 = pd.read_csv(fn1)
+                row = df.iloc[-1,:]
+                pnl += row.pnl
 
-        rec.datetime = today + ' 15:00:00'
-        rec.pnl = pnl
-        df = pd.DataFrame([rec])
-        df.to_csv(fn, index=False, header=None, mode='a')
+            rec.datetime = today + ' 15:00:00'
+            rec.pnl = pnl
+            df = pd.DataFrame([rec])
+            df.to_csv(fn, index=False, header=None, mode='a')
 
-        all += pnl
+            all += pnl
 
     df = pd.DataFrame([[today, all]], columns=['date','pnl'])
     fn = get_dss() + 'fut/engine/focus/all.csv'

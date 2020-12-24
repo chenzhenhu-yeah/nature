@@ -278,16 +278,24 @@ class Fut_ArbitragePortfolio(Portfolio):
                     seq = today[-5:-3] + today[-2:] + str(self.id)
                     r.append( [seq, today, tm, 'pcp', ['back', term, S, ca, pb, T, x, pSc_back, diff_back, rt_back]] )
 
-        df = pd.DataFrame(r, columns=['seq', 'date', 'time', 'type', 'content'])
         fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
-        if os.path.exists(fn):
-            df.to_csv(fn, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fn, index=False)
+        df = pd.read_csv(fn)
+        df = df[(df.date== today) & (df.type=='pcp')]
+        result = []
+        for rr in r:
+            rec = rr[4]
+            for i, row in df.iterrows():
+                c = eval(row['content'])
+                if c[1] == rec[1] and c[2] == rec[2] and c[3] == rec[3] and c[5] == rec[5] and c[7] == rec[7]:
+                    pass
+                else:
+                    result.append(rec)
 
-        if tm > '09:00:00' and tm < '15:00:00' and r != []:
-            pass
-            # send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
+        if result != []:
+            df = pd.DataFrame(result, columns=['seq', 'date', 'time', 'type', 'content'])
+            df.to_csv(fn, index=False, mode='a', header=False)
+            if tm > '09:00:00' and tm < '15:00:00':
+                send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
 
     #----------------------------------------------------------------------
     def die(self):
@@ -362,24 +370,21 @@ class Fut_ArbitragePortfolio(Portfolio):
                         # to_log(s)
 
 
-        df = pd.DataFrame(r, columns=['seq', 'date', 'time', 'type', 'content'])
         fn = get_dss() +  'fut/engine/arbitrage/portfolio_arbitrage_chance.csv'
-        if os.path.exists(fn):
-            df.to_csv(fn, index=False, mode='a', header=False)
-        else:
-            df.to_csv(fn, index=False)
+        df = pd.read_csv(fn)
+        df = df[(df.date== today) & (df.type=='die')]
+        result = []
+        for rr in r:
+            rec = rr[4]
+            for i, row in df.iterrows():
+                c = eval(row['content'])                
+                if c[1] == rec[1] and c[2] == rec[2] and c[3] == rec[3] and c[5] == rec[5] and c[7] == rec[7]:
+                    pass
+                else:
+                    result.append(rec)
 
-        if tm > '09:00:00' and tm < '15:00:00' and r != []:
-            df = pd.read_csv(fn)
-            df = df[(df.date== today) & (df.type=='die')]
-            for result in r:
-                rec = result[4]
-                zai = False
-                for i, row in df.iterrows():
-                    c = eval(row['content'])
-                    # print(type(c), c)
-                    if c[1] == rec[1] and c[2] == rec[2] and c[3] == rec[3] and c[5] == rec[5] and c[7] == rec[7]:
-                        zai = True
-                if zai == False :
-                    # send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')
-                    break
+        if result != []:
+            df = pd.DataFrame(result, columns=['seq', 'date', 'time', 'type', 'content'])
+            df.to_csv(fn, index=False, mode='a', header=False)
+            if tm > '09:00:00' and tm < '15:00:00':
+                send_email(get_dss(), '无风险套利机会'+' '+today+' '+tm, '', [], 'chenzhenhu@yeah.net')

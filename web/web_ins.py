@@ -690,6 +690,115 @@ def custom_mail():
 
     return render_template("custom_mail.html",title="",tip=tips, rows=r)
 
+@app.route('/warehouse_upload', methods=['get','post'])
+def warehouse_upload():
+    tips = ''
+    dirname = get_dss() + 'info/warehouse'
+    ch_en_dict = {'郑州商品交易所':'CZCE',}
+    indicator_dict = {'郑州商品交易所':[],}
+
+    for k in indicator_dict.keys():
+        fn = os.path.join(dirname, ch_en_dict[k]+'.csv')
+        if os.path.exists(fn):
+            df = pd.read_csv(fn)
+            indicator_dict[k] = sorted(set(df.date))
+
+    if request.method == "POST":
+        try:
+            f = request.files.get('f')
+            if f is not None:
+                # 上传文件到指定路径
+                fn = os.path.join(dirname, 'native/temp.xls')
+                f.save(fn)
+
+                # 若是新数据，导入数据库
+                df = pd.read_excel(fn)
+                checker = df.columns[0].strip()
+                date = checker[15:-1]
+                checker = checker[:7]
+                assert checker == '郑州商品交易所'
+
+                indicator = checker
+                if date not in indicator_dict[indicator]:
+                    indicator_dict[indicator].append(date)
+                    begin = 0
+                    end = 0
+                    symbol = ''
+                    r = []
+                    for i, row in df.iterrows():
+                        if str(row[0]).strip()[:2] == '品种':
+                            begin = i
+                            symbol = row[0].strip()[3:8].strip()
+                        if str(row[0]).strip() == '总计':
+                            if begin > 0:
+                                end = i
+                        if end > begin:
+                            df0 = df.loc[begin+2:end, :]
+                            if symbol == '白糖SR':
+                                r.append([date, symbol, df0.iat[-1,5], df0.iat[-1,7]])
+                            if symbol == '一号棉CF':
+                                r.append([date, symbol, df0.iat[-1,5], df0.iat[-1,7]])
+                            if symbol == '棉纱CY':
+                                r.append([date, symbol, df0.iat[-1,4], df0.iat[-1,6]])
+                            if symbol == '菜粕RM':
+                                r.append([date, symbol, df0.iat[-1,2], df0.iat[-1,4]])
+                            if symbol == '玻璃FG':
+                                r.append([date, symbol, df0.iat[-1,3], np.nan])
+                            if symbol == '纯碱SA':
+                                r.append([date, symbol, df0.iat[-1,2], df0.iat[-1,4]])
+
+                    df = pd.DataFrame(r, columns=['date','symbol','receipt','forecast'])
+                    fn = os.path.join(dirname, ch_en_dict[indicator]+'.csv')
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    # 保留原始文件
+                    try:
+                        fn1 = os.path.join(dirname, 'native/temp.xls')
+                        fn2 = os.path.join(dirname, 'native/'+date+'_'+ch_en_dict[indicator]+'.xls')
+                        os.rename(fn1, fn2)
+                    except:
+                        pass
+
+                    # 写入上传记录文件
+                    now = datetime.now()
+                    today = now.strftime('%Y-%m-%d %H:%M:%S')
+                    fn = os.path.join(dirname, 'history.csv')
+                    df = pd.DataFrame([[today,date,indicator]], columns=['done_dt','data_dt','indicator'])
+                    if os.path.exists(fn):
+                        df.to_csv(fn, mode='a', header=False, index=False)
+                    else:
+                        df.to_csv(fn, index=False)
+
+                    tips = '文件上传成功'
+                else:
+                    tips = '文件已存在，未上传'
+            else:
+                tips = '未选择文件'
+        except:
+            tips = '文件出错了'
+            s = traceback.format_exc()
+            to_log(s)
+
+    # 显示维护历史
+    fn = os.path.join(dirname, 'history.csv')
+    df = pd.read_csv(fn)
+    h = []
+    for i, row in df.iterrows():
+        h.append( list(row) )
+    h.append(list(df.columns))
+    h.reverse()
+    h = h[:4]
+
+    # 数据清单
+    r = [['数据', '最近日期列表']]
+    for k in indicator_dict.keys():
+        r.append([k, sorted(indicator_dict[k])[-12:]])
+
+    return render_template("warehouse_upload.html", title="仓单", tip=tips, hs=h, rows=r)
+
 @app.route('/USDA_upload', methods=['get','post'])
 def USDA_upload():
     tips = ''

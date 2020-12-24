@@ -29,12 +29,10 @@ import zipfile
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
 from nature import rc_file, get_symbols_quote, get_tick, send_order
 
-#
-# fn_setting_fut = get_dss() + 'fut/cfg/setting_pz.csv'
-# df = pd.read_csv(fn_setting_fut)
-# df['sp'] = ''
-# # print(df)
-# df.to_csv(fn_setting_fut, index=False)
+s = pd.Series([1, 2])
 
-# code = 'm2105&m2109'
-# get_contract(code)
+print(s)
+deep = s.copy()
+s[0] = 10
+print(s)
+print(deep)
