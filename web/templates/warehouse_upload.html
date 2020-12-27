@@ -75,10 +75,17 @@
 
       <form method="post" enctype="multipart/form-data" action="warehouse_upload" >
       <fieldset>
-         <input type="file" name="f">
+        <p>
+        交易所:
+            <select name="exchange"/>
+              <option value=''></option>
+              <option value='上海期货交易所'>上海期货交易所</option>
+              <option value='郑州商品交易所'>郑州商品交易所</option>
+              <option value='大连商品交易所'>大连商品交易所</option>
+            </select>
+        </p>
+        <p><input type="file" name="f"></p>
       </fieldset>
-
-      <p></p>
 
       <div>
       <input type="submit" value="Submit"/>

@@ -2,7 +2,9 @@
 
 import os
 import zipfile
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import smtplib
 from email.mime.text import MIMEText
 import schedule
@@ -63,21 +65,42 @@ def mail_log():
         print(now, '-'*30)
         traceback.print_exc()
 
-def mail_1815():
+def mail_value():
     try:
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
-            print('\n' + str(now) + " mail_factor begin...")
-            r = has_factor(dss)
-            if r == []:
-                send_email(dss, 'no factor', '')
-            else:
-                send_email(dss, 'has factor', '\n'.join(r))
+        if 0 <= weekday <= 5:
+            value_base = 109E4
+            date_base = '2020-12-21'
 
-            print('\n' + str(now) + " mail_stk_report begin...")
-            r = stk_report(dss)
-            send_email(dss, 'show stk_report', '\n'.join(r))
+            fn = get_dss() + 'fut/engine/focus/all.csv'
+            df = pd.read_csv(fn)
+            df['value'] = round(df['pnl'] / value_base, 2) + 1
+            df = df[df.date >= date_base]
+            df = df.set_index('date')
+            date_list = list(df.index)
+
+            plt.figure(figsize=(7,3))
+            plt.title( date_list[-1] + ':  ' + str(df.at[date_list[-1],'value']) )
+            plt.plot(df.value)
+
+            # plt.xticks(rotation=90)
+            plt.xticks('off')
+            plt.grid(True, axis='y')
+            # ax = plt.gca()
+            # for label in ax.get_xticklabels():
+            #     label.set_visible(False)
+            # for label in ax.get_xticklabels()[0:1]:
+            #     label.set_visible(True)
+            # for label in ax.get_xticklabels()[-1:]:
+            #     label.set_visible(True)
+
+            # plt.legend()
+            fn = get_repo() + 'nature/web/static/value_all.jpg'
+            plt.savefig(fn)
+            plt.cla()
+
+            send_email(dss, 'value', '', [fn])
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -85,10 +108,12 @@ def mail_1815():
 def mail_bak():
     try:
         now = datetime.datetime.now()
+        today = now.strftime('%Y%m%d')
         weekday = int(now.strftime('%w'))
-        if 1 <= weekday <= 5:
+        if 1 <= weekday <= 6:
             dirname = os.path.join(get_dss(), 'fut')
-            # 压缩文件路径
+
+            # 创建压缩文件A
             zip_file = os.path.join(dirname, 'cfg_engine.zip')
             # 在指定zip压缩文件目录下创建zip文件
             create_zip_file = zipfile.ZipFile(zip_file, mode='w', compression=zipfile.ZIP_DEFLATED)
@@ -100,7 +125,19 @@ def mail_bak():
                         create_zip_file.write(fn, d+folderName[len(path):]+'/'+file_name)
             create_zip_file.close()
 
-            # send_email(get_dss(), 'cfg_engine.zip', '', [zip_file])
+            # 创建压缩文件B
+            zip_file = os.path.join(dirname, 'tick_'+today+'.zip')
+            # 在指定zip压缩文件目录下创建zip文件
+            create_zip_file = zipfile.ZipFile(zip_file, mode='w', compression=zipfile.ZIP_DEFLATED)
+            for d in ['tick']:
+                path = os.path.join(get_dss(), 'fut/'+d)
+                for folderName,subfolders,filenames in os.walk(path):
+                    for file_name in filenames:
+                        if today in file_name:
+                            fn = os.path.join(folderName, file_name)
+                            create_zip_file.write(fn, d+folderName[len(path):]+'/'+file_name)
+            create_zip_file.close()
+
     except Exception as e:
         s = traceback.format_exc()
         to_log(s)
@@ -316,7 +353,7 @@ def run_examine():
         print('\n' + str(now) + " examine end ")
 
 if __name__ == '__main__':
-    # run_mail_pdf()
+    # mail_value()
 
     try:
         '''
@@ -331,15 +368,16 @@ if __name__ == '__main__':
         # 盘后
         schedule.every().day.at("15:05").do(run_tick2bar)
         schedule.every().day.at("15:15").do(run_iv)
-        schedule.every().day.at("15:20").do(run_book_opt)
-        schedule.every().day.at("15:25").do(run_pandian)
-        schedule.every().day.at("15:26").do(run_sdiffer)
-        schedule.every().day.at("15:27").do(run_down_data)
-        schedule.every().day.at("15:28").do(run_mail_pdf)
+        schedule.every().day.at("15:16").do(run_book_opt)
+        schedule.every().day.at("15:17").do(run_pandian)
+        schedule.every().day.at("15:18").do(run_sdiffer)
+        schedule.every().day.at("15:19").do(run_down_data)
+        schedule.every().day.at("15:21").do(mail_value)
+        schedule.every().day.at("15:22").do(run_mail_pdf)
         schedule.every().day.at("15:29").do(run_examine)
-        schedule.every().day.at("15:30").do(mail_log)
-        schedule.every().day.at("15:31").do(mail_bak)
-
+        schedule.every().day.at("15:30").do(mail_bak)
+        schedule.every().day.at("15:31").do(mail_log)
+            
         print('schedule begin...')
         while True:
             schedule.run_pending()

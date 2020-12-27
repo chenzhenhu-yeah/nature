@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>fut</title>
+    <style type="text/css">
+      body {
+         font: 12pt Verdana, Arial, Georgia, sans-serif;
+      }
+      nav {
+         width:150px;
+         float:left;
+         margin-top:12px;
+         margin-right:18px;
+      }
+      section {
+         width:900px;
+         float:left;
+         margin-bottom:36px;
+      }
+      nav a {
+         text-decoration: none;
+      }
+      section a {
+         text-decoration: none;
+         font-weight: bold;
+      }
+      nav ul {
+         list-style: none;
+         margin: 12px 0px 0px 0px;
+         padding: 0px;
+      }
+      nav li {
+         border-bottom: 1px solid #ffffff;
+      }
+      nav li a:link, nav li a:visited {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #628794;
+         color: #ffffff;
+      }
+      nav li a:hover, nav li a:active {
+         font-size: 10pt;
+         font-weight: bold;
+         display: block;
+         padding: 3px 0px 3px 3px;
+         background-color: #c6a648;
+         color: #000000;
+      }
+      table, tr, th, td {
+       border: 1px solid black;
+       border-collapse: collapse;
+       padding: 3px;
+      }
+      .description {
+        text-align: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav>
+    <ul>
+	    <li><a href="fut">服务器状态</a></li>
+    </ul>
+    </nav>
+
+    <section>
+       <header>
+       <h1>{{title}}</h1>
+       <h1>{{tip}}</h1>
+       </header>
+
+      <form method="post" action="warehouse_mail">
+      <fieldset>
+        <input type="radio" name="kind" value="上海期货交易所" />上海期货交易所
+        <input type="checkbox" name="k" value="铜"/>铜
+        <input type="checkbox" name="k" value="铝"/>铝
+        <input type="checkbox" name="k" value="锌"/>锌
+        <input type="checkbox" name="k" value="铅"/>铅
+        <input type="checkbox" name="k" value="镍"/>镍
+        <input type="checkbox" name="k" value="锡"/>锡
+        <input type="checkbox" name="k" value="螺纹钢仓库"/>螺纹钢仓库
+        <input type="checkbox" name="k" value="螺纹钢厂库"/>螺纹钢厂库
+        <input type="checkbox" name="k" value="线材"/>线材
+        <input type="checkbox" name="k" value="热轧卷板"/>热轧卷板
+        <input type="checkbox" name="k" value="不锈钢仓库"/>不锈钢仓库
+        <input type="checkbox" name="k" value="天然橡胶"/>天然橡胶
+        <input type="checkbox" name="k" value="20号胶"/>20号胶
+      </fieldset>
+
+       <fieldset>
+        <input type="radio" name="kind" value="郑州商品交易所" />郑州商品交易所
+        <input type="checkbox" name="k" value="SR"/>白糖
+        <input type="checkbox" name="k" value="CF"/>棉
+        <input type="checkbox" name="k" value="CY"/>棉纱
+        <input type="checkbox" name="k" value="RM"/>菜粕
+        <input type="checkbox" name="k" value="FG"/>玻璃
+        <input type="checkbox" name="k" value="SA"/>纯碱
+       </fieldset>
+
+       <fieldset>
+        <input type="radio" name="kind" value="大连商品交易所" />大连商品交易所
+        <input type="checkbox" name="k" value="豆一"/>豆一
+        <input type="checkbox" name="k" value="玉米"/>玉米
+        <input type="checkbox" name="k" value="豆粕"/>豆粕
+        <input type="checkbox" name="k" value="豆油"/>豆油
+       </fieldset>
+
+      <fieldset>
+       <p>
+          截至日期:<input type="text" name="enddate"/> YYYYMM
+       </p>
+
+       <p>
+          邮箱:
+          <select name="mailto"/>
+            <option value=''></option>
+            <option value='25617680@qq.com'>逍逍法王^-^</option>
+          </select>
+      </p>
+
+      </fieldset>
+
+      <div>
+      <input type="submit" value="Submit"/>
+      </div>
+      </form>
+    </section>
+  </body>
+</html>
