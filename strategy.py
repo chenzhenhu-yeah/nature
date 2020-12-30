@@ -570,7 +570,7 @@ class Tick:
         self.UpperLimitPrice = 0.0     # 涨板价
         self.LowerLimitPrice = 0.0     # 跌板价
         self.PreOpenInterest = 0.0     # 昨持仓
-
+        # self.SettlementPrice = 0.0     # 结算价
 
         self.PreSettlementPrice = 0.0  # 前结算价
         self.PreClosePrice = 0.0       # 前收盘价

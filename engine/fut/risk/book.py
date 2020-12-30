@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 import time
 from csv import DictReader
-from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, get_contract, to_log
+from nature import get_dss, get_trading_dates, get_daily, get_stk_hfq, get_contract, to_log, get_tick
 from nature import get_symbols_quote
 
 
@@ -124,7 +124,7 @@ def trade2book():
 
     df0.to_csv(fn, index=False)
 
-def fresh_rec_price(rec):
+def fresh_rec_price(rec, fname):
     dss = get_dss()
     pnl = rec.pnl
     pos_dict = eval(rec.posDict)
@@ -133,24 +133,6 @@ def fresh_rec_price(rec):
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
     rec.date = today
-
-    # 对于已到期的期权合约，将期持仓置为0
-    for symbol in pos_dict:
-        mature = get_contract(symbol).mature
-        if mature is not None:
-            if mature < today:
-                pos_dict[symbol] = 0
-
-    # 将持仓为0的品种清理掉
-    s_list = []
-    for s in pos_dict:
-        if pos_dict[s] == 0:
-            s_list.append(s)
-    for s in s_list:
-        if s in pos_dict:
-            pos_dict.pop(s)
-        if s in close_dict:
-            close_dict.pop(s)
 
     # 从每天收盘行情切片中获取最新行情数据
     fn = dss + 'opt/' + today[:7] + '.csv'
@@ -176,6 +158,63 @@ def fresh_rec_price(rec):
     rec.posDict = str(pos_dict)
     rec.closeDict = str(close_dict)
 
+    df = pd.DataFrame([rec])
+    df.to_csv(fname, index=False, header=None, mode='a')
+
+def proc_rec_mature(rec, fname):
+    dss = get_dss()
+    pos_dict = eval(rec.posDict)
+    close_dict = eval(rec.closeDict)
+
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    rec.date = today
+
+    s_list = []
+    # 对于已到期的期权合约(IO除外)，将持仓置为0，并清理；若有行权，添加行权记录到got_trade文件
+    for symbol in pos_dict:
+        pos = pos_dict[symbol]
+        c = get_contract(symbol)
+        # 目前期货合约暂不处理（返回值为None）；回头也返回一个到期日，过期作清零处理
+        if c.mature is not None:
+            # 到期的，都要进行清零处理
+            if c.mature <= today:
+                s_list.append(symbol)
+                if c.be_opt and symbol[:2] != 'IO' and pos != 0:
+                    size = c.size
+                    if c.exchangeID == 'CZCE':                       # tick数据的特点，需对郑商所数据进行特殊处理
+                        size = 1
+                    settle = get_tick(c.basic)['AveragePrice'] / size
+                    fn = get_dss() + 'fut/engine/book/got_trade.csv'
+                    df = pd.read_csv(fn)
+                    exercise = ['', c.exchangeID, c.basic, 'Open', int(time.time()), round(settle,4),
+                                int(time.time()), '15:00:01', today, abs(pos), 'no', '',
+                                'hedge' if 'hedge' in fname else 'secure', 'no', len(df)+1]
+
+                    if (pos > 0 and c.opt_flag == 'C' and settle >= c.strike ) or \
+                       (pos < 0 and c.opt_flag == 'P' and settle <= c.strike ):
+                       # 以strike作为价格买开仓basic
+                       exercise[0] = 'Buy'
+                    if (pos > 0 and c.opt_flag == 'P' and settle <= c.strike ) or \
+                       (pos < 0 and c.opt_flag == 'C' and settle >= c.strike ):
+                       # 以strike作为价格卖开仓basic
+                       exercise[0] = 'Sell'
+                    if exercise[0] != '':
+                        df = pd.DataFrame([exercise])
+                        df.to_csv(fn, index=False, header=None, mode='a')
+
+    if s_list != []:
+        # 清零处理
+        for s in s_list:
+            if s in pos_dict:
+                pos_dict.pop(s)
+            if s in close_dict:
+                close_dict.pop(s)
+        rec.posDict = str(pos_dict)
+        rec.closeDict = str(close_dict)
+        df = pd.DataFrame([rec])
+        df.to_csv(fname, index=False, header=None, mode='a')
+
 def fresh_book():
     """更新book文件，计算当日盈亏"""
     # 获取opt目录下全部book文件
@@ -185,13 +224,11 @@ def fresh_book():
     for filename in listfile:
         # 逐个文件更新收盘价，并计算当日盈亏
         if filename[:5] == 'book_':
-            fn = dirname + filename
-            df = pd.read_csv(fn)
+            fname = dirname + filename
+            df = pd.read_csv(fname)
             rec = df.iloc[-1,:]
-
-            fresh_rec_price(rec)
-            df = pd.DataFrame([rec])
-            df.to_csv(fn, index=False, header=None, mode='a')
+            fresh_rec_price(rec, fname)
+            proc_rec_mature(rec, fname)
 
 def book_run():
     # 以下调用顺序不能乱！

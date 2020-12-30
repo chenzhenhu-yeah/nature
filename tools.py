@@ -77,7 +77,7 @@ class Contract(object):
     def get_mature(self, symbol):
         if self.be_opt:
             df = get_df_mature()
-            df1 = df[df.symbol == symbol]
+            df1 = df[df.symbol == self.basic]
             mature_list = list(df1.mature)
             if len(mature_list) > 0:
                 return mature_list[0]

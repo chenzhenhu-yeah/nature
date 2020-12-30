@@ -29,10 +29,10 @@ import zipfile
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date
 from nature import rc_file, get_symbols_quote, get_tick, send_order
 
-s = pd.Series([1, 2])
-
-print(s)
-deep = s.copy()
-s[0] = 10
-print(s)
-print(deep)
+# t = get_tick('m2105')
+t = get_tick('al2101')
+# t = get_tick('FG105')
+# t = get_tick('CF105')
+# t = get_tick('IF2101')
+# t = get_tick('IO2101-C-5000')
+print(t)

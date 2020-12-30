@@ -78,6 +78,7 @@ class HuQuote(CtpQuote):
         tick.LastPrice = pDepthMarketData.getLastPrice()
         tick.OpenInterest = pDepthMarketData.getOpenInterest()
         tick.Volume = pDepthMarketData.getVolume()
+        # tick.SettlementPrice = pDepthMarketData.getSettlementPrice()
 
         # 只做为临时变量，因郑交所与其他不一样!!!
         self.temp_tradeDay = pDepthMarketData.getTradingDay()
@@ -107,7 +108,7 @@ class HuQuote(CtpQuote):
     def save_tick_file(self, symbol):
 
         fname = self.dss + 'fut/tick/tick_' + self.tradeDay + '_' + symbol + '.csv'
-        cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
+        cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AveragePrice', 'UpperLimitPrice', 'LowerLimitPrice', 'PreSettlementPrice', 'AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
         df = pd.DataFrame(self.ticks_dict[symbol], columns=cols)
         if os.path.exists(fname):
             df.to_csv(fname, index=False, mode='a', header=False)
@@ -121,7 +122,7 @@ class HuQuote(CtpQuote):
     # 缓存tick -----------------------------------------------------------
     def cache_tick(self, f, UpdateDate):
         Localtime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
-        rec =  [Localtime, f.Instrument, f.LastPrice, f.Volume, f.OpenInterest, f.AskPrice, f.AskVolume, f.BidPrice, f.BidVolume, UpdateDate, f.UpdateTime]
+        rec =  [Localtime, f.Instrument, f.LastPrice, f.Volume, f.OpenInterest, f.AveragePrice, f.UpperLimitPrice, f.LowerLimitPrice, f.PreSettlementPrice, f.AskPrice, f.AskVolume, f.BidPrice, f.BidVolume, UpdateDate, f.UpdateTime]
 
         if f.Instrument in self.ticks_dict:
             self.ticks_dict[f.Instrument].append( rec )
@@ -307,8 +308,17 @@ class TestQuote(object):
                         if self.q is not None:
                             if s in self.q.ticks_dict:
                                 tick = self.q.ticks_dict[s][-1]
-                                cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
+                                cols = ['Localtime','Instrument','LastPrice','Volume','OpenInterest','AveragePrice', 'UpperLimitPrice', 'LowerLimitPrice', 'PreSettlementPrice', 'AskPrice','AskVolume','BidPrice','BidVolume','UpdateDate','UpdateTime']
                                 tick = dict(zip(cols, tick))
+                        else:
+                            now = datetime.now()
+                            today = now.strftime('%Y%m%d')
+                            fn = self.dss + 'fut/tick/tick_' + today + '_' + s + '.csv'
+                            if os.path.exists(fn):
+                                df = pd.read_csv(fn)
+                                rec = df.iloc[-1,:]
+                                tick = dict(rec)
+
                         conn.send( str(tick) )
             except Exception as e:
                 # print(e)
