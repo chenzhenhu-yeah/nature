@@ -451,10 +451,9 @@ def send_email(dss, subject, content, attach_list=[], receivers=None):
         mail_auth_password = setting['mail_auth_password']     # 授权密码
         # print(mail_host, mail_username, mail_auth_password)
 
-        # # 第三方 SMTP 服务
-        # mail_host = 'smtp.qq.com'              # 设置服务器
-        # mail_username = '395772397@qq.com'   # 用户名
-        # mail_auth_password = "pwqgqmexjvhbbhjd"       # 授权密码
+        # 第三方 SMTP 服务
+        # mail_auth_password = "pwqgqmexjvhbbhjd"       # QQ授权密码
+        # mail_auth_password = "RONROHGJBUAOPXOP"       # yeah授权密码
 
         sender = setting['sender']
         if receivers is None:

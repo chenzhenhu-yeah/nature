@@ -1864,48 +1864,62 @@ def upload_statement():
 
             pz_list = []
             opt_list = []
-            delta_list = []
-            gamma_list = []
-            vega_list = []
+            delta_duo_list = []
+            delta_kong_list = []
             for i, row in df.iterrows():
                 symbol = row[2].strip()
-                num = row[3] - row[5]
+                long_pos = row[3]
+                short_pos = row[5]
                 pz = get_contract(symbol).pz
                 pz_list.append(pz)
-                # print(symbol, get_contract(symbol).be_opt)
 
                 if get_contract(symbol).be_opt:
                     df2 = df_greeks[df_greeks.Instrument == symbol]
                     # df = df[df.Localtime.str.slice(0,10) == dt]
                     df2 = df2.drop_duplicates(subset=['Instrument'],keep='last')
                     if df2.empty:
-                        delta_list.append(0)
-                        gamma_list.append(0)
-                        vega_list.append(0)
+                        delta_duo_list.append(np.nan)
+                        delta_kong_list.append(np.nan)
                     else:
                         rec = df2.iloc[0,:]
-                        # print(rec.Instrument, num, rec.delta, rec.gamma, rec.vega)
-                        delta_list.append(int(100 * num * rec.delta))
-                        gamma_list.append(round(100 * num * rec.gamma,2))
-                        vega_list.append(round(num * rec.vega,2))
-
+                        if rec.delta > 0:
+                            delta_duo_list.append(int(abs(100 * long_pos * rec.delta)))
+                            delta_kong_list.append(int(-abs(100 * short_pos * rec.delta)))
+                        else:
+                            delta_duo_list.append(int(abs(100 * short_pos * rec.delta)))
+                            delta_kong_list.append(int(-abs(100 * long_pos * rec.delta)))
                     opt_list.append('期权')
                 else:
                     opt_list.append('期货')
-                    delta_list.append(100*num)
-                    gamma_list.append(0)
-                    vega_list.append(0)
+                    delta_duo_list.append(100*long_pos)
+                    delta_kong_list.append(-100*short_pos)
 
             df['pz'] = pz_list
             df['opt'] = opt_list
-            df['delta'] = delta_list
-            df['gamma'] = gamma_list
-            df['vega'] = vega_list
+            df['delta_duo'] = delta_duo_list
+            df['delta_kong'] = delta_kong_list
             df['magin'] = df[10].apply(int)
 
-            df2 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta':np.sum, 'gamma':np.sum, 'vega':np.sum})
+            # 采用简单办法将价格固定下来，后续要改进这个地方
+            pz_price_dict = {'m':3300, 'RM':2700, 'IO':5000, 'CF':15000, 'SR':5000, 'c':2700, 'al':16000, 'FG':1900, 'p':6800, 'y':7800, 'ru':15000, 'AP':7000}
+            df3 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta_duo':np.sum, 'delta_kong':np.sum})
+            df3['delta'] = df3['delta_duo'] + df3['delta_kong']
+            df3 = df3.reset_index()
+            stress_list = []
+            for i, row in df3.iterrows():
+                price = np.nan
+                if row.pz in pz_price_dict:
+                    price = pz_price_dict[row.pz]
+                stress = 0.1 * 1E-6 * price * get_contract(row.pz).size * row.delta
+                stress_list.append(-abs(round(stress,1)))
+            df3['stress'] = stress_list
+
             fn3 = os.path.join(dirname, 'risk_'+dt+'.csv')
-            df2.to_csv(fn3)
+            df3.to_csv(fn3, index=False)
+            cols = ['pz', 'opt', 'magin', 'delta_duo', 'delta_kong', 'delta', 'stress']
+            rec = ['合计',  '', df3.magin.sum(), np.nan, np.nan, df3.delta.sum(), np.nan]
+            df = pd.DataFrame([rec], columns=cols)
+            df.to_csv(fn3, mode='a', index=False, header=None)
 
             send_email(get_dss(), '结算单_'+dt, '', [fn1, fn3])
 

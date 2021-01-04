@@ -70,8 +70,8 @@ def mail_value():
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
         if 0 <= weekday <= 5:
-            value_base = 109E4
-            date_base = '2020-12-21'
+            value_base = 103E4
+            date_base = '2020-12-30'
 
             fn = get_dss() + 'fut/engine/focus/all.csv'
             df = pd.read_csv(fn)
@@ -377,7 +377,7 @@ if __name__ == '__main__':
         schedule.every().day.at("15:29").do(run_examine)
         schedule.every().day.at("15:30").do(mail_bak)
         schedule.every().day.at("15:31").do(mail_log)
-            
+
         print('schedule begin...')
         while True:
             schedule.run_pending()
