@@ -39,6 +39,81 @@ def get_tick(symbol):
 
     raise ValueError
 
+
+########################################################################
+class Spread(object):
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        self.tm = '00:00:00'
+        self.bar_dict = {}
+        self.got_dict = {}
+        self.symbol_list = []
+
+        self.spread_dict = {}
+        self.process_dict = {}
+        fn = get_dss() +  'fut/cfg/spread_param.csv'
+        df = pd.read_csv(fn)
+        for i, row in df.iterrows():
+            self.symbol_list.append(row.s0)
+            self.symbol_list.append(row.s1)
+            self.spread_dict[row.nm] = [row.s0, row.s1]
+            self.process_dict[row.nm] = False
+
+        self.symbol_list = list(set(self.symbol_list))
+        for symbol in self.symbol_list:
+            self.got_dict[symbol] = False
+
+    #----------------------------------------------------------------------
+    def proc_spread_bar(self, bar, minx='min1'):
+        # 不处理不相关的品种
+        if bar.vtSymbol not in self.symbol_list:
+            return
+
+        if self.tm != bar.time:
+            self.tm = bar.time
+            for symbol in self.symbol_list:
+                self.got_dict[symbol] = False
+            for k in self.process_dict.keys():
+                self.process_dict[k] = False
+
+        self.bar_dict[bar.vtSymbol] = bar
+        self.got_dict[bar.vtSymbol] = True
+
+        return self.control_in_p(bar)
+
+    #----------------------------------------------------------------------
+    def control_in_p(self, bar):
+        try:
+            for k in self.spread_dict.keys():
+                s0 = self.spread_dict[k][0]
+                s1 = self.spread_dict[k][1]
+                if s0 not in self.got_dict or s1 not in self.got_dict:
+                    continue
+                if self.got_dict[s0] and self.got_dict[s1] and self.process_dict[k] == False:
+                    self.process_dict[k] = True
+                    s0 = self.bar_dict[s0]
+                    s1 = self.bar_dict[s1]
+
+                    bar_s = VtBarData()
+                    bar_s.vtSymbol = k
+                    bar_s.symbol = k
+                    bar_s.exchange = s0.exchange
+                    bar_s.date = s0.date
+                    bar_s.time = s0.time
+
+                    bar_s.close = s0.close - s1.close
+                    bar_s.AskPrice = s0.AskPrice - s1.BidPrice
+                    bar_s.BidPrice = s0.BidPrice - s1.AskPrice
+
+                    print(bar_s.time, bar_s.vtSymbol, bar_s.close, bar_s.AskPrice, bar_s.BidPrice)
+                    return bar_s
+        except Exception as e:
+            s = traceback.format_exc()
+            to_log(s)
+
+        return None
+
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------
 
@@ -62,6 +137,8 @@ class HuQuote(CtpQuote):
         self.ticks_dict = {}
         self.tm100 = 0
         self.cc = 0
+
+        self.spread = Spread()
 
     #----------------------------------------------------------------------
     def _OnRtnDepthMarketData(self, pDepthMarketData):
@@ -243,6 +320,10 @@ class HuQuote(CtpQuote):
             bar.time = new_bar.time[:-2] + '00'
 
             self.send_bar(bar, 'min1')
+            bar_spread = self.spread.proc_spread_bar(bar, 'min1')
+            if bar_spread is not None:
+                self.send_bar(bar_spread, 'min1')
+
             if bar.vtSymbol[:2] == 'ag':
                 self.put_bar(bar, 'min1')
 

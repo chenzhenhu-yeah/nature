@@ -121,7 +121,7 @@ class Fut_DaLiSignal(Signal):
                 if os.path.exists(filename):
                     pass
                 else:
-                    send_email(get_dss(), self.vtSymbol + ' 挂单未成交！！！', '')
+                    send_email(get_dss(), self.vtSymbol + '已暂停交易或挂单未成交！', '')
             return
 
         self.calculateIndicator()     # 计算指标

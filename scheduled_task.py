@@ -70,12 +70,13 @@ def mail_value():
         now = datetime.datetime.now()
         weekday = int(now.strftime('%w'))
         if 0 <= weekday <= 5:
+            pnl_base = 54562
             value_base = 103E4
             date_base = '2020-12-30'
 
             fn = get_dss() + 'fut/engine/focus/all.csv'
             df = pd.read_csv(fn)
-            df['value'] = round(df['pnl'] / value_base, 2) + 1
+            df['value'] = 1 + round( (df['pnl']-pnl_base) / value_base, 2 )
             df = df[df.date >= date_base]
             df = df.set_index('date')
             date_list = list(df.index)

@@ -240,11 +240,11 @@ class FutEngine(object):
 
         self.loadPortfolio(Fut_ArbitragePortfolio, [])
 
-        if 'symbols_spread' in setting:
-            symbols = setting['symbols_spread']
-            if len(symbols) > 0:
-                spread_symbol_list = symbols.split(',')
-                self.loadPortfolio(Fut_SpreadPortfolio, spread_symbol_list)
+        # if 'symbols_spread' in setting:
+        #     symbols = setting['symbols_spread']
+        #     if len(symbols) > 0:
+        #         spread_symbol_list = symbols.split(',')
+        #         self.loadPortfolio(Fut_SpreadPortfolio, spread_symbol_list)
 
         # 初始化路由
         self.gateway = Gateway_Ht_CTP()
