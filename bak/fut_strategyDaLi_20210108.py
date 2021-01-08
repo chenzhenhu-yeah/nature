@@ -463,8 +463,8 @@ class Fut_DaLiSignal(Signal):
             ct = get_contract(self.vtSymbol)
             size = ct.size
 
-            d_list = [1,1,1,1,1] + self.size_duo_list
-            k_list = [1,1,1,1,1] + self.size_kong_list
+            d_list = [2,2,2,2,2] + self.size_duo_list
+            k_list = [2,2,2,2,2] + self.size_kong_list
             # print(self.vtSymbol)
             # print(d_list)
             # print(k_list)
