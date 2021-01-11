@@ -82,18 +82,22 @@ class Contract(object):
             if len(mature_list) > 0:
                 return mature_list[0]
         else:
-            now = datetime.now()
-            yyyy = datetime.strftime(now, '%Y')
-            yyy = int(yyyy[:3])
-            ymm = int(symbol[-3:])
-            dt = str(int(yyy*1E5 + ymm*100 + 28))
-            # print(dt)
-            dt = datetime.strptime(dt, '%Y%m%d')
-            now = datetime.now()
-            if dt < now:
-                dt += timedelta(days = 3650)
-            dt = datetime.strftime(dt, '%Y-%m-%d')
-            return dt
+            try:
+                now = datetime.now()
+                yyyy = datetime.strftime(now, '%Y')
+                yyy = int(yyyy[:3])
+                # print(symbol)
+                ymm = int(symbol[-3:])
+                dt = str(int(yyy*1E5 + ymm*100 + 28))
+                # print(dt)
+                dt = datetime.strptime(dt, '%Y%m%d')
+                now = datetime.now()
+                if dt < now:
+                    dt += timedelta(days = 3650)
+                dt = datetime.strftime(dt, '%Y-%m-%d')
+                return dt
+            except:
+                pass
 
         return None
 

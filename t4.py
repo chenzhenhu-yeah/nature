@@ -37,7 +37,7 @@ from nature import rc_file, get_symbols_quote, get_tick, send_order
 # # t = get_tick('IO2101-C-5000')
 # print(t)
 
-c = get_contract('m2105')
-c = get_contract('al2105')
-c = get_contract('RM905')
+# c = get_contract('m2105')
+# c = get_contract('al2105')
+c = get_contract('CF105C16000')
 print(c.mature)
