@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import math
 from math import sqrt, log
@@ -81,6 +81,19 @@ class Contract(object):
             mature_list = list(df1.mature)
             if len(mature_list) > 0:
                 return mature_list[0]
+        else:
+            now = datetime.now()
+            yyyy = datetime.strftime(now, '%Y')
+            yyy = int(yyyy[:3])
+            ymm = int(symbol[-3:])
+            dt = str(int(yyy*1E5 + ymm*100 + 28))
+            # print(dt)
+            dt = datetime.strptime(dt, '%Y%m%d')
+            now = datetime.now()
+            if dt < now:
+                dt += timedelta(days = 3650)
+            dt = datetime.strftime(dt, '%Y-%m-%d')
+            return dt
 
         return None
 

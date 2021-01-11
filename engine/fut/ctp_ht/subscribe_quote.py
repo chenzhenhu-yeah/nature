@@ -106,13 +106,23 @@ class Spread(object):
                     bar_s.AskPrice = s0.AskPrice - s1.BidPrice
                     bar_s.BidPrice = s0.BidPrice - s1.AskPrice
 
-                    print(bar_s.time, bar_s.vtSymbol, bar_s.close, bar_s.AskPrice, bar_s.BidPrice)
+                    # print(bar_s.time, bar_s.vtSymbol, bar_s.close, bar_s.AskPrice, bar_s.BidPrice)
+                    df = pd.DataFrame([bar_s.__dict__])
+                    cols = ['date','time','open','high','low','close','volume']
+                    df = df[cols]
+                    fname = get_dss() + 'fut/bar/min1_' + k + '.csv'
+                    if os.path.exists(fname):
+                        df.to_csv(fname, index=False, mode='a', header=False)
+                    else:
+                        df.to_csv(fname, index=False, mode='a')
+
                     return bar_s
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
 
         return None
+
 
 class HuQuote(CtpQuote):
     #----------------------------------------------------------------------

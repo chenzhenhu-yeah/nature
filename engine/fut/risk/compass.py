@@ -16,6 +16,7 @@ import traceback
 from nature import get_dss, get_inx, get_contract, get_repo, to_log, send_email, get_trade_preday
 from nature import bsm_call_value, bsm_put_value, bsm_call_imp_vol, bsm_put_imp_vol
 
+from nature.web.hold import hold_product
 
 dirname = os.path.join(get_repo(), r'nature/engine/fut/risk/img/')
 
@@ -155,18 +156,24 @@ def show_ic(symbol1, symbol2, code, date):
     df1 = pd.read_csv(fn)
     fn = get_dss() +'fut/bar/day_' + symbol2 + '.csv'
     df2 = pd.read_csv(fn)
-    start_dt = df1.at[0,'date'] if df1.at[0,'date'] > df2.at[0,'date'] else df2.at[0,'date']
 
-    df1 = df1[(df1.date >= start_dt) & (df1.date <= date)]
-    df1 = df1.reset_index()
-    # print(df1.head(3))
+    df1 = df1.sort_values('date')
+    df2 = df2.sort_values('date')
+    row1 = df1.iloc[0,:]
+    row2 = df2.iloc[0,:]
+    start_dt = row1['date'] if row1['date'] > row2['date'] else row2['date']
+    row1 = df1.iloc[-1,:]
+    row2 = df2.iloc[-1,:]
+    end_dt = row1['date'] if row1['date'] < row2['date'] else row2['date']
 
-    df2 = df2[(df2.date >= start_dt) & (df2.date <= date)]
-    df2 = df2.reset_index()
-    # print(df2.head(3))
+    df1 = df1[(df1.date >= start_dt) & (df1.date <= end_dt)]
+    df1 = df1.set_index('date')
+
+    df2 = df2[(df2.date >= start_dt) & (df2.date <= end_dt)]
+    df2 = df2.set_index('date')
 
     df1['close'] = df1.close - df2.close
-    df1 = df1.set_index('date')
+    df1 = df1.dropna()
 
     n = 10          # 均线周期
     df1['ma'] = df1['close'].rolling(n).mean()
@@ -788,45 +795,45 @@ def common(date, m0, gap, m1=None):
     if df is not None:
         show_11([df], code, False)
 
-    # skew_day
-    for symbol in [m0, m1]:
-        code = symbol
-        if code is not None:
-            df_right_c, df_right_p = df_atm_plus_obj_day(code, date, gap, shift=2)
-            df_left_c, df_left_p = df_atm_plus_obj_day(code, date, gap, shift=-2)
-            if df_right_c is not None and df_right_p is not None and df_left_c is not None and df_left_p is not None:
-                df_right_c = df_iv(code, df_right_c)
-                df_right_p = df_iv(code, df_right_p)
-                df_left_c = df_iv(code, df_left_c)
-                df_left_p = df_iv(code, df_left_p)
-                # print(df_right_c.tail())
-                # print(df_left_c.tail())
-                df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
-                df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
-                df_right_c.index.name = 'skew_day_c'
-                df_left_p.index.name = 'skew_day_p'
-                if df_right_c is not None and df_left_p is not None:
-                    show_21([df_left_p], [df_right_c], code)
-                    # print(df_right_c.tail())
-
-    # skew__min5
-    for symbol in [m0, m1]:
-        code = symbol
-        if code is not None:
-            df_right_c, df_right_p = df_atm_plus_obj_min5(code, date, gap, shift=2)
-            df_left_c, df_left_p = df_atm_plus_obj_min5(code, date, gap, shift=-2)
-            if df_right_c is not None and df_right_p is not None and df_left_c is not None and df_left_p is not None:
-                df_right_c = df_iv(code, df_right_c)
-                df_right_p = df_iv(code, df_right_p)
-                df_left_c = df_iv(code, df_left_c)
-                df_left_p = df_iv(code, df_left_p)
-                df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
-                df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
-                df_right_c.index.name = 'skew_min5_c'
-                df_left_p.index.name = 'skew_min5_p'
-                if df_right_c is not None and df_left_p is not None:
-                    show_21([df_left_p], [df_right_c], code)
-                    # print(df_right_c.tail())
+    # # skew_day
+    # for symbol in [m0, m1]:
+    #     code = symbol
+    #     if code is not None:
+    #         df_right_c, df_right_p = df_atm_plus_obj_day(code, date, gap, shift=2)
+    #         df_left_c, df_left_p = df_atm_plus_obj_day(code, date, gap, shift=-2)
+    #         if df_right_c is not None and df_right_p is not None and df_left_c is not None and df_left_p is not None:
+    #             df_right_c = df_iv(code, df_right_c)
+    #             df_right_p = df_iv(code, df_right_p)
+    #             df_left_c = df_iv(code, df_left_c)
+    #             df_left_p = df_iv(code, df_left_p)
+    #             # print(df_right_c.tail())
+    #             # print(df_left_c.tail())
+    #             df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
+    #             df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
+    #             df_right_c.index.name = 'skew_day_c'
+    #             df_left_p.index.name = 'skew_day_p'
+    #             if df_right_c is not None and df_left_p is not None:
+    #                 show_21([df_left_p], [df_right_c], code)
+    #                 # print(df_right_c.tail())
+    #
+    # # skew__min5
+    # for symbol in [m0, m1]:
+    #     code = symbol
+    #     if code is not None:
+    #         df_right_c, df_right_p = df_atm_plus_obj_min5(code, date, gap, shift=2)
+    #         df_left_c, df_left_p = df_atm_plus_obj_min5(code, date, gap, shift=-2)
+    #         if df_right_c is not None and df_right_p is not None and df_left_c is not None and df_left_p is not None:
+    #             df_right_c = df_iv(code, df_right_c)
+    #             df_right_p = df_iv(code, df_right_p)
+    #             df_left_c = df_iv(code, df_left_c)
+    #             df_left_p = df_iv(code, df_left_p)
+    #             df_right_c['value'] = 100*(df_right_c['value']/df_left_c['value'] - 1)
+    #             df_left_p['value'] = 100*(df_left_p['value']/df_right_p['value'] - 1)
+    #             df_right_c.index.name = 'skew_min5_c'
+    #             df_left_p.index.name = 'skew_min5_p'
+    #             if df_right_c is not None and df_left_p is not None:
+    #                 show_21([df_left_p], [df_right_c], code)
+    #                 # print(df_right_c.tail())
 
 def CF(date, df):
     m0 = df[(df.pz == 'CF') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -854,35 +861,69 @@ def CF(date, df):
              m0+'_ic_'+m0+'_'+m1+'.jpg',
              m0+'_ic_'+m0+'_'+cy0+'.jpg',
             ])
+    fn1 = dirname+'compass_CF_'+date+'.pdf'
+    return [fn1]
 
 def m(date, df):
     m0 = df[(df.pz == 'm') & (df.flag == 'm0')].iloc[0,:].symbol
     m1 = df[(df.pz == 'm') & (df.flag == 'm1')].iloc[0,:].symbol
+    # m2 = df[(df.pz == 'm') & (df.flag == 'm2')].iloc[0,:].symbol
     # m0 = 'm2101'
     # m1 = 'm2105'
     y0 = 'y' + m0[1:]
+    y1 = 'y' + m1[1:]
+    p0 = 'p' + m0[1:]
+    p1 = 'p' + m1[1:]
+    # b0 = 'b' + m0[1:]
+    # b1 = 'b' + m1[1:]
+    RM0 = 'RM' + m0[2:]
+    RM1 = 'RM' + m1[2:]
     code = m0
     gap = 50
 
     common(date, code, gap)
     smile(date, m0)
 
-    # ic
+    # ip
     show_ic(m0, m1, code, date)
+
+    # ip
     show_ic(y0, m0, code, date)
+    show_ic(y1, m1, code, date)
+    # show_ic(b0, m0, code, date)
+    # show_ic(b1, m1, code, date)
+    show_ic(y0, p0, code, date)
+    show_ic(y1, p1, code, date)
+    show_ic(m0, RM0, code, date)
+    show_ic(m1, RM1, code, date)
 
     img2pdf('compass_m_'+date+'.pdf',
-            [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
+            [
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
+             m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_smile.jpg',
-             m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
-             m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
              m0+'_'+m0+'_implied_dist.jpg',
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
              m0+'_ic_'+m0+'_'+m1+'.jpg',
              m0+'_ic_'+y0+'_'+m0+'.jpg',
+             m0+'_ic_'+y1+'_'+m1+'.jpg',
+             # m0+'_ic_'+b0+'_'+m0+'.jpg',
+             # m0+'_ic_'+b1+'_'+m1+'.jpg',
+             m0+'_ic_'+y0+'_'+p0+'.jpg',
+             m0+'_ic_'+y1+'_'+p1+'.jpg',
+             m0+'_ic_'+m0+'_'+RM0+'.jpg',
+             m0+'_ic_'+m1+'_'+RM1+'.jpg',
             ])
 
+    fn1 = dirname+'compass_m_'+date+'.pdf'
+
+    d2 = get_dss() + 'info/hold/img/'
+    listfile = os.listdir(d2)
+    for fn in listfile:
+        os.remove(d2+fn)
+    hold_product('dce', m0)
+    fn2 = d2 + 'dce.pdf'
+    return [fn1, fn2]
 
 def RM(date, df):
     m0 = df[(df.pz == 'RM') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -907,6 +948,8 @@ def RM(date, df):
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
              m0+'_ic_'+m0+'_'+m1+'.jpg',
             ])
+    fn1 = dirname+'compass_RM_'+date+'.pdf'
+    return [fn1]
 
 def IO(date, df):
     m0 = df[(df.pz == 'IO') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -938,6 +981,9 @@ def IO(date, df):
              m1+'_'+m1+'_openinterest_c_'+m1+'_openinterest_p.jpg',
             ])
 
+    fn1 = dirname+'compass_IO_'+date+'.pdf'
+    return [fn1]
+
 def al(date, df):
     m0 = df[(df.pz == 'al') & (df.flag == 'm0')].iloc[0,:].symbol
     m1 = df[(df.pz == 'al') & (df.flag == 'm1')].iloc[0,:].symbol
@@ -956,6 +1002,9 @@ def al(date, df):
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
             ])
 
+    fn1 = dirname+'compass_al_'+date+'.pdf'
+    return [fn1]
+
 def compass(date):
     listfile = os.listdir(dirname)
     for fn in listfile:
@@ -965,19 +1014,16 @@ def compass(date):
     df2 = pd.read_csv(fn)
     df2 = df2[pd.notnull(df2.flag)]
 
-    for func in [CF, m, RM, IO]:
-    # for func in [al]:
+    fn_list = []
+    # for func in [CF, m, RM, IO]:
+    for func in [m]:
         try:
-            func(date, df2)
+            fn_list += func(date, df2)
         except Exception as e:
             s = traceback.format_exc()
             to_log(s)
 
-    fn_list = []
-    for symbol in ['CF', 'm', 'RM', 'IO', 'al']:
-        fn = dirname+'compass_'+symbol+'_'+date+'.pdf'
-        if os.path.exists(fn):
-            fn_list.append(fn)
+    # print(fn_list)
     send_email(get_dss(), 'compass', '', fn_list)
 
 if __name__ == '__main__':

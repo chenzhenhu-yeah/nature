@@ -305,6 +305,7 @@ def calc_greeks_CF(df, today, r):
 
 def calc_greeks_al(df, today, r):
     df1 = df[df.index.str.startswith('al')]
+    # print(df1.head())
 
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df2 = pd.read_csv(fn)
@@ -338,6 +339,7 @@ def calc_greeks_al(df, today, r):
 
 def calc_greeks_c(df, today, r):
     df1 = df[df.index.str.startswith('c')]
+    # print(df1.head())
 
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df2 = pd.read_csv(fn)
@@ -371,6 +373,7 @@ def calc_greeks_c(df, today, r):
 
 def calc_greeks_SR(df, today, r):
     df1 = df[df.index.str.startswith('SR')]
+    # print(df1.head())
 
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df2 = pd.read_csv(fn)
@@ -407,7 +410,7 @@ def calc_greeks():
     now = datetime.now()
     # today = now.strftime('%Y-%m-%d %H:%M:%S')
     today = now.strftime('%Y-%m-%d')
-    today = '2020-12-29'
+    # today = '2021-01-04'
 
     fn = get_dss() + 'opt/' + today[:7] + '.csv'
     df = pd.read_csv(fn)
@@ -426,5 +429,5 @@ def calc_greeks():
         calc_greeks_SR(df, today, r)
 
 if __name__ == '__main__':
-    # calc_greeks()
+    calc_greeks()
     pass

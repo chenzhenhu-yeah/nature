@@ -1901,7 +1901,9 @@ def upload_statement():
             df['magin'] = df[10].apply(int)
 
             # 采用简单办法将价格固定下来，后续要改进这个地方
-            pz_price_dict = {'m':3300, 'RM':2700, 'IO':5000, 'CF':15000, 'SR':5000, 'c':2700, 'al':16000, 'FG':1900, 'p':6800, 'y':7800, 'ru':15000, 'AP':7000}
+            pz_price_dict = {'m':3300, 'RM':2700, 'IO':5000, 'CF':15000, 'SR':5000,
+                             'c':2700, 'al':16000, 'MA':2300,
+                             'FG':1900, 'p':6800, 'y':7800, 'ru':15000, 'AP':7000}
             df3 = df.groupby(by=['pz','opt']).agg({'magin':np.sum, 'delta_duo':np.sum, 'delta_kong':np.sum})
             df3['delta'] = df3['delta_duo'] + df3['delta_kong']
             df3 = df3.reset_index()
@@ -1910,7 +1912,7 @@ def upload_statement():
                 price = np.nan
                 if row.pz in pz_price_dict:
                     price = pz_price_dict[row.pz]
-                stress = -0.1 * 1E-6 * price * get_contract(row.pz).size * row.delta
+                stress = 0.1 * 1E-6 * price * get_contract(row.pz).size * row.delta
                 stress_list.append(round(stress,1))
             df3['stress'] = stress_list
 

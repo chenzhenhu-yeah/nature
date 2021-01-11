@@ -22,7 +22,7 @@ import sys
 
 from nature import to_log, is_trade_day, send_email, get_dss, get_contract, is_market_date, get_symbols_trade
 from nature import VtBarData, DIRECTION_LONG, DIRECTION_SHORT, BarGenerator
-from nature import Book, a_file
+from nature import Book, a_file, get_tick
 
 from nature import Gateway_Ht_CTP, pandian_run
 from nature import Fut_AtrRsiPortfolio, Fut_RsiBollPortfolio, Fut_CciBollPortfolio
@@ -238,7 +238,7 @@ class FutEngine(object):
         #         skew_bili_symbol_list = symbols.split(',')
         #         self.loadPortfolio(Fut_Skew_BiliPortfolio, skew_bili_symbol_list)
 
-        self.loadPortfolio(Fut_ArbitragePortfolio, [])
+        # self.loadPortfolio(Fut_ArbitragePortfolio, [])
 
         # if 'symbols_spread' in setting:
         #     symbols = setting['symbols_spread']
@@ -565,13 +565,24 @@ class FutEngine(object):
         fn = get_dss() + 'fut/engine/engine_deal.csv'
         a_file(fn, str(r)[2:-2])
 
-        if sp == 'CUS':
-            return
-
         if self.gateway is not None:
-            # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
-            threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
-            # send_email(get_dss(), '引擎下单：'+vtSymbol+' '+str(direction)+' '+str(offset), '')
+            if sp == 'CUS':
+                symbols = vtSymbol[4:]
+                symbol_list = symbols.split('&')
+                s0 = symbol_list[0]
+                price0 = get_tick(s0)['LastPrice']
+                s1 = symbol_list[1]
+                price1 = get_tick(s1)['LastPrice']
+
+                threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, s0, direction, offset, price0, volume, pfName) ).start()
+                if direction == DIRECTION_LONG:
+                    threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, s1, DIRECTION_SHORT, offset, price1, volume, pfName) ).start()
+                if direction == DIRECTION_SHORT:
+                    threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, s1, DIRECTION_LONG, offset, price1, volume, pfName) ).start()
+            else:
+                # self.gateway._bc_sendOrder(dt, vtSymbol, direction, offset, price_deal, volume, pfName)
+                threading.Thread( target=self.gateway._bc_sendOrder, args=(dt, vtSymbol, direction, offset, price, volume, pfName) ).start()
+                # send_email(get_dss(), '引擎下单：'+vtSymbol+' '+str(direction)+' '+str(offset), '')
 
     #----------------------------------------------------------------------
     def worker_open(self):
