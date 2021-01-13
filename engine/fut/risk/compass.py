@@ -151,6 +151,39 @@ def show_31(df_list, df2_list, df3_list, code, xticks_filter=True, filename=None
     plt.savefig(fn)
     plt.cla()
 
+def show_close(symbol, ma1, ma2):
+    fn = get_dss() +'fut/bar/day_' + symbol + '.csv'
+    df = pd.read_csv(fn)
+    df = df.sort_values('date')
+    df = df.set_index('date')
+
+    n = ma1
+    df['ma1'] = df['close'].rolling(n).mean()
+    n = ma2
+    df['ma2'] = df['close'].rolling(n).mean()
+
+    plt.figure(figsize=(15,9))
+    plt.xticks(rotation=90)
+    plt.plot(df.close)
+    plt.plot(df.ma1)
+    plt.plot(df.ma2)
+
+    title = symbol
+    plt.title(title)
+    plt.grid(True, axis='y')
+    ax = plt.gca()
+
+    for label in ax.get_xticklabels():
+        label.set_visible(False)
+    for label in ax.get_xticklabels()[1::30]:
+        label.set_visible(True)
+    for label in ax.get_xticklabels()[-1:]:
+        label.set_visible(True)
+
+    fn = dirname + symbol + '_close'  + '.jpg'
+    plt.savefig(fn)
+    plt.cla()
+
 def show_ic(symbol1, symbol2, code, date):
     fn = get_dss() +'fut/bar/day_' + symbol1 + '.csv'
     df1 = pd.read_csv(fn)
@@ -754,7 +787,6 @@ def common(date, m0, gap, m1=None):
             if df3 is not None:
                 show_21([df1], [df1.iloc[-60:,:], df2.iloc[-60:,:], df3.iloc[-60:,:]], code)
 
-
     # 当月（次月）合约当天隐波分时图
     df31, df32  = df_atm_plus_obj_min5(code, date, gap)
     if df31 is not None and df32 is not None:
@@ -790,10 +822,10 @@ def common(date, m0, gap, m1=None):
         if df_c is not None and df_p is not None:
             show_11([df_c, df_p], m1)
 
-    # 隐含分布
-    df = implied_dist(date, code, gap)
-    if df is not None:
-        show_11([df], code, False)
+    # # 隐含分布
+    # df = implied_dist(date, code, gap)
+    # if df is not None:
+    #     show_11([df], code, False)
 
     # # skew_day
     # for symbol in [m0, m1]:
@@ -836,33 +868,39 @@ def common(date, m0, gap, m1=None):
     #                 # print(df_right_c.tail())
 
 def CF(date, df):
-    m0 = df[(df.pz == 'CF') & (df.flag == 'm0')].iloc[0,:].symbol
-    m1 = df[(df.pz == 'CF') & (df.flag == 'm1')].iloc[0,:].symbol
+    CF0 = df[(df.pz == 'CF') & (df.flag == 'm0')].iloc[0,:].symbol
+    CF1 = df[(df.pz == 'CF') & (df.flag == 'm1')].iloc[0,:].symbol
 
-    cy0 = 'CY' + m0[2:]
-    code = m0
+    CY0 = 'CY' + CF0[2:]
+    code = CF0
     gap = 200
 
     common(date, code, gap)
-    smile(date, m0)
+    smile(date, CF0)
 
     # ic
-    show_ic(m0, m1, code, date)
-    show_ic(m0, cy0, code, date)
+    show_ic(CF0, CF1, code, date)
+    show_ic(CF0, CY0, code, date)
+    show_ic(CF0, CY0, code, date)
+
+    show_close(CF0, 5, 30)
 
     img2pdf('compass_CF_'+date+'.pdf',
-            [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
-             m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
-             m0+'_smile.jpg',
-             m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
-             m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
-             m0+'_'+m0+'_implied_dist.jpg',
-             m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
-             m0+'_ic_'+m0+'_'+m1+'.jpg',
-             m0+'_ic_'+m0+'_'+cy0+'.jpg',
+            [code+'_'+CF0+'_hv_'+CF0+'_'+CF0+'_hv_'+CF0+'_iv_c.jpg',
+             code+'_'+CF0+'_iv_c_'+CF0+'_'+CF0+'_iv_p_'+CF0+'_obj.jpg',
+             code+'_smile.jpg',
+             # m0+'_'+m0+'_implied_dist.jpg',
+             code+'_'+CF0+'_openinterest_c_'+CF0+'_openinterest_p.jpg',
+             code+'_ic_'+CF0+'_'+CF1+'.jpg',
+             code+'_ic_'+CF0+'_'+CY0+'.jpg',
             ])
     fn1 = dirname+'compass_CF_'+date+'.pdf'
-    return [fn1]
+    d2 = get_dss() + 'info/hold/img/'
+    hold_product('czce', code)
+    fn2 = d2 + code +'_czce.pdf'
+    fn = d2 + 'czce.pdf'
+    os.rename(fn, fn2)
+    return [fn1, fn2]
 
 def m(date, df):
     m0 = df[(df.pz == 'm') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -881,6 +919,9 @@ def m(date, df):
     code = m0
     gap = 50
 
+    show_close(m0, 5, 30)
+    show_close(y0, 5, 30)
+    # show_close(b0, 5, 30)
     common(date, code, gap)
     smile(date, m0)
 
@@ -899,6 +940,8 @@ def m(date, df):
 
     img2pdf('compass_m_'+date+'.pdf',
             [
+             m0 + '_close' + '.jpg',
+             y0 + '_close' + '.jpg',
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
              m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_smile.jpg',
@@ -916,40 +959,44 @@ def m(date, df):
             ])
 
     fn1 = dirname+'compass_m_'+date+'.pdf'
-
     d2 = get_dss() + 'info/hold/img/'
-    listfile = os.listdir(d2)
-    for fn in listfile:
-        os.remove(d2+fn)
     hold_product('dce', m0)
-    fn2 = d2 + 'dce.pdf'
+    fn2 = d2 + code +'_dce.pdf'
+    fn = d2 + 'dce.pdf'
+    os.rename(fn, fn2)
     return [fn1, fn2]
 
 def RM(date, df):
-    m0 = df[(df.pz == 'RM') & (df.flag == 'm0')].iloc[0,:].symbol
-    m1 = df[(df.pz == 'RM') & (df.flag == 'm1')].iloc[0,:].symbol
+    RM0 = df[(df.pz == 'RM') & (df.flag == 'm0')].iloc[0,:].symbol
+    RM1 = df[(df.pz == 'RM') & (df.flag == 'm1')].iloc[0,:].symbol
 
-    code = m0
+    code = RM0
     gap = 50
 
     common(date, code, gap)
-    smile(date, m0)
+    smile(date, RM0)
 
     # ic
-    show_ic(m0, m1, code, date)
+    show_ic(RM0, RM1, code, date)
+    show_close(RM0, 5, 30)
 
     img2pdf('compass_RM_'+date+'.pdf',
-            [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
-             m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
-             m0+'_smile.jpg',
-             m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
-             m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
-             m0+'_'+m0+'_implied_dist.jpg',
-             m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
-             m0+'_ic_'+m0+'_'+m1+'.jpg',
+            [
+             RM0 + '_close' + '.jpg',
+             RM0+'_'+RM0+'_hv_'+RM0+'_'+RM0+'_hv_'+RM0+'_iv_c.jpg',
+             RM0+'_'+RM0+'_iv_c_'+RM0+'_'+RM0+'_iv_p_'+RM0+'_obj.jpg',
+             RM0+'_smile.jpg',
+             # RM0+'_'+RM0+'_implied_dist.jpg',
+             RM0+'_'+RM0+'_openinterest_c_'+RM0+'_openinterest_p.jpg',
+             RM0+'_ic_'+RM0+'_'+RM1+'.jpg',
             ])
     fn1 = dirname+'compass_RM_'+date+'.pdf'
-    return [fn1]
+    d2 = get_dss() + 'info/hold/img/'
+    hold_product('czce', code)
+    fn2 = d2 + code +'_czce.pdf'
+    fn = d2 + 'czce.pdf'
+    os.rename(fn, fn2)
+    return [fn1, fn2]
 
 def IO(date, df):
     m0 = df[(df.pz == 'IO') & (df.flag == 'm0')].iloc[0,:].symbol
@@ -962,21 +1009,17 @@ def IO(date, df):
 
     common(date, code, gap, m1)
     term_structure(m0, m1, m2, m3, date, gap)
-    sdiffer(m0, m1, date, gap)
+    # sdiffer(m0, m1, date, gap)
     smile(date, m0, m1)
 
     img2pdf('compass_IO_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c_'+m1+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m1+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m1+'_iv_p_'+m0+'_obj.jpg',
-             m0+'_sdiffer.jpg',
+             # m0+'_sdiffer.jpg',
              m0+'_term_structure.jpg',
              m0+'_smile.jpg',
              m1+'_smile.jpg',
-             m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
-             m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
-             m1+'_skew_day_p_'+m1+'_skew_day_c.jpg',
-             m1+'_skew_min5_p_'+m1+'_skew_min5_c.jpg',
-             m0+'_'+m0+'_implied_dist.jpg',
+             # m0+'_'+m0+'_implied_dist.jpg',
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
              m1+'_'+m1+'_openinterest_c_'+m1+'_openinterest_p.jpg',
             ])
@@ -992,31 +1035,40 @@ def al(date, df):
     gap = 100
 
     common(date, code, gap)
+    show_close(m0, 5, 30)
 
     img2pdf('compass_al_'+date+'.pdf',
             [m0+'_'+m0+'_hv_'+m0+'_'+m0+'_hv_'+m0+'_iv_c.jpg',
              m0+'_'+m0+'_iv_c_'+m0+'_'+m0+'_iv_p_'+m0+'_obj.jpg',
-             m0+'_skew_day_p_'+m0+'_skew_day_c.jpg',
-             m0+'_skew_min5_p_'+m0+'_skew_min5_c.jpg',
-             m0+'_'+m0+'_implied_dist.jpg',
+             # m0+'_'+m0+'_implied_dist.jpg',
              m0+'_'+m0+'_openinterest_c_'+m0+'_openinterest_p.jpg',
             ])
 
     fn1 = dirname+'compass_al_'+date+'.pdf'
-    return [fn1]
+    d2 = get_dss() + 'info/hold/img/'
+    hold_product('shfe', code)
+    fn2 = d2 + code +'_shfe.pdf'
+    fn = d2 + 'shfe.pdf'
+    os.rename(fn, fn2)
+    return [fn1, fn2]
 
 def compass(date):
     listfile = os.listdir(dirname)
     for fn in listfile:
         os.remove(dirname+fn)
 
+    d2 = get_dss() + 'info/hold/img/'
+    listfile = os.listdir(d2)
+    for fn in listfile:
+        os.remove(d2+fn)
+
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df2 = pd.read_csv(fn)
     df2 = df2[pd.notnull(df2.flag)]
 
     fn_list = []
-    # for func in [CF, m, RM, IO]:
-    for func in [m]:
+    for func in [CF, m, RM, al, IO]:
+    # for func in [m]:
         try:
             fn_list += func(date, df2)
         except Exception as e:
@@ -1029,7 +1081,7 @@ def compass(date):
 if __name__ == '__main__':
     now = datetime.now()
     date = now.strftime('%Y-%m-%d')
-    date = '2020-11-20'
+    # date = '2020-11-20'
     # date = '2020-11-23'
 
     compass(date)
