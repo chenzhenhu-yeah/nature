@@ -263,8 +263,8 @@ def get_symbols_trade():
     fn = get_dss() + 'fut/cfg/opt_mature.csv'
     df1 = pd.read_csv(fn)
     strike_list = []
-    for pz in ['IO', 'm', 'RM', 'CF', 'c', 'al']:
-        for flag in ['m0', 'm1', 'm2', 'm3']:
+    for pz in ['IO', 'm', 'RM', 'CF', 'c', 'al', 'MA']:
+        for flag in ['m0', 'm1', 'm2', 'm3', 'm4']:
             df2 = df1[df1.pz == pz]
             df2 = df2[df2.flag == flag]
             df2 = df2[df2.mature >= today]
@@ -321,7 +321,7 @@ def get_symbols_quote():
         # 加载 期权，对于IO还要加载IF
         fn = get_dss() + 'fut/cfg/opt_mature.csv'
         df = pd.read_csv(fn)
-        for pz in ['IO', 'm', 'RM', 'CF', 'c', 'al']:
+        for pz in ['IO', 'm', 'RM', 'CF', 'c', 'al', 'MA']:
             df2 = df[df.pz == pz]
             df2 = df2[df2.flag == df2.flag]                 # 筛选出不为空的记录
             df2 = df2[df2.mature >= today]
