@@ -1912,7 +1912,7 @@ def upload_statement():
                 price = np.nan
                 if row.pz in pz_price_dict:
                     price = pz_price_dict[row.pz]
-                stress = 0.1 * 1E-6 * price * get_contract(row.pz).size * row.delta
+                stress = 0.03 * 1E-6 * price * get_contract(row.pz).size * row.delta
                 stress_list.append(round(stress,1))
             df3['stress'] = stress_list
 
